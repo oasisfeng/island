@@ -60,7 +60,7 @@ public class AppListFragment extends Fragment {
 		mViewModel = new AppListViewModel(mIslandManager);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
-		mIslandManager.startProvisionIfNeeded();
+		mIslandManager.startProfileOwnerProvisioningIfNeeded();
 
 		final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
 		filter.addAction(Intent.ACTION_PACKAGE_CHANGED);

@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.data.AppListViewModel;
 import com.oasisfeng.island.data.AppViewModel.State;
-import com.oasisfeng.island.provisioning.ProfileOwnerProvisioning;
+import com.oasisfeng.island.provisioning.ProfileOwnerSystemProvisioning;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -284,12 +284,13 @@ public class IslandManager implements AppListViewModel.Controller {
 		Log.d(TAG, "onProfileProvisioningComplete");
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
-		startProvision();
+		startProfileOwnerIslandProvisioning();
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
 		MainActivity.startInManagedProfile(mContext, android.os.Process.myUserHandle());
 	}
 
-	@SuppressLint("CommitPrefEdits") public void startProvisionIfNeeded() {
+	@SuppressLint("CommitPrefEdits") public void startProfileOwnerProvisioningIfNeeded() {
+		if (mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName())) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
 		if (state >= 3) return;		// Already provisioned
@@ -300,14 +301,14 @@ public class IslandManager implements AppListViewModel.Controller {
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).commit();	// Avoid further attempts
 
 		if (state == 0)		// Managed profile provision was not performed, the profile may be enabled manually.
-			ProfileOwnerProvisioning.start(mDevicePolicyManager, mAdminComp);	// Simulate the stock managed profile provision
+			ProfileOwnerSystemProvisioning.start(mDevicePolicyManager, mAdminComp);	// Simulate the stock managed profile provision
 
-		startProvision();	// Last provision attempt may be interrupted
+		startProfileOwnerIslandProvisioning();	// Last provision attempt may be interrupted
 
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
 	}
 
-	private void startProvision() {
+	private void startProfileOwnerIslandProvisioning() {
 		disableNonCriticalSystemApps();
 		enableRequiredSystemApps();		// Enable system apps responsible for required intents. (package name unspecified)
 

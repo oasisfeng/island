@@ -8,7 +8,7 @@ import android.content.ComponentName;
  *
  * Created by Oasis on 2016/4/18.
  */
-public class ProfileOwnerProvisioning {
+public class ProfileOwnerSystemProvisioning {
 
 	public static void start(final DevicePolicyManager dpm, final ComponentName admin) {
 		/* DISALLOW_WALLPAPER cannot be changed, we cannot add this restriction. */
