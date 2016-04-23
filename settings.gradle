@@ -1,0 +1,2 @@
+include ':app', ':deagle'
+project(':deagle').projectDir = new File(settingsDir, '../deagle/library')

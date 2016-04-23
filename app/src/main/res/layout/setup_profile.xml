@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+        tools:context=".MainActivity">
+
+    <data>
+        <import type="android.view.View" />
+        <variable name="setup" type="com.oasisfeng.island.data.SetupViewModel" />
+    </data>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingTop="@dimen/activity_vertical_margin">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/setup_profile_message" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@android:color/holo_red_light"
+                android:visibility="@{setup.has_other_owner ? View.VISIBLE : View.GONE}"
+                android:text="@{@string/setup_profile_conflict(setup.owner_name)}"
+                tools:text="@string/setup_profile_conflict" />
+            <Button
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="32dp"
+                android:paddingStart="48dp"
+                android:paddingEnd="48dp"
+                android:layout_gravity="center_horizontal"
+                android:id="@+id/set_up_profile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_button" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_cleanup_hint"/>
+        </LinearLayout>
+
+    </ScrollView>
+
+</layout>

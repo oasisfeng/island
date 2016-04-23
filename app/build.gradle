@@ -1,0 +1,38 @@
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        applicationId "com.oasisfeng.island"
+        minSdkVersion 21
+        targetSdkVersion 23
+    }
+
+    dataBinding {
+        enabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    compile project(':deagle')
+    compile 'com.android.support:design:23.3.0'
+    compile 'com.google.guava:guava:19.0'
+    compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
+    testCompile 'junit:junit:4.12'
+}

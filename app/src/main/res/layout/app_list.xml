@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:bind="http://schemas.android.com/apk/res-auto"
+        tools:context=".MainActivity">
+
+    <data>
+        <import type="android.view.View" />
+        <import type="com.oasisfeng.island.data.AppViewModel.State" />
+        <variable name="apps" type="com.oasisfeng.island.data.AppListViewModel" />
+    </data>
+
+    <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/app_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="-8dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
+            android:paddingEnd="-8dp"
+            android:clipToPadding="false"
+            android:background="@color/background"
+            bind:items="@{apps.items}"
+            bind:item_binder="@{apps.item_binder}"
+            tools:listitem="@layout/app_entry" />
+
+        <include layout="@layout/app_detail" bind:apps="@{apps}" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            android:clickable="true"
+            android:src="@{apps.fabImage}"
+            android:visibility="@{apps.fabImage != 0 ? View.VISIBLE : View.GONE}"
+            android:onClick="@{apps::onFabClick}"
+            app:layout_anchor="@id/app_detail"
+            app:layout_anchorGravity="top|right|end"
+            app:backgroundTint="@{apps.fabBgColor}"
+            app:rippleColor="?attr/colorControlHighlight"
+            app:elevation="@dimen/fab_elevation"
+            app:pressedTranslationZ="@dimen/fab_elevation_pressed" />
+
+    </android.support.design.widget.CoordinatorLayout>
+
+</layout>

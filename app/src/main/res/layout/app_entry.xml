@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:bind="http://schemas.android.com/apk/res-auto"
+        xmlns:comment="http://schemas.android.com/tools">
+
+    <data>
+        <import type="com.oasisfeng.island.data.AppViewModel.State" />
+        <variable name="apps" type="com.oasisfeng.island.data.AppListViewModel" />
+        <variable name="app" type="com.oasisfeng.island.data.AppViewModel" />
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:paddingBottom="2dp"
+        android:clipToPadding="false" comment:x2="Ensure the correct visual effect of elevation"
+        android:background="@{app.selected ? @color/background_highlight : @color/background}">
+
+        <TextView
+            android:id="@+id/entry_name"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="2dp" comment:x1="Carefully adjusted padding for visually better elevation shadow"
+            android:paddingStart="24dp" comment:x2="Actual start/end padding should minus 8dp (the negative parent padding)"
+            android:paddingEnd="24dp"
+            android:background="?android:attr/selectableItemBackground"
+
+            comment:x3="The 'pop up' effect"
+            android:elevation="@{app.selected ? @dimen/elevation_card_resting : 0}"
+            android:outlineProvider="bounds"
+            android:scaleX="@{app.selected ? 1.01f : 1}"
+            android:scaleY="@{app.selected ? 1.01f : 1}"
+
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:gravity="start|center_vertical"
+            android:textColor="@{app.state == State.Alive ? @color/state_alive : app.state == State.Frozen ? @color/state_frozen : @android:color/black}"
+            android:textAlignment="viewStart"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textIsSelectable="false"
+            android:drawablePadding="16dp"
+
+            android:text="@{app.name}"
+            android:drawableStart="@{app.icon ?? @drawable/app_icon_empty}"
+            android:drawableEnd="@{apps.selection == app &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
+            android:onViewAttachedToWindow="@{app::onViewAttached}"
+            android:onClick="@{apps::onItemClick}"
+            bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"
+            tools:drawableStart="@mipmap/ic_launcher"
+            tools:elevation="@dimen/elevation_card_resting"
+            tools:text="@string/app_name" /><!-- bind:app_label="@{app.pkg}" comment:x4="This binds text and drawableStart" -->
+
+    </FrameLayout>
+
+</layout>
