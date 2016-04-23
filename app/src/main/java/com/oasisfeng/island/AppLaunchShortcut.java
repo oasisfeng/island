@@ -17,6 +17,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -27,6 +28,8 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 /**
  * Launch shortcut for apps on Island, from the owner user space
+ *
+ * TODO: Secure both the installer and launch intent to protect again abuse.
  *
  * Created by Oasis on 2016/4/22.
  */
@@ -60,31 +63,17 @@ public class AppLaunchShortcut extends Activity {
 		onNewIntent(getIntent());
 	}
 
-	/** Must be called in managed profile */
 	static boolean createOnLauncher(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
-		final PackageManager pm = context.getPackageManager();
-		final Intent target = pm.getLaunchIntentForPackage(pkg);
-		if (target == null) return false;
-		target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+		if (! IslandManager.isDeviceOwner(context))		// The complex flow for managed profile
+			return createOnLauncherInManagedProfile(context, pkg);
+		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+		broadcastShortcutInstall(context, shortcut_payload);
+		return true;
+	}
 
-		final Intent launch_intent = new Intent(ACTION_LAUNCH_APP)
-				.setData(Uri.fromParts("target", target.getComponent().flattenToShortString(), null));
-		if (target.hasCategory(Intent.CATEGORY_INFO)) launch_intent.addCategory(Intent.CATEGORY_INFO);
-		if (target.hasCategory(Intent.CATEGORY_LAUNCHER)) launch_intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-		final Intent shortcut = new Intent(ACTION_INSTALL_SHORTCUT);	// Extras will be carried in broadcast by Installer.
-		shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
-		@SuppressWarnings("WrongConstant") final ActivityInfo activity = pm.getActivityInfo(target.getComponent(), 0);
-		shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME, activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
-		final Bitmap icon_bitmap = drawableToBitmap(pm.getActivityIcon(target.getComponent()));
-		if (icon_bitmap != null) shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
-		else {
-			final Context pkg_context = context.createPackageContext(pkg, 0);
-			final int icon = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;
-			shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon));
-		}
-		shortcut.putExtra("duplicate", false);
-
+	/** Must be called in managed profile */
+	private static boolean createOnLauncherInManagedProfile(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
+		// Make sure required forwarding rules are ready
 		final IntentFilter installer_filter = new IntentFilter(ACTION_INSTALL_SHORTCUT);
 		installer_filter.addCategory(Intent.CATEGORY_DEFAULT);
 		final IntentFilter launchpad_filter = new IntentFilter(ACTION_LAUNCH_APP);
@@ -97,9 +86,12 @@ public class AppLaunchShortcut extends Activity {
 
 		// Disable installer in managed profile to make sure only the one in owner user receives this intent
 		final ComponentName installer = new ComponentName(context, Installer.class);
-		pm.setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		context.getPackageManager().setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+
+		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+		final Intent shortcut_request = new Intent(ACTION_INSTALL_SHORTCUT).putExtras(shortcut_payload);
 		try {
-			context.startActivity(shortcut);
+			context.startActivity(shortcut_request);
 			return true;
 		} catch (final ActivityNotFoundException e) {
 			Log.e(TAG, "Failed to send shortcut installation request.");
@@ -107,7 +99,40 @@ public class AppLaunchShortcut extends Activity {
 		}
 	}
 
-	/** Runs in managed profile */
+	/** @return null if the given package has no launch entrance */
+	private static @Nullable Bundle buildShortcutPayload(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
+		final PackageManager pm = context.getPackageManager();
+		final Intent target = pm.getLaunchIntentForPackage(pkg);
+		if (target == null) return null;
+		target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+		final Intent launch_intent = new Intent(ACTION_LAUNCH_APP)
+				.setData(Uri.fromParts("target", target.getComponent().flattenToShortString(), null));
+		if (target.hasCategory(Intent.CATEGORY_INFO)) launch_intent.addCategory(Intent.CATEGORY_INFO);
+		if (target.hasCategory(Intent.CATEGORY_LAUNCHER)) launch_intent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+		final Bundle payload = new Bundle();
+		payload.putParcelable(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
+		final ActivityInfo activity = pm.getActivityInfo(target.getComponent(), 0);
+		payload.putCharSequence(Intent.EXTRA_SHORTCUT_NAME, activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
+		final Bitmap icon_bitmap = drawableToBitmap(pm.getActivityIcon(target.getComponent()));
+		if (icon_bitmap != null) payload.putParcelable(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
+		else {
+			final Context pkg_context = context.createPackageContext(pkg, 0);
+			final int icon = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;
+			payload.putParcelable(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon));
+		}
+		payload.putBoolean("duplicate", false);
+		return payload;
+	}
+
+	private static void broadcastShortcutInstall(final Context context, final Bundle shortcut) {
+		final Intent install = new Intent().putExtras(shortcut);
+		context.sendBroadcast(install.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
+		context.sendBroadcast(install.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
+	}
+
+	/** Runs in managed profile or device owner */
 	private void launchApp(final Intent intent) {
 		final Uri uri = intent.getData();
 		if (uri == null) return;
@@ -123,14 +148,6 @@ public class AppLaunchShortcut extends Activity {
 			Toast.makeText(this, "Shortcut is no longer valid, please re-create it in Island", Toast.LENGTH_LONG).show();
 	}
 
-	/** Must be called in owner user */
-	boolean createOnLauncherAsOwner(final Intent intent) {
-		final Intent shortcut = intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT);
-		sendBroadcast(shortcut.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
-		sendBroadcast(shortcut.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
-		return true;
-	}
-
 	@Override protected void onNewIntent(final Intent intent) {
 		try {
 			handleIntent(intent);
@@ -141,11 +158,8 @@ public class AppLaunchShortcut extends Activity {
 
 	private void handleIntent(final Intent intent) {
 		final String action = intent.getAction();
-		if (ACTION_LAUNCH_APP.equals(action)) {
-			launchApp(intent);
-		} else if (ACTION_INSTALL_SHORTCUT.equals(action)) {
-			createOnLauncherAsOwner(intent);
-		}
+		if (! ACTION_LAUNCH_APP.equals(action)) return;
+		launchApp(intent);
 	}
 
 	public static Bitmap drawableToBitmap(final Drawable d) {

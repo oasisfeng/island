@@ -66,6 +66,7 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 public class IslandManager implements AppListViewModel.Controller {
 
 	public static final int REQUEST_CODE_INSTALL = 0x101;
+
 	/** Provision state: 1 - Managed profile provision is completed, 2 - Island provision is started, 3 - Island provision is completed */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
@@ -233,7 +234,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	public void destroy() {
 		final String pkg = mContext.getPackageName();
-		if (mDevicePolicyManager.isDeviceOwnerApp(pkg)) {
+		if (isDeviceOwner(mContext)) {
 			new AlertDialog.Builder(mContext).setTitle("WARNING")
 					.setMessage("Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.")
 					.setPositiveButton(android.R.string.no, null)
@@ -257,6 +258,16 @@ public class IslandManager implements AppListViewModel.Controller {
 		mDevicePolicyManager.clearDeviceOwnerApp(mContext.getPackageName());
 		final Activity activity = Activities.findActivityFrom(mContext);
 		if (activity != null) activity.finish();
+	}
+
+	public static boolean isDeviceOwner(final Context context) {
+		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
+		return dpm.isDeviceOwnerApp(context.getPackageName());
+	}
+
+	public static boolean isProfileOwner(final Context context) {
+		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
+		return dpm.isProfileOwnerApp(context.getPackageName());
 	}
 
 	public static @Nullable UserHandle getManagedProfile(final Context context) {

@@ -1,6 +1,5 @@
 package com.oasisfeng.island;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.LauncherApps;
@@ -22,9 +21,8 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		final DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
 		final String this_pkg = getApplicationContext().getPackageName();
-		final boolean is_device_owner = dpm.isDeviceOwnerApp(this_pkg);
+		final boolean is_device_owner = IslandManager.isDeviceOwner(this);
 		if (! is_device_owner && ! getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
 			Toast.makeText(this, "Sorry, your device or ROM does not support \"Managed Profile\" feature, which is required by Island.", Toast.LENGTH_LONG).show();
 			finish();
@@ -36,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		if (is_device_owner || dpm.isProfileOwnerApp(this_pkg)) {
+		if (is_device_owner || IslandManager.isProfileOwner(this)) {
 			// The managed profile is already set up and we are running inside it
 			setContentView(R.layout.activity_main);
 			showAppListFragment();
