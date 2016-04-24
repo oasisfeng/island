@@ -66,7 +66,7 @@ public class AppLaunchShortcut extends Activity {
 	}
 
 	public static boolean createOnLauncher(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
-		if (! IslandManager.isDeviceOwner(context))		// The complex flow for managed profile
+		if (! new IslandManager(context).isDeviceOwner())		// The complex flow for managed profile
 			return createOnLauncherInManagedProfile(context, pkg);
 		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
 		broadcastShortcutInstall(context, shortcut_payload);

@@ -238,18 +238,18 @@ public class IslandManager implements AppListViewModel.Controller {
 
 
 	public void destroy() {
-		final String pkg = mContext.getPackageName();
-		if (isDeviceOwner(mContext)) {
+		if (Process.myUserHandle().hashCode() == 0 && isDeviceOwner()) {
 			new AlertDialog.Builder(mContext).setTitle("WARNING")
-					.setMessage("Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.")
+					.setMessage(R.string.dialog_deactivate_message)
 					.setPositiveButton(android.R.string.no, null)
 					.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> deactivateDeviceOwner()).show();
-		} else if (mDevicePolicyManager.isProfileOwnerApp(pkg)) {
+		} else if (Process.myUserHandle().hashCode() != 0 && isProfileOwner() && isProfileOwnerActive()) {
 			new AlertDialog.Builder(mContext).setTitle("WARNING")
 					.setMessage(R.string.dialog_destroy_message)
 					.setPositiveButton(android.R.string.no, null)
 					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> removeProfileOwner()).show();
-		}
+		} else new AlertDialog.Builder(mContext).setMessage(R.string.dialog_destroy_failure_message)
+					.setNegativeButton(android.R.string.ok, null).show();
 	}
 
 	private void removeProfileOwner() {
@@ -265,14 +265,17 @@ public class IslandManager implements AppListViewModel.Controller {
 		if (activity != null) activity.finish();
 	}
 
-	public static boolean isDeviceOwner(final Context context) {
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
-		return dpm.isDeviceOwnerApp(context.getPackageName());
+	public boolean isDeviceOwner() {
+		return mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName());
 	}
 
-	public static boolean isProfileOwner(final Context context) {
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
-		return dpm.isProfileOwnerApp(context.getPackageName());
+	public boolean isProfileOwner() {
+		return mDevicePolicyManager.isProfileOwnerApp(mContext.getPackageName());
+	}
+
+	public boolean isProfileOwnerActive() {
+		if (Process.myUserHandle().hashCode() == 0) throw new IllegalStateException("Must not be called in owner user");
+		return mDevicePolicyManager.isAdminActive(mAdminComp);
 	}
 
 	public static @Nullable UserHandle getManagedProfile(final Context context) {
@@ -302,7 +305,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
 		startProfileOwnerIslandProvisioning();
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
-		MainActivity.startInManagedProfile(mContext, android.os.Process.myUserHandle());
+		MainActivity.startAsUser(mContext, android.os.Process.myUserHandle());
 	}
 
 	@SuppressLint("CommitPrefEdits") public void startProfileOwnerProvisioningIfNeeded() {
