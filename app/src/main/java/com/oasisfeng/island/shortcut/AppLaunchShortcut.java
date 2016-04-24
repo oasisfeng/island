@@ -149,7 +149,12 @@ public class AppLaunchShortcut extends Activity {
 
 		final LauncherApps launcher = (LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE);
 		final UserHandle user = android.os.Process.myUserHandle();
-		launcher.startMainActivity(component, user, intent.getSourceBounds(), null);
+		try {
+			launcher.startMainActivity(component, user, intent.getSourceBounds(), null);
+		} catch (final NullPointerException e) {	// A known bug in LauncherAppsService when activity is not found
+			Log.w(TAG, "Not found in Island: " + component);
+			return false;
+		}
 		return launcher.isActivityEnabled(component, user);
 	}
 
