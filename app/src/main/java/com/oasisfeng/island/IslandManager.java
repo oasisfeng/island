@@ -90,7 +90,9 @@ public class IslandManager implements AppListViewModel.Controller {
 			// Enabled system apps with launcher activity by default
 			"com.android.vending",					// Google Play Store to let user install apps directly within
 			"com.android.contacts",					// Contacts
-			"com.android.providers.downloads.ui"	// Downloads
+			"com.android.providers.downloads.ui",	// Downloads
+			// MIUI-specific
+			"com.miui.core"							// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
 	);
 	private static final Collection<Intent> sCriticalActivityIntents = Arrays.asList(
 			new Intent(Intent.ACTION_INSTALL_PACKAGE),				// Usually com.android.packageinstaller, may be altered by ROM.
