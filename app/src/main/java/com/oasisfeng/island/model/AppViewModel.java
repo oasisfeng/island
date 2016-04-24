@@ -1,4 +1,4 @@
-package com.oasisfeng.island.data;
+package com.oasisfeng.island.model;
 
 import android.app.Activity;
 import android.databinding.BaseObservable;

@@ -1,4 +1,4 @@
-package com.oasisfeng.island;
+package com.oasisfeng.island.shortcut;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -20,6 +20,8 @@ import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.oasisfeng.island.engine.IslandManager;
 
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
@@ -63,7 +65,7 @@ public class AppLaunchShortcut extends Activity {
 		onNewIntent(getIntent());
 	}
 
-	static boolean createOnLauncher(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
+	public static boolean createOnLauncher(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
 		if (! IslandManager.isDeviceOwner(context))		// The complex flow for managed profile
 			return createOnLauncherInManagedProfile(context, pkg);
 		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);

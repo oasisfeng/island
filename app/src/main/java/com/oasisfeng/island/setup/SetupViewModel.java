@@ -1,4 +1,4 @@
-package com.oasisfeng.island.data;
+package com.oasisfeng.island.setup;
 
 /**
  * View model for setup fragment

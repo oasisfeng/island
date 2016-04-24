@@ -1,4 +1,4 @@
-package com.oasisfeng.island;
+package com.oasisfeng.island.engine;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -34,8 +34,11 @@ import android.widget.Toast;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
-import com.oasisfeng.island.data.AppListViewModel;
-import com.oasisfeng.island.data.AppViewModel.State;
+import com.oasisfeng.island.IslandDeviceAdminReceiver;
+import com.oasisfeng.island.MainActivity;
+import com.oasisfeng.island.R;
+import com.oasisfeng.island.model.AppListViewModel;
+import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.provisioning.ProfileOwnerSystemProvisioning;
 
 import java.lang.reflect.InvocationTargetException;
@@ -293,7 +296,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		return null;
 	}
 
-	@SuppressLint("CommitPrefEdits") void onProfileProvisioningComplete() {
+	@SuppressLint("CommitPrefEdits") public void onProfileProvisioningComplete() {
 		Log.d(TAG, "onProfileProvisioningComplete");
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
@@ -373,7 +376,7 @@ public class IslandManager implements AppListViewModel.Controller {
 			if (info.providers != null) for (final ProviderInfo service : info.providers)
 				if ((service.flags & ProviderInfo.FLAG_SINGLE_USER) != 0) return true;
 			return false;
-		} catch (PackageManager.NameNotFoundException e) {
+		} catch (final PackageManager.NameNotFoundException e) {
 			return false;
 		}
 	}
@@ -402,7 +405,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		enableForwarding(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
 	}
 
-	IslandManager enableForwarding(final IntentFilter filter, final int flags) {
+	public IslandManager enableForwarding(final IntentFilter filter, final int flags) {
 		mDevicePolicyManager.addCrossProfileIntentFilter(mAdminComp, filter, flags);
 		return this;
 	}

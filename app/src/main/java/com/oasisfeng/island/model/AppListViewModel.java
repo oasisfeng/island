@@ -1,4 +1,4 @@
-package com.oasisfeng.island.data;
+package com.oasisfeng.island.model;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -18,7 +18,7 @@ import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.island.BR;
 import com.oasisfeng.island.R;
-import com.oasisfeng.island.data.AppViewModel.State;
+import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
 

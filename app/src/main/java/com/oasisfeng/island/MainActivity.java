@@ -9,6 +9,10 @@ import android.os.UserHandle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
+import com.oasisfeng.island.console.apps.AppListFragment;
+import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.setup.SetupProfileFragment;
+
 public class MainActivity extends AppCompatActivity {
 
 	public static boolean startInManagedProfile(final Context context, final UserHandle user) {

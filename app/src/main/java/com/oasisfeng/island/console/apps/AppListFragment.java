@@ -1,4 +1,4 @@
-package com.oasisfeng.island;
+package com.oasisfeng.island.console.apps;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -32,10 +32,14 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.ui.AppLabelCache;
-import com.oasisfeng.island.data.AppListViewModel;
-import com.oasisfeng.island.data.AppViewModel;
-import com.oasisfeng.island.data.AppViewModel.State;
+import com.oasisfeng.island.shortcut.AppLaunchShortcut;
+import com.oasisfeng.island.BuildConfig;
+import com.oasisfeng.island.R;
+import com.oasisfeng.island.model.AppListViewModel;
+import com.oasisfeng.island.model.AppViewModel;
+import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.databinding.AppListBinding;
+import com.oasisfeng.island.engine.IslandManager;
 
 import java.util.Collection;
 import java.util.Collections;

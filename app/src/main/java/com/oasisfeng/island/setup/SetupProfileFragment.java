@@ -1,4 +1,4 @@
-package com.oasisfeng.island;
+package com.oasisfeng.island.setup;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,7 +17,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.oasisfeng.island.data.SetupViewModel;
+import com.oasisfeng.island.IslandDeviceAdminReceiver;
+import com.oasisfeng.island.R;
 import com.oasisfeng.island.databinding.SetupProfileBinding;
 
 import java.lang.reflect.InvocationTargetException;

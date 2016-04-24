@@ -4,7 +4,7 @@
 
     <data>
         <import type="android.view.View" />
-        <variable name="setup" type="com.oasisfeng.island.data.SetupViewModel" />
+        <variable name="setup" type="com.oasisfeng.island.setup.SetupViewModel" />
     </data>
 
     <ScrollView

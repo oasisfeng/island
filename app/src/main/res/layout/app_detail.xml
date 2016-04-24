@@ -8,9 +8,9 @@
         <import type="android.view.View" />
         <import type="android.content.pm.ApplicationInfo" />
         <import type="android.support.design.widget.BottomSheetBehavior" />
-        <import type="com.oasisfeng.island.data.AppViewModel.State" />
+        <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="com.oasisfeng.island.BuildConfig" />
-        <variable name="apps" type="com.oasisfeng.island.data.AppListViewModel" />
+        <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
     </data>
 
     <LinearLayout

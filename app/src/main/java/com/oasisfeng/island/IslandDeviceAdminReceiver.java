@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
+import com.oasisfeng.island.engine.IslandManager;
+
 /**
  * Handles events related to managed profile.
  */

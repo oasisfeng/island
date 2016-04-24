@@ -7,8 +7,8 @@
 
     <data>
         <import type="android.view.View" />
-        <import type="com.oasisfeng.island.data.AppViewModel.State" />
-        <variable name="apps" type="com.oasisfeng.island.data.AppListViewModel" />
+        <import type="com.oasisfeng.island.model.AppViewModel.State" />
+        <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
     </data>
 
     <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
