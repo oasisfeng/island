@@ -16,11 +16,13 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.oasisfeng.island.R;
 import com.oasisfeng.island.engine.IslandManager;
 
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
@@ -135,19 +137,20 @@ public class AppLaunchShortcut extends Activity {
 	}
 
 	/** Runs in managed profile or device owner */
-	private void launchApp(final Intent intent) {
+	private boolean launchApp(final Intent intent) {
+		final IslandManager island = new IslandManager(this);
+		if (Process.myUserHandle().hashCode() == 0 && ! island.isDeviceOwner()) return false;
 		final Uri uri = intent.getData();
-		if (uri == null) return;
+		if (uri == null) return false;
 		final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
 
 		// Ensure de-frozen
-		new IslandManager(this).defreezeApp(component.getPackageName());
+		island.defreezeApp(component.getPackageName());
 
 		final LauncherApps launcher = (LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE);
 		final UserHandle user = android.os.Process.myUserHandle();
 		launcher.startMainActivity(component, user, intent.getSourceBounds(), null);
-		if (! launcher.isActivityEnabled(component, user))
-			Toast.makeText(this, "Shortcut is no longer valid, please re-create it in Island", Toast.LENGTH_LONG).show();
+		return launcher.isActivityEnabled(component, user);
 	}
 
 	@Override protected void onNewIntent(final Intent intent) {
@@ -161,7 +164,8 @@ public class AppLaunchShortcut extends Activity {
 	private void handleIntent(final Intent intent) {
 		final String action = intent.getAction();
 		if (! ACTION_LAUNCH_APP.equals(action)) return;
-		launchApp(intent);
+		if (! launchApp(intent))
+			Toast.makeText(this, R.string.toast_shortcut_invalid, Toast.LENGTH_LONG).show();
 	}
 
 	public static Bitmap drawableToBitmap(final Drawable d) {
