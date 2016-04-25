@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageManager;
 import android.databinding.Observable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -18,6 +17,7 @@ import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,20 +26,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.ui.AppLabelCache;
-import com.oasisfeng.island.shortcut.AppLaunchShortcut;
-import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.R;
+import com.oasisfeng.island.databinding.AppListBinding;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
-import com.oasisfeng.island.databinding.AppListBinding;
-import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +48,7 @@ import java.util.Map;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+import static android.support.design.widget.Snackbar.LENGTH_INDEFINITE;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
@@ -91,7 +90,13 @@ public class AppListFragment extends Fragment {
 		if (data == null) return;
 		final String pkg = data.getSchemeSpecificPart();
 		if (pkg == null || context.getPackageName().equals(pkg)) return;
-		mViewModel.updateApp(pkg);
+
+		final AppViewModel app_before = mViewModel.getApp(pkg);
+		final boolean just_cloned = app_before != null && app_before.getState() == State.NotCloned;
+		final AppViewModel app_after = mViewModel.updateApp(pkg);
+		if (just_cloned && app_after != null && app_after.getState() == State.Alive)
+			Snackbar.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app_after.name), LENGTH_INDEFINITE)
+					.setAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(context, pkg)).show();
 		invalidateOptionsMenu();
 	}};
 
@@ -127,10 +132,8 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
-		final AppViewModel app = mViewModel.getSelection();
 		menu.findItem(R.id.menu_show_all).setChecked(mShowAllApps);
-		menu.findItem(R.id.menu_create_shortcut).setVisible(app != null && app.getState() == State.Alive);
-		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
+//		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
@@ -142,17 +145,6 @@ public class AppListFragment extends Fragment {
 			return true;
 		case R.id.menu_destroy:
 			mIslandManager.destroy();
-			return true;
-		case R.id.menu_create_shortcut:
-			try {
-				final AppViewModel app = mViewModel.getSelection();
-				if (app == null) return true;
-				if (AppLaunchShortcut.createOnLauncher(getActivity(), app.pkg)) {
-					Toast.makeText(getActivity(), "Shortcut created on your launcher", Toast.LENGTH_SHORT).show();
-				} else Toast.makeText(getActivity(), "Failed", Toast.LENGTH_SHORT).show();
-			} catch (final PackageManager.NameNotFoundException e) {
-				Toast.makeText(getActivity(), "App not alive", Toast.LENGTH_SHORT).show();
-			}
 			return true;
 		}
 		return super.onOptionsItemSelected(item);

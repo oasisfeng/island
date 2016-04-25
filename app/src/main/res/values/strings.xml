@@ -15,23 +15,27 @@
     <string name="setup_button">Build the island</string>
     <string name="setup_cleanup_hint">If anything goes wrong during the setup procedure, you can always remove all the data created by Island via \"Settings - Account - Remove work profile\".</string>
 
+    <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_remove_clone">Remove the clone</string>
     <string name="button_disable_clone">Disable the clone</string>
     <string name="button_enable_clone">Enable the clone</string>
 
-    <string name="menu_create_shortcut">Create shortcut</string>
     <string name="menu_show_all_apps">Show all apps</string>
     <string name="menu_remove_clone">Remove this clone</string>
     <string name="menu_destroy_island">Destroy the Island</string>
     <string name="menu_launch_app">Launch app</string>
 
+    <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_reactivate_message">Island was accidentally deactivated, please grant this manual Device Admin request to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island?\n\nYou will LOSE ALL THE DATA IN ISLAND.\n\nApps and data outside Island will NOT be affected.</string>
     <string name="dialog_deactivate_message">Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.</string>
     <string name="dialog_destroy_failure_message">Failed to destroy Island. Please try removing it in system \"Settings - Accounts - Remove work profile\".</string>
+    <string name="dialog_add_shortcut">Add a launch shortcut for %1$s?</string>
     <string name="dialog_button_destroy">Destroy</string>
     <string name="dialog_button_deactivate">Deactivate</string>
 
+    <string name="toast_shortcut_created">Shortcut created on launcher</string>
+    <string name="toast_shortcut_failed">Failed to create the shortcut</string>
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
 
 </resources>

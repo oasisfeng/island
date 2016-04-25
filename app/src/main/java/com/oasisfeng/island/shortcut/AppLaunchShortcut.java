@@ -67,12 +67,16 @@ public class AppLaunchShortcut extends Activity {
 		onNewIntent(getIntent());
 	}
 
-	public static boolean createOnLauncher(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
-		if (! new IslandManager(context).isDeviceOwner())		// The complex flow for managed profile
-			return createOnLauncherInManagedProfile(context, pkg);
-		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
-		broadcastShortcutInstall(context, shortcut_payload);
-		return true;
+	public static boolean createOnLauncher(final Context context, final String pkg) {
+		try {
+			if (! new IslandManager(context).isDeviceOwner())		// The complex flow for managed profile
+				return createOnLauncherInManagedProfile(context, pkg);
+			final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+			broadcastShortcutInstall(context, shortcut_payload);
+			return true;
+		} catch (PackageManager.NameNotFoundException e) {
+			return false;
+		}
 	}
 
 	/** Must be called in managed profile */

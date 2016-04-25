@@ -6,7 +6,6 @@
         tools:context=".MainActivity">
 
     <data>
-        <import type="android.view.View" />
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
     </data>
@@ -36,7 +35,7 @@
             android:layout_margin="@dimen/fab_margin"
             android:clickable="true"
             android:src="@{apps.fabImage}"
-            android:visibility="@{apps.fabImage != 0 ? View.VISIBLE : View.GONE}"
+            android:visible="@{apps.fabImage != 0}"
             android:onClick="@{apps::onFabClick}"
             app:layout_anchor="@id/app_detail"
             app:layout_anchorGravity="top|right|end"

@@ -17,6 +17,7 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -40,6 +41,7 @@ import com.oasisfeng.island.R;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.provisioning.ProfileOwnerSystemProvisioning;
+import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -236,15 +238,30 @@ public class IslandManager implements AppListViewModel.Controller {
 		return info.loadLabel(pm);
 	}
 
+	@Override public void createShortcut(final String pkg) {
+		final ApplicationInfo info = getAppInfo(pkg);
+		boolean need_freeze = false;
+		if (info != null && getAppState(info) == State.Frozen) {
+			defreezeApp(pkg);
+			need_freeze = true;
+		}
+
+		if (AppLaunchShortcut.createOnLauncher(mContext, pkg)) {
+			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
+		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
+
+		if (need_freeze) new Handler().postDelayed(() -> freezeApp(pkg), 500);	// TODO: Elegant dealing
+	}
+
 
 	public void destroy() {
 		if (Process.myUserHandle().hashCode() == 0 && isDeviceOwner()) {
-			new AlertDialog.Builder(mContext).setTitle("WARNING")
+			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 					.setMessage(R.string.dialog_deactivate_message)
 					.setPositiveButton(android.R.string.no, null)
 					.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> deactivateDeviceOwner()).show();
 		} else if (Process.myUserHandle().hashCode() != 0 && isProfileOwner() && isProfileOwnerActive()) {
-			new AlertDialog.Builder(mContext).setTitle("WARNING")
+			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 					.setMessage(R.string.dialog_destroy_message)
 					.setPositiveButton(android.R.string.no, null)
 					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> removeProfileOwner()).show();

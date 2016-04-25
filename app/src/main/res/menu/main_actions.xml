@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools">
     <item android:id="@+id/menu_show_all" android:title="@string/menu_show_all_apps" android:checkable="true" app:showAsAction="never" />
-    <item android:id="@+id/menu_create_shortcut" android:title="@string/menu_create_shortcut" app:showAsAction="never"/>
     <item android:id="@+id/menu_remove" android:title="@string/menu_remove_clone" app:showAsAction="never" android:visible="false" />
     <item android:id="@+id/menu_test" android:title="Test" tools:ignore="HardcodedText" app:showAsAction="never" android:visible="false" />
     <item android:id="@+id/menu_destroy" android:title="@string/menu_destroy_island" app:showAsAction="never" />

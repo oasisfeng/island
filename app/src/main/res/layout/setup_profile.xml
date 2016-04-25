@@ -32,7 +32,7 @@
                 android:layout_marginTop="16dp"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="@android:color/holo_red_light"
-                android:visibility="@{setup.has_other_owner ? View.VISIBLE : View.GONE}"
+                android:visible="@{setup.has_other_owner}"
                 android:text="@{@string/setup_profile_conflict(setup.owner_name)}"
                 tools:text="@string/setup_profile_conflict" />
             <Button

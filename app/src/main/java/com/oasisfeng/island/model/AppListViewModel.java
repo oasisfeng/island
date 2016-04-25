@@ -18,9 +18,9 @@ import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.island.BR;
 import com.oasisfeng.island.R;
-import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
+import com.oasisfeng.island.model.AppViewModel.State;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +43,7 @@ public class AppListViewModel extends BaseObservable {
 		void defreezeApp(String pkg);
 		void enableApp(String pkg);
 		void launchApp(String pkg);
+		void createShortcut(String pkg);
 		void removeClone(String pkg);
 		CharSequence readAppName(String pkg) throws PackageManager.NameNotFoundException;
 	}
@@ -84,17 +85,23 @@ public class AppListViewModel extends BaseObservable {
 		} else setFabAction(FabAction.None);
 	}
 
+	public void onShortcutRequested(final View v) {
+		if (selection == null) return;
+		mController.createShortcut(selection.pkg);
+	}
+
 	public void onRemovalRequested(final View v) {
 		if (selection == null) return;
 		mController.removeClone(selection.pkg);
 	}
 
-	/** This API is not provided in AppViewModel because we may need to update or remove the item in SortedList. */
-	public void updateApp(final String pkg) {
+	/** This API is not provided in AppViewModel because we may need to update or remove the item in SortedList.
+	 *  @return updated (or added) app view-model, null if not included or removed */
+	public @Nullable AppViewModel updateApp(final String pkg) {
 		final ApplicationInfo info = mController.getAppInfo(pkg);
 		if (info == null) {
 			removeApp(pkg);
-			return;
+			return null;
 		}
 		final State state = mController.getAppState(info);
 		final AppViewModel app = getApp(pkg);
@@ -102,9 +109,11 @@ public class AppListViewModel extends BaseObservable {
 			final int index = apps.indexOf(app);
 			setAppState(app, state);
 			apps.updateItemAt(index, app);
+			return app;
 		} else if (include_sys_apps || (info.flags & FLAG_SYSTEM) == 0) try {
-			addApp(pkg, mController.readAppName(pkg), info.flags, state);
+			return addApp(pkg, mController.readAppName(pkg), info.flags, state);
 		} catch (final PackageManager.NameNotFoundException ignored) {}
+		return null;
 	}
 
 	/**
@@ -151,7 +160,7 @@ public class AppListViewModel extends BaseObservable {
 		apps.remove(app);
 	}
 
-	public AppViewModel getApp(final String pkg) {
+	public @Nullable AppViewModel getApp(final String pkg) {
 		return apps_by_pkg.get(pkg);
 	}
 
@@ -231,10 +240,10 @@ public class AppListViewModel extends BaseObservable {
 		mController.launchApp(selection.pkg);
 	}
 
-	public final View.OnClickListener onBottomSheetClick = view -> {
-		BottomSheetBehavior bottom_sheet = BottomSheetBehavior.from(view);
+	public final void onBottomSheetClick(final View view) {
+		final BottomSheetBehavior bottom_sheet = BottomSheetBehavior.from(view);
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
-	};
+	}
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
