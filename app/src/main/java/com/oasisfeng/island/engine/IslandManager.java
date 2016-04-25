@@ -229,6 +229,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	private void showAppSettingActivity(final String pkg) {
 		final LauncherApps launcher_apps = (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		ensureSystemAppEnabled("com.android.settings");
 		launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
 	}
 
