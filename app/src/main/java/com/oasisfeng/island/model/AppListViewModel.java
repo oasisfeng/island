@@ -217,14 +217,14 @@ public class AppListViewModel extends BaseObservable {
 		case Clone: return R.drawable.ic_copy_24dp;
 		case Lock: return R.drawable.ic_lock_24dp;
 		case Unlock: return R.drawable.ic_unlock_24dp;
+		case Enable: return R.drawable.ic_enable_24dp;
 		default: return 0; }
 	}
 
 	@Bindable public @ColorRes int getFabBgColor() {
 		switch (fab_action) {
-		case Clone: return R.color.state_frozen;
 		case Lock: return R.color.state_frozen;
-		case Unlock: return R.color.state_alive;
+		case Clone: case Unlock: case Enable: return R.color.state_alive;
 		default: return 0; }
 	}
 

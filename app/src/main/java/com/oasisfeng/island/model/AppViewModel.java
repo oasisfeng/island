@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.databinding.ObservableSortedList;
@@ -25,11 +26,14 @@ import com.oasisfeng.island.BR;
 public class AppViewModel extends BaseObservable implements ObservableSortedList.Sortable<AppViewModel> {
 
 	public enum State {
-		Alive,
-		Frozen,
-		Disabled,
-		NotCloned,	// Not installed in this user
-		Unknown
+		Alive(1),
+		Frozen(2),
+		Disabled(3),
+		NotCloned(3),	// Not installed in this user
+		Unknown(4);
+
+		State(final int order) { this.order = order; }
+		final int order;
 	}
 
 	public final String pkg;
@@ -94,7 +98,8 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 		return name.toString();
 	}
 
-	private final Ordering<AppViewModel> ORDERING = Ordering.natural().onResultOf(AppViewModel::getState)
+	private final Ordering<AppViewModel> ORDERING = Ordering.natural()
+			.onResultOf((Function<AppViewModel, Comparable>) app -> app.getState().order)
 			.compound(Ordering.natural().onResultOf(AppViewModel::getName));
 
 	private volatile boolean mIconLoading;
