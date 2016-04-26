@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
 				parcel.writeInt(0);
 				final UserHandle owner = UserHandle.CREATOR.createFromParcel(parcel);
 				startAsUser(this, owner);		// Start Island in owner user
+				finish();
 			} finally {
 				parcel.recycle();
 			}
