@@ -1,7 +1,6 @@
 package com.oasisfeng.island.provisioning;
 
-import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
+import com.oasisfeng.island.engine.IslandManager;
 
 /**
  * Simulate the managed provisioning procedure for manually enabled managed profile.
@@ -10,9 +9,9 @@ import android.content.ComponentName;
  */
 public class ProfileOwnerSystemProvisioning {
 
-	public static void start(final DevicePolicyManager dpm, final ComponentName admin) {
+	public static void start(final IslandManager island) {
 		/* DISALLOW_WALLPAPER cannot be changed, we cannot add this restriction. */
 		// Set default cross-profile intent-filters
-		CrossProfileIntentFiltersHelper.setFilters(dpm, admin);
+		CrossProfileIntentFiltersHelper.setFilters(island);
 	}
 }

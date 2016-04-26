@@ -5,7 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
-import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.provisioning.IslandProvisioning;
 
 /**
  * Handles events related to managed profile.
@@ -19,7 +19,7 @@ public class IslandDeviceAdminReceiver extends DeviceAdminReceiver {
      * Note that the managed profile is not fully visible until it is enabled.
      */
     @Override public void onProfileProvisioningComplete(final Context context, final Intent intent) {
-        new IslandManager(context).onProfileProvisioningComplete();
+        new IslandProvisioning(context).onProfileProvisioningComplete();
     }
 
     /**

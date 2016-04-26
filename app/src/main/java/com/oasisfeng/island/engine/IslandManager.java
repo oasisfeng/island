@@ -1,6 +1,5 @@
 package com.oasisfeng.island.engine;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
@@ -8,60 +7,35 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ProviderInfo;
-import android.content.pm.ResolveInfo;
-import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.preference.PreferenceManager;
-import android.provider.CalendarContract;
-import android.provider.CallLog;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.Contacts;
 import android.provider.Settings;
-import android.provider.Telephony;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
-import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
-import com.oasisfeng.island.provisioning.ProfileOwnerSystemProvisioning;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
-import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
-import static android.content.pm.PackageManager.GET_PROVIDERS;
-import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
-import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
-import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 
 /**
  * The engine of Island
@@ -72,61 +46,13 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	public static final int REQUEST_CODE_INSTALL = 0x101;
 
-	/** Provision state: 1 - Managed profile provision is completed, 2 - Island provision is started, 3 - Island provision is completed */
-	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
-	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
-			"android", "com.android.systemui",		// There packages are generally safe to either freeze or not, leave them unfrozen for better compatibility.
-			"com.android.packageinstaller",			// Package installer responsible for ACTION_INSTALL_PACKAGE (AOSP)
-			"com.android.settings",					// For various setting intent activities
-			"com.android.keychain",					// MIUI system will crash without this
-			"com.android.providers.telephony",		// The SMS & MMS and carrier info provider. (SMS & MMS provider is shared across all users)
-			"com.android.providers.contacts",		// The storage of contacts, for Contacts app to work
-			"com.android.providers.downloads",		// For DownloadManager to work
-			"com.android.providers.media",			// For media access
-			"com.android.externalstorage",			// Documents provider - Internal storage
-			"com.android.defconatiner",				// For APK file from DownloadManager to install.
-			"com.android.webview",					// WebView provider (AOSP)
-			"com.android.documentsui",				// Document picker
-			// Google packages
-			"com.google.android.gsf",				// Google services framework
-			"com.google.android.packageinstaller",	// Package installer (Google)
-			"com.google.android.gms",				// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
-			"com.google.android.feedback",			// Used by GMS for crash report.
-			"com.google.android.webview",			// WebView provider (Google)
-			// Enabled system apps with launcher activity by default
-			"com.android.vending",					// Google Play Store to let user install apps directly within
-			"com.android.contacts",					// Contacts
-			"com.android.providers.downloads.ui",	// Downloads
-			// MIUI-specific
-			"com.miui.core"							// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
-	);
-	private static final Collection<Intent> sCriticalActivityIntents = Arrays.asList(
-			new Intent(Intent.ACTION_INSTALL_PACKAGE),				// Usually com.android.packageinstaller, may be altered by ROM.
-			new Intent(Settings.ACTION_SETTINGS),					// Usually com.android.settings
-			new Intent("android.content.pm.action.REQUEST_PERMISSIONS"),	// Hidden PackageManager.ACTION_REQUEST_PERMISSIONS
-																	// Runtime permission UI, may be special system app on some ROMs (e.g. MIUI)
-			new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*"),	// Usually com.android.documentsui, may be file explorer app on some ROMs. (e.g. MIUI)
-			new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("*/*"),
-			new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),	// Contact picker, usually com.android.contacts
-			new Intent(Intent.ACTION_VIEW, Uri.parse("http://g.cn"))// Web browser (required by some apps to open web link)
-	);
-	private static final Collection<String> sCriticalContentAuthorities = Arrays.asList(
-			ContactsContract.AUTHORITY,				// Usually com.android.providers.contacts
-			CalendarContract.AUTHORITY,				// Usually com.android.providers.calendar
-			CallLog.AUTHORITY,						// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
-			Telephony.Carriers.CONTENT_URI.getAuthority(),	// Usually com.android.providers.telephony
-			"com.android.externalstorage.documents",// Usually com.android.externalstorage
-			"downloads",							// Usually com.android.providers.downloads
-			"media"									// Usually com.android.providers.media
-	);
-
 	public IslandManager(final Context context) {
 		mContext = context;
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		mAdminComp = IslandDeviceAdminReceiver.getComponentName(context);
 	}
 
-	public @Nullable ApplicationInfo getAppInfo(String pkg) {
+	public @Nullable ApplicationInfo getAppInfo(final String pkg) {
 		try { @SuppressWarnings("WrongConstant")
 		final ApplicationInfo app_info = mContext.getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
 			return app_info;
@@ -318,118 +244,20 @@ public class IslandManager implements AppListViewModel.Controller {
 		return null;
 	}
 
-	@SuppressLint("CommitPrefEdits") public void onProfileProvisioningComplete() {
-		Log.d(TAG, "onProfileProvisioningComplete");
-		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
-		startProfileOwnerIslandProvisioning();
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
-		MainActivity.startAsUser(mContext, android.os.Process.myUserHandle());
-	}
-
-	@SuppressLint("CommitPrefEdits") public void startProfileOwnerProvisioningIfNeeded() {
-		if (mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName())) return;	// Do nothing for device owner
-		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
-		if (state >= 3) return;		// Already provisioned
-		if (state == 2) {
-			Log.w(TAG, "Last provision attempt failed, no more attempts...");
-			return;		// Last attempt failed again, no more attempts.
-		} else if (state == 1) Log.w(TAG, "Last provision attempt might be interrupted, try provisioning one more time...");
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).commit();	// Avoid further attempts
-
-		if (state == 0)		// Managed profile provision was not performed, the profile may be enabled manually.
-			ProfileOwnerSystemProvisioning.start(mDevicePolicyManager, mAdminComp);	// Simulate the stock managed profile provision
-
-		startProfileOwnerIslandProvisioning();	// Last provision attempt may be interrupted
-
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
-	}
-
-	private void startProfileOwnerIslandProvisioning() {
-		disableNonCriticalSystemApps();
-		enableRequiredSystemApps();		// Enable system apps responsible for required intents. (package name unspecified)
-
-		enableProfile();
-		enableAdditionalForwarding();
-	}
-
-	/** This is generally not necessary on AOSP but will eliminate various problems on custom ROMs */
-	private void disableNonCriticalSystemApps() {
-		final PackageManager pm = mContext.getPackageManager();
-		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
-		// Detect package names for critical intent actions, as an addition to the whitelist of well-known ones.
-		for (final Intent intent : sCriticalActivityIntents) {
-			mDevicePolicyManager.enableSystemApp(mAdminComp, intent);
-			final List<ResolveInfo> activities = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
-			FluentIterable.from(activities).filter(info -> (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) != 0)
-					.transform(info -> info.activityInfo.packageName)
-					.filter(pkg -> { Log.i(TAG, "Critical package for " + intent + ": " + pkg); return true; })
-					.copyInto(critical_sys_pkgs);
-		}
-		// Detect package names for critical content providers, as an addition to the whitelist of well-known ones.
-		for (final String authority : sCriticalContentAuthorities) {
-			final ProviderInfo provider = pm.resolveContentProvider(authority, 0);
-			if (provider == null || (provider.applicationInfo.flags & FLAG_SYSTEM) == 0 || (provider.flags & FLAG_SINGLE_USER) != 0) continue;
-			Log.i(TAG, "Critical package for authority \"" + authority + "\": " + provider.packageName);
-			critical_sys_pkgs.add(provider.packageName);
-		}
-
-		final List<ApplicationInfo> apps = pm.getInstalledApplications(0);
-		final ImmutableList<ApplicationInfo> sys_apps_to_hide = FluentIterable.from(apps)
-				.filter(IslandManager::isSystemApp)
-				.filter(info -> ! critical_sys_pkgs.contains(info.packageName))
-				.toList();
-		for (final ApplicationInfo app : sys_apps_to_hide) {
-			if (hasSingleUserComponent(pm, app.packageName)) {
-				Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
-			} else {
-				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
-				freezeApp(app.packageName);
-			}
-		}
-	}
-
-	private boolean hasSingleUserComponent(final PackageManager pm, final String pkg) {
-		try {
-			final PackageInfo info = pm.getPackageInfo(pkg, GET_SERVICES | GET_PROVIDERS);
-			if (info.services != null) for (final ServiceInfo service : info.services)
-				if ((service.flags & ServiceInfo.FLAG_SINGLE_USER) != 0) return true;
-			if (info.providers != null) for (final ProviderInfo service : info.providers)
-				if ((service.flags & ProviderInfo.FLAG_SINGLE_USER) != 0) return true;
-			return false;
-		} catch (final PackageManager.NameNotFoundException e) {
-			return false;
-		}
-	}
-
-	private static boolean isSystemApp(final ApplicationInfo info) { return (info.flags & FLAG_SYSTEM) != 0; }
-
-	private void enableRequiredSystemApps() {
-
-		mDevicePolicyManager.enableSystemApp(mAdminComp, new Intent(Intent.ACTION_INSTALL_PACKAGE));
-	}
-
-	private void enableProfile() {
+	public void enableProfile() {
 		Log.d(TAG, "Enable profile now.");
 		mDevicePolicyManager.setProfileName(mAdminComp, mContext.getString(R.string.profile_name));
 		// Enable the profile here, launcher will show all apps inside.
 		mDevicePolicyManager.setProfileEnabled(mAdminComp);
 	}
 
-	private void enableAdditionalForwarding() {
-		// For sharing across Island (bidirectional)
-		enableForwarding(new IntentFilter(Intent.ACTION_SEND), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
-		// For web browser
-		final IntentFilter browser = new IntentFilter(Intent.ACTION_VIEW);
-		browser.addCategory(Intent.CATEGORY_BROWSABLE);
-		browser.addDataScheme("http"); browser.addDataScheme("https"); browser.addDataScheme("ftp");
-		enableForwarding(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
-	}
-
 	public IslandManager enableForwarding(final IntentFilter filter, final int flags) {
 		mDevicePolicyManager.addCrossProfileIntentFilter(mAdminComp, filter, flags);
 		return this;
+	}
+
+	public void enableSystemAppForActivity(final Intent intent) {
+		mDevicePolicyManager.enableSystemApp(mAdminComp, intent);
 	}
 
 	private final Context mContext;

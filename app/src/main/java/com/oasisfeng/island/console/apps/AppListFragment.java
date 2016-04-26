@@ -37,6 +37,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
+import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
 import java.util.Collection;
@@ -59,21 +60,22 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mIslandManager = new IslandManager(getActivity());
+		final Activity activity = getActivity();
+		mIslandManager = new IslandManager(activity);
 		mViewModel = new AppListViewModel(mIslandManager);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
-		mIslandManager.startProfileOwnerProvisioningIfNeeded();
+		new IslandProvisioning(activity, mIslandManager).startProfileOwnerProvisioningIfNeeded();
 
 		final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
 		filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
 		filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
 		filter.addDataScheme("package");
-		getActivity().registerReceiver(mPackageEventsObserver, filter);
+		activity.registerReceiver(mPackageEventsObserver, filter);
 
 		final IntentFilter pkgs_filter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
 		pkgs_filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-		getActivity().registerReceiver(mPackagesEventsObserver, pkgs_filter);
+		activity.registerReceiver(mPackagesEventsObserver, pkgs_filter);
 
 		loadAppList(false);
 	}
