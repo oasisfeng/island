@@ -9,7 +9,7 @@
     <string name="state_disabled">Disabled</string>
     <string name="state_not_cloned">Not cloned</string>
 
-    <string name="setup_profile_message">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data outside the sandbox (including call logs, contacts and etc). (SMS as an exception is accessible)\n\nIsolated app can be frozen on demand, to vanish from launcher and completely block its background behaviors.\n\nTo start the sandbox, we need to build the island first.</string>
+    <string name="setup_profile_message">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data outside the sandbox (including call logs, contacts and etc). (SMS as an exception is accessible)\n\nIsolated app can be frozen on demand, with launcher icon vanished and its background behaviors completely blocked.\n\nTo start the sandbox, we need to build the island first.</string>
     <string name="setup_profile_conflict">Android for Work is already set up on your device by \"%1$s\". Due to the limitation of Android system, Island cannot coexist with it. If you proceed, the existent profile WITH ALL ITS DATA WILL BE REMOVED.</string>
     <string name="name_unknown_app">unknown app</string>
     <string name="setup_button">Build the island</string>

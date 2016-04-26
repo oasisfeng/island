@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.provider.CalendarContract;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.util.Log;
@@ -79,9 +80,9 @@ public class SystemAppsManager {
 			CalendarContract.AUTHORITY,				// Usually com.android.providers.calendar
 			CallLog.AUTHORITY,						// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
 			Telephony.Carriers.CONTENT_URI.getAuthority(),	// Usually com.android.providers.telephony
-			"com.android.externalstorage.documents",// Usually com.android.externalstorage
+			MediaStore.AUTHORITY,					// Usually com.android.providers.media
 			"downloads",							// Usually com.android.providers.downloads
-			"media"									// Usually com.android.providers.media
+			"com.android.externalstorage.documents" // Usually com.android.externalstorage
 	);
 
 	public void prepareSystemApps() {
