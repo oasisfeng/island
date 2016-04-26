@@ -76,7 +76,7 @@ public class IslandManager implements AppListViewModel.Controller {
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
 			"android", "com.android.systemui",		// There packages are generally safe to either freeze or not, leave them unfrozen for better compatibility.
-			"com.android.packageinstaller",			// Package installer responsible for ACTION_INSTALL_PACKAGE
+			"com.android.packageinstaller",			// Package installer responsible for ACTION_INSTALL_PACKAGE (AOSP)
 			"com.android.settings",					// For various setting intent activities
 			"com.android.keychain",					// MIUI system will crash without this
 			"com.android.providers.telephony",		// The SMS & MMS and carrier info provider. (SMS & MMS provider is shared across all users)
@@ -85,13 +85,14 @@ public class IslandManager implements AppListViewModel.Controller {
 			"com.android.providers.media",			// For media access
 			"com.android.externalstorage",			// Documents provider - Internal storage
 			"com.android.defconatiner",				// For APK file from DownloadManager to install.
+			"com.android.webview",					// WebView provider (AOSP)
 			"com.android.documentsui",				// Document picker
 			// Google packages
 			"com.google.android.gsf",				// Google services framework
-			"com.google.android.packageinstaller",	// Google's variant of package installer on Nexus devices
+			"com.google.android.packageinstaller",	// Package installer (Google)
 			"com.google.android.gms",				// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
 			"com.google.android.feedback",			// Used by GMS for crash report.
-			"com.google.android.webview",			// Standalone Chromium WebView
+			"com.google.android.webview",			// WebView provider (Google)
 			// Enabled system apps with launcher activity by default
 			"com.android.vending",					// Google Play Store to let user install apps directly within
 			"com.android.contacts",					// Contacts
