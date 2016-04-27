@@ -256,8 +256,13 @@ public class IslandManager implements AppListViewModel.Controller {
 		return this;
 	}
 
-	public void enableSystemAppForActivity(final Intent intent) {
-		mDevicePolicyManager.enableSystemApp(mAdminComp, intent);
+	public int enableSystemAppForActivity(final Intent intent) {
+		try {
+			return mDevicePolicyManager.enableSystemApp(mAdminComp, intent);
+		} catch (final IllegalArgumentException e) {	// This exception may be thrown on Android 5.x (but not 6.0+) if non-system apps also match this intent.
+			Log.w(TAG, "Some system apps may not be enabled for: " + intent);
+			return 0;
+		}
 	}
 
 	private final Context mContext;
