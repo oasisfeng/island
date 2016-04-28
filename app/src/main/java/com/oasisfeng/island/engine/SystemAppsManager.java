@@ -49,14 +49,15 @@ public class SystemAppsManager {
 			"com.android.providers.downloads",		// For DownloadManager to work
 			"com.android.providers.media",			// For media access
 			"com.android.externalstorage",			// Documents provider - Internal storage
-			"com.android.defconatiner",				// For APK file from DownloadManager to install.
+			"com.android.defconatiner",				// For APK file from DownloadManager to install
 			"com.android.webview",					// WebView provider (AOSP)
+			"com.android.vpndialogs",				// Required by VPN service app (e.g. ShadowSocks)
 			"com.android.documentsui",				// Document picker
 			// Google packages
 			"com.google.android.gsf",				// Google services framework
 			"com.google.android.packageinstaller",	// Package installer (Google)
 			"com.google.android.gms",				// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
-			"com.google.android.feedback",			// Used by GMS for crash report.
+			"com.google.android.feedback",			// Used by GMS for crash report
 			"com.google.android.webview",			// WebView provider (Google)
 			// Enabled system apps with launcher activity by default
 			"com.android.vending",					// Google Play Store to let user install apps directly within
