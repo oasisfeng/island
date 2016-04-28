@@ -26,11 +26,13 @@
     <string name="menu_launch_app">Launch app</string>
 
     <string name="dialog_title_warning">WARNING</string>
+    <string name="dialog_clone_install_explanation">Island will now launch the Android installer to \"install\" this app in Island.\n\nAlthough it looks like the regular installation, actually it takes no extra storage space but just activates this app in Island. Thus the \"installation\" will finish instantly.</string>
     <string name="dialog_reactivate_message">Island was accidentally deactivated, please grant this manual Device Admin request to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island?\n\nYou will LOSE ALL THE DATA IN ISLAND.\n\nApps and data outside Island will NOT be affected.</string>
     <string name="dialog_deactivate_message">Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.</string>
     <string name="dialog_destroy_failure_message">Failed to destroy Island. Please try removing it in system \"Settings - Accounts - Remove work profile\".</string>
     <string name="dialog_add_shortcut">Add a launch shortcut for %1$s?</string>
+    <string name="dialog_button_continue">Continue</string>
     <string name="dialog_button_destroy">Destroy</string>
     <string name="dialog_button_deactivate">Deactivate</string>
 

@@ -21,6 +21,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.model.AppListViewModel;
@@ -88,6 +89,12 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void cloneApp(final String pkg) {
+		if (Scopes.app(mContext).mark("cloned-once")) {
+			new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_install_explanation)
+					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
+			return;
+		}
+
 		final PackageManager pm = mContext.getPackageManager();
 		try { @SuppressWarnings("WrongConstant")
 			final ApplicationInfo info = pm.getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
