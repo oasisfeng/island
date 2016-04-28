@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-        tools:context=".MainActivity">
+    tools:context=".MainActivity">
 
     <data>
         <import type="android.view.View" />
@@ -8,10 +8,12 @@
     </data>
 
     <ScrollView
+        android:fillViewport="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <LinearLayout
+            android:gravity="center|top"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -20,36 +22,53 @@
             android:paddingRight="@dimen/activity_horizontal_margin"
             android:paddingTop="@dimen/activity_vertical_margin">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="@string/setup_profile_message" />
+            <ImageView
+                android:layout_marginBottom="15dp"
+                android:layout_gravity="center"
+                android:src="@mipmap/ic_launcher"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:contentDescription="@string/app_name" />
+
 
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="@android:color/holo_red_light"
-                android:visible="@{setup.has_other_owner}"
-                android:text="@{@string/setup_profile_conflict(setup.owner_name)}"
-                tools:text="@string/setup_profile_conflict" />
-            <Button
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="32dp"
-                android:paddingStart="48dp"
-                android:paddingEnd="48dp"
-                android:layout_gravity="center_horizontal"
-                android:id="@+id/set_up_profile"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:text="@string/setup_profile_welcome"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_button" />
+                android:layout_height="wrap_content" />
 
-            <TextView
+
+            <RelativeLayout
+                android:gravity="bottom|center"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_cleanup_hint"/>
+                android:layout_height="match_parent">
+
+                <com.oasisfeng.island.setup.WelcomeScreen
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="90dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                </com.oasisfeng.island.setup.WelcomeScreen>
+
+                <Button
+                    android:layout_alignParentBottom="true"
+                    android:background="@drawable/app_btn_build_island"
+                    android:textColor="@android:color/white"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="20dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_gravity="center_horizontal"
+                    android:id="@+id/set_up_profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_button" />
+
+            </RelativeLayout>
+
+
         </LinearLayout>
 
     </ScrollView>

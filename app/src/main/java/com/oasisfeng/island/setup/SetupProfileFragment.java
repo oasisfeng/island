@@ -11,12 +11,15 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.databinding.SetupProfileBinding;
@@ -61,6 +64,9 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
     }
 
     @Override public void onViewCreated(final View view, final Bundle savedInstanceState) {
+        //In setup page, ActionBar Should be hidden.
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) actionBar.hide();
         view.findViewById(R.id.set_up_profile).setOnClickListener(this);
     }
 
@@ -122,7 +128,7 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
                     new AsyncTask<Void, Void, Void>() {
                         @Override protected Void doInBackground(final Void... params) {
                             try {
-                                Shell.SU.run("setprop persist.sys.no_req_encrypt 1");
+                                Shell.SU.run("setrop persist.sys.no_req_encrypt 1");
                             } catch (final Exception e) {
                                 Log.e(TAG, "Error running root command", e);
                             }
@@ -146,8 +152,8 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 
     private boolean isEncryptionRequired() {
         try {
-            return ! (Boolean) Class.forName("android.os.SystemProperties").getMethod("getBoolean", String.class, boolean.class).invoke(null, "persist.sys.no_req_encrypt", false);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+            return !(Boolean) Hack.into("android.os.SystemProperties").method("getBoolean", String.class, boolean.class).invoke(null, "persist.sys.no_req_encrypt", false);
+        } catch (Hack.HackDeclaration.HackAssertionException | InvocationTargetException e) {
             return true;
         }
     }
