@@ -7,10 +7,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Process;
 import android.os.UserHandle;
@@ -35,7 +37,6 @@ import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
 /**
@@ -89,12 +90,6 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void cloneApp(final String pkg) {
-		if (Scopes.app(mContext).mark("cloned-once")) {
-			new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_install_explanation)
-					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
-			return;
-		}
-
 		final PackageManager pm = mContext.getPackageManager();
 		try { @SuppressWarnings("WrongConstant")
 			final ApplicationInfo info = pm.getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
@@ -104,32 +99,64 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	private void cloneApp(final ApplicationInfo app_info) {
 		final String pkg = app_info.packageName;
-		if ((app_info.flags & FLAG_INSTALLED) != 0) {
-			Log.w(TAG, "Already cloned: " + pkg);
-			return;
-		}
+		if ((app_info.flags & FLAG_INSTALLED) != 0) { Log.e(TAG, "Already cloned: " + pkg); return; }
 
 		// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
-		if ((app_info.flags & (FLAG_SYSTEM | FLAG_UPDATED_SYSTEM_APP)) != 0) {
-			mDevicePolicyManager.enableSystemApp(mAdminComp, pkg);
+		if ((app_info.flags & FLAG_SYSTEM) != 0) {
+			enableSystemApp(pkg);
 			return;
 		}
+		/* For non-system app, we initiate the manual installation process. */
 
-		// For non-system app, we initiate the manual installation process.
-		ensureSystemAppEnabled("com.android.packageinstaller");
-		ensureSystemAppEnabled("com.google.android.packageinstaller");
-		try {
-			mDevicePolicyManager.setSecureSetting(mAdminComp, Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
-		} catch (final SecurityException e) {
-			Log.e(TAG, "Failed to enable " + Settings.Secure.INSTALL_NON_MARKET_APPS + ": " + e);
-		}
 		final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
 				.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, mContext.getPackageName());
+		enableSystemAppForActivity(intent);		// Ensure package installer is enabled.
+		// Blindly clear these restrictions
+		mDevicePolicyManager.clearUserRestriction(mAdminComp, UserManager.DISALLOW_INSTALL_APPS);
+		mDevicePolicyManager.clearUserRestriction(mAdminComp, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
 
-		final Activity activity = Activities.findActivityFrom(mContext);
-		if (activity != null)
-			activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
-		else mContext.startActivity(intent);
+		if (ensureInstallNonMarketAppAllowed()) {		// Launch package installer
+			if (Scopes.app(mContext).mark("clone-via-install-explained")) {
+				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_install_explanation)
+						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(app_info)).show();
+				return;
+			}
+			final Activity activity = Activities.findActivityFrom(mContext);
+			if (activity == null) mContext.startActivity(intent);
+			else activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
+		} else {										// Launch market app (preferable Google Play Store)
+			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg));
+			enableSystemAppForActivity(market_intent);
+			final ActivityInfo market_info = market_intent.resolveActivityInfo(mContext.getPackageManager(), 0);
+			if ((market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
+				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_google_play_explanation)
+						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
+				return;		// TODO: Analytics
+			} else if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
+				if (Scopes.app(mContext).mark("clone-via-google-play-explained")) {
+					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_google_play_explanation)
+							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
+					return;
+				}
+				enableSystemApp(SystemAppsManager.PACKAGE_GOOGLE_PLAY_SERVICES);	// Special dependency
+			} else {
+				if (Scopes.app(mContext).mark("clone-via-builtin-market-explained")) {
+					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_builtin_market_explanation)
+							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
+					return;
+				}
+			}
+			mContext.startActivity(market_intent);
+		}
+	}
+
+	private boolean ensureInstallNonMarketAppAllowed() {
+		if (Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0) return true;
+		// We cannot directly enable this secure setting on Android 5.0.x.
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return false;
+
+		mDevicePolicyManager.setSecureSetting(mAdminComp, Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
+		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
 	private void ensureSystemAppEnabled(final String pkg) {
@@ -263,12 +290,22 @@ public class IslandManager implements AppListViewModel.Controller {
 		return this;
 	}
 
-	public int enableSystemAppForActivity(final Intent intent) {
+	public void enableSystemAppForActivity(final Intent intent) {
 		try {
-			return mDevicePolicyManager.enableSystemApp(mAdminComp, intent);
-		} catch (final IllegalArgumentException e) {	// This exception may be thrown on Android 5.x (but not 6.0+) if non-system apps also match this intent.
-			Log.w(TAG, "Some system apps may not be enabled for: " + intent);
-			return 0;
+			final int result = mDevicePolicyManager.enableSystemApp(mAdminComp, intent);
+			if (result > 0) Log.d(TAG, result + " system apps enabled for: " + intent);
+		} catch (final IllegalArgumentException e) {
+			// This exception may be thrown on Android 5.x (but not 6.0+) if non-system apps also match this intent.
+			// System apps should have been enabled before this exception is thrown, so we just ignore it.
+			Log.w(TAG, "System apps may not be enabled for: " + intent);
+		}
+	}
+
+	private void enableSystemApp(final String pkg) {
+		try {
+			mDevicePolicyManager.enableSystemApp(mAdminComp, pkg);
+		} catch (final IllegalArgumentException e) {
+			Log.e(TAG, "Failed to enable: " + pkg, e);
 		}
 	}
 

@@ -27,7 +27,10 @@
     <string name="menu_launch_app">Launch app</string>
 
     <string name="dialog_title_warning">WARNING</string>
-    <string name="dialog_clone_install_explanation">Island will now launch the Android installer to \"install\" this app in Island.\n\nAlthough it looks like the regular installation, actually it takes no extra storage space but just activates this app in Island. Thus the \"installation\" will finish instantly.</string>
+    <string name="dialog_clone_via_install_explanation">Island will now launch the Android installer to \"install\" this app in Island.\n\nAlthough it looks like the regular installation confirmation, actually it takes no extra storage space but just activates this app in Island. Thus the \"installation\" will finish instantly.</string>
+    <string name="dialog_clone_via_google_play_explanation">Island will now launch Google Play Store to clone this app, please then click the \"Install\" button there.\n\nAlthough it will look like the regular installation, actually it will not download the app again and takes no extra storage space but just activates this app in Island. Thus the \"installation\" will finish instantly.</string>
+    <string name="dialog_clone_via_builtin_market_explanation">Island will now launch the built-in app store on your device to clone this app, please follow the regular installation procedure.\n\nATTENTION: The built-in app store on your device may or may not support Android for Work properly. In case it fails to finish the installation, please refer to the FAQ for solutions.</string>
+    <string name="dialog_clone_incapable_explanation">Sorry, Island cannot clone apps without a proper built-in app market on your device (preferable Google Play Store) until Android 5.1. Please refer to the FAQ for solutions.</string>
     <string name="dialog_reactivate_message">Island was accidentally deactivated, please grant this manual Device Admin request to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island?\n\nYou will LOSE ALL THE DATA IN ISLAND.\n\nApps and data outside Island will NOT be affected.</string>
     <string name="dialog_deactivate_message">Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.</string>

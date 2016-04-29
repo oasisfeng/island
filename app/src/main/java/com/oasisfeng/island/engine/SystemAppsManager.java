@@ -39,6 +39,9 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
  */
 public class SystemAppsManager {
 
+	public static final String PACKAGE_GOOGLE_PLAY_SERVICES = "com.google.android.gms";
+	public static final String PACKAGE_GOOGLE_PLAY_STORE = "com.android.vending";
+
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
 			"android", "com.android.systemui",		// There packages are generally safe to either freeze or not, leave them unfrozen for better compatibility.
 			"com.android.packageinstaller",			// Package installer responsible for ACTION_INSTALL_PACKAGE (AOSP)
@@ -56,11 +59,11 @@ public class SystemAppsManager {
 			// Google packages
 			"com.google.android.gsf",				// Google services framework
 			"com.google.android.packageinstaller",	// Package installer (Google)
-			"com.google.android.gms",				// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
+			PACKAGE_GOOGLE_PLAY_SERVICES,			// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
 			"com.google.android.feedback",			// Used by GMS for crash report
 			"com.google.android.webview",			// WebView provider (Google)
 			// Enabled system apps with launcher activity by default
-			"com.android.vending",					// Google Play Store to let user install apps directly within
+			PACKAGE_GOOGLE_PLAY_STORE,				// Google Play Store to let user install apps directly within
 			"com.android.contacts",					// Contacts
 			"com.android.providers.downloads.ui",	// Downloads
 			// MIUI-specific
@@ -95,7 +98,7 @@ public class SystemAppsManager {
 	private void disableNonCriticalSystemApps() {
 		final PackageManager pm = mContext.getPackageManager();
 		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
-		// Detect package names for critical intent actions, as an addition to the whitelist of well-known ones.
+		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
 		for (final Intent intent : sCriticalActivityIntents) {
 			mIslandManager.enableSystemAppForActivity(intent);
 			final List<ResolveInfo> activities = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
@@ -104,7 +107,7 @@ public class SystemAppsManager {
 					.filter(pkg -> { Log.i(TAG, "Critical package for " + intent + ": " + pkg); return true; })
 					.copyInto(critical_sys_pkgs);
 		}
-		// Detect package names for critical content providers, as an addition to the whitelist of well-known ones.
+		// Detect package names for critical content providers, as an addition to the white-list of well-known ones.
 		for (final String authority : sCriticalContentAuthorities) {
 			final ProviderInfo provider = pm.resolveContentProvider(authority, 0);
 			if (provider == null || (provider.applicationInfo.flags & FLAG_SYSTEM) == 0 || (provider.flags & FLAG_SINGLE_USER) != 0) continue;
