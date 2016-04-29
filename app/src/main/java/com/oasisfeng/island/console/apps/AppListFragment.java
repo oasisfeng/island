@@ -27,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -34,6 +35,7 @@ import com.oasisfeng.android.ui.AppLabelCache;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
@@ -56,7 +58,7 @@ public class AppListFragment extends Fragment {
 
 	private static final String KStateKeyRecyclerView = "apps.recycler.layout";
 	/** System packages shown to user always even if no launcher activities */
-	private static final Collection<String> sVisibleSysPackages = Collections.singletonList("com.google.android.gms");
+	private static final Collection<String> sAlwaysVisibleSysPkgs = Collections.singletonList("com.google.android.gms");
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -192,10 +194,13 @@ public class AppListFragment extends Fragment {
 		final String this_pkg = activity.getPackageName();
 		//noinspection WrongConstant
 		final List<ApplicationInfo> installed_apps = activity.getPackageManager().getInstalledApplications(GET_UNINSTALLED_PACKAGES);
+		final SystemAppsManager system_apps = new SystemAppsManager(activity, mIslandManager);
 		final ImmutableList<ApplicationInfo> apps = FluentIterable.from(installed_apps)
 				// TODO: Also include system apps with running services (even if no launcher activities)
-				.filter(app -> (app.flags & FLAG_SYSTEM) == 0 ? ! this_pkg.equals(app.packageName)		// Exclude Island
-						: (all || (sVisibleSysPackages.contains(app.packageName) || hasActivities(launcher, app.packageName, this_user))))
+				.filter(app -> ! this_pkg.equals(app.packageName))		// Exclude Island
+				.filter(all ? Predicates.alwaysTrue() : app ->			// Filter for apps shown by default
+						(app.flags & FLAG_SYSTEM) == 0 || sAlwaysVisibleSysPkgs.contains(app.packageName)
+								|| (! system_apps.isCritical(app.packageName) && isLaunchable(launcher, app, this_user)))
 				// Cloned apps first to optimize the label and icon loading experience.
 				.toSortedList(Ordering.explicit(true, false).onResultOf(info -> (info.flags & FLAG_INSTALLED) != 0));
 
@@ -205,9 +210,10 @@ public class AppListFragment extends Fragment {
 		return app_vm_by_pkg;
 	}
 
-	private boolean hasActivities(final LauncherApps launcher, final String pkg, final UserHandle user) {
-		return ! launcher.getActivityList(pkg, user).isEmpty()
-				|| (! user.equals(OWNER) && ! launcher.getActivityList(pkg, OWNER).isEmpty());
+	private boolean isLaunchable(final LauncherApps launcher, final ApplicationInfo app, final UserHandle user) {
+		final String pkg = app.packageName;
+		return user.equals(OWNER) || mIslandManager.getAppState(app) == State.Alive ? ! launcher.getActivityList(pkg, user).isEmpty()
+				: ! launcher.getActivityList(pkg, OWNER).isEmpty();		// Detect launcher activity in primary user if not alive
 	}
 
 	private void fillAppViewModels(final Map<String/* pkg */, ApplicationInfo> app_vms) {
