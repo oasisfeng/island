@@ -67,12 +67,29 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
         //In setup page, ActionBar Should be hidden.
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) actionBar.hide();
-        view.findViewById(R.id.set_up_profile).setOnClickListener(this);
+        view.findViewById(R.id.btn_setup_profile).setOnClickListener(this);
+        View iconView = view.findViewById(R.id.img_setup_icon);
+        View setupView = view.findViewById(R.id.layout_setup_content);
+        setupView.setAlpha(0f);
+        setupView.setScaleX(0);
+        setupView.setScaleY(0);
+        iconView.setScaleX(0.8f);
+        iconView.setScaleY(0.8f);
+        iconView.animate().setStartDelay(300L).scaleX(1.1f).scaleY(1.1f)
+                .withEndAction(()->
+                        iconView.animate().scaleX(1f).scaleY(1f).withEndAction(()->
+                                setupView.animate()
+                                .scaleX(1).scaleY(1)
+                                .alpha(1)
+                                .start()))
+                .start();
+
     }
+
 
     @Override public void onClick(final View view) {
         switch (view.getId()) {
-            case R.id.set_up_profile: {
+            case R.id.btn_setup_profile: {
 //                provisionDeviceOwner();
                 if (! isDeviceEncrypted(getActivity()) && isEncryptionRequired())
                     provisionManagedProfileRequiringEncryption();
@@ -128,7 +145,7 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
                     new AsyncTask<Void, Void, Void>() {
                         @Override protected Void doInBackground(final Void... params) {
                             try {
-                                Shell.SU.run("setrop persist.sys.no_req_encrypt 1");
+                                Shell.SU.run("setprop persist.sys.no_req_encrypt 1");
                             } catch (final Exception e) {
                                 Log.e(TAG, "Error running root command", e);
                             }
