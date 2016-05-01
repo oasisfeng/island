@@ -17,6 +17,7 @@
     <string name="setup_button">Create Environment</string>
     <string name="setup_cleanup_hint">If anything goes wrong during the setup procedure, you can always remove all the data created by Island via \"Settings - Account - Remove work profile\".</string>
 
+    <string name="field_app_id">APP ID: %1$s</string>
     <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_remove_clone">Remove the clone</string>
     <string name="button_disable_clone">Disable the clone</string>

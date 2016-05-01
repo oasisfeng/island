@@ -60,9 +60,8 @@
             android:paddingEnd="@dimen/margin_medium"
             android:paddingTop="@dimen/margin_tiny"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:visible="@{BuildConfig.DEBUG}"
-            android:text="@{apps.selection.pkg}"
-            tools:text="Frozen" />
+            android:text="@{@string/field_app_id(apps.selection.pkg)}"
+            tools:text="APP ID: com.oasisfeng.island" />
 
         <Button
             android:layout_width="wrap_content"
