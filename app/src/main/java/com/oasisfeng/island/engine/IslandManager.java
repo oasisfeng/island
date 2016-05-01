@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -22,6 +23,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.common.base.Supplier;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
@@ -52,6 +54,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		mContext = context;
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		mAdminComp = IslandDeviceAdminReceiver.getComponentName(context);
+		mLauncherApps = () -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 	}
 
 	public @Nullable ApplicationInfo getAppInfo(final String pkg) {
@@ -189,15 +192,18 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	private void showAppSettingActivity(final String pkg) {
-		final LauncherApps launcher_apps = (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		ensureSystemAppEnabled("com.android.settings");
-		launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
+		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
 	}
 
 	@Override public CharSequence readAppName(final String pkg) throws PackageManager.NameNotFoundException {
 		final PackageManager pm = mContext.getPackageManager();
 		@SuppressWarnings("WrongConstant") final ApplicationInfo info = pm.getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
 		return info.loadLabel(pm);
+	}
+
+	@Override public boolean isCloneExclusive(final String pkg) {
+		return ! mLauncherApps.get().isPackageEnabled(pkg, OWNER);
 	}
 
 	@Override public void createShortcut(final String pkg) {
@@ -309,9 +315,29 @@ public class IslandManager implements AppListViewModel.Controller {
 		}
 	}
 
+	public boolean isLaunchable(final ApplicationInfo app) {
+		final String pkg = app.packageName;
+		final LauncherApps launcher = mLauncherApps.get();
+		return mCurrentUser.equals(OWNER) || getAppState(app) == State.Alive ? ! launcher.getActivityList(pkg, mCurrentUser).isEmpty()
+				: ! launcher.getActivityList(pkg, OWNER).isEmpty();		// Detect launcher activity in primary user if not alive
+	}
+
 	private final Context mContext;
 	private final DevicePolicyManager mDevicePolicyManager;
 	private final ComponentName mAdminComp;
+	private final Supplier<LauncherApps> mLauncherApps;
+	private static final UserHandle mCurrentUser = Process.myUserHandle();
 
+	private static final UserHandle OWNER;
+	static {
+		final Parcel p = Parcel.obtain();
+		try {
+			p.writeInt(0);
+			p.setDataPosition(0);
+			OWNER = new UserHandle(p);
+		} finally {
+			p.recycle();
+		}
+	}
 	private static final String TAG = IslandManager.class.getSimpleName();
 }

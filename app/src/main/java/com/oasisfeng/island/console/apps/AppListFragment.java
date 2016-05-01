@@ -7,15 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherApps;
 import android.databinding.Observable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Process;
-import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -189,8 +185,6 @@ public class AppListFragment extends Fragment {
 	private Map<String, ApplicationInfo> populateApps(final boolean all) {
 		final Activity activity = getActivity();
 
-		final UserHandle this_user = Process.myUserHandle();
-		final LauncherApps launcher = (LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		final String this_pkg = activity.getPackageName();
 		//noinspection WrongConstant
 		final List<ApplicationInfo> installed_apps = activity.getPackageManager().getInstalledApplications(GET_UNINSTALLED_PACKAGES);
@@ -200,7 +194,7 @@ public class AppListFragment extends Fragment {
 				.filter(app -> ! this_pkg.equals(app.packageName))		// Exclude Island
 				.filter(all ? Predicates.alwaysTrue() : app ->			// Filter for apps shown by default
 						(app.flags & FLAG_SYSTEM) == 0 || sAlwaysVisibleSysPkgs.contains(app.packageName)
-								|| (! system_apps.isCritical(app.packageName) && isLaunchable(launcher, app, this_user)))
+								|| (! system_apps.isCritical(app.packageName) && mIslandManager.isLaunchable(app)))
 				// Cloned apps first to optimize the label and icon loading experience.
 				.toSortedList(Ordering.explicit(true, false).onResultOf(info -> (info.flags & FLAG_INSTALLED) != 0));
 
@@ -208,12 +202,6 @@ public class AppListFragment extends Fragment {
 		for (final ApplicationInfo app : apps)
 			app_vm_by_pkg.put(app.packageName, app);
 		return app_vm_by_pkg;
-	}
-
-	private boolean isLaunchable(final LauncherApps launcher, final ApplicationInfo app, final UserHandle user) {
-		final String pkg = app.packageName;
-		return user.equals(OWNER) || mIslandManager.getAppState(app) == State.Alive ? ! launcher.getActivityList(pkg, user).isEmpty()
-				: ! launcher.getActivityList(pkg, OWNER).isEmpty();		// Detect launcher activity in primary user if not alive
 	}
 
 	private void fillAppViewModels(final Map<String/* pkg */, ApplicationInfo> app_vms) {
@@ -252,16 +240,5 @@ public class AppListFragment extends Fragment {
 	private AppListBinding mBinding;
 	private boolean mShowAllApps;
 
-	private static final UserHandle OWNER;
-	static {
-		final Parcel p = Parcel.obtain();
-		try {
-			p.writeInt(0);
-			p.setDataPosition(0);
-			OWNER = new UserHandle(p);
-		} finally {
-			p.recycle();
-		}
-	}
 	private static final String TAG = "AppListFragment";
 }
