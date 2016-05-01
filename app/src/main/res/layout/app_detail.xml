@@ -49,7 +49,7 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null}"
+            android:text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.exclusive ? @string/status_exclusive : &quot;&quot;)}"
             tools:text="Frozen" />
 
         <TextView

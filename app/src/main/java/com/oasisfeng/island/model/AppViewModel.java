@@ -28,7 +28,7 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 	public enum State {
 		Alive(1),
 		Frozen(2),
-		Disabled(3),
+		Disabled(3),	// System app only
 		NotCloned(3),	// Not installed in this user
 		Unknown(4);
 
@@ -39,8 +39,9 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 	public final String pkg;
 	public final CharSequence name;
 	public final ObservableField<Drawable> icon = new ObservableField<>();
-	public final int flags;
+	public final int flags;		// From ApplicationInfo.flags
 	public transient final ObservableBoolean selected = new ObservableBoolean(false);
+	public transient final ObservableBoolean exclusive = new ObservableBoolean();	// Only installed & enabled in Island (uninstalled or disabled in owner user)
 	public final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO
 
 	@Bindable public State getState() { return state; }
@@ -76,10 +77,11 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 		if (icon.get() == null) icon.set(activity.getPackageManager().getDefaultActivityIcon());
 	}
 
-	public AppViewModel(final String pkg, final CharSequence name, final int flags) {
+	public AppViewModel(final String pkg, final CharSequence name, final int flags, final boolean exclusive) {
 		this.pkg = pkg;
 		this.name = name;
 		this.flags = flags;
+		this.exclusive.set(exclusive);
 	}
 
 	@Override public boolean isSameAs(final AppViewModel another) {
@@ -94,13 +96,13 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 		return ORDERING.compare(this, another);
 	}
 
-	private String getName() {
-		return name.toString();
-	}
+	private String getName() { return name.toString(); }
+	private boolean isExclusive() { return exclusive.get(); }
 
 	private final Ordering<AppViewModel> ORDERING = Ordering.natural()
-			.onResultOf((Function<AppViewModel, Comparable>) app -> app.getState().order)
-			.compound(Ordering.natural().onResultOf(AppViewModel::getName));
+			.onResultOf((Function<AppViewModel, Comparable>) app -> app.getState().order)	// Order by state
+			.compound(Ordering.natural().reverse().onResultOf(AppViewModel::isExclusive))	// Exclusive clones first
+			.compound(Ordering.natural().onResultOf(AppViewModel::getName));				// Order by name
 
 	private volatile boolean mIconLoading;
 

@@ -8,6 +8,7 @@
     <string name="state_frozen">Frozen</string>
     <string name="state_disabled">Disabled</string>
     <string name="state_not_cloned">Not cloned</string>
+    <string name="status_exclusive">(Exclusive Clone)</string>
 
     <string name="setup_profile_welcome">Welcome to Island</string>
     <string name="setup_profile_message">We need to open the profile setup page for Island to  create Environment.</string>

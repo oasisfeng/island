@@ -46,6 +46,7 @@ public class AppListViewModel extends BaseObservable {
 		void createShortcut(String pkg);
 		void removeClone(String pkg);
 		CharSequence readAppName(String pkg) throws PackageManager.NameNotFoundException;
+		boolean isCloneExclusive(String pkg);
 	}
 
 	enum FabAction { None, Clone, Lock, Unlock, Enable }
@@ -146,7 +147,7 @@ public class AppListViewModel extends BaseObservable {
 		if (pkg == null) throw new IllegalArgumentException("pkg is null");
 		final AppViewModel existent = apps_by_pkg.get(pkg);
 		if (existent != null) return existent;
-		final AppViewModel app = new AppViewModel(pkg, name, flag);
+		final AppViewModel app = new AppViewModel(pkg, name, flag, mController.isCloneExclusive(pkg));
 		setAppState(app, state);
 		apps_by_pkg.put(pkg, app);
 		apps.add(app);
