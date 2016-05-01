@@ -24,7 +24,7 @@
         android:elevation="@dimen/elevation_card_raised"
         app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
         app:behavior_hideable="true"
-        app:behavior_peekHeight="64dp"
+        app:behavior_peekHeight="72dp"
         bind:behavior_state="@{apps.selection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
         bind:behavior_bottomSheetCallback="@{apps.bottom_sheet_callback}"
         android:onClick="@{apps::onBottomSheetClick}">
@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
-            android:paddingTop="@dimen/margin_tiny"
+            android:paddingTop="@dimen/margin_small"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@{@string/field_app_id(apps.selection.pkg)}"
             tools:text="APP ID: com.oasisfeng.island" />
