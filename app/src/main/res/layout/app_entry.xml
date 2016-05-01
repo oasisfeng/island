@@ -22,8 +22,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingTop="2dp" comment:x1="Carefully adjusted padding for visually better elevation shadow"
-            android:paddingStart="24dp" comment:x2="Actual start/end padding should minus 8dp (the negative parent padding)"
-            android:paddingEnd="24dp"
+            android:paddingStart="32dp" comment:x2="Actual start/end padding should minus 16dp (the negative parent padding)"
+            android:paddingEnd="32dp"
             android:background="?android:attr/selectableItemBackground"
 
             comment:x3="The 'pop up' effect"
