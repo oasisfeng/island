@@ -68,19 +68,20 @@ public class AppLaunchShortcut extends Activity {
 	}
 
 	public static boolean createOnLauncher(final Context context, final String pkg) {
+		final IslandManager island = new IslandManager(context);
 		try {
-			if (! new IslandManager(context).isDeviceOwner())		// The complex flow for managed profile
-				return createOnLauncherInManagedProfile(context, pkg);
+			if (! island.isDeviceOwner())		// The complex flow for managed profile
+				return createOnLauncherInManagedProfile(context, island, pkg);
 			final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
 			broadcastShortcutInstall(context, shortcut_payload);
 			return true;
-		} catch (PackageManager.NameNotFoundException e) {
+		} catch (final PackageManager.NameNotFoundException e) {
 			return false;
 		}
 	}
 
 	/** Must be called in managed profile */
-	private static boolean createOnLauncherInManagedProfile(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
+	private static boolean createOnLauncherInManagedProfile(final Context context, final IslandManager island, final String pkg) throws PackageManager.NameNotFoundException {
 		// Make sure required forwarding rules are ready
 		final IntentFilter installer_filter = new IntentFilter(ACTION_INSTALL_SHORTCUT);
 		installer_filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -89,7 +90,7 @@ public class AppLaunchShortcut extends Activity {
 		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
 		launchpad_filter.addCategory(Intent.CATEGORY_LAUNCHER);
 		launchpad_filter.addCategory(Intent.CATEGORY_INFO);
-		new IslandManager(context).enableForwarding(installer_filter, FLAG_PARENT_CAN_ACCESS_MANAGED)
+		island.enableForwarding(installer_filter, FLAG_PARENT_CAN_ACCESS_MANAGED)
 				.enableForwarding(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Disable installer in managed profile to make sure only the one in owner user receives this intent
@@ -177,7 +178,7 @@ public class AppLaunchShortcut extends Activity {
 			Toast.makeText(this, R.string.toast_shortcut_invalid, Toast.LENGTH_LONG).show();
 	}
 
-	public static Bitmap drawableToBitmap(final Drawable d) {
+	private static Bitmap drawableToBitmap(final Drawable d) {
 		if (d instanceof BitmapDrawable)
 			return ((BitmapDrawable) d).getBitmap();
 		if (d instanceof ColorDrawable) //TODO: working to support color drawable
