@@ -1,84 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".MainActivity">
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:comment="http://schemas.android.com/tools"
+        tools:context=".MainActivity">
 
     <data>
-
         <import type="android.view.View" />
-
-        <variable
-            name="setup"
-            type="com.oasisfeng.island.setup.SetupViewModel" />
+        <variable name="setup" type="com.oasisfeng.island.setup.SetupViewModel" />
     </data>
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:orientation="vertical" >
 
-        <LinearLayout
+        <TextView android:layout_width="match_parent"
+                  android:layout_height="@dimen/setup_header_height"
+                  android:paddingTop="@dimen/margin_medium"
+                  android:paddingBottom="@dimen/margin_medium"
+                  android:paddingLeft="@dimen/activity_horizontal_margin"
+                  android:paddingRight="@dimen/activity_horizontal_margin"
+                  android:gravity="bottom"
+                  android:maxLines="1"
+                  style="@android:style/TextAppearance.Material.Title"
+                  android:background="@drawable/setup_header" comment:x1="AOSP managed provisioning header color: #FF5722"
+                  android:textColor="@android:color/white"
+                  android:textSize="24sp"
+                  android:text="@string/setup_profile_welcome" />
+
+        <ScrollView android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:fillViewport="true">
+
+            <TextView android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:paddingTop="@dimen/activity_vertical_margin"
+                      android:paddingBottom="@dimen/activity_vertical_margin"
+                      android:paddingLeft="@dimen/activity_horizontal_margin"
+                      android:paddingRight="@dimen/activity_horizontal_margin"
+                      android:text="@string/setup_profile_message"
+                      style="@android:style/TextAppearance.Material.Medium"
+                      android:textSize="18sp" />
+
+        </ScrollView>
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="center|top"
-            android:orientation="vertical"
-            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:paddingTop="@dimen/margin_small"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
-            android:paddingTop="@dimen/activity_vertical_margin">
+            style="@android:style/TextAppearance.Material.Body2"
+            android:textColor="@android:color/holo_red_light"
+            android:visible="@{setup.has_other_owner}"
+            android:text="@{@string/setup_profile_conflict(setup.owner_name)}"
+            tools:text="@string/setup_profile_conflict" />
 
-            <ImageView
-                android:id="@+id/img_setup_icon"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:layout_gravity="center"
-                android:layout_marginBottom="30dp"
-                android:layout_marginTop="50dp"
-                android:contentDescription="@string/app_name"
-                android:src="@mipmap/ic_launcher" />
-
-
-            <LinearLayout
-                android:id="@+id/layout_setup_content"
-                android:orientation="vertical"
-                android:gravity="top|center"
+        <Button android:id="@+id/btn_setup_profile"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_small"
+                android:layout_marginBottom="@dimen/margin_small"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_gravity="center"
+                android:background="@color/primary"
+                android:text="@string/setup_button"
+                android:textColor="@android:color/white" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_profile_welcome"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="40dp"
-                    android:gravity="center"
-                    android:padding="10dp"
-                    android:text="@string/setup_profile_message"
-                    android:textSize="18sp" />
-
-                <Button
-                    android:id="@+id/btn_setup_profile"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="20dp"
-                    android:layout_marginEnd="20dp"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="40dp"
-                    android:background="@drawable/app_btn_build_island"
-                    android:text="@string/setup_button"
-                    android:textColor="@android:color/white" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </ScrollView>
+    </LinearLayout>
 
 </layout>

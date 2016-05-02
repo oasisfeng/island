@@ -9,14 +9,18 @@
     <dimen name="elevation_card_resting">2dp</dimen>
     <dimen name="elevation_card_pop_up">4dp</dimen>
     <dimen name="elevation_card_raised">8dp</dimen>
+
     <!-- Semantic definitions -->
     <dimen name="horizontal_page_margin">@dimen/margin_medium</dimen>
     <dimen name="vertical_page_margin">@dimen/margin_medium</dimen>
     <dimen name="activity_horizontal_margin">@dimen/horizontal_page_margin</dimen>
     <dimen name="activity_vertical_margin">@dimen/vertical_page_margin</dimen>
+
+    <dimen name="setup_header_height">234dp</dimen>
+
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="fab_elevation">12dp</dimen>
     <dimen name="fab_elevation_pressed">8dp</dimen>
-    <!-- Default screen margins, per the Android Design guidelines. -->
 
+    <!-- Default screen margins, per the Android Design guidelines. -->
 </resources>
