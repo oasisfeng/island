@@ -123,7 +123,7 @@ public class AppLaunchShortcut extends Activity {
 		final Bundle payload = new Bundle();
 		payload.putParcelable(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
 		final ActivityInfo activity = pm.getActivityInfo(target.getComponent(), 0);
-		payload.putCharSequence(Intent.EXTRA_SHORTCUT_NAME, activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
+		payload.putCharSequence(Intent.EXTRA_SHORTCUT_NAME, "\uD83C\uDF00" + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
 		final Bitmap icon_bitmap = drawableToBitmap(pm.getActivityIcon(target.getComponent()));
 		if (icon_bitmap != null) payload.putParcelable(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
 		else {
