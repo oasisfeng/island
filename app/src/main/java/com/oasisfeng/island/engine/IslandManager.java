@@ -23,7 +23,10 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
@@ -35,6 +38,7 @@ import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
@@ -48,6 +52,7 @@ import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
  */
 public class IslandManager implements AppListViewModel.Controller {
 
+	private static final int MAX_DESTROYING_APPS_LIST = 8;
 	public static final int REQUEST_CODE_INSTALL = 0x101;
 
 	public IslandManager(final Context context) {
@@ -191,6 +196,11 @@ public class IslandManager implements AppListViewModel.Controller {
 		mContext.startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
 	}
 
+	@Override public void installForOwner(final String pkg) {
+		enableForwarding(ForwardInstaller.getIntentFilter(), FLAG_PARENT_CAN_ACCESS_MANAGED);
+		mContext.startActivity(ForwardInstaller.makeIntent(pkg));
+	}
+
 	private void showAppSettingActivity(final String pkg) {
 		ensureSystemAppEnabled("com.android.settings");
 		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
@@ -222,7 +232,7 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 
-	public void destroy() {
+	public void destroy(final ImmutableList<CharSequence> exclusive_clones) {
 		if (Process.myUserHandle().hashCode() == 0 && isDeviceOwner()) {
 			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 					.setMessage(R.string.dialog_deactivate_message)
@@ -232,8 +242,15 @@ public class IslandManager implements AppListViewModel.Controller {
 			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 					.setMessage(R.string.dialog_destroy_message)
 					.setPositiveButton(android.R.string.no, null)
-					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> removeProfileOwner()).show();
-		} else new AlertDialog.Builder(mContext).setMessage(R.string.dialog_destroy_failure_message)
+					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> {
+						final String names = Joiner.on('\n').skipNulls().join(FluentIterable.from(exclusive_clones).limit(MAX_DESTROYING_APPS_LIST));
+						final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
+						new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
+								.setMessage(mContext.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
+								.setNeutralButton(R.string.dialog_button_destroy, (dd, ww) -> removeProfileOwner())
+								.setPositiveButton(android.R.string.no, null).show();
+					}).show();
+		} else new AlertDialog.Builder(mContext).setMessage(R.string.dialog_cannot_destroy_message)
 					.setNegativeButton(android.R.string.ok, null).show();
 	}
 

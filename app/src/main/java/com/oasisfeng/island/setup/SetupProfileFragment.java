@@ -129,7 +129,7 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 	}
 
 	private void provisionManagedProfileRequiringEncryption() {
-		new AlertDialog.Builder(getActivity()).setMessage("WARNING: Device encryption is required on your device to create the island, as a restriction enforced by Android system.\n\nFOR SUPER USER: This requirement can be avoided if root privilege is granted. Click \"NO ENC (ROOT)\" to proceed.")
+		new AlertDialog.Builder(getActivity()).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_encryption_required)
 				.setNegativeButton("Continue", (dialog, which) -> {
 					provisionManagedProfile();
 				}).setNeutralButton("No Enc (Root)", (dialog, which) -> {

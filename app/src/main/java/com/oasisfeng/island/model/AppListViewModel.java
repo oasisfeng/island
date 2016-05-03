@@ -14,6 +14,8 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.view.View;
 
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.island.BR;
@@ -45,6 +47,7 @@ public class AppListViewModel extends BaseObservable {
 		void launchApp(String pkg);
 		void createShortcut(String pkg);
 		void removeClone(String pkg);
+		void installForOwner(String pkg);
 		CharSequence readAppName(String pkg) throws PackageManager.NameNotFoundException;
 		boolean isCloneExclusive(String pkg);
 	}
@@ -96,6 +99,11 @@ public class AppListViewModel extends BaseObservable {
 		mController.removeClone(selection.pkg);
 	}
 
+	public void onOwnerInstallationRequested(final View v) {
+		if (selection == null) return;
+		mController.installForOwner(selection.pkg);
+	}
+
 	/** This API is not provided in AppViewModel because we may need to update or remove the item in SortedList.
 	 *  @return updated (or added) app view-model, null if not included or removed */
 	public @Nullable AppViewModel updateApp(final String pkg) {
@@ -109,6 +117,7 @@ public class AppListViewModel extends BaseObservable {
 		if (app != null) {
 			final int index = apps.indexOf(app);
 			setAppState(app, state);
+			app.exclusive.set(mController.isCloneExclusive(pkg));
 			apps.updateItemAt(index, app);
 			return app;
 		} else if (include_sys_apps || (info.flags & FLAG_SYSTEM) == 0) try {
@@ -172,6 +181,11 @@ public class AppListViewModel extends BaseObservable {
 	@Deprecated // For generated binding class only, should never be called.
 	public ObservableList<AppViewModel> getItems() {
 		return apps;
+	}
+
+	public ImmutableList<CharSequence> getNameOfExclusiveClones() {
+		return FluentIterable.from(apps_by_pkg.values()).filter(app -> app.exclusive.get())
+				.transform(app -> app.name).toList();
 	}
 
 	public final void onFabClick(final View view) {

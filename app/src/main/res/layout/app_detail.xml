@@ -72,22 +72,43 @@
             style="@style/Widget.AppCompat.Button.Borderless.Colored"
             android:minHeight="36dp"
             android:maxLines="1"
-            android:visible="@{apps.selection.state != State.NotCloned}"
+            android:enabled="@{apps.selection == null || apps.selection.state != State.NotCloned}"
             android:onClick="@{apps::onShortcutRequested}"
-            android:text="@string/button_create_shortcut"/>
+            android:text="@string/button_create_shortcut" />
 
-        <Button
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/margin_small"
-            android:layout_marginEnd="@dimen/margin_small"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:minHeight="36dp"
-            android:maxLines="1"
-            android:enabled="@{apps.selection.state != State.NotCloned}" comment:x1="Alive, Frozen and Disabled"
-            android:onClick="@{apps::onRemovalRequested}"
-            android:text="@{(apps.selection.flags &amp; ApplicationInfo.FLAG_SYSTEM) == 0 ? @string/button_remove_clone : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
-            tools:text="@string/button_remove_clone"/>
+            android:orientation="horizontal" >
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="@dimen/margin_large" tools:ignore="RtlSymmetry" comment:x1="Workaround width clipping bug caused by different length of strings used here"
+                android:gravity="start"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginEnd="@dimen/margin_small"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                android:minHeight="36dp"
+                android:maxLines="1"
+                android:enabled="@{apps.selection == null || apps.selection.state != State.NotCloned}" comment:x2="Alive, Frozen and Disabled"
+                android:onClick="@{apps::onRemovalRequested}"
+                android:text="@{(apps.selection.flags &amp; ApplicationInfo.FLAG_SYSTEM) == 0 ? (apps.selection.exclusive ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
+                tools:text="@string/button_remove_clone" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginEnd="@dimen/margin_small"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                android:minHeight="36dp"
+                android:maxLines="1"
+                android:visible="@{apps.selection == null || apps.selection.exclusive}"
+                android:onClick="@{apps::onOwnerInstallationRequested}"
+                android:text="@string/button_install_outside" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
