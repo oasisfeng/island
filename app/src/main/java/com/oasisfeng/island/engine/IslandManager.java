@@ -14,7 +14,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
-import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -33,6 +32,7 @@ import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
+import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
 import java.lang.reflect.InvocationTargetException;
@@ -43,6 +43,8 @@ import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
 /**
@@ -197,7 +199,13 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void installForOwner(final String pkg) {
+		if (OWNER.equals(Process.myUserHandle())) return;
+		// Disable installer in managed profile
+		final ComponentName installer = new ComponentName(mContext, ForwardInstaller.class);
+		mContext.getPackageManager().setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		// Ensure forwarding is enabled
 		enableForwarding(ForwardInstaller.getIntentFilter(), FLAG_PARENT_CAN_ACCESS_MANAGED);
+		// Forward the installation
 		mContext.startActivity(ForwardInstaller.makeIntent(pkg));
 	}
 
@@ -345,16 +353,6 @@ public class IslandManager implements AppListViewModel.Controller {
 	private final Supplier<LauncherApps> mLauncherApps;
 	private static final UserHandle mCurrentUser = Process.myUserHandle();
 
-	private static final UserHandle OWNER;
-	static {
-		final Parcel p = Parcel.obtain();
-		try {
-			p.writeInt(0);
-			p.setDataPosition(0);
-			OWNER = new UserHandle(p);
-		} finally {
-			p.recycle();
-		}
-	}
+	static final UserHandle OWNER = GlobalStatus.OWNER;
 	private static final String TAG = IslandManager.class.getSimpleName();
 }
