@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
@@ -25,10 +26,13 @@ import android.widget.Toast;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.engine.IslandManager;
 
+import java.util.List;
+
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
 /**
  * Launch shortcut for apps on Island, from the owner user space
@@ -113,20 +117,21 @@ public class AppLaunchShortcut extends Activity {
 	/** @return null if the given package has no launch entrance */
 	private static @Nullable Bundle buildShortcutPayload(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
 		final PackageManager pm = context.getPackageManager();
-		final Intent target = pm.getLaunchIntentForPackage(pkg);
-		if (target == null) return null;
-		target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+		@SuppressWarnings("WrongConstant") final List<ResolveInfo> activities = pm.queryIntentActivities(
+				new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), GET_UNINSTALLED_PACKAGES);
+		if (activities.isEmpty()) return null;
 
-		final Intent launch_intent = new Intent(ACTION_LAUNCH_APP)
-				.setData(Uri.fromParts("target", target.getComponent().flattenToShortString(), null));
-		if (target.hasCategory(Intent.CATEGORY_INFO)) launch_intent.addCategory(Intent.CATEGORY_INFO);
-		if (target.hasCategory(Intent.CATEGORY_LAUNCHER)) launch_intent.addCategory(Intent.CATEGORY_LAUNCHER);
+		final ActivityInfo activity = activities.get(0).activityInfo;
+		final ComponentName component = new ComponentName(activity.packageName, activity.name);
+
+		final Intent launch_intent = new Intent(ACTION_LAUNCH_APP).addCategory(Intent.CATEGORY_LAUNCHER)
+				.setData(Uri.fromParts("target", component.flattenToShortString(), null));
 
 		final Bundle payload = new Bundle();
 		payload.putParcelable(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
-		final ActivityInfo activity = pm.getActivityInfo(target.getComponent(), 0);
 		payload.putCharSequence(Intent.EXTRA_SHORTCUT_NAME, "\uD83C\uDF00" + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
-		final Bitmap icon_bitmap = drawableToBitmap(pm.getActivityIcon(target.getComponent()));
+		@SuppressWarnings("WrongConstant") final Drawable d = pm.getActivityInfo(component, GET_UNINSTALLED_PACKAGES).loadIcon(pm);
+		final Bitmap icon_bitmap = drawableToBitmap(d);
 		if (icon_bitmap != null) payload.putParcelable(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
 		else {
 			final Context pkg_context = context.createPackageContext(pkg, 0);

@@ -14,7 +14,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -228,18 +227,9 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void createShortcut(final String pkg) {
-		final ApplicationInfo info = getAppInfo(pkg);
-		boolean need_freeze = false;
-		if (info != null && getAppState(info) == State.Frozen) {
-			defreezeApp(pkg);
-			need_freeze = true;
-		}
-
 		if (AppLaunchShortcut.createOnLauncher(mContext, pkg)) {
 			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
 		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
-
-		if (need_freeze) new Handler().postDelayed(() -> freezeApp(pkg), 500);	// TODO: Elegant dealing
 	}
 
 
