@@ -49,6 +49,7 @@ public class AppListViewModel extends BaseObservable {
 		void removeClone(String pkg);
 		void installForOwner(String pkg);
 		CharSequence readAppName(String pkg) throws PackageManager.NameNotFoundException;
+		boolean isLaunchable(String pkg);
 		boolean isCloneExclusive(String pkg);
 	}
 
@@ -121,7 +122,7 @@ public class AppListViewModel extends BaseObservable {
 			apps.updateItemAt(index, app);
 			return app;
 		} else if (include_sys_apps || (info.flags & FLAG_SYSTEM) == 0) try {
-			return addApp(pkg, mController.readAppName(pkg), info.flags, state);
+			return addApp(pkg, mController.readAppName(pkg), info.flags, mController.isLaunchable(pkg), state);
 		} catch (final PackageManager.NameNotFoundException ignored) {}
 		return null;
 	}
@@ -142,21 +143,21 @@ public class AppListViewModel extends BaseObservable {
 		apps.clear();
 	}
 
-	public AppViewModel addApp(final String pkg, final CharSequence name, final int flag) {
+	public AppViewModel addApp(final String pkg, final CharSequence name, final int flag, final boolean launchable) {
 		final ApplicationInfo info = mController.getAppInfo(pkg);
 		if (info == null) return null;
-		return addApp(info, name, flag);
+		return addApp(info, name, flag, launchable);
 	}
 
-	public AppViewModel addApp(final ApplicationInfo info, final CharSequence name, final int flag) {
-		return addApp(info.packageName, name, flag, mController.getAppState(info));
+	public AppViewModel addApp(final ApplicationInfo info, final CharSequence name, final int flag, final boolean launchable) {
+		return addApp(info.packageName, name, flag, launchable, mController.getAppState(info));
 	}
 
-	private AppViewModel addApp(final String pkg, final CharSequence name, final int flag, final State state) {
+	private AppViewModel addApp(final String pkg, final CharSequence name, final int flag, final boolean launchable, final State state) {
 		if (pkg == null) throw new IllegalArgumentException("pkg is null");
 		final AppViewModel existent = apps_by_pkg.get(pkg);
 		if (existent != null) return existent;
-		final AppViewModel app = new AppViewModel(pkg, name, flag, mController.isCloneExclusive(pkg));
+		final AppViewModel app = new AppViewModel(pkg, name, flag, launchable, mController.isCloneExclusive(pkg));
 		setAppState(app, state);
 		apps_by_pkg.put(pkg, app);
 		apps.add(app);

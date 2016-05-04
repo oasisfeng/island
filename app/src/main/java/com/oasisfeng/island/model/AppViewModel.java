@@ -39,9 +39,10 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 	public final String pkg;
 	public final CharSequence name;
 	public final ObservableField<Drawable> icon = new ObservableField<>();
-	public final int flags;		// From ApplicationInfo.flags
-	public transient final ObservableBoolean selected = new ObservableBoolean(false);
+	public final int flags;				// From ApplicationInfo.flags
+	public final boolean launchable;
 	public transient final ObservableBoolean exclusive = new ObservableBoolean();	// Only installed & enabled in Island (uninstalled or disabled in owner user)
+	public transient final ObservableBoolean selected = new ObservableBoolean(false);
 	public final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO
 
 	@Bindable public State getState() { return state; }
@@ -77,10 +78,11 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 		if (icon.get() == null) icon.set(activity.getPackageManager().getDefaultActivityIcon());
 	}
 
-	public AppViewModel(final String pkg, final CharSequence name, final int flags, final boolean exclusive) {
+	public AppViewModel(final String pkg, final CharSequence name, final int flags, final boolean launchable, final boolean exclusive) {
 		this.pkg = pkg;
 		this.name = name;
 		this.flags = flags;
+		this.launchable = launchable;
 		this.exclusive.set(exclusive);
 	}
 

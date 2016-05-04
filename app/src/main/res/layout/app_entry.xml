@@ -43,7 +43,7 @@
 
             android:text="@{app.name}"
             android:drawableStart="@{app.icon ?? @drawable/app_icon_empty}"
-            android:drawableEnd="@{apps.selection == app &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
+            android:drawableEnd="@{apps.selection == app &amp;&amp; app.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
             android:onViewAttachedToWindow="@{app::onViewAttached}"
             android:onClick="@{apps::onItemClick}"
             bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"

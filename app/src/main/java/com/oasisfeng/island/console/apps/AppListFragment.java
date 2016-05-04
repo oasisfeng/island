@@ -94,7 +94,7 @@ public class AppListFragment extends Fragment {
 		final AppViewModel app_before = mViewModel.getApp(pkg);
 		final boolean just_cloned = app_before != null && app_before.getState() == State.NotCloned;
 		final AppViewModel app_after = mViewModel.updateApp(pkg);
-		if (just_cloned && app_after != null && app_after.getState() == State.Alive)
+		if (just_cloned && app_after != null && app_after.getState() == State.Alive && mIslandManager.isLaunchable(app_after.pkg))
 			Snackbar.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app_after.name), LENGTH_INDEFINITE)
 					.setAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(context, pkg)).show();
 		invalidateOptionsMenu();
@@ -194,7 +194,7 @@ public class AppListFragment extends Fragment {
 				.filter(app -> ! this_pkg.equals(app.packageName))		// Exclude Island
 				.filter(all ? Predicates.alwaysTrue() : app ->			// Filter for apps shown by default
 						(app.flags & FLAG_SYSTEM) == 0 || sAlwaysVisibleSysPkgs.contains(app.packageName)
-								|| (! system_apps.isCritical(app.packageName) && mIslandManager.isLaunchable(app)))
+								|| (! system_apps.isCritical(app.packageName) && mIslandManager.isLaunchable(app.packageName)))
 				// Cloned apps first to optimize the label and icon loading experience.
 				.toSortedList(Ordering.explicit(true, false).onResultOf(info -> (info.flags & FLAG_INSTALLED) != 0));
 
@@ -219,7 +219,9 @@ public class AppListFragment extends Fragment {
 				Log.d(TAG, "onTextLoaded for " + pkg + ": " + text);
 				AppViewModel item = mViewModel.getApp(pkg);
 				if (item == null) {
-					item = mViewModel.addApp(pkg, text, flags);
+					final boolean launchable = mIslandManager.isLaunchable(pkg);
+					if (! launchable && ! mShowAllApps) return;		// TODO: Filter launchable later
+					item = mViewModel.addApp(pkg, text, flags, launchable);
 					Log.v(TAG, "Add: " + item.pkg);
 				} else Log.v(TAG, "Replace: " + item.pkg);
 			}

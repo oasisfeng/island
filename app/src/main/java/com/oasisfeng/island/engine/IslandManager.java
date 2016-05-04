@@ -11,6 +11,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
@@ -45,6 +47,7 @@ import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
 /**
@@ -61,7 +64,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		mContext = context;
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		mAdminComp = IslandDeviceAdminReceiver.getComponentName(context);
-		mLauncherApps = () -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		mLauncherApps = Suppliers.memoize(() -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 	}
 
 	public @Nullable ApplicationInfo getAppInfo(final String pkg) {
@@ -340,18 +343,17 @@ public class IslandManager implements AppListViewModel.Controller {
 		}
 	}
 
-	public boolean isLaunchable(final ApplicationInfo app) {
-		final String pkg = app.packageName;
-		final LauncherApps launcher = mLauncherApps.get();
-		return mCurrentUser.equals(OWNER) || getAppState(app) == State.Alive ? ! launcher.getActivityList(pkg, mCurrentUser).isEmpty()
-				: ! launcher.getActivityList(pkg, OWNER).isEmpty();		// Detect launcher activity in primary user if not alive
+	public boolean isLaunchable(final String pkg) {
+		final PackageManager pm = mContext.getPackageManager();
+		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg);
+		@SuppressWarnings("WrongConstant") final ResolveInfo resolved = pm.resolveActivity(intent, GET_DISABLED_COMPONENTS | GET_UNINSTALLED_PACKAGES);
+		return resolved != null;
 	}
 
 	private final Context mContext;
 	private final DevicePolicyManager mDevicePolicyManager;
 	private final ComponentName mAdminComp;
 	private final Supplier<LauncherApps> mLauncherApps;
-	private static final UserHandle mCurrentUser = Process.myUserHandle();
 
 	static final UserHandle OWNER = GlobalStatus.OWNER;
 	private static final String TAG = IslandManager.class.getSimpleName();
