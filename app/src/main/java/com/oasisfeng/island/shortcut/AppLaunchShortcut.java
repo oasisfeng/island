@@ -73,6 +73,7 @@ public class AppLaunchShortcut extends Activity {
 			if (! island.isDeviceOwner())		// The complex flow for managed profile
 				return createOnLauncherInManagedProfile(context, island, pkg);
 			final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+			if (shortcut_payload == null) return false;
 			broadcastShortcutInstall(context, shortcut_payload);
 			return true;
 		} catch (final PackageManager.NameNotFoundException e) {
@@ -98,6 +99,7 @@ public class AppLaunchShortcut extends Activity {
 		context.getPackageManager().setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 
 		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+		if (shortcut_payload == null) return false;
 		final Intent shortcut_request = new Intent(ACTION_INSTALL_SHORTCUT).putExtras(shortcut_payload);
 		try {
 			context.startActivity(shortcut_request);
