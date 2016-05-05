@@ -44,6 +44,7 @@ import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 public class AppLaunchShortcut extends Activity {
 
 	private static final String ACTION_INSTALL_SHORTCUT = "com.oasisfeng.island.action.INSTALL_SHORTCUT";
+	private static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
 	private static final String ACTION_LAUNCH_APP = "com.oasisfeng.island.action.LAUNCH_APP";
 
 	/** Runs in owner user space to delegate the shortcut install broadcast */
@@ -76,7 +77,7 @@ public class AppLaunchShortcut extends Activity {
 		try {
 			if (! island.isDeviceOwner())		// The complex flow for managed profile
 				return createOnLauncherInManagedProfile(context, island, pkg);
-			final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+			final Bundle shortcut_payload = buildShortcutPayload(context, pkg, false);
 			if (shortcut_payload == null) return false;
 			broadcastShortcutInstall(context, shortcut_payload);
 			return true;
@@ -90,7 +91,7 @@ public class AppLaunchShortcut extends Activity {
 		// Make sure required forwarding rules are ready
 		final IntentFilter installer_filter = new IntentFilter(ACTION_INSTALL_SHORTCUT);
 		installer_filter.addCategory(Intent.CATEGORY_DEFAULT);
-		final IntentFilter launchpad_filter = new IntentFilter(ACTION_LAUNCH_APP);
+		final IntentFilter launchpad_filter = new IntentFilter(ACTION_LAUNCH_CLONE);
 		launchpad_filter.addDataScheme("target");
 		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
 		launchpad_filter.addCategory(Intent.CATEGORY_LAUNCHER);
@@ -98,11 +99,11 @@ public class AppLaunchShortcut extends Activity {
 		island.enableForwarding(installer_filter, FLAG_PARENT_CAN_ACCESS_MANAGED)
 				.enableForwarding(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
 
-		// Disable installer in managed profile to make sure only the one in owner user receives this intent
+		// Disable installer in managed profile to make sure only the one in owner user receives this intent. ("android:singleUser" is supported for Activity since Android 6.0)
 		final ComponentName installer = new ComponentName(context, Installer.class);
 		context.getPackageManager().setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 
-		final Bundle shortcut_payload = buildShortcutPayload(context, pkg);
+		final Bundle shortcut_payload = buildShortcutPayload(context, pkg, true);
 		if (shortcut_payload == null) return false;
 		final Intent shortcut_request = new Intent(ACTION_INSTALL_SHORTCUT).putExtras(shortcut_payload);
 		try {
@@ -115,7 +116,7 @@ public class AppLaunchShortcut extends Activity {
 	}
 
 	/** @return null if the given package has no launch entrance */
-	private static @Nullable Bundle buildShortcutPayload(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
+	private static @Nullable Bundle buildShortcutPayload(final Context context, final String pkg, final boolean clone) throws PackageManager.NameNotFoundException {
 		final PackageManager pm = context.getPackageManager();
 		@SuppressWarnings("WrongConstant") final List<ResolveInfo> activities = pm.queryIntentActivities(
 				new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), GET_UNINSTALLED_PACKAGES);
@@ -124,7 +125,7 @@ public class AppLaunchShortcut extends Activity {
 		final ActivityInfo activity = activities.get(0).activityInfo;
 		final ComponentName component = new ComponentName(activity.packageName, activity.name);
 
-		final Intent launch_intent = new Intent(ACTION_LAUNCH_APP).addCategory(Intent.CATEGORY_LAUNCHER)
+		final Intent launch_intent = new Intent(clone ? ACTION_LAUNCH_CLONE : ACTION_LAUNCH_APP).addCategory(Intent.CATEGORY_LAUNCHER)
 				.setData(Uri.fromParts("target", component.flattenToShortString(), null));
 
 		final Bundle payload = new Bundle();
@@ -151,16 +152,16 @@ public class AppLaunchShortcut extends Activity {
 	/** Runs in managed profile or device owner */
 	private boolean launchApp(final Intent intent) {
 		final IslandManager island = new IslandManager(this);
-		if (Process.myUserHandle().hashCode() == 0 && ! island.isDeviceOwner()) return false;
+		final UserHandle user = Process.myUserHandle();
+		if (user.hashCode() == 0 && ! island.isDeviceOwner()) return false;
 		final Uri uri = intent.getData();
 		if (uri == null) return false;
-		final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
 
 		// Ensure de-frozen
+		final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
 		island.defreezeApp(component.getPackageName());
 
 		final LauncherApps launcher = (LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE);
-		final UserHandle user = android.os.Process.myUserHandle();
 		try {
 			launcher.startMainActivity(component, user, intent.getSourceBounds(), null);
 		} catch (final NullPointerException e) {	// A known bug in LauncherAppsService when activity is not found
@@ -180,7 +181,7 @@ public class AppLaunchShortcut extends Activity {
 
 	private void handleIntent(final Intent intent) {
 		final String action = intent.getAction();
-		if (! ACTION_LAUNCH_APP.equals(action)) return;
+		if (! ACTION_LAUNCH_APP.equals(action) && ! ACTION_LAUNCH_CLONE.equals(action)) return;
 		if (! launchApp(intent))
 			Toast.makeText(this, R.string.toast_shortcut_invalid, Toast.LENGTH_LONG).show();
 	}

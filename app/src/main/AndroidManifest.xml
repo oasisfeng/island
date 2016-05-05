@@ -29,16 +29,25 @@
                   android:excludeFromRecents="true"
                   android:theme="@style/android:Theme.Translucent.NoTitleBar"
                   android:clearTaskOnLaunch="true"
-                  android:taskAffinity=":automation"
+                  android:taskAffinity=":shortcut"
                   android:launchMode="singleTask" > <!-- Most important attribute: launchMode="singleTask" -->
             <intent-filter>
-                <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
-                <category android:name="android.intent.category.INFO" />
+                <action android:name="com.oasisfeng.island.action.LAUNCH_CLONE" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="target" />
             </intent-filter>
         </activity>
+
+        <activity-alias android:name=".shortcut.AppLaunchShortcutAlias"
+                        android:targetActivity=".shortcut.AppLaunchShortcut" >
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="target" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".shortcut.AppLaunchShortcut$Installer"
                   android:hardwareAccelerated="false"
