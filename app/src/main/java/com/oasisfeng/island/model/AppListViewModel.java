@@ -184,8 +184,8 @@ public class AppListViewModel extends BaseObservable {
 		return apps;
 	}
 
-	public ImmutableList<CharSequence> getNameOfExclusiveClones() {
-		return FluentIterable.from(apps_by_pkg.values()).filter(app -> app.exclusive.get())
+	public ImmutableList<CharSequence> getNonSystemExclusiveCloneNames() {
+		return FluentIterable.from(apps_by_pkg.values()).filter(app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && app.exclusive.get())
 				.transform(app -> app.name).toList();
 	}
 

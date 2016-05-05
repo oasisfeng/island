@@ -144,7 +144,7 @@ public class AppListFragment extends Fragment {
 			loadAppList(mShowAllApps);
 			return true;
 		case R.id.menu_destroy:
-			mIslandManager.destroy(mViewModel.getNameOfExclusiveClones());
+			mIslandManager.destroy(mViewModel.getNonSystemExclusiveCloneNames());
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
