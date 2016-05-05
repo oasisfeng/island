@@ -68,7 +68,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	public @Nullable ApplicationInfo getAppInfo(final String pkg) {
 		try { @SuppressWarnings("WrongConstant")
-		final ApplicationInfo app_info = mContext.getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
+		final ApplicationInfo app_info = mContext.getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES | GET_DISABLED_COMPONENTS);
 			return app_info;
 		} catch (final PackageManager.NameNotFoundException e) {
 			return null;
