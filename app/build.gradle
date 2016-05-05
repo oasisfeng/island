@@ -33,6 +33,7 @@ dependencies {
     compile project(':deagle')
     compile 'com.android.support:design:23.3.0'
     compile 'com.google.guava:guava:19.0'
+    compile 'com.google.android.gms:play-services-analytics:8.4.0'
     compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     testCompile 'junit:junit:4.12'
 }
