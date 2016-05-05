@@ -1,5 +1,6 @@
 package com.oasisfeng.island.engine;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -8,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.content.pm.Signature;
 import android.provider.CalendarContract;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
@@ -98,6 +100,32 @@ public class SystemAppsManager {
 
 	public boolean isCritical(final String pkg) {
 		return sCriticalSystemPkgs.contains(pkg);	// TODO: Intent-based matching on sCriticalActivityIntents
+	}
+
+	/**
+	 * Determine whether a package is a "system package", in which case certain things (like
+	 * disabling notifications or disabling the package altogether) should be disallowed.
+	 */
+	public boolean isSystemSignature(final PackageInfo pkg) {
+		if (sSystemSignature == null) {
+			sSystemSignature = new Signature[] { getSystemSignature(mContext.getPackageManager()) };
+		}
+		return sSystemSignature[0] != null && sSystemSignature[0].equals(getFirstSignature(pkg));
+	}
+
+	private static Signature[] sSystemSignature;
+
+	private static Signature getFirstSignature(final PackageInfo pkg) {
+		if (pkg != null && pkg.signatures != null && pkg.signatures.length > 0)
+			return pkg.signatures[0];
+		return null;
+	}
+
+	@SuppressLint("PackageManagerGetSignatures") private static Signature getSystemSignature(final PackageManager pm) {
+		try {
+			final PackageInfo sys = pm.getPackageInfo("android", PackageManager.GET_SIGNATURES);
+			return getFirstSignature(sys);
+		} catch (final PackageManager.NameNotFoundException ignored) { return null; }
 	}
 
 	public void prepareSystemApps() {
