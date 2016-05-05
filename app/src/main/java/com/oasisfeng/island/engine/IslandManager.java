@@ -261,6 +261,10 @@ public class IslandManager implements AppListViewModel.Controller {
 					.setMessage(R.string.dialog_destroy_message)
 					.setPositiveButton(android.R.string.no, null)
 					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> {
+						if (exclusive_clones.isEmpty()) {
+							removeProfileOwner();
+							return;
+						}
 						final String names = Joiner.on('\n').skipNulls().join(FluentIterable.from(exclusive_clones).limit(MAX_DESTROYING_APPS_LIST));
 						final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
 						new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
