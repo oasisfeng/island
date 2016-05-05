@@ -95,7 +95,7 @@
                 android:maxLines="1"
                 android:enabled="@{apps.selection.state != State.NotCloned}" comment:x2="Alive, Frozen and Disabled"
                 android:onClick="@{apps::onRemovalRequested}"
-                android:text="@{(apps.selection.flags &amp; ApplicationInfo.FLAG_SYSTEM) == 0 ? (apps.selection.exclusive ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
+                android:text="@{! apps.selection.isSystem() ? (apps.selection.exclusive ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
                 tools:text="@string/button_remove_clone" />
 
             <Button
@@ -106,7 +106,7 @@
                 style="@style/Widget.AppCompat.Button.Borderless.Colored"
                 android:minHeight="36dp"
                 android:maxLines="1"
-                bind:visible="@{apps.selection == null || apps.selection.exclusive &amp;&amp; (apps.selection.flags &amp; ApplicationInfo.FLAG_SYSTEM) == 0}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
+                bind:visible="@{apps.selection == null || apps.selection.exclusive &amp;&amp; ! apps.selection.isSystem()}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
                 android:onClick="@{apps::onOwnerInstallationRequested}"
                 android:text="@string/button_install_outside" />
 
