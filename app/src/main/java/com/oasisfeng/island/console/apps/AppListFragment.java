@@ -7,11 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherApps;
 import android.databinding.Observable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -76,38 +78,73 @@ public class AppListFragment extends Fragment {
 		pkgs_filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
 		activity.registerReceiver(mPackagesEventsObserver, pkgs_filter);
 
+		((LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE)).registerCallback(mLauncherAppsCallback);
+
 		loadAppList(false);
 	}
 
 	@Override public void onDestroy() {
 		mViewModel.removeOnPropertyChangedCallback(onPropertyChangedCallback);
+		((LauncherApps) getActivity().getSystemService(Context.LAUNCHER_APPS_SERVICE)).unregisterCallback(mLauncherAppsCallback);
 		getActivity().unregisterReceiver(mPackagesEventsObserver);
 		getActivity().unregisterReceiver(mPackageEventsObserver);
 		super.onDestroy();
 	}
+
+	private final LauncherApps.Callback mLauncherAppsCallback = new LauncherApps.Callback() {
+		@Override public void onPackageRemoved(final String pkg, final UserHandle user) {
+			onPackageEvent(pkg);
+		}
+
+		@Override public void onPackageAdded(final String pkg, final UserHandle user) {
+			onPackageEvent(pkg);
+		}
+
+		@Override public void onPackageChanged(final String pkg, final UserHandle user) {
+			onPackageEvent(pkg);
+		}
+
+		@Override public void onPackagesAvailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
+			onPackagesEvent(pkgs);
+		}
+
+		@Override public void onPackagesUnavailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
+			onPackagesEvent(pkgs);
+		}
+	};
 
 	private final BroadcastReceiver mPackageEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final Uri data = intent.getData();
 		if (data == null) return;
 		final String pkg = data.getSchemeSpecificPart();
 		if (pkg == null || context.getPackageName().equals(pkg)) return;
-
-		final AppViewModel app_before = mViewModel.getApp(pkg);
-		final boolean just_cloned = app_before != null && app_before.getState() == State.NotCloned;
-		final AppViewModel app_after = mViewModel.updateApp(pkg);
-		if (just_cloned && app_after != null && app_after.getState() == State.Alive && mIslandManager.isLaunchable(app_after.pkg))
-			Snackbar.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app_after.name), LENGTH_INDEFINITE)
-					.setAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(context, pkg)).show();
-		invalidateOptionsMenu();
+		onPackageEvent(pkg);
 	}};
 
 	private final BroadcastReceiver mPackagesEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final String[] pkgs = intent.getStringArrayExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST);
 		if (pkgs == null) return;
+		onPackagesEvent(pkgs);
+	}};
+
+	private void onPackageEvent(final String pkg) {
+		final AppViewModel app_before = mViewModel.getApp(pkg);
+		final boolean just_cloned = app_before != null && app_before.getState() == State.NotCloned;
+		final AppViewModel app_after = mViewModel.updateApp(pkg);
+
+		final Activity activity = getActivity();
+		if (activity != null && just_cloned && app_after != null && app_after.getState() == State.Alive && mIslandManager.isLaunchable(app_after.pkg))
+			Snackbar.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app_after.name), LENGTH_INDEFINITE)
+					.setAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg)).show();
+
+		invalidateOptionsMenu();
+	}
+
+	private void onPackagesEvent(final String[] pkgs) {
 		for (final String pkg : pkgs)
 			mViewModel.updateApp(pkg);
 		invalidateOptionsMenu();
-	}};
+	}
 
 	private final Observable.OnPropertyChangedCallback onPropertyChangedCallback = new Observable.OnPropertyChangedCallback() {
 		@Override public void onPropertyChanged(final Observable observable, final int var) {
