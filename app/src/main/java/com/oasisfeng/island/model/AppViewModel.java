@@ -18,6 +18,8 @@ import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.ui.AppLabelCache;
 import com.oasisfeng.island.BR;
 
+import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+
 /**
  * View-model for app entry
  *
@@ -44,6 +46,8 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 	public transient final ObservableBoolean exclusive = new ObservableBoolean();	// Only installed & enabled in Island (uninstalled or disabled in owner user)
 	public transient final ObservableBoolean selected = new ObservableBoolean(false);
 	public final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO
+
+	public boolean isSystem() { return (flags & FLAG_SYSTEM) != 0; }
 
 	@Bindable public State getState() { return state; }
 	void setState(final State state) { this.state = state; notifyPropertyChanged(BR.state); }
@@ -104,6 +108,7 @@ public class AppViewModel extends BaseObservable implements ObservableSortedList
 	private final Ordering<AppViewModel> ORDERING = Ordering.natural()
 			.onResultOf((Function<AppViewModel, Comparable>) app -> app.getState().order)	// Order by state
 			.compound(Ordering.natural().reverse().onResultOf(AppViewModel::isExclusive))	// Exclusive clones first
+			.compound(Ordering.natural().onResultOf(AppViewModel::isSystem))				// Non-system apps first
 			.compound(Ordering.natural().onResultOf(AppViewModel::getName));				// Order by name
 
 	private volatile boolean mIconLoading;
