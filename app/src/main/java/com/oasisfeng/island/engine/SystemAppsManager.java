@@ -12,6 +12,7 @@ import android.provider.CalendarContract;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony.Carriers;
@@ -78,6 +79,9 @@ public class SystemAppsManager {
 			new Intent(Settings.ACTION_SETTINGS),					// Usually com.android.settings
 			new Intent("android.content.pm.action.REQUEST_PERMISSIONS"),	// Hidden PackageManager.ACTION_REQUEST_PERMISSIONS
 																	// Runtime permission UI, may be special system app on some ROMs (e.g. MIUI)
+			/* New entrance for Downloads UI, required by old Downloads app trampoline */
+			new Intent("android.provider.action.MANAGE_ROOT"/* DocumentsContract.ACTION_MANAGE_ROOT */,
+					DocumentsContract.buildRootUri("com.android.providers.downloads.documents", "downloads")),
 			new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*"),	// Usually com.android.documentsui, may be file explorer app on some ROMs. (e.g. MIUI)
 			new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("*/*"),
 			new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI)	// Contact picker, usually com.android.contacts
