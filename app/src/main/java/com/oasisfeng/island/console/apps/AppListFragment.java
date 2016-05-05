@@ -35,6 +35,7 @@ import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
+import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
@@ -133,6 +134,8 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		menu.findItem(R.id.menu_show_all).setChecked(mShowAllApps);
+		menu.findItem(R.id.menu_destroy).setVisible(! GlobalStatus.running_in_owner);
+		menu.findItem(R.id.menu_deactivate).setVisible(GlobalStatus.running_in_owner);
 //		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
@@ -144,6 +147,7 @@ public class AppListFragment extends Fragment {
 			loadAppList(mShowAllApps);
 			return true;
 		case R.id.menu_destroy:
+		case R.id.menu_deactivate:
 			mIslandManager.destroy(mViewModel.getNonSystemExclusiveCloneNames());
 			return true;
 		}

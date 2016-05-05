@@ -22,6 +22,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.R;
@@ -42,6 +43,8 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCR
  * This {@link Fragment} handles initiation of managed profile provisioning.
  */
 public class SetupProfileFragment extends Fragment implements View.OnClickListener {
+
+	private static final String URL_LEARN_MORE = "http://island.oasisfeng.com/";
 
 	private static final String KEY_HAS_OTHER_PROFILE_OWNER = "has.other.owner";
 	private static final String KEY_OWNER_NAME = "owner.name";
@@ -130,9 +133,9 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 
 	private void provisionManagedProfileRequiringEncryption() {
 		new AlertDialog.Builder(getActivity()).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_encryption_required)
-				.setNegativeButton("Continue", (dialog, which) -> {
-					provisionManagedProfile();
-				}).setNeutralButton("No Enc (Root)", (dialog, which) -> {
+				.setNegativeButton(R.string.dialog_button_continue, (d, w) -> provisionManagedProfile())
+				.setPositiveButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(getActivity(), URL_LEARN_MORE))
+				.setNeutralButton(R.string.dialog_button_skip_with_root, (d, w) -> {
 					new AsyncTask<Void, Void, Void>() {
 						@Override protected Void doInBackground(final Void... params) {
 							try {
@@ -143,12 +146,12 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 							return null;
 						}
 
-						@Override protected void onPostExecute(final Void aVoid) {
+						@Override protected void onPostExecute(final Void ignored) {
 							if (isEncryptionRequired()) provisionManagedProfileRequiringEncryption();
 							else provisionManagedProfile();
 						}
 					}.execute();
-		}).setPositiveButton(android.R.string.cancel, null).show();
+				}).show();
 	}
 
 	private static boolean isDeviceEncrypted(final Context context) {
@@ -160,7 +163,7 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 
 	private boolean isEncryptionRequired() {
 		try {
-			return !(Boolean) Hack.into("android.os.SystemProperties").method("getBoolean", String.class, boolean.class).invoke(null, "persist.sys.no_req_encrypt", false);
+			return ! (Boolean) Hack.into("android.os.SystemProperties").staticMethod("getBoolean", String.class, boolean.class).invoke("persist.sys.no_req_encrypt", false);
 		} catch (Hack.HackDeclaration.HackAssertionException | InvocationTargetException e) {
 			return true;
 		}

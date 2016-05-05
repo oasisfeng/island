@@ -4,4 +4,5 @@
     <item android:id="@+id/menu_remove" android:title="@string/menu_remove_clone" app:showAsAction="never" android:visible="false" />
     <item android:id="@+id/menu_test" android:title="Test" tools:ignore="HardcodedText" app:showAsAction="never" android:visible="false" />
     <item android:id="@+id/menu_destroy" android:title="@string/menu_destroy_island" app:showAsAction="never" />
+    <item android:id="@+id/menu_deactivate" android:title="@string/menu_deactivate_island" app:showAsAction="never" android:visible="false" />
 </menu>
