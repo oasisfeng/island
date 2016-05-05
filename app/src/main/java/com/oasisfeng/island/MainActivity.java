@@ -13,6 +13,7 @@ import android.os.UserHandle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.HitBuilders;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.setup.SetupProfileFragment;
@@ -33,7 +34,9 @@ public class MainActivity extends AppCompatActivity {
 		final IslandManager island = new IslandManager(this);
 		final boolean is_device_owner = island.isDeviceOwner();
 		if (! is_device_owner && ! getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
-			Toast.makeText(this, "Sorry, your device or ROM does not support \"Managed Profile\" feature, which is required by Island.", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, R.string.dialog_incompatible_rom, Toast.LENGTH_LONG).show();
+			AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP).send(new HitBuilders.EventBuilder()
+					.setCategory("Compatibility").setAction("NoManagedProfileFeature").build());
 			finish();
 			return;
 		}
@@ -46,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
 		final int user = Process.myUserHandle().hashCode();
 		if ((user == 0 && is_device_owner) || (user != 0 && island.isProfileOwner())) {
 			if (user != 0 && ! island.isProfileOwnerActive()) {        // Edge case: profile owner is set but device admin is not active. (May occur on MIUI if Island is uninstalled without managed profile removed first)
+				AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP).send(new HitBuilders.EventBuilder()
+						.setCategory("State").setAction("InactiveDeviceAdmin").build());
 				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(this))
 						.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
@@ -69,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
 					}	// Fall through if failed to start
 				} else if (owner != null) try {
                     owner_name = getPackageManager().getApplicationInfo(owner.getPackageName(), 0).loadLabel(getPackageManager()).toString();
+					AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP).send(new HitBuilders.EventBuilder()
+							.setCategory("State").setAction("ExistentProfileOwner").setLabel(owner_name).build());
                 } catch (final PackageManager.NameNotFoundException ignored) {}
             }
 			setContentView(R.layout.activity_main);

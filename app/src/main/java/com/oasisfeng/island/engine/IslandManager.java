@@ -22,6 +22,8 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -29,6 +31,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
+import com.oasisfeng.island.AnalyticsTrackers;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.model.AppListViewModel;
@@ -84,14 +87,17 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void freezeApp(final String pkg) {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Freeze").setLabel(pkg).build());
 		mDevicePolicyManager.setApplicationHidden(mAdminComp, pkg, true);
 	}
 
 	@Override public void defreezeApp(final String pkg) {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Defreeze").setLabel(pkg).build());
 		mDevicePolicyManager.setApplicationHidden(mAdminComp, pkg, false);
 	}
 
 	@Override public void launchApp(final String pkg) {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Launch").setLabel(pkg).build());
 		final Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
 		if (intent == null) {
 			Toast.makeText(mContext, "This app has no launch entrance.", Toast.LENGTH_SHORT).show();
@@ -115,6 +121,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 		// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
 		if ((app_info.flags & FLAG_SYSTEM) != 0) {
+			sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Clone.Sys").setLabel(pkg).build());
 			enableSystemApp(pkg);
 			return;
 		}
@@ -133,6 +140,7 @@ public class IslandManager implements AppListViewModel.Controller {
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(app_info)).show();
 				return;
 			}
+			sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Clone.Install").setLabel(pkg).build());
 			final Activity activity = Activities.findActivityFrom(mContext);
 			if (activity == null) mContext.startActivity(intent);
 			else activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
@@ -141,9 +149,10 @@ public class IslandManager implements AppListViewModel.Controller {
 			enableSystemAppForActivity(market_intent);
 			final ActivityInfo market_info = market_intent.resolveActivityInfo(mContext.getPackageManager(), 0);
 			if ((market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
-				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_google_play_explanation)
+				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_incapable_explanation)
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
-				return;		// TODO: Analytics
+				sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Clone.Incapable").build());
+				return;
 			} else if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
 				if (Scopes.app(mContext).mark("clone-via-google-play-explained")) {
 					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_google_play_explanation)
@@ -151,12 +160,14 @@ public class IslandManager implements AppListViewModel.Controller {
 					return;
 				}
 				enableSystemApp(SystemAppsManager.PACKAGE_GOOGLE_PLAY_SERVICES);	// Special dependency
+				sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Clone.GooglePlay").setLabel(pkg).build());
 			} else {
 				if (Scopes.app(mContext).mark("clone-via-builtin-market-explained")) {
 					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_builtin_market_explanation)
 							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> cloneApp(pkg)).show();
 					return;
 				}
+				sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Clone.[" + market_info.packageName + "]").setLabel(pkg).build());
 			}
 			mContext.startActivity(market_intent);
 		}
@@ -180,6 +191,7 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void enableApp(final String pkg) {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Enable").setLabel(pkg).build());
 		showAppSettingActivity(pkg);
 	}
 
@@ -195,8 +207,10 @@ public class IslandManager implements AppListViewModel.Controller {
 		if ((flags & FLAG_SYSTEM) != 0) {
 			defreezeApp(pkg);	// App must not be hidden for startAppDetailsActivity() to work.
 			showAppSettingActivity(pkg);
+			sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Disable.SysApp").setLabel(pkg).build());
 			return;
 		}
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Uninstall").setLabel(pkg).build());
 		mContext.startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
 	}
 
@@ -209,6 +223,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		enableForwarding(ForwardInstaller.getIntentFilter(), FLAG_PARENT_CAN_ACCESS_MANAGED);
 		// Forward the installation
 		mContext.startActivity(ForwardInstaller.makeIntent(pkg));
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Install.Outside").setLabel(pkg).build());
 	}
 
 	private void showAppSettingActivity(final String pkg) {
@@ -227,6 +242,7 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	@Override public void createShortcut(final String pkg) {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Create.Shortcut").setLabel(pkg).build());
 		if (AppLaunchShortcut.createOnLauncher(mContext, pkg)) {
 			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
 		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
@@ -239,6 +255,7 @@ public class IslandManager implements AppListViewModel.Controller {
 					.setMessage(R.string.dialog_deactivate_message)
 					.setPositiveButton(android.R.string.no, null)
 					.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> deactivateDeviceOwner()).show();
+			sTracker.setScreenName("Deactivate.Warning"); sTracker.send(new HitBuilders.ScreenViewBuilder().build());
 		} else if (Process.myUserHandle().hashCode() != 0 && isProfileOwner() && isProfileOwnerActive()) {
 			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 					.setMessage(R.string.dialog_destroy_message)
@@ -250,12 +267,18 @@ public class IslandManager implements AppListViewModel.Controller {
 								.setMessage(mContext.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
 								.setNeutralButton(R.string.dialog_button_destroy, (dd, ww) -> removeProfileOwner())
 								.setPositiveButton(android.R.string.no, null).show();
+						sTracker.setScreenName("Destroy.Exclusive.Warning"); sTracker.send(new HitBuilders.ScreenViewBuilder().build());
 					}).show();
-		} else new AlertDialog.Builder(mContext).setMessage(R.string.dialog_cannot_destroy_message)
+			sTracker.setScreenName("Destroy.Warning"); sTracker.send(new HitBuilders.ScreenViewBuilder().build());
+		} else {
+			new AlertDialog.Builder(mContext).setMessage(R.string.dialog_cannot_destroy_message)
 					.setNegativeButton(android.R.string.ok, null).show();
+			sTracker.setScreenName("Destroy.Failure"); sTracker.send(new HitBuilders.ScreenViewBuilder().build());
+		}
 	}
 
 	private void removeProfileOwner() {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Destroy").build());
 		if (mDevicePolicyManager.isProfileOwnerApp(mContext.getPackageName()))		// Ensure we are just wiping managed profile, not the primary user
 			mDevicePolicyManager.wipeData(0);
 		final Activity activity = Activities.findActivityFrom(mContext);
@@ -263,6 +286,7 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	private void deactivateDeviceOwner() {
+		sTracker.send(new HitBuilders.EventBuilder().setCategory("Action").setAction("Deactivate").build());
 		mDevicePolicyManager.clearDeviceOwnerApp(mContext.getPackageName());
 		final Activity activity = Activities.findActivityFrom(mContext);
 		if (activity != null) activity.finish();
@@ -346,5 +370,6 @@ public class IslandManager implements AppListViewModel.Controller {
 	private final Supplier<LauncherApps> mLauncherApps;
 
 	static final UserHandle OWNER = GlobalStatus.OWNER;
+	private static final Tracker sTracker = AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP);
 	private static final String TAG = IslandManager.class.getSimpleName();
 }

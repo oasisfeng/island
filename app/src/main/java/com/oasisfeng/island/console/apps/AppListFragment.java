@@ -25,11 +25,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.ui.AppLabelCache;
+import com.oasisfeng.island.AnalyticsTrackers;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IslandManager;
@@ -61,6 +64,9 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		mTracker.setScreenName("AppList");
+		mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+
 		final Activity activity = getActivity();
 		mIslandManager = new IslandManager(activity);
 		mViewModel = new AppListViewModel(mIslandManager);
@@ -282,6 +288,7 @@ public class AppListFragment extends Fragment {
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
 	private boolean mShowAllApps;
+	private final Tracker mTracker = AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP);
 
 	private static final String TAG = "AppListFragment";
 }
