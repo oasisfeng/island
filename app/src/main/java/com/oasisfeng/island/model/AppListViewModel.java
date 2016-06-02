@@ -41,7 +41,7 @@ public class AppListViewModel extends BaseObservable {
 		@Nullable ApplicationInfo getAppInfo(String pkg);
 		State getAppState(ApplicationInfo pkg);
 		void cloneApp(String pkg);
-		void freezeApp(String pkg);
+		void freezeApp(String pkg, String reason);
 		void defreezeApp(String pkg);
 		void enableApp(String pkg);
 		void launchApp(String pkg);
@@ -207,7 +207,7 @@ public class AppListViewModel extends BaseObservable {
 					setSelection(next);
 				else clearSelection();
 			}
-			mController.freezeApp(pkg);
+			mController.freezeApp(pkg, "manual");
 			break;
 		case Unlock:
 			mController.defreezeApp(pkg);

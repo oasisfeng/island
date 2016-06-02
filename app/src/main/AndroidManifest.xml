@@ -84,6 +84,12 @@
             </intent-filter>
         </receiver>
 
+        <service android:name=".api.AppControllerService" >
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.api.IAppController" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

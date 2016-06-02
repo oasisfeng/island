@@ -25,15 +25,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
-import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 import com.oasisfeng.android.ui.AppLabelCache;
-import com.oasisfeng.island.AnalyticsTrackers;
 import com.oasisfeng.island.R;
+import com.oasisfeng.island.data.AppList;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.SystemAppsManager;
@@ -44,28 +40,21 @@ import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.support.design.widget.Snackbar.LENGTH_INDEFINITE;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
 
 	private static final String KStateKeyRecyclerView = "apps.recycler.layout";
-	/** System packages shown to user always even if no launcher activities */
-	private static final Collection<String> sAlwaysVisibleSysPkgs = Collections.singletonList("com.google.android.gms");
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mTracker.setScreenName("AppList");
-		mTracker.send(new HitBuilders.ScreenViewBuilder().build());
 
 		final Activity activity = getActivity();
 		mIslandManager = new IslandManager(activity);
@@ -122,15 +111,16 @@ public class AppListFragment extends Fragment {
 	private final BroadcastReceiver mPackageEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final Uri data = intent.getData();
 		if (data == null) return;
-		final String pkg = data.getSchemeSpecificPart();
-		if (pkg == null || context.getPackageName().equals(pkg)) return;
+		final String pkg = data.getSchemeSpecificPart(), this_pkg = context.getPackageName();
+		if (pkg == null || this_pkg.equals(pkg)) return;
 		onPackageEvent(pkg);
 	}};
 
 	private final BroadcastReceiver mPackagesEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final String[] pkgs = intent.getStringArrayExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST);
 		if (pkgs == null) return;
-		onPackagesEvent(pkgs);
+		final String this_pkg = context.getPackageName();
+		onPackagesEvent(FluentIterable.from(Arrays.asList(pkgs)).filter(pkg -> ! this_pkg.equals(pkg)).toArray(String.class));
 	}};
 
 	private void onPackageEvent(final String pkg) {
@@ -230,23 +220,15 @@ public class AppListFragment extends Fragment {
 	}
 
 	private Map<String, ApplicationInfo> populateApps(final boolean all) {
-		final Activity activity = getActivity();
-
-		final String this_pkg = activity.getPackageName();
-		//noinspection WrongConstant
-		final List<ApplicationInfo> installed_apps = activity.getPackageManager().getInstalledApplications(GET_UNINSTALLED_PACKAGES);
-		final SystemAppsManager system_apps = new SystemAppsManager(activity, mIslandManager);
-		final ImmutableList<ApplicationInfo> apps = FluentIterable.from(installed_apps)
-				// TODO: Also include system apps with running services (even if no launcher activities)
-				.filter(app -> ! this_pkg.equals(app.packageName))		// Exclude Island
-				.filter(all ? Predicates.alwaysTrue() : app ->			// Filter for apps shown by default
-						(app.flags & FLAG_SYSTEM) == 0 || sAlwaysVisibleSysPkgs.contains(app.packageName)
-								|| (! system_apps.isCritical(app.packageName) && mIslandManager.isLaunchable(app.packageName)))
-				// Cloned apps first to optimize the label and icon loading experience.
-				.toSortedList(Ordering.explicit(true, false).onResultOf(info -> (info.flags & FLAG_INSTALLED) != 0));
+		final Context context = getActivity();
+		final FluentIterable<ApplicationInfo> all_apps = AppList.populate(context);
+		final FluentIterable<ApplicationInfo> apps = all ? all_apps : all_apps.filter(app -> (app.flags & FLAG_SYSTEM) == 0 || AppList.ALWAYS_VISIBLE_SYS_PKGS.contains(app.packageName)
+				|| (! SystemAppsManager.isCritical(app.packageName) && IslandManager.isLaunchable(context, app.packageName)));
+		// TODO: Also include system apps with running services (even if no launcher activities)
+		final ImmutableList<ApplicationInfo> ordered_apps = apps.toSortedList(AppList.CLONED_FIRST);
 
 		final Map<String, ApplicationInfo> app_vm_by_pkg = new LinkedHashMap<>();	// LinkedHashMap to preserve the order
-		for (final ApplicationInfo app : apps)
+		for (final ApplicationInfo app : ordered_apps)
 			app_vm_by_pkg.put(app.packageName, app);
 		return app_vm_by_pkg;
 	}
@@ -288,7 +270,6 @@ public class AppListFragment extends Fragment {
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
 	private boolean mShowAllApps;
-	private final Tracker mTracker = AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP);
 
 	private static final String TAG = "AppListFragment";
 }

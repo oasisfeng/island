@@ -98,7 +98,7 @@ public class SystemAppsManager {
 			"com.android.externalstorage.documents" // Usually com.android.externalstorage
 	);
 
-	public boolean isCritical(final String pkg) {
+	public static boolean isCritical(final String pkg) {
 		return sCriticalSystemPkgs.contains(pkg);	// TODO: Intent-based matching on sCriticalActivityIntents
 	}
 
@@ -164,7 +164,7 @@ public class SystemAppsManager {
 				Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
 			} else {
 				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
-				mIslandManager.freezeApp(app.packageName);
+				mIslandManager.freezeApp(app.packageName, "provision");
 			}
 		}
 	}
