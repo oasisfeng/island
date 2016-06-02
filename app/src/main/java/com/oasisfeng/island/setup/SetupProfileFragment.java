@@ -22,16 +22,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.hack.Hack;
-import com.oasisfeng.island.AnalyticsTrackers;
+import com.oasisfeng.island.Config;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.R;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.databinding.SetupProfileBinding;
-
-import java.lang.reflect.InvocationTargetException;
 
 import eu.chainfire.libsuperuser.Shell;
 
@@ -47,8 +44,6 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCR
  */
 public class SetupProfileFragment extends Fragment implements View.OnClickListener {
 
-	private static final String URL_LEARN_MORE = "http://island.oasisfeng.com/";
-
 	private static final String KEY_HAS_OTHER_PROFILE_OWNER = "has.other.owner";
 	private static final String KEY_OWNER_NAME = "owner.name";
 	private static final int REQUEST_PROVISION_MANAGED_PROFILE = 1;
@@ -63,9 +58,6 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 	}
 
 	@Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-		mTracker.setScreenName("Setup");
-		mTracker.send(new HitBuilders.ScreenViewBuilder().build());
-
 		final SetupProfileBinding binding = SetupProfileBinding.inflate(inflater, container, false);
 		final SetupViewModel vm = new SetupViewModel();
 		final Bundle args = getArguments();
@@ -92,7 +84,7 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 			case R.id.btn_setup_profile: {
 //                provisionDeviceOwner();
 				final boolean encrypted = isDeviceEncrypted(getActivity());
-				if (encrypted) mTracker.send(new HitBuilders.EventBuilder().setCategory("Encryption").setAction("AlreadyEncrypted").build());
+				Analytics.$().setProperty("already-encrypted", "true");
 				if (! encrypted && isEncryptionRequired())
 					provisionManagedProfileRequiringEncryption();
 				else provisionManagedProfile();
@@ -128,9 +120,6 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 		final Activity activity = getActivity();
 		if (null == activity) return;
 
-		mTracker.setScreenName("ProvisionManagedProfile");
-		mTracker.send(new HitBuilders.ScreenViewBuilder().build());
-
 		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
 			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class));
@@ -143,20 +132,17 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 	}
 
 	private void provisionManagedProfileRequiringEncryption() {
-		mTracker.setScreenName("EncryptionWarning");
-		mTracker.send(new HitBuilders.ScreenViewBuilder().build());
-
 		new AlertDialog.Builder(getActivity()).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_encryption_required)
 				.setNegativeButton(R.string.dialog_button_continue, (d, w) -> {
-					mTracker.send(new HitBuilders.EventBuilder().setCategory("Encryption").setAction("Continue").build());
+					Analytics.$().event("encryption-continue").send();
 					provisionManagedProfile();
 				})
 				.setPositiveButton(R.string.dialog_button_learn_more, (d, w) -> {
-					mTracker.send(new HitBuilders.EventBuilder().setCategory("Encryption").setAction("LearnMore").build());
-					WebContent.view(getActivity(), URL_LEARN_MORE);
+					Analytics.$().event("encryption-learn-more").send();
+					WebContent.view(getActivity(), Config.URL_ABOUT_ENCRYPTION);
 				})
 				.setNeutralButton(R.string.dialog_button_skip_with_root, (d, w) -> {
-					mTracker.send(new HitBuilders.EventBuilder().setCategory("Encryption").setAction("SkipWithRootAttempt").build());
+					Analytics.$().event("encryption-skip-with-root").send();
 					new AsyncTask<Void, Void, Void>() {
 						@Override protected Void doInBackground(final Void... params) {
 							try {
@@ -169,10 +155,10 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 
 						@Override protected void onPostExecute(final Void ignored) {
 							if (isEncryptionRequired()) {
-								mTracker.send(new HitBuilders.EventBuilder().setCategory("Encryption").setAction("SkipWithRootFail").build());
+								Analytics.$().event("encryption-skip-with-root-failed").send();
 								provisionManagedProfileRequiringEncryption();
 							} else {
-								mTracker.send(new HitBuilders.EventBuilder().setCategory("Encryption").setAction("SkipWithRootDone").build());
+								Analytics.$().event("encryption-skip-with-root-done").send();
 								provisionManagedProfile();
 							}
 						}
@@ -188,11 +174,8 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 	}
 
 	private boolean isEncryptionRequired() {
-		try {
-			return ! (Boolean) Hack.into("android.os.SystemProperties").staticMethod("getBoolean", String.class, boolean.class).invoke("persist.sys.no_req_encrypt", false);
-		} catch (Hack.HackDeclaration.HackAssertionException | InvocationTargetException e) {
-			return true;
-		}
+		return ! Hack.into("android.os.SystemProperties").staticMethod("getBoolean").returning(boolean.class).fallbackReturning(false)
+				.withParams(String.class, boolean.class).invoke("persist.sys.no_req_encrypt", false).statically();
 	}
 
 	@Override
@@ -207,8 +190,6 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 	}
 
 	public SetupProfileFragment() {}
-
-	private final Tracker mTracker = AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP);
 
 	private static final String TAG = "Island.Setup";
 }

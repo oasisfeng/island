@@ -2,6 +2,8 @@ package com.oasisfeng.island;
 
 import android.app.Application;
 
+import com.oasisfeng.island.analytics.Analytics;
+
 /**
  * Application class
  *
@@ -11,6 +13,6 @@ public class IslandApplication extends Application {
 
 	@Override public void onCreate() {
 		super.onCreate();
-		AnalyticsTrackers.initialize(this);
+		Analytics.setContext(this);
 	}
 }

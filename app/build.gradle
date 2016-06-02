@@ -31,9 +31,13 @@ android {
 
 dependencies {
     compile project(':deagle')
-    compile 'com.android.support:design:23.3.0'
+    compile 'com.android.support:design:23.4.0'
     compile 'com.google.guava:guava:19.0'
-    compile 'com.google.android.gms:play-services-analytics:8.4.0'
+    compile 'com.google.firebase:firebase-analytics:9.0.0'
+    compile 'com.google.firebase:firebase-config:9.0.0'
     compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     testCompile 'junit:junit:4.12'
 }
+
+// Must be at the bottom of this file
+apply plugin: 'com.google.gms.google-services'

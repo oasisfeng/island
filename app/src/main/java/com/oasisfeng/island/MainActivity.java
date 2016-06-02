@@ -10,10 +10,11 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
-import com.google.android.gms.analytics.HitBuilders;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.setup.SetupProfileFragment;
@@ -35,8 +36,7 @@ public class MainActivity extends AppCompatActivity {
 		final boolean is_device_owner = island.isDeviceOwner();
 		if (! is_device_owner && ! getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
 			Toast.makeText(this, R.string.dialog_incompatible_rom, Toast.LENGTH_LONG).show();
-			AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP).send(new HitBuilders.EventBuilder()
-					.setCategory("Compatibility").setAction("NoManagedProfileFeature").build());
+			Analytics.$().event("compat-lack-managed-profile-feature").send();
 			finish();
 			return;
 		}
@@ -49,8 +49,7 @@ public class MainActivity extends AppCompatActivity {
 		final int user = Process.myUserHandle().hashCode();
 		if ((user == 0 && is_device_owner) || (user != 0 && island.isProfileOwner())) {
 			if (user != 0 && ! island.isProfileOwnerActive()) {        // Edge case: profile owner is set but device admin is not active. (May occur on MIUI if Island is uninstalled without managed profile removed first)
-				AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP).send(new HitBuilders.EventBuilder()
-						.setCategory("State").setAction("InactiveDeviceAdmin").build());
+				Analytics.$().event("inactive-device-admin").send();
 				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(this))
 						.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
@@ -63,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 		} else if (user == 0) {
 			final String admin_class = IslandDeviceAdminReceiver.class.getName();
 			final UserHandle profile = IslandManager.getManagedProfile(this);
-			String owner_name = null;
+			String owner_label = null;
 			if (profile != null) {
 				final ComponentName owner = IslandManager.getProfileOwner(this, profile);
 				if (owner != null && this_pkg.equals(owner.getPackageName()) && owner.getClassName().equals(admin_class)) {
@@ -73,13 +72,12 @@ public class MainActivity extends AppCompatActivity {
 						return;
 					}	// Fall through if failed to start
 				} else if (owner != null) try {
-                    owner_name = getPackageManager().getApplicationInfo(owner.getPackageName(), 0).loadLabel(getPackageManager()).toString();
-					AnalyticsTrackers.getInstance().get(AnalyticsTrackers.Target.APP).send(new HitBuilders.EventBuilder()
-							.setCategory("State").setAction("ExistentProfileOwner").setLabel(owner_name).build());
+                    owner_label = getPackageManager().getApplicationInfo(owner.getPackageName(), 0).loadLabel(getPackageManager()).toString();
+					Analytics.$().event("profile-owner-existent").with("package", owner.getPackageName()).with("label", owner_label).send();
                 } catch (final PackageManager.NameNotFoundException ignored) {}
             }
 			setContentView(R.layout.activity_main);
-			showSetupProfile(false, owner_name);
+			showSetupProfile(false, owner_label);
 		} else/* if (user != 0 && ! island.isProfileOwner()) */{
 			final Parcel parcel = Parcel.obtain();
 			try {
@@ -93,13 +91,11 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	private void showSetupProfile(final boolean has_other_owner, final String owner_name) {
+	private void showSetupProfile(final boolean has_other_owner, final @Nullable String owner_name) {
 		getFragmentManager().beginTransaction().replace(R.id.container, SetupProfileFragment.newInstance(has_other_owner, owner_name)).commit();
 	}
 
 	private void showAppListFragment() {
 		getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
 	}
-
-	private static final String TAG = "Island.Main";
 }
