@@ -285,7 +285,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		}
 
 		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
-				.setData(Uri.fromParts("package", pkg, String.valueOf(Process.myUserHandle().hashCode())));
+				.setData(Uri.fromParts("package", pkg, "u" + Process.myUserHandle().hashCode()));
 		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
 	}
 
