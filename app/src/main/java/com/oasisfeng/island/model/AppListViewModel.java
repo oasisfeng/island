@@ -46,6 +46,7 @@ public class AppListViewModel extends BaseObservable {
 		void enableApp(String pkg);
 		void launchApp(String pkg);
 		void createShortcut(String pkg);
+		void greenify(String pkg);
 		void removeClone(String pkg);
 		void installForOwner(String pkg);
 		CharSequence readAppName(String pkg) throws PackageManager.NameNotFoundException;
@@ -93,6 +94,11 @@ public class AppListViewModel extends BaseObservable {
 	public void onShortcutRequested(final View v) {
 		if (selection == null) return;
 		mController.createShortcut(selection.pkg);
+	}
+
+	public void onGreenifyRequested(final View v) {
+		if (selection == null) return;
+		mController.greenify(selection.pkg);
 	}
 
 	public void onRemovalRequested(final View v) {

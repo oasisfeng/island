@@ -60,6 +60,7 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:paddingTop="@dimen/margin_small"
+            android:paddingBottom="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@{@string/field_app_id(apps.selection.pkg)}"
             tools:text="APP ID: com.oasisfeng.island" />
@@ -67,7 +68,6 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:layout_marginStart="@dimen/margin_small"
             android:layout_marginEnd="@dimen/margin_small"
             style="@style/Widget.AppCompat.Button.Borderless.Colored"
@@ -76,6 +76,18 @@
             android:enabled="@{apps.selection.launchable &amp;&amp; (apps.selection.state == State.Alive || apps.selection.state == State.Frozen)}"
             android:onClick="@{apps::onShortcutRequested}"
             android:text="@string/button_create_shortcut" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/margin_small"
+            android:layout_marginEnd="@dimen/margin_small"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:minHeight="36dp"
+            android:maxLines="1"
+            android:enabled="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
+            android:onClick="@{apps::onGreenifyRequested}"
+            android:text="@string/button_greenify" />
 
         <LinearLayout
             android:layout_width="match_parent"

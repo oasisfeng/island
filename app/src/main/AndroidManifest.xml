@@ -62,14 +62,14 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".engine.ForwardInstaller"
+        <activity android:name=".engine.ActivityForwarder"
+                  android:exported="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
                   android:theme="@style/android:Theme.Translucent.NoTitleBar" >
             <intent-filter>
-                <action android:name="com.oasisfeng.island.action.INSTALL_APP" />
+                <action android:name="com.oasisfeng.island.action.FORWARD_ACTIVITY" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="package" />
             </intent-filter>
         </activity>
 
