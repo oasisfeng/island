@@ -284,8 +284,9 @@ public class IslandManager implements AppListViewModel.Controller {
 			return;
 		}
 
+		final long user_sn = ((UserManager) mContext.getSystemService(USER_SERVICE)).getSerialNumberForUser(Process.myUserHandle());
 		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
-				.setData(Uri.fromParts("package", pkg, "u" + Process.myUserHandle().hashCode()));
+				.setData(Uri.fromParts("package", pkg, "u" + user_sn));
 		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
 	}
 
