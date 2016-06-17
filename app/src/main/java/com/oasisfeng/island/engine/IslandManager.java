@@ -140,7 +140,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 		if (ensureInstallNonMarketAppAllowed()) {		// Launch package installer
 			final String mark = "clone-via-install-explained";
-			if (Scopes.app(mContext).isMarked(mark)) {
+			if (! Scopes.app(mContext).isMarked(mark)) {
 				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_install_explanation)
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 							Scopes.app(mContext).mark(mark);
@@ -164,7 +164,7 @@ public class IslandManager implements AppListViewModel.Controller {
 				return;
 			} else if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
 				final String mark = "clone-via-google-play-explained";
-				if (Scopes.app(mContext).isMarked(mark)) {
+				if (! Scopes.app(mContext).isMarked(mark)) {
 					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_google_play_explanation)
 							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 								Scopes.app(mContext).mark(mark);
@@ -176,7 +176,7 @@ public class IslandManager implements AppListViewModel.Controller {
 				Analytics.$().event("action-clone").with("package", pkg).send();
 			} else {
 				final String mark = "clone-via-builtin-market-explained";
-				if (Scopes.app(mContext).isMarked(mark)) {
+				if (! Scopes.app(mContext).isMarked(mark)) {
 					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_builtin_market_explanation)
 							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 								Scopes.app(mContext).mark(mark);
