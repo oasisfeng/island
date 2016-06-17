@@ -35,6 +35,7 @@ import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.model.GlobalStatus;
@@ -44,10 +45,13 @@ import com.oasisfeng.island.util.DevicePolicies;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
@@ -287,6 +291,17 @@ public class IslandManager implements AppListViewModel.Controller {
 		final long user_sn = ((UserManager) mContext.getSystemService(USER_SERVICE)).getSerialNumberForUser(Process.myUserHandle());
 		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
 				.setData(Uri.fromParts("package", pkg, "u" + user_sn));
+		// Enable API for Greenify in this profile
+		final ComponentName api = new ComponentName(mContext, ApiActivity.class);
+		final PackageManager pm = mContext.getPackageManager();
+		// TODO: Ensure ApiActivity is also enabled after re-installation.
+		if (pm.getComponentEnabledSetting(api) != PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+			pm.setComponentEnabledSetting(api, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+			mDevicePolicies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
+			final IntentFilter filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
+			filter.addDataScheme("package");
+			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
+		}
 		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
 	}
 
