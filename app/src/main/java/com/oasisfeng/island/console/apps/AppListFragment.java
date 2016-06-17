@@ -88,22 +88,27 @@ public class AppListFragment extends Fragment {
 
 	private final LauncherApps.Callback mLauncherAppsCallback = new LauncherApps.Callback() {
 		@Override public void onPackageRemoved(final String pkg, final UserHandle user) {
+			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
 			onPackageEvent(pkg);
 		}
 
 		@Override public void onPackageAdded(final String pkg, final UserHandle user) {
+			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
 			onPackageEvent(pkg);
 		}
 
 		@Override public void onPackageChanged(final String pkg, final UserHandle user) {
+			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
 			onPackageEvent(pkg);
 		}
 
 		@Override public void onPackagesAvailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
+			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
 			onPackagesEvent(pkgs);
 		}
 
 		@Override public void onPackagesUnavailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
+			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
 			onPackagesEvent(pkgs);
 		}
 	};

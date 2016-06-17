@@ -23,5 +23,6 @@ public class GlobalStatus {
 		}
 	}
 
-	public static final boolean running_in_owner = OWNER.equals(Process.myUserHandle());
+	public static final UserHandle CURRENT_USER = Process.myUserHandle();
+	public static final boolean running_in_owner = OWNER.equals(CURRENT_USER);
 }
