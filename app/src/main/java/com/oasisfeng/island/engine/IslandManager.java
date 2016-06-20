@@ -314,6 +314,16 @@ public class IslandManager implements AppListViewModel.Controller {
 		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
 	}
 
+	@Override public boolean block(final String pkg) {
+		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, true);
+		return failed == null || failed.length == 0;
+	}
+
+	@Override public boolean unblock(final String pkg) {
+		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
+		return failed == null || failed.length == 0;
+	}
+
 	public void destroy(final ImmutableList<CharSequence> exclusive_clones) {
 		if (Process.myUserHandle().hashCode() == 0 && isDeviceOwner()) {
 			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)

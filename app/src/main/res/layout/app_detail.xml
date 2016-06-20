@@ -7,6 +7,8 @@
 
     <data>
         <import type="android.content.pm.ApplicationInfo" />
+        <import type="android.os.Build.VERSION" />
+        <import type="android.os.Build.VERSION_CODES" />
         <import type="android.support.design.widget.BottomSheetBehavior" />
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="com.oasisfeng.island.BuildConfig" />
@@ -71,9 +73,27 @@
             android:text="@string/button_create_shortcut" />
 
         <Button style="@style/AppTheme.BorderlessActionButton"
-            android:enabled="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
+            bind:visible="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
             android:onClick="@{apps::onGreenifyRequested}"
             android:text="@string/button_greenify" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            bind:visible="@{BuildConfig.DEBUG &amp;&amp; VERSION.SDK_INT > VERSION_CODE.M}"
+            android:orientation="horizontal" >
+
+            <Button style="@style/AppTheme.BorderlessActionButton"
+                    android:layout_weight="1"
+                    android:onClick="@{apps::onBlockingRequested}"
+                    android:text="@string/button_block" />
+
+            <Button style="@style/AppTheme.BorderlessActionButton"
+                    android:layout_weight="1"
+                    android:onClick="@{apps::onUnblockingRequested}"
+                    android:text="@string/button_unblock" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -82,14 +102,14 @@
             android:orientation="horizontal" >
 
             <Button style="@style/AppTheme.BorderlessActionButton"
-                android:gravity="start"
-                android:paddingEnd="@dimen/margin_large" tools:ignore="RtlSymmetry" comment:x1="Workaround width clipping bug caused by different length of strings used here"
+                android:layout_weight="1"
                 android:enabled="@{apps.selection.state != State.NotCloned}" comment:x2="Alive, Frozen and Disabled"
                 android:onClick="@{apps::onRemovalRequested}"
                 android:text="@{! apps.selection.isSystem() ? (apps.selection.exclusive ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
                 tools:text="@string/button_remove_clone" />
 
             <Button style="@style/AppTheme.BorderlessActionButton"
+                android:layout_weight="1"
                 bind:visible="@{apps.selection == null || apps.selection.exclusive &amp;&amp; ! apps.selection.isSystem()}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
                 android:onClick="@{apps::onOwnerInstallationRequested}"
                 android:text="@string/button_install_outside" />

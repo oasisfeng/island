@@ -20,6 +20,8 @@
     <string name="field_app_id">APP ID: %1$s</string>
     <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_greenify">Auto-freeze with Greenify</string>
+    <string name="button_block">Block</string>
+    <string name="button_unblock">Unblock</string>
     <string name="button_remove_clone">Remove clone</string>
     <string name="button_uninstall_clone">Uninstall app</string>
     <string name="button_install_outside">Install outside</string>
