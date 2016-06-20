@@ -6,7 +6,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+
+import com.oasisfeng.hack.Hack;
 
 import java.util.List;
 
@@ -47,6 +50,32 @@ public class DevicePolicies {
 	/** @see DevicePolicyManager#isApplicationHidden(ComponentName, String) */
 	public boolean isApplicationHidden(final String pkg) {
 		return mDevicePolicyManager.isApplicationHidden(sCachedComponent, pkg);
+	}
+
+	/**
+	 * Called by device or profile owners to suspend packages for this user.
+	 * <p>A suspended package will not be able to start activities. Its notifications will be hidden, it will not show up in recents, will not be able to show toasts or dialogs or ring the device.
+	 * <p>The package must already be installed.
+	 *
+	 * @param pkgs	The package names to suspend or unsuspend.
+	 * @param suspended	If set to true than the packages will be suspended, if set to false the packages will be unsuspended.
+	 * @return an array of package names for which the suspended status is not set as requested in this method.
+	 */
+	public String[] setPackagesSuspended(final String[] pkgs, final boolean suspended) {
+		return Hack.into(DevicePolicyManager.class).method("setPackagesSuspended").returning(String[].class)
+				.fallbackReturning(null).withParams(ComponentName.class, String[].class, boolean.class)
+				.invoke(sCachedComponent, pkgs, suspended).on(mDevicePolicyManager);
+	}
+
+	/**
+	 * Called by device or profile owners to determine if a package is suspended.
+	 *
+	 * @param pkg The name of the package to retrieve the suspended status of.
+	 */
+	public boolean isPackageSuspended(final String pkg) throws NameNotFoundException {
+		return Hack.into(DevicePolicyManager.class).method("isPackageSuspended").throwing(NameNotFoundException.class)
+				.returning(boolean.class).fallbackReturning(false).withParams(ComponentName.class, String.class)
+				.invoke(sCachedComponent, pkg).on(mDevicePolicyManager);
 	}
 
 	/** @see DevicePolicyManager#isAdminActive(ComponentName) */
