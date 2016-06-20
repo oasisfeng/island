@@ -258,7 +258,6 @@ public class AppListViewModel extends BaseObservable {
 
 	public final void onItemLaunchIconClick(final View view) {
 		if (selection == null) return;
-		if (selection.getState() == State.Frozen) mController.defreezeApp(selection.pkg);
 		mController.launchApp(selection.pkg);
 	}
 

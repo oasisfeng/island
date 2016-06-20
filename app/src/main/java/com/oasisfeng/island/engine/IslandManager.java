@@ -102,6 +102,15 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	@Override public void launchApp(final String pkg) {
 		Analytics.$().event("action-launch").with("package", pkg).send();
+		if (mDevicePolicies.isApplicationHidden(pkg))
+			mDevicePolicies.setApplicationHidden(pkg, false);
+		try {
+			if (mDevicePolicies.isPackageSuspended(pkg))
+				mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
+		} catch (final PackageManager.NameNotFoundException ignored) {
+			return;
+		}
+
 		final Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
 		if (intent == null) {
 			Toast.makeText(mContext, "This app has no launch entrance.", Toast.LENGTH_SHORT).show();
