@@ -65,26 +65,12 @@
             android:text="@{@string/field_app_id(apps.selection.pkg)}"
             tools:text="APP ID: com.oasisfeng.island" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/margin_small"
-            android:layout_marginEnd="@dimen/margin_small"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:minHeight="36dp"
-            android:maxLines="1"
+        <Button style="@style/AppTheme.BorderlessActionButton"
             android:enabled="@{apps.selection.launchable &amp;&amp; (apps.selection.state == State.Alive || apps.selection.state == State.Frozen)}"
             android:onClick="@{apps::onShortcutRequested}"
             android:text="@string/button_create_shortcut" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/margin_small"
-            android:layout_marginEnd="@dimen/margin_small"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:minHeight="36dp"
-            android:maxLines="1"
+        <Button style="@style/AppTheme.BorderlessActionButton"
             android:enabled="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
             android:onClick="@{apps::onGreenifyRequested}"
             android:text="@string/button_greenify" />
@@ -95,29 +81,15 @@
             bind:visible="@{! status.running_in_owner}" comment:x1="Never show installation-related actions in God mode"
             android:orientation="horizontal" >
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingEnd="@dimen/margin_large" tools:ignore="RtlSymmetry" comment:x1="Workaround width clipping bug caused by different length of strings used here"
+            <Button style="@style/AppTheme.BorderlessActionButton"
                 android:gravity="start"
-                android:layout_marginStart="@dimen/margin_small"
-                android:layout_marginEnd="@dimen/margin_small"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                android:minHeight="36dp"
-                android:maxLines="1"
+                android:paddingEnd="@dimen/margin_large" tools:ignore="RtlSymmetry" comment:x1="Workaround width clipping bug caused by different length of strings used here"
                 android:enabled="@{apps.selection.state != State.NotCloned}" comment:x2="Alive, Frozen and Disabled"
                 android:onClick="@{apps::onRemovalRequested}"
                 android:text="@{! apps.selection.isSystem() ? (apps.selection.exclusive ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
                 tools:text="@string/button_remove_clone" />
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_small"
-                android:layout_marginEnd="@dimen/margin_small"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                android:minHeight="36dp"
-                android:maxLines="1"
+            <Button style="@style/AppTheme.BorderlessActionButton"
                 bind:visible="@{apps.selection == null || apps.selection.exclusive &amp;&amp; ! apps.selection.isSystem()}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
                 android:onClick="@{apps::onOwnerInstallationRequested}"
                 android:text="@string/button_install_outside" />
