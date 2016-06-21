@@ -80,7 +80,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            bind:visible="@{BuildConfig.DEBUG &amp;&amp; VERSION.SDK_INT > VERSION_CODE.M}"
+            bind:visible="@{BuildConfig.DEBUG &amp;&amp; VERSION.SDK_INT > VERSION_CODES.M}"
             android:orientation="horizontal" >
 
             <Button style="@style/AppTheme.BorderlessActionButton"
