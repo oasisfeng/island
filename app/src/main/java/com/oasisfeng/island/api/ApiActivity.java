@@ -17,9 +17,6 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.SystemAppsManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_SIGNATURES;
@@ -36,9 +33,8 @@ public class ApiActivity extends Activity {
 	public static final String ACTION_GET_APP_LIST = "com.oasisfeng.island.action.GET_APP_LIST";
 	private static final String EXTRA_PACKAGE_LIST = "packages";
 
-	private static final Collection<String> ALLOWED_CALLER_PACKAGES = ! BuildConfig.DEBUG ? Collections.singleton("com.oasisfeng.greenify")
-			: Arrays.asList("com.oasisfeng.greenify", "com.oasisfeng.greenify.debug");
-	private static final int KGreenifySignatureHash = BuildConfig.DEBUG ? -499626899: -373128424;   // Signature hash code of Greenify
+	private static final String ALLOWED_CALLER_PACKAGE = "com.oasisfeng.greenify";
+	private static final int KGreenifySignatureHash = -373128424;   // Signature hash code of Greenify
 
 	private void onStartCommand(final Intent intent) {
 		if (intent.getAction() == null) return;
@@ -67,7 +63,7 @@ public class ApiActivity extends Activity {
 
 	private boolean validateCallerIdentity() {
 		final String caller = getCallingPackage();
-		if (! ALLOWED_CALLER_PACKAGES.contains(caller)) return false;
+		if (! ALLOWED_CALLER_PACKAGE.equals(caller)) return false;
 		try { @SuppressWarnings("WrongConstant") @SuppressLint("PackageManagerGetSignatures")
 			final PackageInfo info = getPackageManager().getPackageInfo(caller, GET_SIGNATURES | GET_UNINSTALLED_PACKAGES);
 			for (final Signature signature : info.signatures)
@@ -80,7 +76,7 @@ public class ApiActivity extends Activity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (validateCallerIdentity())
+		if (BuildConfig.DEBUG || validateCallerIdentity())
 			onStartCommand(getIntent());
 		finish();
 	}
