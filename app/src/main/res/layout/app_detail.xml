@@ -73,7 +73,7 @@
             android:text="@string/button_create_shortcut" />
 
         <Button style="@style/AppTheme.BorderlessActionButton"
-            bind:visible="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
+            android:enabled="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
             android:onClick="@{apps::onGreenifyRequested}"
             android:text="@string/button_greenify" />
 
