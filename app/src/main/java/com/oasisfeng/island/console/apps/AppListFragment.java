@@ -7,13 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherApps;
 import android.databinding.Observable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -32,7 +30,6 @@ import com.oasisfeng.island.R;
 import com.oasisfeng.island.data.AppList;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
@@ -45,8 +42,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.support.design.widget.Snackbar.LENGTH_INDEFINITE;
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.or;
+import static com.oasisfeng.island.data.AppList.INSTALLED;
+import static com.oasisfeng.island.data.AppList.NON_CRITICAL_SYSTEM;
+import static com.oasisfeng.island.data.AppList.NON_SYSTEM;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
@@ -73,45 +74,15 @@ public class AppListFragment extends Fragment {
 		pkgs_filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
 		activity.registerReceiver(mPackagesEventsObserver, pkgs_filter);
 
-		((LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE)).registerCallback(mLauncherAppsCallback);
-
 		loadAppList(false);
 	}
 
 	@Override public void onDestroy() {
 		mViewModel.removeOnPropertyChangedCallback(onPropertyChangedCallback);
-		((LauncherApps) getActivity().getSystemService(Context.LAUNCHER_APPS_SERVICE)).unregisterCallback(mLauncherAppsCallback);
 		getActivity().unregisterReceiver(mPackagesEventsObserver);
 		getActivity().unregisterReceiver(mPackageEventsObserver);
 		super.onDestroy();
 	}
-
-	private final LauncherApps.Callback mLauncherAppsCallback = new LauncherApps.Callback() {
-		@Override public void onPackageRemoved(final String pkg, final UserHandle user) {
-			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
-			onPackageEvent(pkg);
-		}
-
-		@Override public void onPackageAdded(final String pkg, final UserHandle user) {
-			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
-			onPackageEvent(pkg);
-		}
-
-		@Override public void onPackageChanged(final String pkg, final UserHandle user) {
-			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
-			onPackageEvent(pkg);
-		}
-
-		@Override public void onPackagesAvailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
-			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
-			onPackagesEvent(pkgs);
-		}
-
-		@Override public void onPackagesUnavailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
-			if (! GlobalStatus.CURRENT_USER.equals(user)) return;
-			onPackagesEvent(pkgs);
-		}
-	};
 
 	private final BroadcastReceiver mPackageEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final Uri data = intent.getData();
@@ -226,9 +197,9 @@ public class AppListFragment extends Fragment {
 
 	private Map<String, ApplicationInfo> populateApps(final boolean all) {
 		final Context context = getActivity();
-		final FluentIterable<ApplicationInfo> all_apps = AppList.populate(context);
-		final FluentIterable<ApplicationInfo> apps = all ? all_apps : all_apps.filter(app -> (app.flags & FLAG_SYSTEM) == 0 || AppList.ALWAYS_VISIBLE_SYS_PKGS.contains(app.packageName)
-				|| (! SystemAppsManager.isCritical(app.packageName) && IslandManager.isLaunchable(context, app.packageName)));
+		final AppList all_apps = AppList.all(context).excludeSelf();
+		final FluentIterable<ApplicationInfo> apps = all ? all_apps.build()
+				: all_apps.build().filter(INSTALLED).filter(or(NON_SYSTEM, and(NON_CRITICAL_SYSTEM, all_apps.LAUNCHABLE)));
 		// TODO: Also include system apps with running services (even if no launcher activities)
 		final ImmutableList<ApplicationInfo> ordered_apps = apps.toSortedList(AppList.CLONED_FIRST);
 
@@ -244,20 +215,19 @@ public class AppListFragment extends Fragment {
 		final AppLabelCache cache = AppLabelCache.load(getActivity());
 		mViewModel.removeAllApps();
 
+		final boolean visible_initially = isVisible();
 		cache.loadLabelTextOnly(app_vms.keySet(), new AppLabelCache.LabelLoadCallback() {
+
 			@Override public boolean isCancelled(final String pkg) {
-				return false;
+				return visible_initially && ! isVisible();
 			}
 
 			@Override public void onTextLoaded(final String pkg, final CharSequence text, final int flags) {
 				Log.d(TAG, "onTextLoaded for " + pkg + ": " + text);
-				AppViewModel item = mViewModel.getApp(pkg);
-				if (item == null) {
-					final boolean launchable = mIslandManager.isLaunchable(pkg);
-					if (! launchable && ! mShowAllApps) return;		// TODO: Filter launchable later
-					item = mViewModel.addApp(pkg, text, flags, launchable);
-					Log.v(TAG, "Add: " + item.pkg);
-				} else Log.v(TAG, "Replace: " + item.pkg);
+				final boolean launchable = mIslandManager.isLaunchable(pkg);
+				if (! launchable && ! mShowAllApps) return;		// TODO: Filter launchable later
+				final AppViewModel item = mViewModel.addApp(pkg, text, flags, launchable);
+				Log.v(TAG, "Add: " + item.pkg);
 			}
 
 			@Override public void onError(final String pkg, final Throwable error) {

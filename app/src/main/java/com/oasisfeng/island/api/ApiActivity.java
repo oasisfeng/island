@@ -14,11 +14,9 @@ import com.google.common.collect.ImmutableList;
 import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.data.AppList;
 import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.engine.SystemAppsManager;
 
 import java.util.ArrayList;
 
-import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_SIGNATURES;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
@@ -52,10 +50,7 @@ public class ApiActivity extends Activity {
 	}
 
 	private ArrayList<String> getInstalledApps() {
-		final ImmutableList<ApplicationInfo> apps = AppList.populate(this)
-				.filter(app -> (app.flags & FLAG_SYSTEM) == 0 || AppList.ALWAYS_VISIBLE_SYS_PKGS.contains(app.packageName)
-						|| (! SystemAppsManager.isCritical(app.packageName) && IslandManager.isLaunchable(this, app.packageName)))
-				.toSortedList(AppList.CLONED_FIRST);
+		final ImmutableList<ApplicationInfo> apps = AppList.available(this).excludeSelf().build().toSortedList(AppList.CLONED_FIRST);
 		final ArrayList<String> app_list = new ArrayList<>(apps.size());
 		for (final ApplicationInfo app : apps) app_list.add(app.packageName);
 		return app_list;
