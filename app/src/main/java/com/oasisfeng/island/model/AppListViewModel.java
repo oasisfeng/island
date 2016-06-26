@@ -2,10 +2,9 @@ package com.oasisfeng.island.model;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.databinding.BaseObservable;
 import android.databinding.Bindable;
 import android.databinding.DataBindingUtil;
-import android.databinding.ObservableList;
+import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
@@ -16,16 +15,12 @@ import android.view.View;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.island.BR;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppViewModel.State;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 
@@ -35,7 +30,7 @@ import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
  * Created by Oasis on 2015/7/7.
  */
 @SuppressWarnings("unused")
-public class AppListViewModel extends BaseObservable {
+public class AppListViewModel extends AbstractAppListViewModel {
 
 	public interface Controller {
 		@Nullable ApplicationInfo getAppInfo(String pkg);
@@ -56,35 +51,20 @@ public class AppListViewModel extends BaseObservable {
 		boolean isCloneExclusive(String pkg);
 	}
 
-	enum FabAction { None, Clone, Lock, Unlock, Enable }
+	private enum FabAction { None, Clone, Lock, Unlock, Enable }
 
 	public boolean include_sys_apps;
-	private final ObservableSortedList<AppViewModel> apps = new ObservableSortedList<>(AppViewModel.class);
-	private final Map<String, AppViewModel> apps_by_pkg = new HashMap<>();
 	private final transient Controller mController;
-	private transient AppViewModel selection;
-
-	@Bindable public @Nullable AppViewModel getSelection() { return selection; }
-
-	public void clearSelection() {
-		setSelection(null);
-	}
-
-	private void setSelection(final AppViewModel selection) {
-		if (this.selection == selection) return;
-		if (this.selection != null) this.selection.selected.set(false);
-		this.selection = selection;
-		if (selection != null) selection.selected.set(true);
-		updateFab();
-		notifyPropertyChanged(BR.selection);
-	}
 
 	public AppListViewModel(final Controller controller) {
 		mController = controller;
+		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
+			if (property == BR.selection) updateFab();
+		}});
 	}
 
 	private void updateFab() {
-		if (selection != null) switch (selection.getState()) {
+		if (getSelection() != null) switch (getSelection().getState()) {
 		case Alive: setFabAction(FabAction.Lock); break;
 		case Frozen: setFabAction(FabAction.Unlock); break;
 		case Disabled: setFabAction(FabAction.Enable); break;
@@ -93,34 +73,39 @@ public class AppListViewModel extends BaseObservable {
 		} else setFabAction(FabAction.None);
 	}
 
+	public final void onItemLaunchIconClick(final View view) {
+		if (getSelection() == null) return;
+		mController.launchApp(getSelection().pkg);
+	}
+
 	public void onShortcutRequested(final View v) {
-		if (selection == null) return;
-		mController.createShortcut(selection.pkg);
+		if (getSelection() == null) return;
+		mController.createShortcut(getSelection().pkg);
 	}
 
 	public void onGreenifyRequested(final View v) {
-		if (selection == null) return;
-		mController.greenify(selection.pkg);
+		if (getSelection() == null) return;
+		mController.greenify(getSelection().pkg);
 	}
 
 	public void onBlockingRequested(final View v) {
-		if (selection == null) return;
-		mController.block(selection.pkg);
+		if (getSelection() == null) return;
+		mController.block(getSelection().pkg);
 	}
 
 	public void onUnblockingRequested(final View v) {
-		if (selection == null) return;
-		mController.unblock(selection.pkg);
+		if (getSelection() == null) return;
+		mController.unblock(getSelection().pkg);
 	}
 
 	public void onRemovalRequested(final View v) {
-		if (selection == null) return;
-		mController.removeClone(selection.pkg);
+		if (getSelection() == null) return;
+		mController.removeClone(getSelection().pkg);
 	}
 
 	public void onOwnerInstallationRequested(final View v) {
-		if (selection == null) return;
-		mController.installForOwner(selection.pkg);
+		if (getSelection() == null) return;
+		mController.installForOwner(getSelection().pkg);
 	}
 
 	/** This API is not provided in AppViewModel because we may need to update or remove the item in SortedList.
@@ -134,10 +119,10 @@ public class AppListViewModel extends BaseObservable {
 		final State state = mController.getAppState(info);
 		final AppViewModel app = getApp(pkg);
 		if (app != null) {
-			final int index = apps.indexOf(app);
+			final int index = indexOf(app);		// Index must be retrieved before any change which may change the index.
 			setAppState(app, state);
 			app.exclusive.set(mController.isCloneExclusive(pkg));
-			apps.updateItemAt(index, app);
+			updateAppAt(index, app);
 			return app;
 		} else if (include_sys_apps || (info.flags & FLAG_SYSTEM) == 0) try {
 			return addApp(pkg, mController.readAppName(pkg), info.flags, mController.isLaunchable(pkg), state);
@@ -156,58 +141,33 @@ public class AppListViewModel extends BaseObservable {
 		updateFab();
 	}
 
-	public void removeAllApps() {
-		apps_by_pkg.clear();
-		apps.clear();
-	}
-
 	public AppViewModel addApp(final String pkg, final CharSequence name, final int flag, final boolean launchable) {
 		final ApplicationInfo info = mController.getAppInfo(pkg);
 		if (info == null) return null;
 		return addApp(info, name, flag, launchable);
 	}
 
-	public AppViewModel addApp(final ApplicationInfo info, final CharSequence name, final int flag, final boolean launchable) {
+	private AppViewModel addApp(final ApplicationInfo info, final CharSequence name, final int flag, final boolean launchable) {
 		return addApp(info.packageName, name, flag, launchable, mController.getAppState(info));
 	}
 
 	private AppViewModel addApp(final String pkg, final CharSequence name, final int flag, final boolean launchable, final State state) {
 		if (pkg == null) throw new IllegalArgumentException("pkg is null");
-		final AppViewModel existent = apps_by_pkg.get(pkg);
+		final AppViewModel existent = getApp(pkg);
 		if (existent != null) return existent;
 		final AppViewModel app = new AppViewModel(pkg, name, flag, launchable, mController.isCloneExclusive(pkg));
 		setAppState(app, state);
-		apps_by_pkg.put(pkg, app);
-		apps.add(app);
+		putApp(app);
 		return app;
 	}
 
-	private void removeApp(final String pkg) {
-		if (pkg == null) return;
-		final AppViewModel app = apps_by_pkg.remove(pkg);
-		if (app == null) return;
-		apps.remove(app);
-	}
-
-	public @Nullable AppViewModel getApp(final String pkg) {
-		return apps_by_pkg.get(pkg);
-	}
-
-	public boolean isEmpty() {
-		return apps_by_pkg.isEmpty();
-	}
-
-	@Deprecated // For generated binding class only, should never be called.
-	public ObservableList<AppViewModel> getItems() {
-		return apps;
-	}
-
 	public ImmutableList<CharSequence> getNonSystemExclusiveCloneNames() {
-		return FluentIterable.from(apps_by_pkg.values()).filter(app -> ! app.isSystem() && app.exclusive.get())
+		return FluentIterable.from(allApps()).filter(app -> ! app.isSystem() && app.exclusive.get())
 				.transform(app -> app.name).toList();
 	}
 
 	public final void onFabClick(final View view) {
+		final AppViewModel selection = getSelection();
 		if (selection == null) return;
 		final String pkg = selection.pkg;
 		switch (fab_action) {
@@ -217,10 +177,10 @@ public class AppListViewModel extends BaseObservable {
 			break;
 		case Lock:
 			// Select the next alive app, or clear selection.
-			final int next_index = apps.indexOf(selection) + 1;
-			if (next_index >= apps.size()) clearSelection();
+			final int next_index = indexOf(selection) + 1;
+			if (next_index >= size()) clearSelection();
 			else {
-				final AppViewModel next = apps.get(next_index);
+				final AppViewModel next = getAppAt(next_index);
 				if (next.getState() == State.Alive)
 					setSelection(next);
 				else clearSelection();
@@ -265,12 +225,7 @@ public class AppListViewModel extends BaseObservable {
 	public final void onItemClick(final View view) {
 		final AppEntryBinding binding = DataBindingUtil.findBinding(view);
 		final AppViewModel clicked = binding.getApp();
-		setSelection(clicked != selection ? clicked : null);	// Click the selected one to deselect
-	}
-
-	public final void onItemLaunchIconClick(final View view) {
-		if (selection == null) return;
-		mController.launchApp(selection.pkg);
+		setSelection(clicked != getSelection() ? clicked : null);	// Click the selected one to deselect
 	}
 
 	public final void onBottomSheetClick(final View view) {
@@ -298,5 +253,4 @@ public class AppListViewModel extends BaseObservable {
 			item.setVariable(BR.apps, ((AppListBinding) container).getApps());
 		}
 	};
-
 }
