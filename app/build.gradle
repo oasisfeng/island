@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 24
     buildToolsVersion "23.0.3"
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 24
     }
 
     dataBinding {
@@ -31,10 +31,10 @@ android {
 
 dependencies {
     compile project(':deagle')
-    compile 'com.android.support:design:23.4.0'
+    compile 'com.android.support:design:24.1.1'
     compile 'com.google.guava:guava:19.0'
-    compile 'com.google.firebase:firebase-analytics:9.0.0'
-    compile 'com.google.firebase:firebase-config:9.0.0'
+    compile 'com.google.firebase:firebase-analytics:9.0.2'
+    compile 'com.google.firebase:firebase-config:9.0.2'
     compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     testCompile 'junit:junit:4.12'
 }
