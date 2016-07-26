@@ -36,6 +36,7 @@ import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.ApiActivity;
+import com.oasisfeng.island.api.ApiTokenManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.model.GlobalStatus;
@@ -52,8 +53,6 @@ import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
 /**
  * The engine of Island
@@ -63,9 +62,9 @@ import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 public class IslandManager implements AppListViewModel.Controller {
 
 	private static final int MAX_DESTROYING_APPS_LIST = 8;
-	public static final int REQUEST_CODE_INSTALL = 0x101;
+	private static final int REQUEST_CODE_INSTALL = 0x101;
 	private static final String GREENIFY_PKG = BuildConfig.DEBUG ? "com.oasisfeng.greenify.debug" : "com.oasisfeng.greenify";
-	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 208 : 210;	// The minimal version of Greenify with support for Island.
+	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 208 : 215;	// TODO: The minimal version of Greenify with support for Island.
 
 	public IslandManager(final Context context) {
 		mContext = context;
@@ -74,8 +73,9 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	public @Nullable ApplicationInfo getAppInfo(final String pkg) {
-		try { @SuppressWarnings("WrongConstant")
-		final ApplicationInfo app_info = mContext.getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES | GET_DISABLED_COMPONENTS);
+		try { @SuppressWarnings({"WrongConstant", "deprecation"})
+		final ApplicationInfo app_info = mContext.getPackageManager().getApplicationInfo(pkg,
+				PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_COMPONENTS);
 			return app_info;
 		} catch (final PackageManager.NameNotFoundException e) {
 			return null;
@@ -122,8 +122,8 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	@Override public void cloneApp(final String pkg) {
 		final PackageManager pm = mContext.getPackageManager();
-		try { @SuppressWarnings("WrongConstant")
-			final ApplicationInfo info = pm.getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
+		try { @SuppressWarnings({"WrongConstant", "deprecation"})
+			final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 			cloneApp(info);
 		} catch (final PackageManager.NameNotFoundException ignored) {}
 	}
@@ -209,8 +209,8 @@ public class IslandManager implements AppListViewModel.Controller {
 	}
 
 	private void ensureSystemAppEnabled(final String pkg) {
-		try { @SuppressWarnings("WrongConstant")
-			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
+		try { @SuppressWarnings({"WrongConstant", "deprecation"})
+			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 			if ((info.flags & FLAG_INSTALLED) != 0) defreezeApp(pkg);
 			else cloneApp(info);
 		} catch (final PackageManager.NameNotFoundException ignored) {}
@@ -223,8 +223,8 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	@Override public void removeClone(final String pkg) {
 		final int flags;
-		try { @SuppressWarnings("WrongConstant")
-			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
+		try { @SuppressWarnings({"WrongConstant", "deprecation"})
+			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 			flags = info.flags;
 		} catch (final PackageManager.NameNotFoundException e) {
 			Log.e(TAG, "Try to remove non-existent clone: " + pkg);
@@ -254,7 +254,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	@Override public CharSequence readAppName(final String pkg) throws PackageManager.NameNotFoundException {
 		final PackageManager pm = mContext.getPackageManager();
-		@SuppressWarnings("WrongConstant") final ApplicationInfo info = pm.getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
+		@SuppressWarnings({"WrongConstant", "deprecation"}) final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 		return info.loadLabel(pm);
 	}
 
@@ -274,7 +274,8 @@ public class IslandManager implements AppListViewModel.Controller {
 		final boolean greenify_installed = mLauncherApps.get().isPackageEnabled(GREENIFY_PKG, OWNER);
 		int greenify_version = 0;
 		if (greenify_installed) try {
-			@SuppressWarnings("WrongConstant") final PackageInfo info = mContext.getPackageManager().getPackageInfo(GREENIFY_PKG, GET_UNINSTALLED_PACKAGES);
+			@SuppressWarnings({"WrongConstant", "deprecation"}) final PackageInfo info = mContext.getPackageManager()
+					.getPackageInfo(GREENIFY_PKG, PackageManager.GET_UNINSTALLED_PACKAGES);
 			greenify_version = info.versionCode;
 		} catch (final PackageManager.NameNotFoundException ignored) {}
 		final boolean unavailable_or_version_too_low = greenify_version < MIN_GREENIFY_VERSION;
@@ -299,7 +300,8 @@ public class IslandManager implements AppListViewModel.Controller {
 
 		final long user_sn = ((UserManager) mContext.getSystemService(USER_SERVICE)).getSerialNumberForUser(Process.myUserHandle());
 		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
-				.setData(Uri.fromParts("package", pkg, "u" + user_sn));
+				.setData(Uri.fromParts("package", pkg, "u" + user_sn))
+				.putExtra(ApiActivity.EXTRA_API_TOKEN, new ApiTokenManager(mContext).getToken(GREENIFY_PKG));
 		// Enable API for Greenify in this profile
 		final ComponentName api = new ComponentName(mContext, ApiActivity.class);
 		final PackageManager pm = mContext.getPackageManager();
@@ -437,10 +439,11 @@ public class IslandManager implements AppListViewModel.Controller {
 		return isLaunchable(mContext, pkg);
 	}
 
-	public static boolean isLaunchable(final Context context, final String pkg) {
+	private static boolean isLaunchable(final Context context, final String pkg) {
 		final PackageManager pm = context.getPackageManager();
 		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg);
-		@SuppressWarnings("WrongConstant") final ResolveInfo resolved = pm.resolveActivity(intent, GET_DISABLED_COMPONENTS | GET_UNINSTALLED_PACKAGES);
+		@SuppressWarnings({"WrongConstant", "deprecation"}) final ResolveInfo resolved
+				= pm.resolveActivity(intent, PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_UNINSTALLED_PACKAGES);
 		return resolved != null;
 	}
 
