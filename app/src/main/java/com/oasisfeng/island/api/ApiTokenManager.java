@@ -23,7 +23,7 @@ public class ApiTokenManager {
 	public String getToken(final String pkg) {
 		final String token = mTokenStore.getString(pkg, null);
 		if (token != null) return token;
-		final String new_token = Hex.encodeHexString(SecureRandom.getSeed(8));
+		final String new_token = Hex.encodeHexString(SecureRandom.getSeed(8)).toUpperCase();
 		mTokenStore.edit().putString(pkg, new_token).apply();	// TODO: Potential failure in persistence, consider pre-allocation.
 		return new_token;
 	}
