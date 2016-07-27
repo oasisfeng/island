@@ -36,8 +36,8 @@ public class AppListViewModel extends AbstractAppListViewModel {
 		@Nullable ApplicationInfo getAppInfo(String pkg);
 		State getAppState(ApplicationInfo pkg);
 		void cloneApp(String pkg);
-		void freezeApp(String pkg, String reason);
-		void defreezeApp(String pkg);
+		boolean freezeApp(String pkg, String reason);
+		boolean defreezeApp(String pkg);
 		void enableApp(String pkg);
 		void launchApp(String pkg);
 		void createShortcut(String pkg);

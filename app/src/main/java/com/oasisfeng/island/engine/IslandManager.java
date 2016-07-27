@@ -90,14 +90,14 @@ public class IslandManager implements AppListViewModel.Controller {
 		return State.Alive;
 	}
 
-	@Override public void freezeApp(final String pkg, final String reason) {
+	@Override public boolean freezeApp(final String pkg, final String reason) {
 		Analytics.$().event("action-freeze").with("package", pkg).send();
-		mDevicePolicies.setApplicationHidden(pkg, true);
+		return mDevicePolicies.setApplicationHidden(pkg, true);
 	}
 
-	@Override public void defreezeApp(final String pkg) {
+	@Override public boolean defreezeApp(final String pkg) {
 		Analytics.$().event("action-defreeze").with("package", pkg).send();
-		mDevicePolicies.setApplicationHidden(pkg, false);
+		return mDevicePolicies.setApplicationHidden(pkg, false);
 	}
 
 	@Override public void launchApp(final String pkg) {
