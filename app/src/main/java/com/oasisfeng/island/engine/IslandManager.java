@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
@@ -92,18 +93,20 @@ public class IslandManager implements AppListViewModel.Controller {
 
 	@Override public boolean freezeApp(final String pkg, final String reason) {
 		Analytics.$().event("action-freeze").with("package", pkg).send();
-		return mDevicePolicies.setApplicationHidden(pkg, true);
+		return mDevicePolicies.setApplicationHidden(pkg, true) || mDevicePolicies.isApplicationHidden(pkg);
 	}
 
 	@Override public boolean defreezeApp(final String pkg) {
 		Analytics.$().event("action-defreeze").with("package", pkg).send();
-		return mDevicePolicies.setApplicationHidden(pkg, false);
+		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
 	}
 
 	@Override public void launchApp(final String pkg) {
 		Analytics.$().event("action-launch").with("package", pkg).send();
-		if (mDevicePolicies.isApplicationHidden(pkg))
-			mDevicePolicies.setApplicationHidden(pkg, false);
+		if (mDevicePolicies.isApplicationHidden(pkg)) {
+			if (! mDevicePolicies.setApplicationHidden(pkg, false))
+				if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return;	// Not installed, just give up.
+		}
 		try {
 			if (mDevicePolicies.isPackageSuspended(pkg))
 				mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);

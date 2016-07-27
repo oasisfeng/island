@@ -36,7 +36,9 @@ public class AppListViewModel extends AbstractAppListViewModel {
 		@Nullable ApplicationInfo getAppInfo(String pkg);
 		State getAppState(ApplicationInfo pkg);
 		void cloneApp(String pkg);
+		/** @return whether the package is frozen, or true if not found */
 		boolean freezeApp(String pkg, String reason);
+		/** @return whether the package is unfrozen, or false if not found */
 		boolean defreezeApp(String pkg);
 		void enableApp(String pkg);
 		void launchApp(String pkg);

@@ -42,12 +42,14 @@ public class DevicePolicies {
 		return mDevicePolicyManager.enableSystemApp(sCachedComponent, intent);
 	}
 
-	/** @see DevicePolicyManager#setApplicationHidden(ComponentName, String, boolean) */
+	/** @return Whether the hidden setting of the package was successfully updated, (false if not found)
+	 *  @see DevicePolicyManager#setApplicationHidden(ComponentName, String, boolean) */
 	public boolean setApplicationHidden(final String pkg, final boolean hidden) {
 		return mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, hidden);
 	}
 
-	/** @see DevicePolicyManager#isApplicationHidden(ComponentName, String) */
+	/** @return true if the package is hidden or not found, false otherwise.
+	 *  @see DevicePolicyManager#isApplicationHidden(ComponentName, String) */
 	public boolean isApplicationHidden(final String pkg) {
 		return mDevicePolicyManager.isApplicationHidden(sCachedComponent, pkg);
 	}
