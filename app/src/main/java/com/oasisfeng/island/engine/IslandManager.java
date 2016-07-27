@@ -310,8 +310,9 @@ public class IslandManager implements AppListViewModel.Controller {
 			pm.setComponentEnabledSetting(api, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
 			mDevicePolicies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
 			final IntentFilter filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
+			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Batch freeze API without data
 			filter.addDataScheme("package");
-			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
+			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
 		}
 		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
 	}
