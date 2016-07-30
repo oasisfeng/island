@@ -87,6 +87,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.FREEZE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <receiver android:name=".IslandDeviceAdminReceiver"
