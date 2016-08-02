@@ -303,7 +303,7 @@ public class IslandManager implements AppListViewModel.Controller {
 
 		final long user_sn = ((UserManager) mContext.getSystemService(USER_SERVICE)).getSerialNumberForUser(Process.myUserHandle());
 		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
-				.setData(Uri.fromParts("package", pkg, "u" + user_sn))
+				.setData(Uri.fromParts("package", pkg, "usn=" + user_sn))
 				.putExtra(ApiActivity.EXTRA_API_TOKEN, new ApiTokenManager(mContext).getToken(GREENIFY_PKG));
 		// Enable API for Greenify in this profile
 		final ComponentName api = new ComponentName(mContext, ApiActivity.class);
