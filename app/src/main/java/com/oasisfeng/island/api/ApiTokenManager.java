@@ -38,7 +38,7 @@ public class ApiTokenManager {
 	}
 
 	boolean verifyToken(final String token) {
-		return mTokenStore.contains(token);
+		return mTokenStore.getAll().containsValue(token);	// TODO: Optimize the performance
 	}
 
 	private final SharedPreferences mTokenStore;	// Key: token, String value: package
