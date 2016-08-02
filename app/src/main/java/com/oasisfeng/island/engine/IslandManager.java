@@ -304,8 +304,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		final long user_sn = ((UserManager) mContext.getSystemService(USER_SERVICE)).getSerialNumberForUser(Process.myUserHandle());
 		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
 				.setData(Uri.fromParts("package", pkg, "u" + user_sn))
-				.putExtra(ApiActivity.EXTRA_API_TOKEN, new ApiTokenManager(mContext).getToken(GREENIFY_PKG))
-				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				.putExtra(ApiActivity.EXTRA_API_TOKEN, new ApiTokenManager(mContext).getToken(GREENIFY_PKG));
 		// Enable API for Greenify in this profile
 		final ComponentName api = new ComponentName(mContext, ApiActivity.class);
 		final PackageManager pm = mContext.getPackageManager();
@@ -318,7 +317,9 @@ public class IslandManager implements AppListViewModel.Controller {
 			filter.addDataScheme("package");
 			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
 		}
-		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
+		if (mContext instanceof Activity)
+			ActivityForwarder.startActivityForResultAsOwner((Activity) mContext, mDevicePolicies, intent, 0);
+		else throw new IllegalStateException("Not an activity context");
 	}
 
 	@Override public boolean block(final String pkg) {

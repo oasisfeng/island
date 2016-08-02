@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.oasisfeng.island.util.DevicePolicies;
 
@@ -24,6 +25,11 @@ public class ActivityForwarder extends Activity {
 
 	private static final String ACTION_FORWARD_ACTIVITY = "com.oasisfeng.island.action.FORWARD_ACTIVITY";
 
+	static void startActivityForResultAsOwner(final Activity activity, final DevicePolicies dp, final Intent intent, final int request_code) {
+		prepare(activity, dp);
+		activity.startActivityForResult(new Intent(ACTION_FORWARD_ACTIVITY).putExtra(EXTRA_INTENT, intent), request_code);
+	}
+
 	static void startActivityAsOwner(final Context context, final DevicePolicies dp, final Intent intent) {
 		prepare(context, dp);
 		context.startActivity(new Intent(ACTION_FORWARD_ACTIVITY).putExtra(EXTRA_INTENT, intent));
@@ -40,6 +46,7 @@ public class ActivityForwarder extends Activity {
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		final Intent intent = getIntent(), payload;
+		Log.d("Forwarder", "Intent: " + intent);
 		if (ACTION_FORWARD_ACTIVITY.equals(intent.getAction()) && (payload = intent.getParcelableExtra(EXTRA_INTENT)) != null)
 			try {
 				startActivityForResult(payload, 0);
