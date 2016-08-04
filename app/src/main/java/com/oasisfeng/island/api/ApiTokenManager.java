@@ -21,10 +21,14 @@ public class ApiTokenManager {
 
 	public String getToken(final String pkg) {
 		final String token = mTokenStore.getString(pkg, null);
-		if (token != null) return token;
+		if (token != null) return buildClientToken(pkg, token);
 		final String new_token = generateToken();
 		mTokenStore.edit().putString(pkg, new_token).apply();	// TODO: Potential failure in persistence, consider pre-allocation.
-		return new_token;
+		return buildClientToken(pkg, new_token);
+	}
+
+	private String buildClientToken(final String pkg, final String token) {
+		return token + "@" + pkg;
 	}
 
 	private String generateToken() {
@@ -38,7 +42,11 @@ public class ApiTokenManager {
 	}
 
 	boolean verifyToken(final String token) {
-		return mTokenStore.getAll().containsValue(token);	// TODO: Optimize the performance
+		final int pos_at = token.indexOf('@');
+		if (pos_at > 0) {
+			final String internal_token = mTokenStore.getString(token.substring(pos_at + 1), null);
+			return internal_token != null && token.substring(0, pos_at).equals(internal_token);
+		} else return mTokenStore.getAll().containsValue(token);		// Old style token
 	}
 
 	private final SharedPreferences mTokenStore;	// Key: token, String value: package
