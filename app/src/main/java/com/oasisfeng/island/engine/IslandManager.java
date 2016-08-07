@@ -312,10 +312,14 @@ public class IslandManager implements AppListViewModel.Controller {
 		if (pm.getComponentEnabledSetting(api) != PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
 			pm.setComponentEnabledSetting(api, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
 			mDevicePolicies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
-			final IntentFilter filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
-			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Batch freeze API without data
-			filter.addDataScheme("package");
-			mDevicePolicies.addCrossProfileIntentFilter(filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
+
+			final IntentFilter batch_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
+			batch_filter.addDataScheme("packages");
+			mDevicePolicies.addCrossProfileIntentFilter(batch_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Batch freeze API without data
+
+			final IntentFilter single_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
+			single_filter.addDataScheme("package");
+			mDevicePolicies.addCrossProfileIntentFilter(single_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
 		}
 		if (mContext instanceof Activity)
 			ActivityForwarder.startActivityForResultAsOwner((Activity) mContext, mDevicePolicies, intent, 0);
