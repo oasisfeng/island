@@ -42,6 +42,7 @@ public class ApiTokenManager {
 	}
 
 	boolean verifyToken(final String token) {
+		if (token == null) return false;
 		final int pos_at = token.indexOf('@');
 		if (pos_at > 0) {
 			final String internal_token = mTokenStore.getString(token.substring(pos_at + 1), null);
