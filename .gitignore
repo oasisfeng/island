@@ -1,9 +1,13 @@
 # Local directories
 /release
 /captures
+/proguard
+/design
+/dist
 
 # Local configuration file (sdk path, etc)
 /local.properties
+/keystore.jks
 
 # Android Studio
 .idea

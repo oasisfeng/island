@@ -12,11 +12,34 @@
 
     <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
 
+        <Toolbar
+            android:id="@+id/appbar"
+            android:layout_width="match_parent"
+            android:layout_height="?android:attr/actionBarSize"
+            android:background="?android:attr/colorPrimary"
+            android:elevation="4dp"
+            android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
+            android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" -" tools:ignore="HardcodedText"/>
+
+            <Spinner
+                android:id="@+id/filters"
+                android:entries="@array/app_list_filters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
+
+        </Toolbar>
+
         <android.support.v7.widget.RecyclerView
             android:id="@+id/app_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingTop="8dp"
+            android:layout_marginTop="?android:attr/actionBarSize"
             android:paddingBottom="8dp"
             android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
             android:paddingEnd="-16dp"
@@ -33,14 +56,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/fab_margin"
+            app:layout_anchor="@id/app_detail"
+            app:layout_anchorGravity="top|right|end"
+            app:layout_behavior="com.oasisfeng.island.util.FloatingActionButtonBehavior"
             android:clickable="true"
             android:src="@{apps.fabImage}"
             bind:visible="@{apps.fabImage != 0}"
             android:onClick="@{apps::onFabClick}"
-            app:layout_anchor="@id/app_detail"
-            app:layout_anchorGravity="top|right|end"
             app:backgroundTint="@{apps.fabBgColor}"
-            app:rippleColor="?attr/colorControlHighlight"
+            app:rippleColor="?android:attr/colorControlHighlight"
             app:elevation="@dimen/fab_elevation"
             app:pressedTranslationZ="@dimen/fab_elevation_pressed" />
 

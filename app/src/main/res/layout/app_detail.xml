@@ -42,7 +42,7 @@
             android:paddingEnd="@dimen/margin_medium"
             android:maxLines="1"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="@{apps.selection.name}"
+            android:text="@{apps.selection.info.label}"
             tools:text="@string/app_name" />
 
         <TextView
@@ -52,7 +52,7 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.exclusive ? @string/status_exclusive : &quot;&quot;)}"
+            android:text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.isExclusive() ? @string/status_exclusive : &quot;&quot;)}"
             tools:text="Frozen" />
 
         <TextView
@@ -64,11 +64,11 @@
             android:paddingTop="@dimen/margin_small"
             android:paddingBottom="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{@string/field_app_id(apps.selection.pkg)}"
+            android:text="@{@string/field_app_id(apps.selection.info.packageName)}"
             tools:text="APP ID: com.oasisfeng.island" />
 
         <Button style="@style/AppTheme.BorderlessActionButton"
-            android:enabled="@{apps.selection.launchable &amp;&amp; (apps.selection.state == State.Alive || apps.selection.state == State.Frozen)}"
+            android:enabled="@{apps.selection.info.launchable &amp;&amp; (apps.selection.state == State.Alive || apps.selection.state == State.Frozen)}"
             android:onClick="@{apps::onShortcutRequested}"
             android:text="@string/button_create_shortcut" />
 
@@ -105,12 +105,12 @@
                 android:layout_weight="1"
                 android:enabled="@{apps.selection.state != State.NotCloned}" comment:x2="Alive, Frozen and Disabled"
                 android:onClick="@{apps::onRemovalRequested}"
-                android:text="@{! apps.selection.isSystem() ? (apps.selection.exclusive ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
+                android:text="@{! apps.selection.isSystem() ? (apps.selection.isExclusive() ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
                 tools:text="@string/button_remove_clone" />
 
             <Button style="@style/AppTheme.BorderlessActionButton"
                 android:layout_weight="1"
-                bind:visible="@{apps.selection == null || apps.selection.exclusive &amp;&amp; ! apps.selection.isSystem()}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
+                bind:visible="@{apps.selection == null || apps.selection.isExclusive() &amp;&amp; ! apps.selection.isSystem()}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
                 android:onClick="@{apps::onOwnerInstallationRequested}"
                 android:text="@string/button_install_outside" />
 

@@ -2,119 +2,85 @@ package com.oasisfeng.island.console.apps;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.databinding.Observable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.oasisfeng.android.ui.AppLabelCache;
+import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.R;
-import com.oasisfeng.island.data.AppList;
+import com.oasisfeng.island.data.IslandAppInfo;
+import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
-import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
-import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import static android.support.design.widget.Snackbar.LENGTH_INDEFINITE;
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.or;
-import static com.oasisfeng.island.data.AppList.INSTALLED;
-import static com.oasisfeng.island.data.AppList.NON_CRITICAL_SYSTEM;
-import static com.oasisfeng.island.data.AppList.NON_SYSTEM;
+import java8.util.function.Predicate;
+import java8.util.function.Predicates;
+import java8.util.stream.Collectors;
+import java8.util.stream.RefStreams;
+
+import static com.oasisfeng.island.data.IslandAppListProvider.NON_SYSTEM;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
 
 	private static final String KStateKeyRecyclerView = "apps.recycler.layout";
 
+	private static final Predicate<IslandAppInfo> CLONED = IslandAppInfo::isInstalledInUser;
+	private static final Predicate<IslandAppInfo> CLONEABLE = Predicates.negate(IslandAppInfo::isInstalledInUser);
+
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
+
 		mIslandManager = new IslandManager(activity);
 		mViewModel = new AppListViewModel(mIslandManager);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
+		IslandAppListProvider.getInstance(activity).registerObserver(this::onPackageEvent);
+
 		new IslandProvisioning(activity, mIslandManager).startProfileOwnerProvisioningIfNeeded();
 
-		final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
-		filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
-		filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
-		filter.addDataScheme("package");
-		activity.registerReceiver(mPackageEventsObserver, filter);
-
-		final IntentFilter pkgs_filter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
-		pkgs_filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-		activity.registerReceiver(mPackagesEventsObserver, pkgs_filter);
-
-		loadAppList(false);
+		rebuildAppViewModels();
 	}
 
 	@Override public void onDestroy() {
+		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(this::onPackageEvent);
 		mViewModel.removeOnPropertyChangedCallback(onPropertyChangedCallback);
-		getActivity().unregisterReceiver(mPackagesEventsObserver);
-		getActivity().unregisterReceiver(mPackageEventsObserver);
 		super.onDestroy();
 	}
 
-	private final BroadcastReceiver mPackageEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
-		final Uri data = intent.getData();
-		if (data == null) return;
-		final String pkg = data.getSchemeSpecificPart(), this_pkg = context.getPackageName();
-		if (pkg == null || this_pkg.equals(pkg)) return;
-		onPackageEvent(pkg);
-	}};
-
-	private final BroadcastReceiver mPackagesEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
-		final String[] pkgs = intent.getStringArrayExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST);
-		if (pkgs == null) return;
-		final String this_pkg = context.getPackageName();
-		onPackagesEvent(FluentIterable.from(Arrays.asList(pkgs)).filter(pkg -> ! this_pkg.equals(pkg)).toArray(String.class));
-	}};
-
-	private void onPackageEvent(final String pkg) {
-		final AppViewModel app_before = mViewModel.getApp(pkg);
-		final boolean just_cloned = app_before != null && app_before.getState() == State.NotCloned;
-		final AppViewModel app_after = mViewModel.updateApp(pkg);
-
+	private void onPackageEvent(final String[] pkgs) {
 		final Activity activity = getActivity();
-		if (activity != null && just_cloned && app_after != null && app_after.getState() == State.Alive && mIslandManager.isLaunchable(app_after.pkg))
-			Snackbar.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app_after.name), LENGTH_INDEFINITE)
-					.setAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg)).show();
+		if (activity == null) return;
+		final Map<String, IslandAppInfo> apps = IslandAppListProvider.getInstance(activity).map();
 
-		invalidateOptionsMenu();
-	}
+		final Predicate<IslandAppInfo> filters = activeFilters();
+		RefStreams.of(pkgs).map(apps::get).filter(app -> app != null).forEach(app -> {
+			if (filters.test(app)) mViewModel.putApp(app.packageName, new AppViewModel(app));
+			else mViewModel.removeApp(app.packageName);
+		});
 
-	private void onPackagesEvent(final String[] pkgs) {
-		for (final String pkg : pkgs)
-			mViewModel.updateApp(pkg);
+// TODO
+//		Snackbars.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app.getLabel()),
+//				Snackbars.withAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg))).show();
+
 		invalidateOptionsMenu();
 	}
 
@@ -130,11 +96,28 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-		setHasOptionsMenu(true);
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
 		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
+		getActivity().setActionBar(mBinding.appbar);
+		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
+				onListFilterChanged(position);
+			}
+			@Override public void onNothingSelected(final AdapterView<?> parent) {}
+		});
+		// Work-around a bug in Android N DP4.
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) mBinding.appbar.inflateMenu(R.menu.main_actions);
 		return mBinding.getRoot();
+	}
+
+	private void onListFilterChanged(final int index) {
+		switch (index) {
+		case 0: mAppsSubsetFilter = CLONED; break;
+		case 1: mAppsSubsetFilter = CLONEABLE; break;
+		default: throw new IllegalStateException();
+		}
+		rebuildAppViewModels();
 	}
 
 	@Override public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
@@ -142,7 +125,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
-		menu.findItem(R.id.menu_show_all).setChecked(mShowAllApps);
+		menu.findItem(R.id.menu_show_system).setChecked(mShowSystemApps);
 		menu.findItem(R.id.menu_destroy).setVisible(! GlobalStatus.running_in_owner);
 		menu.findItem(R.id.menu_deactivate).setVisible(GlobalStatus.running_in_owner);
 //		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
@@ -150,14 +133,17 @@ public class AppListFragment extends Fragment {
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_show_all:
-			item.setChecked(mViewModel.include_sys_apps = mShowAllApps = ! item.isChecked());	// Toggle the checked state
+		case R.id.menu_show_system:
+			item.setChecked(mViewModel.include_sys_apps = mShowSystemApps = ! item.isChecked());	// Toggle the checked state
 			mViewModel.clearSelection();
-			loadAppList(mShowAllApps);
+			rebuildAppViewModels();
 			return true;
 		case R.id.menu_destroy:
 		case R.id.menu_deactivate:
-			mIslandManager.destroy(mViewModel.getNonSystemExclusiveCloneNames());
+			final List<String> exclusive_clones = IslandAppListProvider.getInstance(getActivity()).installedApps()
+					.filter(IslandAppListProvider.NON_SYSTEM).filter(app -> ! app.checkInstalledInOwner())
+					.map(AppInfo::getLabel).collect(Collectors.toList());
+			mIslandManager.destroy(exclusive_clones);
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -166,22 +152,6 @@ public class AppListFragment extends Fragment {
 	@Override public void onStop() {
 		mBinding.getApps().clearSelection();
 		super.onStop();
-	}
-
-	private void loadAppList(final boolean all) {
-		Log.d(TAG, all ? "Start loading app list (all)..." : "Start loading app list...");
-		// Build app list if not yet (or invalidated)
-		new AsyncTask<Void, Void, Map<String, ApplicationInfo>>() {
-			@Override protected Map<String, ApplicationInfo> doInBackground(final Void... params) {
-				final Activity activity = getActivity();
-				if (activity == null) return Collections.emptyMap();
-				return populateApps(all);
-			}
-
-			@Override protected void onPostExecute(final Map<String, ApplicationInfo> items) {
-				fillAppViewModels(items);
-			}
-		}.execute();
 	}
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
@@ -195,47 +165,34 @@ public class AppListFragment extends Fragment {
 			mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(KStateKeyRecyclerView));
 	}
 
-	private Map<String, ApplicationInfo> populateApps(final boolean all) {
-		final Context context = getActivity();
-		final AppList all_apps = AppList.all(context).excludeSelf();
-		final FluentIterable<ApplicationInfo> apps = all ? all_apps.build()
-				: all_apps.build().filter(INSTALLED).filter(or(NON_SYSTEM, and(NON_CRITICAL_SYSTEM, all_apps.LAUNCHABLE)));
-		// TODO: Also include system apps with running services (even if no launcher activities)
-		final ImmutableList<ApplicationInfo> ordered_apps = apps.toSortedList(AppList.CLONED_FIRST);
+//	private Map<String, AppInfo> populateApps() {
+//		final Context context = getActivity();
+//		return AppList.installed(context).filter(AppList.excludeSelf(context)).collect(Collectors.toMap());
+//	}
+//
+//	private Map<String, AppInfo> populateApps(final boolean all) {
+//		final Context context = getActivity();
+//		final AppList all_apps = AppList.all(context).excludeSelf();
+//		final FluentIterable<AppInfo> apps = all ? all_apps.build()
+//				: all_apps.build().filter(INSTALLED_IN_USER).filter(or(NON_SYSTEM, and(NON_CRITICAL_SYSTEM, all_apps.LAUNCHABLE)));
+//		// TODO: Also include system apps with running services (even if no launcher activities)
+//		final ImmutableList<AppInfo> ordered_apps = apps.toSortedList(AppList.CLONED_FIRST);
+//
+//		final Map<String, ApplicationInfo> app_vm_by_pkg = new LinkedHashMap<>();	// LinkedHashMap to preserve the order
+//		for (final ApplicationInfo app : ordered_apps)
+//			app_vm_by_pkg.put(app.packageName, app);
+//		return app_vm_by_pkg;
+//	}
 
-		final Map<String, ApplicationInfo> app_vm_by_pkg = new LinkedHashMap<>();	// LinkedHashMap to preserve the order
-		for (final ApplicationInfo app : ordered_apps)
-			app_vm_by_pkg.put(app.packageName, app);
-		return app_vm_by_pkg;
+	private void rebuildAppViewModels() {
+		final List<AppViewModel> apps = IslandAppListProvider.getInstance(getActivity()).installedApps()
+				.filter(IslandAppListProvider.excludeSelf(getActivity()))
+				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+		mViewModel.replaceApps(apps);
 	}
 
-	private void fillAppViewModels(final Map<String/* pkg */, ApplicationInfo> app_vms) {
-		final Activity activity = getActivity();
-		if (activity == null) return;
-		final AppLabelCache cache = AppLabelCache.load(getActivity());
-		mViewModel.removeAllApps();
-
-		final boolean visible_initially = isVisible();
-		cache.loadLabelTextOnly(app_vms.keySet(), new AppLabelCache.LabelLoadCallback() {
-
-			@Override public boolean isCancelled(final String pkg) {
-				return visible_initially && ! isVisible();
-			}
-
-			@Override public void onTextLoaded(final String pkg, final CharSequence text, final int flags) {
-				Log.d(TAG, "onTextLoaded for " + pkg + ": " + text);
-				final boolean launchable = mIslandManager.isLaunchable(pkg);
-				if (! launchable && ! mShowAllApps) return;		// TODO: Filter launchable later
-				final AppViewModel item = mViewModel.addApp(pkg, text, flags, launchable);
-				Log.v(TAG, "Add: " + item.pkg);
-			}
-
-			@Override public void onError(final String pkg, final Throwable error) {
-				Log.w(TAG, "Failed to load label for " + pkg, error);
-			}
-
-			@Override public void onIconLoaded(final String pkg, final Drawable icon) {}
-		});
+	private Predicate<IslandAppInfo> activeFilters() {
+		return mShowSystemApps ? mAppsSubsetFilter : Predicates.and(mAppsSubsetFilter, NON_SYSTEM);
 	}
 
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */
@@ -244,7 +201,6 @@ public class AppListFragment extends Fragment {
 	private IslandManager mIslandManager;
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
-	private boolean mShowAllApps;
-
-	private static final String TAG = "AppListFragment";
+	private Predicate<IslandAppInfo> mAppsSubsetFilter = CLONED;
+	private boolean mShowSystemApps;
 }

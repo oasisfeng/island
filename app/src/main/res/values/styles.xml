@@ -1,20 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Duplicate entries without "android" namespace are for AppCompat,
+         to be compatible with Android Design Support Library -->
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/primary</item>
         <item name="colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:colorAccent">@color/accent</item>
         <item name="colorAccent">@color/accent</item>
+        <item name="android:colorControlHighlight">@color/control_highlight</item>
         <item name="colorControlHighlight">@color/control_highlight</item>
     </style>
 
-    <style name="AppTheme.Dark" parent="Theme.AppCompat">
+    <style name="AppTheme.Dark" parent="android:Theme.Material">
+        <item name="android:colorPrimary">@color/primary</item>
         <item name="colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:colorAccent">@color/accent</item>
         <item name="colorAccent">@color/accent</item>
     </style>
 
-    <style name="AppTheme.BorderlessActionButton" parent="Widget.AppCompat.Button.Borderless.Colored">
+    <style name="AppThemeOverlay.Dark.Popup" parent="android:ThemeOverlay.Material.Dark">
+        <item name="android:colorBackground">?android:attr/colorPrimaryDark</item>
+    </style>
+
+    <style name="AppTheme.BorderlessActionButton" parent="android:Widget.Material.Button.Borderless.Colored">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_marginStart">@dimen/margin_small</item>

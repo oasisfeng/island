@@ -12,7 +12,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
@@ -26,8 +25,7 @@ import android.widget.Toast;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.ui.WebContent;
@@ -39,7 +37,6 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.api.ApiTokenManager;
 import com.oasisfeng.island.model.AppListViewModel;
-import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -71,24 +68,6 @@ public class IslandManager implements AppListViewModel.Controller {
 		mContext = context;
 		mDevicePolicies = new DevicePolicies(context);
 		mLauncherApps = Suppliers.memoize(() -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE));
-	}
-
-	public @Nullable ApplicationInfo getAppInfo(final String pkg) {
-		try { @SuppressWarnings({"WrongConstant", "deprecation"})
-		final ApplicationInfo app_info = mContext.getPackageManager().getApplicationInfo(pkg,
-				PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_COMPONENTS);
-			return app_info;
-		} catch (final PackageManager.NameNotFoundException e) {
-			return null;
-		}
-	}
-
-	public State getAppState(final ApplicationInfo app_info) {
-		if ((app_info.flags & ApplicationInfo.FLAG_INSTALLED) == 0) return State.NotCloned;
-		if (! app_info.enabled) return State.Disabled;
-		if (mDevicePolicies.isApplicationHidden(app_info.packageName))
-			return State.Frozen;
-		return State.Alive;
 	}
 
 	@Override public boolean freezeApp(final String pkg, final String reason) {
@@ -255,16 +234,6 @@ public class IslandManager implements AppListViewModel.Controller {
 		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
 	}
 
-	@Override public CharSequence readAppName(final String pkg) throws PackageManager.NameNotFoundException {
-		final PackageManager pm = mContext.getPackageManager();
-		@SuppressWarnings({"WrongConstant", "deprecation"}) final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
-		return info.loadLabel(pm);
-	}
-
-	@Override public boolean isCloneExclusive(final String pkg) {
-		return ! mLauncherApps.get().isPackageEnabled(pkg, OWNER);
-	}
-
 	@Override public void createShortcut(final String pkg) {
 		Analytics.$().event("action-create-shortcut").with("package", pkg).send();
 		if (AppLaunchShortcut.createOnLauncher(mContext, pkg)) {
@@ -336,7 +305,7 @@ public class IslandManager implements AppListViewModel.Controller {
 		return failed == null || failed.length == 0;
 	}
 
-	public void destroy(final ImmutableList<CharSequence> exclusive_clones) {
+	public void destroy(final List<String> exclusive_clones) {
 		if (Process.myUserHandle().hashCode() == 0 && isDeviceOwner()) {
 			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 					.setMessage(R.string.dialog_deactivate_message)
@@ -351,7 +320,7 @@ public class IslandManager implements AppListViewModel.Controller {
 							removeProfileOwner();
 							return;
 						}
-						final String names = Joiner.on('\n').skipNulls().join(FluentIterable.from(exclusive_clones).limit(MAX_DESTROYING_APPS_LIST));
+						final String names = Joiner.on('\n').skipNulls().join(Iterables.limit(exclusive_clones, MAX_DESTROYING_APPS_LIST));
 						final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
 						new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
 								.setMessage(mContext.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
@@ -443,18 +412,6 @@ public class IslandManager implements AppListViewModel.Controller {
 		} catch (final IllegalArgumentException e) {
 			Log.e(TAG, "Failed to enable: " + pkg, e);
 		}
-	}
-
-	public boolean isLaunchable(final String pkg) {
-		return isLaunchable(mContext, pkg);
-	}
-
-	private static boolean isLaunchable(final Context context, final String pkg) {
-		final PackageManager pm = context.getPackageManager();
-		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg);
-		@SuppressWarnings({"WrongConstant", "deprecation"}) final ResolveInfo resolved
-				= pm.resolveActivity(intent, PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_UNINSTALLED_PACKAGES);
-		return resolved != null;
 	}
 
 	private final Context mContext;

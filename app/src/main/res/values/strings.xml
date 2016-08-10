@@ -4,6 +4,11 @@
     <string name="app_name">Island</string>
     <string name="profile_name">Island</string>
 
+    <string-array name="app_list_filters">
+        <item>Cloned</item>
+        <item>Cloneable</item>
+    </string-array>
+
     <string name="state_alive">Active</string>
     <string name="state_frozen">Frozen</string>
     <string name="state_disabled">Disabled</string>
@@ -28,7 +33,7 @@
     <string name="button_disable_clone">Disable clone</string>
     <string name="button_enable_clone">Enable clone</string>
 
-    <string name="menu_show_all_apps">Show all apps</string>
+    <string name="menu_show_all_apps">Show system apps</string>
     <string name="menu_remove_clone">Remove this clone</string>
     <string name="menu_destroy_island">Destroy Island…</string>
     <string name="menu_deactivate_island">Deactivate Island…</string>
@@ -49,7 +54,7 @@
     <string name="dialog_destroy_exclusives_message">Since exclusively installed in Island, the following %1$d app(s) will be UNINSTALLED effectively from your device if Island is destroyed.\n\n%2$s\n\nAre you sure you want to proceed?</string>
     <string name="dialog_deactivate_message">Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.</string>
     <string name="dialog_cannot_destroy_message">Cannot destroy Island due to privilege failure. Please try removing it in system \"Settings - Accounts - Remove work profile\".</string>
-    <string name="dialog_add_shortcut">Add a launch shortcut for %1$s? It will de-freeze the app if needed.</string>
+    <string name="dialog_add_shortcut">Add a shortcut to de-freeze and launch %1$s?</string>
     <string name="dialog_button_continue">Continue</string>
     <string name="dialog_button_skip_with_root">Skip (root)</string>
     <string name="dialog_button_learn_more">Learn more</string>

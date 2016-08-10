@@ -101,6 +101,12 @@
             </intent-filter>
         </receiver>
 
+        <provider
+            android:authorities="com.oasisfeng.island.apps"
+            android:name="com.oasisfeng.island.data.IslandAppListProvider"
+            android:exported="false"
+            android:multiprocess="true" />
+
     </application>
 
 </manifest>
