@@ -25,18 +25,14 @@ public class AppInfo extends ApplicationInfo {
 		super(base);
 		//noinspection ConstantConditions, context should never be null
 		mContext = provider.getContext();
+		mLabel = nonLocalizedLabel != null ? nonLocalizedLabel.toString() : provider.getCachedOrTempLabel(this);
 		if (last != null) {
 			mLastInfo = last;
 			last.mLastInfo = null;	// Only store the adjacent last.
 		}
 	}
 
-	public String getLabel() {
-		final String label = mCachedLabel;
-		if (label != null) return label;
-		// TODO: Use the label of the first launcher activity if no app label.
-		return mCachedLabel = loadLabel(context().getPackageManager()).toString();
-	}
+	public String getLabel() { return mLabel; }
 
 	/** Is launchable (neither disabled nor hidden) */
 	public boolean isLaunchable() { return mIsLaunchable.get(); }
@@ -53,9 +49,6 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	public AppInfo getLastInfo() { return mLastInfo; }
-
-	/** Called by {@link AppListProvider} */
-	@CallSuper protected void onConfigurationChanged() { mCachedLabel = null; }
 
 	@NonNull protected Context context() { return mContext; }
 
@@ -94,14 +87,13 @@ public class AppInfo extends ApplicationInfo {
 	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory when UI is hidden */
 	@CallSuper protected void trimMemoryOnUiHidden() {
 		mCachedIcon = null;
-		mLastInfo = null;
 	}
 
 	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory in memory-critical situation */
 	@CallSuper protected void trimMemoryOnCritical() {
 		mCachedIcon = null;
 		mLastInfo = null;
-		mCachedLabel = null;	// TODO: Worth trimming?
+		// mLabel is not worth trimming and kept for performance
 	}
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
@@ -112,9 +104,10 @@ public class AppInfo extends ApplicationInfo {
 		return dr;
 	}
 
-	private String mCachedLabel;
+	private final String mLabel;
 	private Drawable mCachedIcon;
 	private final @NonNull Context mContext;
-	private AppInfo mLastInfo;	// The information about the same package before its state is changed to this instance
+	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
+	private AppInfo mLastInfo;
 	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoize(() -> context().getPackageManager().getLaunchIntentForPackage(packageName) != null);
 }

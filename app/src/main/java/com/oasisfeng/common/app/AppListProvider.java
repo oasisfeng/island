@@ -24,6 +24,7 @@ import com.oasisfeng.island.BuildConfig;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import java8.util.stream.Stream;
@@ -38,6 +39,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 
 	private static final String AUTHORITY = BuildConfig.APPLICATION_ID + ".apps";
 
+	/** The implementation should be as fast as possible, since it may be called in mass. */
 	protected abstract T createEntry(final ApplicationInfo base, final T last);
 
 	public Stream<T> installedApps() {
@@ -135,15 +137,33 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		notifyUpdate(pkgs);
 	}
 
-	private void notifyUpdate(final String[] pkgs) {
-		mEventRegistry.notifyCallbacks(pkgs, 0, null);
+	/** Called by {@link AppLabelCache} when app label is lazily-loaded or updated (changed from cache) */
+	private void onAppLabelUpdate(final String pkg) {
+		final T entry = mAppMap.get().get(pkg);
+		if (entry == null) return;
+		final T new_entry = createEntry(entry, null);
+		mAppMap.get().put(pkg, new_entry);
+
+		notifyUpdate(new String[] { pkg });
 	}
 
 	@Override public void onConfigurationChanged(final Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		if (! mStarted) return;
-		StreamSupport.stream(mAppMap.get().values()).forEach(AppInfo::onConfigurationChanged);
+		for (final Map.Entry<String, T> entry : mAppMap.get().entrySet())
+			entry.setValue(createEntry(entry.getValue(), null));
+
+		final Set<String> pkgs = mAppMap.get().keySet();
+		notifyUpdate(pkgs.toArray(new String[pkgs.size()]));		// TODO: Better solution for performance?
 	}
+
+	String getCachedOrTempLabel(final AppInfo info) {
+		final String cached = mAppLabelCache.get().get(info);
+		if (cached != null) return cached;
+		return info.packageName;		// As temporary label
+	}
+
+	private void notifyUpdate(final String[] pkgs) { mEventRegistry.notifyCallbacks(pkgs, 0, null); }
 
 	private final BroadcastReceiver mPackageEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final Uri data = intent.getData();
@@ -204,6 +224,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 			callback.onPackageEvent(pkgs);
 		}
 	});
+	private final Supplier<AppLabelCache> mAppLabelCache = Suppliers.memoize(() -> new AppLabelCache(context(), this::onAppLabelUpdate));
 
 	@SuppressWarnings("deprecation") private static final int PM_FLAGS_GET_APP_INFO = PackageManager.GET_UNINSTALLED_PACKAGES
 																					| PackageManager.GET_DISABLED_COMPONENTS
