@@ -32,10 +32,10 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	public String getLabel() {
-		final String label = mLabel;
+		final String label = mCachedLabel;
 		if (label != null) return label;
 		// TODO: Use the label of the first launcher activity if no app label.
-		return mLabel = loadLabel(context().getPackageManager()).toString();
+		return mCachedLabel = loadLabel(context().getPackageManager()).toString();
 	}
 
 	/** Is launchable (neither disabled nor hidden) */
@@ -55,7 +55,7 @@ public class AppInfo extends ApplicationInfo {
 	public AppInfo getLastInfo() { return mLastInfo; }
 
 	/** Called by {@link AppListProvider} */
-	@CallSuper protected void onConfigurationChanged() { mLabel = null; }
+	@CallSuper protected void onConfigurationChanged() { mCachedLabel = null; }
 
 	@NonNull protected Context context() { return mContext; }
 
@@ -76,7 +76,7 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	@UiThread private void loadIcon(final @Nullable IconFilter filter, final IconConsumer consumer, final boolean need_badge) {
-		if (mIcon != null) consumer.accept(mIcon);
+		if (mCachedIcon != null) consumer.accept(mCachedIcon);
 		else new AsyncTask<Void, Void, Drawable>() {
 
 			@Override protected Drawable doInBackground(final Void... params) {
@@ -85,10 +85,23 @@ public class AppInfo extends ApplicationInfo {
 
 			@Override protected void onPostExecute(final Drawable drawable) {
 				final Drawable icon = (filter != null ? filter.process(drawable) : drawable);
-				mIcon = icon;
+				mCachedIcon = icon;
 				consumer.accept(icon);
 			}
 		}.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+	}
+
+	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory when UI is hidden */
+	@CallSuper protected void trimMemoryOnUiHidden() {
+		mCachedIcon = null;
+		mLastInfo = null;
+	}
+
+	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory in memory-critical situation */
+	@CallSuper protected void trimMemoryOnCritical() {
+		mCachedIcon = null;
+		mLastInfo = null;
+		mCachedLabel = null;	// TODO: Worth trimming?
 	}
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
@@ -99,8 +112,8 @@ public class AppInfo extends ApplicationInfo {
 		return dr;
 	}
 
-	private String mLabel;
-	private Drawable mIcon;
+	private String mCachedLabel;
+	private Drawable mCachedIcon;
 	private final @NonNull Context mContext;
 	private AppInfo mLastInfo;	// The information about the same package before its state is changed to this instance
 	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoize(() -> context().getPackageManager().getLaunchIntentForPackage(packageName) != null);

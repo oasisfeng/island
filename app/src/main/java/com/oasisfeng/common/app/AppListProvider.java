@@ -165,7 +165,21 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	}};
 
 	@Override public void onTrimMemory(final int level) {
-		// FIXME
+		if (! mStarted) return;
+		final ConcurrentHashMap<String, T> apps = mAppMap.get();
+		switch (level) {
+		case TRIM_MEMORY_RUNNING_MODERATE:
+		case TRIM_MEMORY_RUNNING_LOW:
+		case TRIM_MEMORY_RUNNING_CRITICAL:
+		case TRIM_MEMORY_UI_HIDDEN:
+		case TRIM_MEMORY_BACKGROUND:
+			Log.i(TAG, "Trim memory for level " + level);
+			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnUiHidden);
+		case TRIM_MEMORY_MODERATE:
+		case TRIM_MEMORY_COMPLETE:
+			Log.i(TAG, "Clean memory for level " + level);
+			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnCritical);
+		}
 	}
 
 	@Override public boolean onCreate() {
