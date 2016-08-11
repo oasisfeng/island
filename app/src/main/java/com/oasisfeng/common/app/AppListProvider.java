@@ -195,10 +195,12 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		case TRIM_MEMORY_BACKGROUND:
 			Log.i(TAG, "Trim memory for level " + level);
 			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnUiHidden);
+			break;
 		case TRIM_MEMORY_MODERATE:
 		case TRIM_MEMORY_COMPLETE:
 			Log.i(TAG, "Clean memory for level " + level);
 			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnCritical);
+			break;
 		}
 	}
 
