@@ -5,15 +5,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.SystemAppsManager;
+import com.oasisfeng.island.util.DevicePolicies;
 
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
+import static android.os.UserManager.ALLOW_PARENT_PROFILE_APP_LINKING;
 
 /**
  * The one-time provisioning for newly created managed profile of Island
@@ -57,6 +60,8 @@ public class IslandProvisioning {
 		new SystemAppsManager(mContext, mIslandManager).prepareSystemApps();
 		mIslandManager.enableProfile();
 		enableAdditionalForwarding();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+			new DevicePolicies(mContext).addUserRestriction(ALLOW_PARENT_PROFILE_APP_LINKING);
 	}
 
 	private void enableAdditionalForwarding() {
