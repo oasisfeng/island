@@ -1,8 +1,10 @@
 package com.oasisfeng.common.app;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -13,6 +15,8 @@ import android.support.annotation.UiThread;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Information about an installed app, more than {@link ApplicationInfo}.
@@ -34,8 +38,15 @@ public class AppInfo extends ApplicationInfo {
 
 	public String getLabel() { return mLabel; }
 
-	/** Is launchable (neither disabled nor hidden) */
+	/** Is launchable (and neither disabled nor hidden) */
 	public boolean isLaunchable() { return mIsLaunchable.get(); }
+	private final Supplier<Boolean> mIsLaunchable = lazyLessMutable(() -> checkLaunchable(0));
+
+	protected boolean checkLaunchable(final int flags) {
+		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
+		final ResolveInfo resolved = context().getPackageManager().resolveActivity(intent, flags);
+		return resolved != null;
+	}
 
 	/** Compare label without loading the string. */
 	boolean labelEquals(final AppInfo another) {
@@ -96,6 +107,9 @@ public class AppInfo extends ApplicationInfo {
 		// mLabel is not worth trimming and kept for performance
 	}
 
+	protected <T> Supplier<T> lazyImmutable(final Supplier<T> supplier) { return Suppliers.memoize(supplier); }
+	protected <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, TimeUnit.SECONDS); }
+
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) return loadUnbadgedIcon(pm);
 		Drawable dr = null;
@@ -109,5 +123,4 @@ public class AppInfo extends ApplicationInfo {
 	private final @NonNull Context mContext;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;
-	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoize(() -> context().getPackageManager().getLaunchIntentForPackage(packageName) != null);
 }
