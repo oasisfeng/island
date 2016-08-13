@@ -11,7 +11,7 @@ import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.oasisfeng.island.analytics.Analytics;
@@ -19,7 +19,7 @@ import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.setup.SetupProfileFragment;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends AppCompatActivity {
 
 	public static boolean startAsUser(final Context context, final UserHandle user) {
 		final LauncherApps apps = (LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE);
