@@ -90,6 +90,11 @@ public class DevicePolicies {
 		mDevicePolicyManager.setSecureSetting(sCachedComponent, setting, value);
 	}
 
+	/** @see DevicePolicyManager#addUserRestriction(ComponentName, String) */
+	public void addUserRestriction(final String key) {
+		mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
+	}
+
 	/** @see DevicePolicyManager#clearUserRestriction(ComponentName, String) */
 	public void clearUserRestriction(final String key) {
 		mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
