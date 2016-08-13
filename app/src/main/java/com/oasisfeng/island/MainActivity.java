@@ -1,5 +1,6 @@
 package com.oasisfeng.island;
 
+import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,7 +12,6 @@ import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.oasisfeng.island.analytics.Analytics;
@@ -19,7 +19,7 @@ import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.setup.SetupProfileFragment;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
 	public static boolean startAsUser(final Context context, final UserHandle user) {
 		final LauncherApps apps = (LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE);

@@ -1,5 +1,6 @@
 package com.oasisfeng.island.setup;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -12,8 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,7 +68,7 @@ public class SetupProfileFragment extends Fragment implements View.OnClickListen
 
 	@Override public void onViewCreated(final View view, final Bundle savedInstanceState) {
 		// Immersive
-		final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		final ActionBar actionBar = getActivity().getActionBar();
 		if (actionBar != null) actionBar.hide();
 		final Window window = getActivity().getWindow();
 		window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
