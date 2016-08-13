@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.util.DevicePolicies;
 
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
@@ -26,8 +27,10 @@ public class ActivityForwarder extends Activity {
 	private static final String ACTION_FORWARD_ACTIVITY = "com.oasisfeng.island.action.FORWARD_ACTIVITY";
 
 	static void startActivityForResultAsOwner(final Activity activity, final DevicePolicies dp, final Intent intent, final int request_code) {
-		prepare(activity, dp);
-		activity.startActivityForResult(new Intent(ACTION_FORWARD_ACTIVITY).putExtra(EXTRA_INTENT, intent), request_code);
+		if (! GlobalStatus.running_in_owner) {
+			prepare(activity, dp);
+			activity.startActivityForResult(new Intent(ACTION_FORWARD_ACTIVITY).putExtra(EXTRA_INTENT, intent), request_code);
+		} else activity.startActivityForResult(intent, request_code);
 	}
 
 	static void startActivityAsOwner(final Context context, final DevicePolicies dp, final Intent intent) {
