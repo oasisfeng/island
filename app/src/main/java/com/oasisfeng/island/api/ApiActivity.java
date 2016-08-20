@@ -69,14 +69,18 @@ public class ApiActivity extends Activity {
 			else return RESULT_CANCELED;	// Should never happen
 
 			final boolean always = intent.getBooleanExtra(EXTRA_ALWAYS, true);
-			final List<String> unqualified_pkgs = pkgs.filter(pkg -> (! always && isForeground(pkg))
-					|| ! mIslandManager.get().freezeApp(pkg, "api")).toList();
+			try {
+				final List<String> unqualified_pkgs = pkgs.filter(pkg -> (! always && isForeground(pkg))
+						|| ! mIslandManager.get().freezeApp(pkg, "api")).toList();
 
-			if (unqualified_pkgs.isEmpty()) return RESULT_OK;
-			if (single) return RESULT_CANCELED;
-			setResult(RESULT_OK, unqualified_pkgs.isEmpty() ? null :
-					new Intent().setData(Uri.fromParts("packages", Joiner.on(',').join(unqualified_pkgs), null)));
-			return null;
+				if (unqualified_pkgs.isEmpty()) return RESULT_OK;
+				if (single) return RESULT_CANCELED;
+				setResult(RESULT_OK, unqualified_pkgs.isEmpty() ? null :
+						new Intent().setData(Uri.fromParts("packages", Joiner.on(',').join(unqualified_pkgs), null)));
+				return null;
+			} catch (final SecurityException e) {
+				return RESULT_CANCELED;		// Island might be have been deactivated or not set up yet.
+			}
 		default: return RESULT_CANCELED;
 		}
 	}
