@@ -16,7 +16,9 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.R;
+import com.oasisfeng.island.TempDebug;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppListBinding;
@@ -128,7 +130,7 @@ public class AppListFragment extends Fragment {
 		menu.findItem(R.id.menu_show_system).setChecked(mShowSystemApps);
 		menu.findItem(R.id.menu_destroy).setVisible(! GlobalStatus.running_in_owner);
 		menu.findItem(R.id.menu_deactivate).setVisible(GlobalStatus.running_in_owner);
-//		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
+		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
@@ -145,6 +147,8 @@ public class AppListFragment extends Fragment {
 					.map(AppInfo::getLabel).collect(Collectors.toList());
 			mIslandManager.destroy(exclusive_clones);
 			return true;
+		case R.id.menu_test:
+			TempDebug.run(getActivity());
 		}
 		return super.onOptionsItemSelected(item);
 	}
