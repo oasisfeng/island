@@ -3,20 +3,19 @@ package com.oasisfeng.island.data;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Process;
-import android.util.Log;
+import android.os.UserHandle;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
-import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.util.Hacks;
 
 import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
-import static com.oasisfeng.island.model.GlobalStatus.OWNER;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 
 /**
  * Island-specific {@link AppInfo}
@@ -28,29 +27,33 @@ public class IslandAppInfo extends AppInfo {
 	private static final int PRIVATE_FLAG_HIDDEN = 1;
 	private static final int FLAG_HIDDEN = 1<<27;
 
-	public boolean isInstalledInUser() { return (flags & FLAG_INSTALLED) != 0; }
-	public boolean checkInstalledInOwner() { return mIsInstalledInOwner.get(); }
-	private final Supplier<Boolean> mIsInstalledInOwner = lazyLessMutable(
-			() -> ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, OWNER));
+	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
 
-	public boolean isHiddenOrNotInstalled() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
-			if (private_flags != null) return (private_flags & PRIVATE_FLAG_HIDDEN) != 0;
-		} else return (flags & FLAG_HIDDEN) != 0;
+	public boolean isHidden() {
+		final Boolean hidden = isHidden(this);
+		if (hidden != null) return hidden;
 		// The fallback implementation
-		if (BuildConfig.DEBUG) Log.e(TAG, "Incompatible ROM: No field ApplicationInfo.privateFlags");
 		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
+	}
+
+	/** @return hidden state, or null if failed to */
+	private static Boolean isHidden(final ApplicationInfo info) {
+		if (SDK_INT >= M) {
+			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
+			if (private_flags != null) return (private_flags & PRIVATE_FLAG_HIDDEN) != 0;
+		} else return (info.flags & FLAG_HIDDEN) != 0;
+		return null;
 	}
 
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
-	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(
+	@SuppressWarnings("deprecation") private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(
 			() -> checkLaunchable(PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, TimeUnit.SECONDS);
 
-	IslandAppInfo(final IslandAppListProvider islandAppListProvider, final ApplicationInfo base, final IslandAppInfo last) {
-		super(islandAppListProvider, base, last);
+	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base, final IslandAppInfo last) {
+		super(provider, base, last);
+		this.user = user;
 	}
 
-	private static final String TAG = "Island.AppInfo";
+	public final UserHandle user;
 }

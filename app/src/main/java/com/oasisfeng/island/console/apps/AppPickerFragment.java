@@ -20,7 +20,7 @@ public class AppPickerFragment extends Fragment {
 
 	@Override public void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mViewModel = new AppListViewModel(null);
+		mViewModel = new AppListViewModel(getActivity());
 	}
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {

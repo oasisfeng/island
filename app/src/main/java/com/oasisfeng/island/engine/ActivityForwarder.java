@@ -24,7 +24,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  */
 public class ActivityForwarder extends Activity {
 
-	private static final String ACTION_FORWARD_ACTIVITY = "com.oasisfeng.island.action.FORWARD_ACTIVITY";
+	@Deprecated private static final String ACTION_FORWARD_ACTIVITY = "com.oasisfeng.island.action.FORWARD_ACTIVITY";
 
 	static void startActivityForResultAsOwner(final Activity activity, final DevicePolicies dp, final Intent intent, final int request_code) {
 		if (! GlobalStatus.running_in_owner) {
@@ -39,6 +39,7 @@ public class ActivityForwarder extends Activity {
 	}
 
 	private static void prepare(final Context context, final DevicePolicies dp) {
+		if (GlobalStatus.running_in_owner) return;
 		// Disable installer in managed profile
 		final ComponentName installer = new ComponentName(context, ActivityForwarder.class);
 		context.getPackageManager().setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);

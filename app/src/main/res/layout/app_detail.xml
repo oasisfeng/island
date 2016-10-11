@@ -52,7 +52,7 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.isExclusive() ? @string/status_exclusive : &quot;&quot;)}"
+            bind:text="@{apps.selection.statusText}"
             tools:text="Frozen" />
 
         <TextView
@@ -80,7 +80,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            bind:visible="@{BuildConfig.DEBUG &amp;&amp; VERSION.SDK_INT > VERSION_CODES.M}"
+            bind:visible="@{BuildConfig.DEBUG &amp;&amp; VERSION.SDK_INT >= VERSION_CODES.N}"
             android:orientation="horizontal" >
 
             <Button style="@style/AppTheme.BorderlessActionButton"
@@ -98,7 +98,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            bind:visible="@{! status.running_in_owner}" comment:x1="Never show installation-related actions in God mode"
+            bind:visible="@{apps.selection.info().user != null}" comment:x1="Never show installation-related actions in God mode"
             android:orientation="horizontal" >
 
             <Button style="@style/AppTheme.BorderlessActionButton"

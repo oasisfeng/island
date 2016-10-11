@@ -1,12 +1,18 @@
 package com.oasisfeng.island.console.apps;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.databinding.Observable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -14,27 +20,35 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Toast;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.TempDebug;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppListBinding;
+import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
-import com.oasisfeng.island.model.GlobalStatus;
-import com.oasisfeng.island.provisioning.IslandProvisioning;
+import com.oasisfeng.island.shuttle.ServiceShuttle.ShuttleServiceConnection;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import java8.util.function.Predicate;
 import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
-import java8.util.stream.RefStreams;
+import java8.util.stream.StreamSupport;
 
 import static com.oasisfeng.island.data.IslandAppListProvider.NON_SYSTEM;
 
@@ -43,8 +57,9 @@ public class AppListFragment extends Fragment {
 
 	private static final String KStateKeyRecyclerView = "apps.recycler.layout";
 
-	private static final Predicate<IslandAppInfo> CLONED = IslandAppInfo::isInstalledInUser;
-	private static final Predicate<IslandAppInfo> CLONEABLE = Predicates.negate(IslandAppInfo::isInstalledInUser);
+	private Predicate<IslandAppInfo> mExcludeSelf;
+	private static final Predicate<IslandAppInfo> CLONED = app -> app.user.hashCode() != 0 && app.isInstalled();
+	private static final Predicate<IslandAppInfo> CLONEABLE = app -> app.user.hashCode() == 0;		// FIXME: Exclude already cloned
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -52,39 +67,72 @@ public class AppListFragment extends Fragment {
 		final Activity activity = getActivity();
 
 		mIslandManager = new IslandManager(activity);
-		mViewModel = new AppListViewModel(mIslandManager);
+		mViewModel = new AppListViewModel(activity);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+		mExcludeSelf = IslandAppListProvider.excludeSelf(activity);
 
-		IslandAppListProvider.getInstance(activity).registerObserver(this::onPackageEvent);
+		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
+	}
 
-		new IslandProvisioning(activity, mIslandManager).startProfileOwnerProvisioningIfNeeded();
+	@Override public void onStart() {
+		super.onStart();
+		if (! Services.bind(getActivity(), IIslandManager.class, mServiceConnection))
+			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
+	}
 
-		rebuildAppViewModels();
+	@Override public void onStop() {
+		try {
+			getActivity().unbindService(mServiceConnection);
+		} catch (final RuntimeException ignored) {}
+		mBinding.getApps().clearSelection();
+		super.onStop();
 	}
 
 	@Override public void onDestroy() {
-		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(this::onPackageEvent);
+		getActivity().unbindService(mServiceConnection);
+		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(mAppChangeObserver);
 		mViewModel.removeOnPropertyChangedCallback(onPropertyChangedCallback);
 		super.onDestroy();
 	}
 
-	private void onPackageEvent(final String[] pkgs) {
-		final Activity activity = getActivity();
-		if (activity == null) return;
-		final Map<String, IslandAppInfo> apps = IslandAppListProvider.getInstance(activity).map();
+	// Use ShuttleServiceConnection to connect to remote service in profile via ServiceShuttle (see also MainActivity.bindService)
+	private final ServiceConnection mServiceConnection = new ShuttleServiceConnection() {
+		@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
+			mViewModel.setIslandManager(IIslandManager.Stub.asInterface(service));
+			Log.d(TAG, "Service connected");
+		}
 
-		final Predicate<IslandAppInfo> filters = activeFilters();
-		RefStreams.of(pkgs).map(apps::get).filter(app -> app != null).forEach(app -> {
-			if (filters.test(app)) mViewModel.putApp(app.packageName, new AppViewModel(app));
-			else mViewModel.removeApp(app.packageName);
-		});
+		@Override public void onServiceDisconnected(final ComponentName name) {
+			mViewModel.setIslandManager(null);
+		}
+	};
 
-// TODO
-//		Snackbars.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app.getLabel()),
-//				Snackbars.withAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg))).show();
-
-		invalidateOptionsMenu();
+	@Override public void onResume() {
+		super.onResume();
+		mIsDeviceOwner = mIslandManager.isDeviceOwner();
 	}
+
+	AppListProvider.PackageChangeObserver<IslandAppInfo> mAppChangeObserver = new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
+
+		@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
+			final Predicate<IslandAppInfo> filters = activeFilters();
+			for (final IslandAppInfo app : apps) {
+				if (filters.test(app)) mViewModel.putApp(app.packageName, new AppViewModel(app));
+				else mViewModel.removeApp(app.packageName);
+			}
+// TODO
+//			Snackbars.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app.getLabel()),
+//					Snackbars.withAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg))).show();
+			invalidateOptionsMenu();
+		}
+
+		@Override public void onPackageRemoved(final Collection<IslandAppInfo> apps) {
+			final Predicate<IslandAppInfo> filters = activeFilters();
+			for (final IslandAppInfo app : apps)
+				if (filters.test(app)) mViewModel.removeApp(app.packageName);
+			invalidateOptionsMenu();
+		}
+	};
 
 	private final Observable.OnPropertyChangedCallback onPropertyChangedCallback = new Observable.OnPropertyChangedCallback() {
 		@Override public void onPropertyChanged(final Observable observable, final int var) {
@@ -115,10 +163,11 @@ public class AppListFragment extends Fragment {
 
 	private void onListFilterChanged(final int index) {
 		switch (index) {
-		case 0: mAppsSubsetFilter = CLONED; break;
-		case 1: mAppsSubsetFilter = CLONEABLE; break;
+		case 0: mAppsSubsetFilter = Predicates.and(mExcludeSelf, CLONED); break;
+		case 1: mAppsSubsetFilter = Predicates.and(mExcludeSelf, CLONEABLE); break;
 		default: throw new IllegalStateException();
 		}
+		mViewModel.clearSelection();
 		rebuildAppViewModels();
 	}
 
@@ -128,8 +177,8 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		menu.findItem(R.id.menu_show_system).setChecked(mShowSystemApps);
-		menu.findItem(R.id.menu_destroy).setVisible(! GlobalStatus.running_in_owner);
-		menu.findItem(R.id.menu_deactivate).setVisible(GlobalStatus.running_in_owner);
+		menu.findItem(R.id.menu_destroy).setVisible(! mIsDeviceOwner);
+		menu.findItem(R.id.menu_deactivate).setVisible(mIsDeviceOwner);
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
@@ -142,20 +191,12 @@ public class AppListFragment extends Fragment {
 			return true;
 		case R.id.menu_destroy:
 		case R.id.menu_deactivate:
-			final List<String> exclusive_clones = IslandAppListProvider.getInstance(getActivity()).installedApps()
-					.filter(IslandAppListProvider.NON_SYSTEM).filter(app -> ! app.checkInstalledInOwner())
-					.map(AppInfo::getLabel).collect(Collectors.toList());
-			mIslandManager.destroy(exclusive_clones);
+			destroy();
 			return true;
 		case R.id.menu_test:
 			TempDebug.run(getActivity());
 		}
 		return super.onOptionsItemSelected(item);
-	}
-
-	@Override public void onStop() {
-		mBinding.getApps().clearSelection();
-		super.onStop();
 	}
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
@@ -169,28 +210,8 @@ public class AppListFragment extends Fragment {
 			mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(KStateKeyRecyclerView));
 	}
 
-//	private Map<String, AppInfo> populateApps() {
-//		final Context context = getActivity();
-//		return AppList.installed(context).filter(AppList.excludeSelf(context)).collect(Collectors.toMap());
-//	}
-//
-//	private Map<String, AppInfo> populateApps(final boolean all) {
-//		final Context context = getActivity();
-//		final AppList all_apps = AppList.all(context).excludeSelf();
-//		final FluentIterable<AppInfo> apps = all ? all_apps.build()
-//				: all_apps.build().filter(INSTALLED_IN_USER).filter(or(NON_SYSTEM, and(NON_CRITICAL_SYSTEM, all_apps.LAUNCHABLE)));
-//		// TODO: Also include system apps with running services (even if no launcher activities)
-//		final ImmutableList<AppInfo> ordered_apps = apps.toSortedList(AppList.CLONED_FIRST);
-//
-//		final Map<String, ApplicationInfo> app_vm_by_pkg = new LinkedHashMap<>();	// LinkedHashMap to preserve the order
-//		for (final ApplicationInfo app : ordered_apps)
-//			app_vm_by_pkg.put(app.packageName, app);
-//		return app_vm_by_pkg;
-//	}
-
 	private void rebuildAppViewModels() {
 		final List<AppViewModel> apps = IslandAppListProvider.getInstance(getActivity()).installedApps()
-				.filter(IslandAppListProvider.excludeSelf(getActivity()))
 				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		mViewModel.replaceApps(apps);
 	}
@@ -199,12 +220,63 @@ public class AppListFragment extends Fragment {
 		return mShowSystemApps ? mAppsSubsetFilter : Predicates.and(mAppsSubsetFilter, NON_SYSTEM);
 	}
 
+	public void destroy() {
+		final Activity activity = getActivity();
+		final Map<Boolean, List<IslandAppInfo>> partitions = IslandAppListProvider.getInstance(activity).installedApps()
+				.filter(IslandAppListProvider.NON_SYSTEM).collect(Collectors.partitioningBy(app -> app.user.hashCode() == 0 && app.isInstalled()));
+		final Set<String> owner_installed = StreamSupport.stream(partitions.get(Boolean.TRUE)).map(app -> app.packageName).collect(Collectors.toSet());
+		final List<String> exclusive_clones = StreamSupport.stream(partitions.get(Boolean.FALSE))	// Island installed
+				.filter(app -> ! owner_installed.contains(app.packageName)).map(AppInfo::getLabel).collect(Collectors.toList());
+
+		if (mIslandManager.isDeviceOwner()) {
+			new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
+					.setMessage(R.string.dialog_deactivate_message)
+					.setPositiveButton(android.R.string.no, null)
+					.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> mIslandManager.deactivateDeviceOwner()).show();
+		} else if (IslandManager.isProfileOwner(activity)) {
+			new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
+					.setMessage(R.string.dialog_destroy_message)
+					.setPositiveButton(android.R.string.no, null)
+					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> {
+						if (exclusive_clones.isEmpty()) {
+							destroyProfile();
+							return;
+						}
+						final String names = Joiner.on('\n').skipNulls().join(Iterables.limit(exclusive_clones, MAX_DESTROYING_APPS_LIST));
+						final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
+						new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
+								.setMessage(activity.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
+								.setNeutralButton(R.string.dialog_button_destroy, (dd, ww) -> destroyProfile())
+								.setPositiveButton(android.R.string.no, null).show();
+					}).show();
+		} else {
+			new AlertDialog.Builder(activity).setMessage(R.string.dialog_cannot_destroy_message)
+					.setNegativeButton(android.R.string.ok, null).show();
+			Analytics.$().event("cannot_destroy").send();
+		}
+	}
+	private static final int MAX_DESTROYING_APPS_LIST = 8;
+
+	private void destroyProfile() {
+		final Activity activity = getActivity();
+		final IIslandManager controller = mViewModel.mController;
+		if (controller != null) try {
+			controller.destroyProfile();
+			activity.finish();
+			return;
+		} catch (final RemoteException ignored) {}
+
+		Toast.makeText(activity, "Failed", Toast.LENGTH_LONG).show();
+	}
+
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */
 	public AppListFragment() {}
 
 	private IslandManager mIslandManager;
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
-	private Predicate<IslandAppInfo> mAppsSubsetFilter = CLONED;
+	private Predicate<IslandAppInfo> mAppsSubsetFilter;
 	private boolean mShowSystemApps;
+	private boolean mIsDeviceOwner;
+	private static final String TAG = "Island.AppsUI";
 }

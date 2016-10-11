@@ -13,6 +13,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.databinding.CallbackRegistry;
 import android.net.Uri;
+import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -21,10 +22,12 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.island.BuildConfig;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import java8.util.stream.Stream;
@@ -42,14 +45,6 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	/** The implementation should be as fast as possible, since it may be called in mass. */
 	protected abstract T createEntry(final ApplicationInfo base, final T last);
 
-	public Stream<T> installedApps() {
-		return StreamSupport.stream(mAppMap.get().values());
-	}
-
-	public Map<String, T> map() {
-		return Collections.unmodifiableMap(mAppMap.get());
-	}
-
 	protected static <T extends AppListProvider> T getInstance(final Context context) {
 		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(AUTHORITY);
 		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + AUTHORITY);
@@ -65,16 +60,22 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		}
 	}
 
-	public interface PackageChangeObserver {
+	public Stream<T> installedApps() { return StreamSupport.stream(mAppMap.get().values()); }
+
+	public T get(final String pkg) { return mAppMap.get().get(pkg); }
+
+	public interface PackageChangeObserver<T extends AppInfo> {
 		/** Called when package event happens the info argument might be null if package is removed. */
-		void onPackageEvent(String[] pkgs);
+		void onPackageUpdate(Collection<T> apps);
+		void onPackageRemoved(Collection<T> apps);
 	}
 
-	public void registerObserver(final PackageChangeObserver observer) { mEventRegistry.add(observer); }
-	public void unregisterObserver(final PackageChangeObserver observer) { mEventRegistry.remove(observer); }
+	public void registerObserver(final PackageChangeObserver<T> observer) { mEventRegistry.add(observer); }
+	public void unregisterObserver(final PackageChangeObserver<T> observer) { mEventRegistry.remove(observer); }
 
-	/** Called upon the first fetch */
-	private ConcurrentHashMap<String/* package */, T> startAndLoadApps() {
+	/** Called upon the first fetch to build the list lazily and start to monitor related events. */
+	// TODO: onStop() when offloading the while list
+	@CallSuper protected void onStartLoadingApps(final Map<String/* package */, T> apps) {
 		mStarted = true;
 		final IntentFilter pkg_filter = new IntentFilter();
 		pkg_filter.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -88,11 +89,9 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		pkgs_filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
 		context().registerReceiver(mPackagesEventsObserver, pkgs_filter);
 
-		final ConcurrentHashMap<String, T> apps = new ConcurrentHashMap<>();
 		//noinspection WrongConstant
 		for (final ApplicationInfo app : context().getPackageManager().getInstalledApplications(PM_FLAGS_GET_APP_INFO))
 			apps.put(app.packageName, createEntry(app, null));
-		return apps;
 	}
 
 	private void onPackageEvent(final String pkg) {
@@ -103,38 +102,47 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 			final T last_entry = mAppMap.get().get(pkg);
 			entry = createEntry(info, last_entry);
 		} catch (final PackageManager.NameNotFoundException ignored) {}
+
 		if (entry != null) {
 			if (apps.put(pkg, entry) != null) Log.i(TAG, "Updated: " + pkg);
 			else Log.i(TAG, "Added: " + pkg);
-		} else if (apps.remove(pkg) != null)
+			notifyUpdate(Collections.singleton(entry));
+		} else if ((entry = apps.remove(pkg)) != null) {
 			Log.i(TAG, "Removed: " + pkg);
-		else /* if nothing to remove */ return;		// Already removed somewhere before?
-
-		notifyUpdate(new String[] { pkg });
+			notifyRemoval(Collections.singleton(entry));
+		} else Log.e(TAG, "Event of non-existent package: " + pkg);		// Already removed somewhere before?
 	}
 
 	// Eventual consistency strategy to improve performance
 	private void onPackagesEvent(final String[] pkgs, final boolean removed) {
 		final Map<String, T> apps = mAppMap.get();
 		if (removed) {
-			for (final String pkg : pkgs) apps.remove(pkg);
-			Log.i(TAG, "Removed: " + Arrays.toString(pkgs));
-		} else for (final String pkg : pkgs) {
-			ApplicationInfo info = null;
-			try { //noinspection WrongConstant
-				info = context().getPackageManager().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
-			} catch (final PackageManager.NameNotFoundException ignored) {}
-			if (info == null) {
-				Log.w(TAG, "Unexpected package absence: " + pkg);
-				continue;	// May happen during continuous events.
+			final List<T> removed_apps = new ArrayList<>();
+			for (final String pkg : pkgs) {
+				final T removed_app = apps.remove(pkg);
+				if (removed_app != null) removed_apps.add(removed_app);
 			}
+			Log.i(TAG, "Removed: " + Arrays.toString(pkgs));
+			notifyRemoval(removed_apps);
+		} else {
+			final List<T> updated_apps = new ArrayList<>();
+			for (final String pkg : pkgs) {
+				ApplicationInfo info = null;
+				try { //noinspection WrongConstant
+					info = context().getPackageManager().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
+				} catch (final PackageManager.NameNotFoundException ignored) {}
+				if (info == null) {
+					Log.w(TAG, "Unexpected package absence: " + pkg);
+					continue;	// May happen during continuous events.
+				}
 
-			final T app = createEntry(info, apps.get(pkg)/* last entry */);
-			apps.put(pkg, app);
-			Log.i(TAG, "Added: " + pkg);
+				final T app = createEntry(info, apps.get(pkg)/* last entry */);
+				apps.put(pkg, app);
+				updated_apps.add(app);
+				Log.i(TAG, "Added: " + pkg);
+			}
+			notifyUpdate(updated_apps);
 		}
-
-		notifyUpdate(pkgs);
 	}
 
 	/** Called by {@link AppLabelCache} when app label is lazily-loaded or updated (changed from cache) */
@@ -144,7 +152,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		final T new_entry = createEntry(entry, null);
 		mAppMap.get().put(pkg, new_entry);
 
-		notifyUpdate(new String[] { pkg });
+		notifyUpdate(Collections.singleton(new_entry));
 	}
 
 	@Override public void onConfigurationChanged(final Configuration newConfig) {
@@ -153,8 +161,8 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		for (final Map.Entry<String, T> entry : mAppMap.get().entrySet())
 			entry.setValue(createEntry(entry.getValue(), null));
 
-		final Set<String> pkgs = mAppMap.get().keySet();
-		notifyUpdate(pkgs.toArray(new String[pkgs.size()]));		// TODO: Better solution for performance?
+		final Collection<T> pkgs = mAppMap.get().values();
+		notifyUpdate(Collections.unmodifiableCollection(pkgs));
 	}
 
 	String getCachedOrTempLabel(final AppInfo info) {
@@ -163,7 +171,8 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		return info.packageName;		// As temporary label
 	}
 
-	private void notifyUpdate(final String[] pkgs) { mEventRegistry.notifyCallbacks(pkgs, 0, null); }
+	protected void notifyUpdate(final Collection<T> apps) { mEventRegistry.notifyCallbacks(apps, CALLBACK_UPDATE, null); }
+	protected void notifyRemoval(final Collection<T> apps) { mEventRegistry.notifyCallbacks(apps, CALLBACK_REMOVE, null); }
 
 	private final BroadcastReceiver mPackageEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final Uri data = intent.getData();
@@ -209,7 +218,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		return true;
 	}
 
-	private Context context() { return getContext(); }
+	protected Context context() { return getContext(); }
 
 	/* The normal ContentProvider IPC interface is not used. */
 	@Nullable @Override public Cursor query(final @NonNull Uri uri, final String[] projection, final String selection, final String[] selection_args, final String sort) { return null; }
@@ -220,16 +229,22 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 
 	/** This provider is lazily started to its full working state. */
 	private boolean mStarted;
-	private final Supplier<ConcurrentHashMap<String/* package */, T>> mAppMap = Suppliers.memoize(this::startAndLoadApps);
-	private final CallbackRegistry<PackageChangeObserver, String[], Void> mEventRegistry = new CallbackRegistry<>(new CallbackRegistry.NotifierCallback<PackageChangeObserver, String[], Void>() {
-		@Override public void onNotifyCallback(final PackageChangeObserver callback, final String[] pkgs, final int unused1, final Void unused2) {
-			callback.onPackageEvent(pkgs);
+	private final Supplier<ConcurrentHashMap<String/* package */, T>> mAppMap = Suppliers.memoize(() -> {
+		ConcurrentHashMap<String, T> apps = new ConcurrentHashMap<>();
+		onStartLoadingApps(apps);
+		return apps;
+	});
+	private final CallbackRegistry<PackageChangeObserver<T>, Collection<T>, Void> mEventRegistry = new CallbackRegistry<>(new CallbackRegistry.NotifierCallback<PackageChangeObserver<T>, Collection<T>, Void>() {
+		@Override public void onNotifyCallback(final PackageChangeObserver<T> callback, final Collection<T> apps, final int callback_index, final Void unused2) {
+			if (callback_index == CALLBACK_UPDATE) callback.onPackageUpdate(apps);
+			else if (callback_index == CALLBACK_REMOVE) callback.onPackageRemoved(apps);
 		}
 	});
 	private final Supplier<AppLabelCache> mAppLabelCache = Suppliers.memoize(() -> new AppLabelCache(context(), this::onAppLabelUpdate));
 
-	@SuppressWarnings("deprecation") private static final int PM_FLAGS_GET_APP_INFO = PackageManager.GET_UNINSTALLED_PACKAGES
-																					| PackageManager.GET_DISABLED_COMPONENTS
-												   									| PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS;
+	private static final int CALLBACK_UPDATE = 0;
+	private static final int CALLBACK_REMOVE = -1;
+	@SuppressWarnings("deprecation") protected static final int PM_FLAGS_GET_APP_INFO
+			= PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS;
 	private static final String TAG = "AppListProvider";
 }

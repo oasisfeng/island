@@ -8,6 +8,7 @@
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
 
@@ -26,6 +27,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".setup.SetupActivity" android:exported="true" android:theme="@style/SetupTheme" />
 
         <activity android:name=".shortcut.AppLaunchShortcut"
                   android:hardwareAccelerated="false"
@@ -73,9 +76,20 @@
             </intent-filter>
         </activity>
 
+        <activity-alias android:name=".engine.InboundActivityForwarder"
+                        android:targetActivity=".engine.ActivityForwarder"
+                        android:exported="true" >
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.FORWARD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
         <activity android:name=".api.ApiActivity"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
+                  android:alwaysRetainTaskState="true"
+                  android:taskAffinity=":api"
                   android:enabled="false"
                   android:theme="@style/android:Theme.Translucent.NoTitleBar" >
             <intent-filter>
@@ -91,14 +105,23 @@
         </activity>
 
         <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttle"
-                  android:process=":service"
                   android:exported="false"
-                  android:enabled="false" >
+                  android:enabled="false"
+                  android:hardwareAccelerated="false"
+                  android:excludeFromRecents="true"
+                  android:theme="@style/android:Theme.Translucent.NoTitleBar"
+                  android:taskAffinity=":shuttle" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.BIND_SERVICE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <service android:name="com.oasisfeng.island.engine.IslandManager$AidlService" android:exported="false">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.engine.IIslandManager" />
+            </intent-filter>
+        </service>
 
         <receiver android:name=".IslandDeviceAdminReceiver"
                   android:description="@string/app_name"
@@ -111,11 +134,15 @@
             </intent-filter>
         </receiver>
 
-        <provider
-            android:authorities="com.oasisfeng.island.apps"
-            android:name="com.oasisfeng.island.data.IslandAppListProvider"
-            android:exported="false"
-            android:multiprocess="true" />
+        <provider android:authorities="com.oasisfeng.island.apps"
+                  android:name=".data.IslandAppListProvider"
+                  android:exported="false"
+                  android:multiprocess="true" />
+
+        <provider android:authorities="com.oasisfeng.island.users"
+                  android:name=".util.Users"
+                  android:exported="false"
+                  android:multiprocess="true" />
 
     </application>
 

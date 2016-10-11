@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
@@ -108,7 +109,18 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	protected <T> Supplier<T> lazyImmutable(final Supplier<T> supplier) { return Suppliers.memoize(supplier); }
-	protected <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, TimeUnit.SECONDS); }
+	protected <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) {
+		return new Supplier<T>() {
+			@Override public T get() {
+				final T current_value = delegate.get();
+				if (! Objects.equal(current_value, value)) ;
+				value = current_value;
+				return current_value;
+			}
+			private T value;
+			private final Supplier<T> delegate = Suppliers.memoizeWithExpiration(supplier, 1, TimeUnit.SECONDS);
+		};
+	}
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) return loadUnbadgedIcon(pm);

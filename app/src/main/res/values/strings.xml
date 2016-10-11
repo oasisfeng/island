@@ -9,6 +9,11 @@
         <item>Cloneable</item>
     </string-array>
 
+    <string-array name="app_list_filters_wo_profile">
+        <item>Frozen</item>
+        <item>All</item>
+    </string-array>
+
     <string name="state_alive">Active</string>
     <string name="state_frozen">Frozen</string>
     <string name="state_disabled">Disabled</string>
@@ -16,13 +21,20 @@
     <string name="status_exclusive">(Exclusive Clone)</string>
 
     <string name="setup_profile_welcome">Welcome</string>
-    <string name="setup_profile_message">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data outside (including call logs, contacts and etc) even if permissions are granted.\n\nIsolated app can be frozen on demand, with launcher icon vanished and its background behaviors completely blocked.</string>
+    <string name="setup_island_intro">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data outside (including call logs, contacts and etc) even if permissions are granted.\n\nCloned app runs parallel aside from the installed one with its separate copy of app data. It can also be frozen on demand, with launcher icon vanished and its background behaviors completely blocked.</string>
     <string name="setup_profile_conflict">Android for Work is already set up on your device by \"%1$s\". Due to the limitation of Android system, Island cannot coexist with it. If you proceed, the existent profile WITH ALL ITS DATA WILL BE REMOVED.</string>
     <string name="setup_profile_owner_unknown_app">unknown app</string>
     <string name="setup_button">Build the Island now</string>
     <string name="setup_cleanup_hint">If anything goes wrong during the setup procedure, you can always remove all the data created by Island via \"Settings - Account - Remove work profile\".</string>
+    <string name="error_rom_incompatible">Sorry, your device (or ROM) is incompatible with Island.\n\n> %s\n\nPlease refer to the online FAQ for possible solutions.</string>
+    <string name="error_reason_provisioning_not_allowed">Provisioning is not allowed.</string>
+    <string name="error_reason_managed_profile_not_supported">Managed profile is not supported.</string>
+    <string name="error_reason_low_ram">Not allowed on low-RAM device.</string>
+    <string name="error_reason_multi_user_not_allowed">Multi-user is not allowed.</string>
 
     <string name="field_app_id">APP ID: %1$s</string>
+    <string name="button_learn_more_online">Learn more (online)</string>
+    <string name="button_instructions_online">Instructions (online)</string>
     <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_greenify">Auto-freeze with Greenify</string>
     <string name="button_block">Block</string>
@@ -41,10 +53,10 @@
 
     <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_incompatible_rom">Sorry, your device or ROM does not support \"Managed Profile\" feature, which is required by Island.</string>
-    <string name="dialog_encryption_required">Device encryption is required on your device to create the island, enforced by Android system. Encrypting the device may degrade the overall performance significantly on some old device models.\n\nFOR SUPER USER: The encryption enforcement can be skipped either with root privilege, or by manual override via ADB shell. Click \"SKIP (ROOT)\" to proceed or "LEARN MORE" for online instructions.</string>
+    <string name="dialog_encryption_required">Device encryption is required on your device to create the island, enforced by Android system. Encrypting the device may degrade the overall performance significantly on some old or low-end devices. Encryption can be skipped if root privilege is available and granted in the next step.\n\nFOR SUPER USER: The encryption enforcement can also be skipped by manual override via ADB shell. Please refer to the online guide.</string>
     <string name="dialog_clone_via_install_explanation">Island will now launch the Android installer to \"install\" this app in Island.\n\nAlthough it looks like the regular installation confirmation, actually it takes no extra storage space but just activates this app in Island. Thus the \"installation\" will finish instantly.</string>
     <string name="dialog_clone_via_google_play_explanation">Island will now launch Google Play Store to clone this app, please then click the \"Install\" button there.\n\nAlthough it will look like the regular installation, actually it will not download the app again and takes no extra storage space but just activates this app in Island. Thus the \"installation\" will finish instantly.</string>
-    <string name="dialog_clone_via_builtin_market_explanation">Island will now launch the built-in app store on your device to clone this app, please follow the regular installation procedure.\n\nATTENTION: The built-in app store on your device may or may not support Android for Work properly. In case it fails to finish the installation, please refer to the FAQ for solutions.</string>
+    <string name="dialog_clone_via_sys_market_explanation">Island will now launch the built-in app store on your device to clone this app, please follow the regular installation procedure.\n\nATTENTION: The built-in app store on your device may or may not support Android for Work properly. In case it fails to finish the installation, please refer to the FAQ for solutions.</string>
     <string name="dialog_clone_incapable_explanation">Sorry, Island cannot clone apps without a proper built-in app market on your device (preferable Google Play Store) until Android 5.1. Please refer to the FAQ for solutions.</string>
     <string name="dialog_greenify_title">Greenify integration</string>
     <string name="dialog_greenify_explanation">To save memory and avoid unnecessary battery consumption, Island has no background services in design. Instead it delegates the automatic freezing job to Greenify, taking advantage of its sophisticated automatic hibernation management.</string>
@@ -63,8 +75,13 @@
     <string name="dialog_button_destroy">Destroy</string>
     <string name="dialog_button_deactivate">Deactivate</string>
 
+    <string name="toast_already_cloned">Already cloned</string>
     <string name="toast_shortcut_created">Shortcut created on launcher</string>
     <string name="toast_shortcut_failed">Failed to create the shortcut</string>
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
+
+    <!-- General words -->
+    <string name="exit">Exit</string>
+    <string name="setup">Setup</string>
 
 </resources>

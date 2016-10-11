@@ -8,12 +8,16 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.hack.Hack;
 
 import java.util.List;
 
 import static android.app.admin.DeviceAdminReceiver.ACTION_DEVICE_ADMIN_ENABLED;
+import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
@@ -27,9 +31,21 @@ public class DevicePolicies {
 		getDeviceAdminComponent(context);
 	}
 
+	public boolean isProfileOwner() {
+		return mDevicePolicyManager.isProfileOwnerApp(sCachedComponent.getPackageName());
+	}
+
+	public boolean isDeviceOwner() {
+		return mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
+	}
+
 	/** @see DevicePolicyManager#addCrossProfileIntentFilter(ComponentName, IntentFilter, int) */
 	public void addCrossProfileIntentFilter(final IntentFilter filter, final int flags) {
 		mDevicePolicyManager.addCrossProfileIntentFilter(sCachedComponent, filter, flags);
+	}
+
+	public void clearCrossProfileIntentFilters() {
+		mDevicePolicyManager.clearCrossProfileIntentFilters(sCachedComponent);
 	}
 
 	/** @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
@@ -48,7 +64,7 @@ public class DevicePolicies {
 		return mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, hidden);
 	}
 
-	/** @return true if the package is hidden or not found, false otherwise.
+	/** @return true if the package is hidden or not installed on device, false otherwise (including not installed in current user/profile).
 	 *  @see DevicePolicyManager#isApplicationHidden(ComponentName, String) */
 	public boolean isApplicationHidden(final String pkg) {
 		return mDevicePolicyManager.isApplicationHidden(sCachedComponent, pkg);
@@ -108,6 +124,14 @@ public class DevicePolicies {
 	/** @see DevicePolicyManager#setProfileEnabled(ComponentName) */
 	public void setProfileEnabled() {
 		mDevicePolicyManager.setProfileEnabled(sCachedComponent);
+	}
+
+	@RequiresApi(M) public void setPermissionGrantState(final String pkg, final String permission, final int state) {
+		mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
+	}
+
+	@RequiresApi(N) public Bundle getUserRestrictions() {
+		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 	}
 
 	public DevicePolicyManager getManager() { return mDevicePolicyManager; }

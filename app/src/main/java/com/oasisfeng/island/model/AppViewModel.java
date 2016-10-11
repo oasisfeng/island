@@ -2,11 +2,13 @@ package com.oasisfeng.island.model;
 
 import android.databinding.ObservableBoolean;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
+import com.oasisfeng.island.R;
 import com.oasisfeng.island.data.IslandAppInfo;
 
 /**
@@ -20,7 +22,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		Alive(1),
 		Frozen(2),
 		Disabled(3),	// System app only
-		NotCloned(3),	// Not installed in this user
+		NotCloned(3),	// Not installed in Island
 		Unknown(4);
 
 		State(final int order) { this.order = order; }
@@ -28,13 +30,22 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	private State checkState() {
-		if (! info().isInstalledInUser()) return State.NotCloned;
+		if (info().user.hashCode() == 0) return State.NotCloned;	// FIXME
+//		if (! info().isInstalledInIsland()) return State.NotCloned;
 		if (! info.enabled) return State.Disabled;
-		if (info().isHiddenOrNotInstalled()) return State.Frozen;
+		if (info().isHidden()) return State.Frozen;
 		return State.Alive;
 	}
 
-	private IslandAppInfo info() { return (IslandAppInfo) info; }
+	public @StringRes int getStatusText() {
+// android:_text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.isExclusive() ? @string/status_exclusive : &quot;&quot;)}"
+		if (! info().isInstalled()) return R.string.state_not_cloned;
+		if (info().isHidden()) return R.string.state_frozen;
+		if (! info().enabled) return R.string.state_disabled;
+		return R.string.state_alive;
+	}
+
+	public IslandAppInfo info() { return (IslandAppInfo) info; }
 
 	public final State state;
 	private final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO
@@ -56,11 +67,11 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		return ORDERING.compare(this, another);
 	}
 
-	public boolean isExclusive() { return ! ((IslandAppInfo) info).checkInstalledInOwner(); }
+	public boolean isExclusive() { return false; }	// FIXME
 
 	private final Ordering<AppViewModel> ORDERING = Ordering.natural()
 			.onResultOf((Function<AppViewModel, Comparable>) app -> app.state.order)		// Order by state
-			.compound(Ordering.natural().reverse().onResultOf(AppViewModel::isExclusive))	// Exclusive clones first
+//			.compound(Ordering.natural().reverse().onResultOf(AppViewModel::isExclusive))	// Exclusive clones first
 			.compound(Ordering.natural().onResultOf(AppViewModel::isSystem))				// Non-system apps first
 			.compound(Ordering.natural().onResultOf(app -> app.info.getLabel()));			// Order by label
 }

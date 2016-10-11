@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion 24
+    buildToolsVersion '24.0.2'
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 24
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
@@ -29,11 +29,33 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    lintOptions {
+        check 'NewApi'
+        abortOnError true
+        xmlReport false
+        textReport true
+        textOutput "stdout"
+    }
+
+    // Enable lint checking in all build variants.
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def lintTask = tasks["lint${variant.name.capitalize()}"]
+            output.assemble.dependsOn lintTask
+        }
+    }
+
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
 }
 
 dependencies {
     compile project(':deagle')
-    compile 'com.android.support:design:23.4.0'
+    compile 'com.android.support:design:24.2.1'
     compile 'com.google.guava:guava:19.0'
     compile 'com.google.firebase:firebase-analytics:9.0.2'
     compile 'com.google.firebase:firebase-config:9.0.2'
@@ -41,14 +63,15 @@ dependencies {
     compile 'com.google.android.agera:content:1.1.0'
     compile 'com.google.android.agera:rvadapter:1.1.0'
     compile 'com.google.android.agera:rvdatabinding:1.1.0'
-    compile 'net.sourceforge.streamsupport:streamsupport:1.5.1'
     compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
-
+    compile 'net.sourceforge.streamsupport:streamsupport:1.5.1'
+    compile 'org.jetbrains:annotations:13.0'
+    compile(name: 'setup-wizard-lib-platform-release', ext: 'aar')
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
-
     androidTestCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support:support-annotations:24.1.1' // Resolve the dependency conflict
+    androidTestCompile 'com.android.support:support-annotations:24.2.1'
+    // Resolve the dependency conflict
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile 'com.android.support.test:rules:0.5'
 }

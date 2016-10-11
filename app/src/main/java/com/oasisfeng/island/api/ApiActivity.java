@@ -11,15 +11,10 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
-import com.oasisfeng.island.data.IslandAppInfo;
-import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.IslandManager;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import java8.util.stream.Collectors;
 
 /**
  * API via activity to cross the user border
@@ -56,8 +51,9 @@ public class ApiActivity extends Activity {
 
 		switch (intent.getAction()) {
 		case ACTION_GET_APP_LIST:
-			setResult(RESULT_OK, new Intent().setData(Uri.fromParts("packages", Joiner.on(',').join(getInstalledAppsExceptSelfInUser()), null)));
-			return null;
+//			setResult(RESULT_OK, new Intent().setData(Uri.fromParts("packages", Joiner.on(',').join(getInstalledAppsExceptSelfInUser()), null)));
+//			return null;
+			return RESULT_CANCELED;
 		case ACTION_FREEZE:
 			final Uri uri = intent.getData(); final String ssp;
 			if (uri == null || (ssp = uri.getSchemeSpecificPart()) == null) return RESULT_CANCELED;
@@ -90,11 +86,11 @@ public class ApiActivity extends Activity {
 		return false;
 	}
 
-	private ArrayList<String> getInstalledAppsExceptSelfInUser() {
-		return IslandAppListProvider.getInstance(this).installedApps()
-				.filter(IslandAppListProvider.excludeSelf(this)).filter(IslandAppInfo::isInstalledInUser)
-				.map(app -> app.packageName).collect(Collectors.toCollection(ArrayList::new));
-	}
+//	private ArrayList<String> getInstalledAppsExceptSelfInUser() {
+//		return IslandAppListProvider.getInstance(this).installedApps()
+//				.filter(IslandAppListProvider.excludeSelf(this)).filter(IslandAppInfo::isInstalledInIsland)
+//				.map(app -> app.packageName).collect(Collectors.toCollection(ArrayList::new));
+//	}
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

@@ -2,49 +2,52 @@ package com.oasisfeng.island.engine;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Service;
 import android.app.admin.DevicePolicyManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.IBinder;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.Iterables;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
-import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.BuildConfig;
-import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.api.ApiTokenManager;
-import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Hacks;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
+
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
@@ -57,9 +60,8 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  *
  * Created by Oasis on 2016/4/5.
  */
-public class IslandManager implements AppListViewModel.Controller {
+public class IslandManager extends IIslandManager.Stub {
 
-	private static final int MAX_DESTROYING_APPS_LIST = 8;
 	private static final int REQUEST_CODE_INSTALL = 0x101;
 	private static final String GREENIFY_PKG = BuildConfig.DEBUG ? "com.oasisfeng.greenify.debug" : "com.oasisfeng.greenify";
 	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 208 : 215;	// TODO: The minimal version of Greenify with support for Island.
@@ -70,114 +72,121 @@ public class IslandManager implements AppListViewModel.Controller {
 		mLauncherApps = Suppliers.memoize(() -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 	}
 
+	// TODO: Use ParceledSlickList instead of List
+	@Override public List<ApplicationInfo> queryApps(final int query_flags, final int include_flags) {
+		final List<ApplicationInfo> apps = mContext.getPackageManager().getInstalledApplications(query_flags);
+		if (include_flags == 0) return apps;
+		return StreamSupport.stream(apps).filter(app -> (app.flags & include_flags) != 0).collect(Collectors.toList());
+	}
+
+	@Override public ApplicationInfo getApplicationInfo(final String pkg, final int flags) {
+		try {
+			return mContext.getPackageManager().getApplicationInfo(pkg, flags);
+		} catch (final PackageManager.NameNotFoundException e) { return null; }
+	}
+
 	@Override public boolean freezeApp(final String pkg, final String reason) {
-		Analytics.$().event("action-freeze").with("package", pkg).send();
+		Log.i(TAG, "Freeze: " + pkg + " for " + reason);
 		return mDevicePolicies.setApplicationHidden(pkg, true) || mDevicePolicies.isApplicationHidden(pkg);
 	}
 
 	@Override public boolean defreezeApp(final String pkg) {
-		Analytics.$().event("action-defreeze").with("package", pkg).send();
+		Log.i(TAG, "Defreeze: " + pkg);
 		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
 	}
 
-	@Override public void launchApp(final String pkg) {
-		Analytics.$().event("action-launch").with("package", pkg).send();
-		if (mDevicePolicies.isApplicationHidden(pkg)) {
+	public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
+		final LauncherApps launcher_apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		final List<LauncherActivityInfo> activities = launcher_apps.getActivityList(pkg, profile);
+		if (activities == null || activities.isEmpty()) return false;
+		launcher_apps.startMainActivity(activities.get(0).getComponentName(), profile, null, null);
+		return true;
+	}
+
+	@Override public boolean launchApp(final String pkg) {
+		if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
 			if (! mDevicePolicies.setApplicationHidden(pkg, false))
-				if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return;	// Not installed, just give up.
+				if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
 		}
 		try {
 			if (mDevicePolicies.isPackageSuspended(pkg))
 				mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
 		} catch (final PackageManager.NameNotFoundException ignored) {
-			return;
+			return false;
 		}
 
 		final Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
-		if (intent == null) {
-			Toast.makeText(mContext, "This app has no launch entrance.", Toast.LENGTH_SHORT).show();
-			return;
-		}
+		if (intent == null) return false;
 		intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-		mContext.startActivity(intent);
+		try {
+			mContext.startActivity(intent);
+		} catch (final ActivityNotFoundException e) {
+			return false;
+		}
+		return true;
 	}
 
-	@Override public void cloneApp(final String pkg) {
+	@Override public int cloneApp(final String pkg, final boolean do_it) {
 		final PackageManager pm = mContext.getPackageManager();
 		try { @SuppressWarnings({"WrongConstant", "deprecation"})
 			final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
-			cloneApp(info);
-		} catch (final PackageManager.NameNotFoundException ignored) {}
+			return cloneApp(info, do_it);
+		} catch (final PackageManager.NameNotFoundException ignored) { return CLONE_RESULT_NOT_FOUND; }
 	}
 
-	private void cloneApp(final ApplicationInfo app_info) {
+	public static final int CLONE_RESULT_ALREADY_CLONED = 0;
+	public static final int CLONE_RESULT_OK_INSTALL = 1;
+	public static final int CLONE_RESULT_OK_SYS_APP = 2;
+	public static final int CLONE_RESULT_OK_GOOGLE_PLAY = 10;
+	public static final int CLONE_RESULT_UNKNOWN_SYS_MARKET = 11;
+
+	public static final int CLONE_RESULT_NOT_FOUND = -1;
+	public static final int CLONE_RESULT_NO_SYS_MARKET = -2;
+
+	private int cloneApp(final ApplicationInfo app_info, final boolean do_it) {
 		final String pkg = app_info.packageName;
-		if ((app_info.flags & FLAG_INSTALLED) != 0) { Log.e(TAG, "Already cloned: " + pkg); return; }
+		if ((app_info.flags & FLAG_INSTALLED) != 0) {
+			Log.e(TAG, "Already cloned: " + pkg);
+			return CLONE_RESULT_ALREADY_CLONED;
+		}
 
 		// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
 		if ((app_info.flags & FLAG_SYSTEM) != 0) {
-			Analytics.$().event("action-clone-sys").with("package", pkg).send();
-			enableSystemApp(pkg);
-			return;
+			if (do_it) enableSystemApp(pkg);
+			return CLONE_RESULT_OK_SYS_APP;
 		}
+
 		/* For non-system app, we initiate the manual installation process. */
 
-		final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
-				.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, mContext.getPackageName());
-		enableSystemAppForActivity(intent);		// Ensure package installer is enabled.
 		// Blindly clear these restrictions
 		mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_APPS);
-		mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
 
-		if (ensureInstallNonMarketAppAllowed()) {		// Launch package installer
-			final String mark = "clone-via-install-explained";
-			if (! Scopes.app(mContext).isMarked(mark)) {
-				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_install_explanation)
-						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-							Scopes.app(mContext).mark(mark);
-							cloneApp(app_info);
-						}).show();
-				return;
-			}
-			Analytics.$().event("action-clone-install").with("package", pkg).send();
-			final Activity activity = Activities.findActivityFrom(mContext);
-			if (ANDROID_N || activity == null) mContext.startActivity(intent);
-			else activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
-		} else {										// Launch market app (preferable Google Play Store)
-			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg));
-			enableSystemAppForActivity(market_intent);
-			final ActivityInfo market_info = market_intent.resolveActivityInfo(mContext.getPackageManager(), 0);
-			Analytics.$().setProperty("sys_market", market_info == null ? null : market_info.packageName);
-			if (market_info == null || (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
-				new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_incapable_explanation)
-						.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mContext, Config.URL_CANNOT_CLONE_EXPLAINED))
-						.setPositiveButton(android.R.string.cancel, null).show();
-				return;
-			} else if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
-				final String mark = "clone-via-google-play-explained";
-				if (! Scopes.app(mContext).isMarked(mark)) {
-					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_google_play_explanation)
-							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-								Scopes.app(mContext).mark(mark);
-								cloneApp(pkg);
-							}).show();
-					return;
-				}
+		if (ensureInstallNonMarketAppAllowed()) {
+			mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+			final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
+					.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, mContext.getPackageName());
+			enableSystemAppForActivity(intent);				// Ensure package installer is enabled.
+			if (do_it) mContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));		// Launch package installer
+//			activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
+			return CLONE_RESULT_OK_INSTALL;
+		}
+
+		// Launch market app (preferable Google Play Store)
+		final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		enableSystemAppForActivity(market_intent);
+		final ActivityInfo market_info = market_intent.resolveActivityInfo(mContext.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
+		if (market_info == null || (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
+			return CLONE_RESULT_NO_SYS_MARKET;
+
+		if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
+			if (do_it) {
 				enableSystemApp(SystemAppsManager.PACKAGE_GOOGLE_PLAY_SERVICES);	// Special dependency
-				Analytics.$().event("action-clone").with("package", pkg).send();
-			} else {
-				final String mark = "clone-via-builtin-market-explained";
-				if (! Scopes.app(mContext).isMarked(mark)) {
-					new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_builtin_market_explanation)
-							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-								Scopes.app(mContext).mark(mark);
-								cloneApp(pkg);
-							}).show();
-					return;
-				}
-				Analytics.$().event("action-clone").with("package", pkg).send();
+				mContext.startActivity(market_intent);
 			}
-			mContext.startActivity(market_intent);
+			return CLONE_RESULT_OK_GOOGLE_PLAY;
+		} else {
+			if (do_it) mContext.startActivity(market_intent);
+			return CLONE_RESULT_UNKNOWN_SYS_MARKET;
 		}
 	}
 
@@ -188,19 +197,6 @@ public class IslandManager implements AppListViewModel.Controller {
 
 		mDevicePolicies.setSecureSetting(Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
 		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
-	}
-
-	private void ensureSystemAppEnabled(final String pkg) {
-		try { @SuppressWarnings({"WrongConstant", "deprecation"})
-			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
-			if ((info.flags & FLAG_INSTALLED) != 0) defreezeApp(pkg);
-			else cloneApp(info);
-		} catch (final PackageManager.NameNotFoundException ignored) {}
-	}
-
-	@Override public void enableApp(final String pkg) {
-		Analytics.$().event("action-enable").with("package", pkg).send();
-		showAppSettingActivity(pkg);
 	}
 
 	@Override public void removeClone(final String pkg) {
@@ -215,34 +211,33 @@ public class IslandManager implements AppListViewModel.Controller {
 		if ((flags & FLAG_SYSTEM) != 0) {
 			defreezeApp(pkg);	// App must not be hidden for startAppDetailsActivity() to work.
 			showAppSettingActivity(pkg);
-			Analytics.$().event("action-disable-sys-app").with("package", pkg).send();
+			Analytics.$().event("action_disable_sys_app").with("package", pkg).send();
 			return;
 		}
-		Analytics.$().event("action-uninstall").with("package", pkg).send();
-		mContext.startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
+		Activities.startActivity(mContext, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
 	}
 
 	@Override public void installForOwner(final String pkg) {
 		if (OWNER.equals(Process.myUserHandle())) return;
 		// Forward the installation
 		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-		Analytics.$().event("action-install-outside").with("package", pkg).send();
+		Analytics.$().event("action_install_outside").with("package", pkg).send();
 	}
 
 	private void showAppSettingActivity(final String pkg) {
-		ensureSystemAppEnabled("com.android.settings");
+		enableSystemAppForActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", "", null)));
 		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
 	}
 
 	@Override public void createShortcut(final String pkg) {
-		Analytics.$().event("action-create-shortcut").with("package", pkg).send();
+		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
 		if (AppLaunchShortcut.createOnLauncher(mContext, pkg)) {
 			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
 		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
 	}
 
 	@Override public void greenify(final String pkg) {
-		Analytics.$().event("action-greenify").with("package", pkg).send();
+		Analytics.$().event("action_greenify").with("package", pkg).send();
 		final boolean greenify_installed = mLauncherApps.get().isPackageEnabled(GREENIFY_PKG, OWNER);
 		int greenify_version = 0;
 		if (greenify_installed) try {
@@ -280,15 +275,15 @@ public class IslandManager implements AppListViewModel.Controller {
 		// TODO: Ensure ApiActivity is also enabled after re-installation.
 		if (pm.getComponentEnabledSetting(api) != PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
 			pm.setComponentEnabledSetting(api, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-			mDevicePolicies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
+//			mDevicePolicies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
-			final IntentFilter batch_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
-			batch_filter.addDataScheme("packages");
-			mDevicePolicies.addCrossProfileIntentFilter(batch_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Batch freeze API without data
+//			final IntentFilter batch_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
+//			batch_filter.addDataScheme("packages");
+//			mDevicePolicies.addCrossProfileIntentFilter(batch_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Batch freeze API without data
 
-			final IntentFilter single_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
-			single_filter.addDataScheme("package");
-			mDevicePolicies.addCrossProfileIntentFilter(single_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
+//			final IntentFilter single_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
+//			single_filter.addDataScheme("package");
+//			mDevicePolicies.addCrossProfileIntentFilter(single_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
 		}
 		if (mContext instanceof Activity)
 			ActivityForwarder.startActivityForResultAsOwner((Activity) mContext, mDevicePolicies, intent, 0);
@@ -305,45 +300,14 @@ public class IslandManager implements AppListViewModel.Controller {
 		return failed == null || failed.length == 0;
 	}
 
-	public void destroy(final List<String> exclusive_clones) {
-		if (Process.myUserHandle().hashCode() == 0 && isDeviceOwner()) {
-			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
-					.setMessage(R.string.dialog_deactivate_message)
-					.setPositiveButton(android.R.string.no, null)
-					.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> deactivateDeviceOwner()).show();
-		} else if (Process.myUserHandle().hashCode() != 0 && isProfileOwner() && isProfileOwnerActive()) {
-			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
-					.setMessage(R.string.dialog_destroy_message)
-					.setPositiveButton(android.R.string.no, null)
-					.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> {
-						if (exclusive_clones.isEmpty()) {
-							removeProfileOwner();
-							return;
-						}
-						final String names = Joiner.on('\n').skipNulls().join(Iterables.limit(exclusive_clones, MAX_DESTROYING_APPS_LIST));
-						final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
-						new AlertDialog.Builder(mContext).setTitle(R.string.dialog_title_warning)
-								.setMessage(mContext.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
-								.setNeutralButton(R.string.dialog_button_destroy, (dd, ww) -> removeProfileOwner())
-								.setPositiveButton(android.R.string.no, null).show();
-					}).show();
-		} else {
-			new AlertDialog.Builder(mContext).setMessage(R.string.dialog_cannot_destroy_message)
-					.setNegativeButton(android.R.string.ok, null).show();
-			Analytics.$().event("cannot-destroy").send();
-		}
+	@Override public void destroyProfile() {
+		mDevicePolicies.clearCrossProfileIntentFilters();
+		mDevicePolicies.getManager().wipeData(0);
 	}
 
-	private void removeProfileOwner() {
-		Analytics.$().event("action-destroy").send();
-		if (mDevicePolicies.getManager().isProfileOwnerApp(mContext.getPackageName()))		// Ensure we are just wiping managed profile, not the primary user
-			mDevicePolicies.getManager().wipeData(0);
-		final Activity activity = Activities.findActivityFrom(mContext);
-		if (activity != null) activity.finish();
-	}
-
-	private void deactivateDeviceOwner() {
-		Analytics.$().event("action-deactivate").send();
+	public void deactivateDeviceOwner() {
+		Analytics.$().event("action_deactivate").send();
+		mDevicePolicies.clearCrossProfileIntentFilters();
 		mDevicePolicies.getManager().clearDeviceOwnerApp(mContext.getPackageName());
 		final Activity activity = Activities.findActivityFrom(mContext);
 		if (activity != null) activity.finish();
@@ -353,8 +317,16 @@ public class IslandManager implements AppListViewModel.Controller {
 		return mDevicePolicies.getManager().isDeviceOwnerApp(mContext.getPackageName());
 	}
 
-	public boolean isProfileOwner() {
-		return mDevicePolicies.getManager().isProfileOwnerApp(mContext.getPackageName());
+	public static boolean isDeviceOwner(final Context context) {
+		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
+		return dpm.isDeviceOwnerApp(context.getPackageName());
+	}
+
+	public static boolean isProfileOwner(final Context context) {
+		final UserHandle profile = getManagedProfile(context);
+		if (profile == null) return false;
+		final ComponentName profile_owner = getProfileOwner(context, profile);
+		return profile_owner != null && context.getPackageName().equals(profile_owner.getPackageName());
 	}
 
 	public boolean isProfileOwnerActive() {
@@ -365,22 +337,20 @@ public class IslandManager implements AppListViewModel.Controller {
 	public static @Nullable UserHandle getManagedProfile(final Context context) {
 		final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
 		final List<UserHandle> profiles = um.getUserProfiles();
+		final UserHandle current_user = Process.myUserHandle();
 		for (final UserHandle profile : profiles)
-			if (! profile.equals(Process.myUserHandle())) return profile;   // Only one managed profile is supported by Android at present.
+			if (! profile.equals(current_user)) return profile;   	// Only one managed profile is supported by Android at present.
 		return null;
 	}
 
 	/** @return the profile owner component, null for none or failure */
-	public static @Nullable ComponentName getProfileOwner(final Context context, final UserHandle profile) {
+	public static @Nullable ComponentName getProfileOwner(final Context context, final @NonNull UserHandle profile) {
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		try {
-			return (ComponentName) DevicePolicyManager.class.getMethod("getProfileOwnerAsUser", int.class).invoke(dpm, profile.hashCode());
-		} catch (final NoSuchMethodException | IllegalAccessException e) {
-			Log.e(TAG, "Partially incompatible ROM: No public method - DevicePolicyManager.getProfileOwnerAsUser()");
-		} catch (final InvocationTargetException | SecurityException e) {
-			Log.e(TAG, "Failed to get profile owner of user " + profile.hashCode(), e);
+			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile.hashCode()).on(dpm);
+		} catch (final IllegalArgumentException e) {
+			return null;
 		}
-		return null;
 	}
 
 	public void enableProfile() {
@@ -419,6 +389,15 @@ public class IslandManager implements AppListViewModel.Controller {
 	private final Supplier<LauncherApps> mLauncherApps;
 
 	private static final UserHandle OWNER = GlobalStatus.OWNER;
-	private static final boolean ANDROID_N = "N".equals(Build.VERSION.CODENAME);
 	private static final String TAG = IslandManager.class.getSimpleName();
+
+	public static class AidlService extends Service {
+
+		@Nullable @Override public IBinder onBind(final Intent intent) {
+			if (! GlobalStatus.running_in_owner) IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this);
+			return mStub.get();
+		}
+
+		private final Supplier<IslandManager> mStub = () -> new IslandManager(this);
+	}
 }

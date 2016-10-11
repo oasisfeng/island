@@ -29,5 +29,4 @@ public class IslandDeviceAdminReceiver extends DeviceAdminReceiver {
     public static ComponentName getComponentName(final Context context) {
         return new ComponentName(context.getApplicationContext(), IslandDeviceAdminReceiver.class);
     }
-
 }

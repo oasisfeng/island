@@ -8,16 +8,20 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
  *
  * Created by Oasis on 2016/5/26.
  */
-public class Config {
+public enum Config {
 
-	private static final FirebaseRemoteConfig sRemoteConfig = FirebaseRemoteConfig.getInstance();
+	URL_CANNOT_CLONE_EXPLAINED("url_cannot_clone"),
+	URL_PREREQUISITES("url_prerequisites");
+
+	public String get() { return FirebaseRemoteConfig.getInstance().getString(key); }
+	Config(final String key) { this.key = key; }
+
+	private final String key;
+
 	static {
-		final FirebaseRemoteConfigSettings settings = new FirebaseRemoteConfigSettings.Builder()
-				.setDeveloperModeEnabled(BuildConfig.DEBUG).build();
-		sRemoteConfig.setConfigSettings(settings);
-		sRemoteConfig.setDefaults(R.xml.config_defaults);
+		final FirebaseRemoteConfigSettings settings = new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG).build();
+		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
+		config.setConfigSettings(settings);
+		config.setDefaults(R.xml.config_defaults);
 	}
-
-	public static final String URL_CANNOT_CLONE_EXPLAINED = sRemoteConfig.getString("url_cannot_clone");
-	public static final String URL_ABOUT_ENCRYPTION = sRemoteConfig.getString("url_about_encryption");
 }

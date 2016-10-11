@@ -28,9 +28,9 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 	public void replaceApps(final List<T> apps) {
 		mApps.clear();
 		mAppsByPackage.clear();
-		mApps.addAll(apps);
 		for (final T app : apps)
 			mAppsByPackage.put(app.info.packageName, app);
+		mApps.addAll(apps);
 	}
 
 	public T putApp(final String pkg, final T app) {

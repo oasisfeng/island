@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".setup.SetupActivity">
+
+    <data>
+        <import type="android.view.View" />
+        <variable name="setup" type="com.oasisfeng.island.setup.SetupViewModel" />
+    </data>
+
+    <com.android.setupwizardlib.SetupWizardLayout
+        android:id="@+id/setup_wizard_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        style="@style/SetupIllustrationTheme"
+        app:suwHeaderText="@string/setup_profile_welcome" >
+
+        <!-- Intro -->
+        <TextView
+            android:id="@+id/intro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            bind:visible="@{setup.message == null}"
+            android:text="@string/setup_island_intro"
+            style="@style/contentContainer" />
+
+        <!-- Error message (abort) -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            style="@style/contentContainer"
+            bind:visible="@{setup.message != null}"
+            tools:visibility="gone" >
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/containerText"
+                android:text="@{setup.message}" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/AppTheme.BorderlessActionButton"
+                bind:visible="@{setup.button_extra != 0}"
+                bind:text="@{setup.button_extra}"
+                android:onClick="@{setup::onExtraButtonClick}" />
+        </LinearLayout>
+
+    </com.android.setupwizardlib.SetupWizardLayout>
+
+</layout>

@@ -9,5 +9,7 @@ import android.app.Activity;
  */
 public class TempDebug {
 
-	@SuppressWarnings("UnusedParameters") public static void run(final Activity activity) {}
+	@SuppressWarnings("UnusedParameters") public static void run(final Activity activity) {
+
+	}
 }

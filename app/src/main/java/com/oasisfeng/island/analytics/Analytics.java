@@ -11,6 +11,8 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.intellij.lang.annotations.Pattern;
+
 /**
  * Abstraction for analytics service
  *
@@ -23,6 +25,11 @@ public class Analytics {
 		mAnalytics.setUserProperty(key, value);
 	}
 
+	public boolean setProperty(final String key, final boolean value) {
+		setProperty(key, Boolean.toString(value));
+		return value;
+	}
+
 	public interface Event {
 		@CheckResult Event with(String key, String value);
 		@CheckResult Event with(String key, long value);
@@ -30,21 +37,21 @@ public class Analytics {
 		void send();
 	}
 
-	public @CheckResult Event event(final String event) {
+	public @CheckResult Event event(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event) {
 		final Bundle bundle = new Bundle();
 		return new Event() {
 
-			@Override public Event with(final String key, final String value) {
+			@Override public @CheckResult Event with(final String key, final String value) {
 				bundle.putString(key, value);
 				return this;
 			}
 
-			@Override public Event with(final String key, final long value) {
+			@Override public @CheckResult Event with(final String key, final long value) {
 				bundle.putLong(key, value);
 				return this;
 			}
 
-			@Override public Event with(final String key, final double value) {
+			@Override public @CheckResult Event with(final String key, final double value) {
 				bundle.putDouble(key, value);
 				return this;
 			}

@@ -8,6 +8,7 @@
     <data>
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
+        <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
     </data>
 
     <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
@@ -28,7 +29,7 @@
 
             <Spinner
                 android:id="@+id/filters"
-                android:entries="@array/app_list_filters"
+                android:entries="@{status.profile != null ? @stringArray/app_list_filters : @stringArray/app_list_filters_wo_profile}"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
