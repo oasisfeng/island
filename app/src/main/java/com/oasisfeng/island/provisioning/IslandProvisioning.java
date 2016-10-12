@@ -37,6 +37,7 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCR
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
@@ -110,16 +111,13 @@ public class IslandProvisioning {
 			return;
 		}
 		startProfileOwnerProvisioningIfNeeded(activity);
-		// Disable the launcher entry inside profile, to mark the finish of provisioning.
-		activity.getPackageManager().setComponentEnabledSetting(new ComponentName(activity, activity.getClass()),
-				PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
 	}
 
 	@SuppressLint("CommitPrefEdits") public void onProfileProvisioningComplete() {
 		Log.d(TAG, "onProfileProvisioningComplete");
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
-		startProfileOwnerIslandProvisioning();
+		startProfileOwnerPostProvisioning();
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
 
 		MainActivity.startAsUser(mContext, GlobalStatus.OWNER);
@@ -139,12 +137,13 @@ public class IslandProvisioning {
 		if (state == 0)		// Managed profile provision was not performed, the profile may be enabled manually.
 			ProfileOwnerSystemProvisioning.start(new IslandManager(context));	// Simulate the stock managed profile provision
 
-		new IslandProvisioning(context).startProfileOwnerIslandProvisioning();	// Last provision attempt may be interrupted
+		new IslandProvisioning(context).startProfileOwnerPostProvisioning();	// Last provision attempt may be interrupted
 
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
 	}
 
-	private void startProfileOwnerIslandProvisioning() {
+	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
+	private void startProfileOwnerPostProvisioning() {
 		new SystemAppsManager(mContext, mIslandManager).prepareSystemApps();
 		mIslandManager.enableProfile();
 		enableAdditionalForwarding();
@@ -159,6 +158,8 @@ public class IslandProvisioning {
 		pm.setComponentEnabledSetting(new ComponentName(mContext, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
 		mIslandManager.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE),
 				FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
+		mContext.getPackageManager().setComponentEnabledSetting(new ComponentName(mContext, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}
 
 	private void enableAdditionalForwarding() {
