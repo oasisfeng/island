@@ -69,7 +69,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 
 	public boolean isExclusive() { return false; }	// FIXME
 
-	private final Ordering<AppViewModel> ORDERING = Ordering.natural()
+	private static final Ordering<AppViewModel> ORDERING = Ordering.natural()
 			.onResultOf((Function<AppViewModel, Comparable>) app -> app.state.order)		// Order by state
 //			.compound(Ordering.natural().reverse().onResultOf(AppViewModel::isExclusive))	// Exclusive clones first
 			.compound(Ordering.natural().onResultOf(AppViewModel::isSystem))				// Non-system apps first
