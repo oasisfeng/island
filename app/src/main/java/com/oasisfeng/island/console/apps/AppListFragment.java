@@ -115,8 +115,11 @@ public class AppListFragment extends Fragment {
 		@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
 			final Predicate<IslandAppInfo> filters = activeFilters();
 			for (final IslandAppInfo app : apps) {
-				if (filters.test(app)) mViewModel.putApp(app.packageName, new AppViewModel(app));
-				else mViewModel.removeApp(app.packageName);
+				final IslandAppInfo last = app.getLastInfo();
+				if (last != null && ! filters.test(last)) continue;
+				if (filters.test(app)) {
+					mViewModel.putApp(app.packageName, new AppViewModel(app));
+				} else if (last != null) mViewModel.removeApp(app.packageName);
 			}
 // TODO
 //			Snackbars.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app.getLabel()),
