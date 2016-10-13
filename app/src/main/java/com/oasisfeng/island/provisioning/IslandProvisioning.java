@@ -32,7 +32,6 @@ import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PRO
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
-import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
@@ -52,8 +51,11 @@ import static android.os.UserManager.ALLOW_PARENT_PROFILE_APP_LINKING;
  */
 public class IslandProvisioning {
 
-	/** Provision state: 1 - Managed profile provision is completed, 2 - Island provision is started, 3 - Island provision is completed */
+	/** Provision state: 1 - Managed profile provision is completed, 2 - Island provision is started, POST_PROVISION_REV - Island provision is completed.
+	 *  [3,POST_PROVISION_REV> - Island provision is completed in previous version, but needs re-performing in this version. */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
+	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
+	private static final int POST_PROVISION_REV = 4;
 
 	public static boolean isEncryptionRequired() {
 		return SDK_INT < N
@@ -77,7 +79,7 @@ public class IslandProvisioning {
 			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class));
 			intent.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 		} else //noinspection deprecation
-			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, activity.getPackageName());
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, activity.getPackageName());
 		if (intent.resolveActivity(activity.getPackageManager()) == null) return false;
 		activity.startActivityForResult(intent, request_code);
 //		activity.finish();
@@ -118,7 +120,7 @@ public class IslandProvisioning {
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
 		startProfileOwnerPostProvisioning();
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
 
 		MainActivity.startAsUser(mContext, GlobalStatus.OWNER);
 	}
@@ -127,7 +129,7 @@ public class IslandProvisioning {
 		if (IslandManager.isDeviceOwner(context)) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
-		if (state >= 3) return;		// Already provisioned
+		if (state >= POST_PROVISION_REV) return;	// Already provisioned (revision up to date)
 		if (state == 2) {
 			Log.w(TAG, "Last provision attempt failed, no more attempts...");
 			return;		// Last attempt failed again, no more attempts.
@@ -137,9 +139,10 @@ public class IslandProvisioning {
 		if (state == 0)		// Managed profile provision was not performed, the profile may be enabled manually.
 			ProfileOwnerSystemProvisioning.start(new IslandManager(context));	// Simulate the stock managed profile provision
 
-		new IslandProvisioning(context).startProfileOwnerPostProvisioning();	// Last provision attempt may be interrupted
+		if (state >= 3) Log.i(TAG, "Re-performing post-provision for new revision " + POST_PROVISION_REV);
+		new IslandProvisioning(context).startProfileOwnerPostProvisioning();
 
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 3).commit();
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
@@ -156,8 +159,8 @@ public class IslandProvisioning {
 		final PackageManager pm = mContext.getPackageManager();
 		// Prepare ServiceShuttle
 		pm.setComponentEnabledSetting(new ComponentName(mContext, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-		mIslandManager.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE),
-				FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+		mIslandManager.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+		mIslandManager.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_UNBIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
 		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
 		mContext.getPackageManager().setComponentEnabledSetting(new ComponentName(mContext, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}

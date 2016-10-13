@@ -113,6 +113,7 @@
                   android:taskAffinity=":shuttle" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.BIND_SERVICE" />
+                <action android:name="com.oasisfeng.island.action.UNBIND_SERVICE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
