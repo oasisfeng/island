@@ -1,7 +1,6 @@
 package com.oasisfeng.island.data;
 
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -201,12 +200,12 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private final ServiceConnection mServiceConnection = new ServiceShuttle.ShuttleServiceConnection() {
 
-		@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
+		@Override public void onServiceConnected(final IBinder service) {
 			onIslandServiceConnected(IIslandManager.Stub.asInterface(service));
 			context().unbindService(this);
 		}
 
-		@Override public void onServiceDisconnected(final ComponentName name) {}
+		@Override public void onServiceDisconnected() {}
 	};
 
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));

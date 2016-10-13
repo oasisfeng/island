@@ -3,7 +3,6 @@ package com.oasisfeng.island.console.apps;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.databinding.Observable;
 import android.os.Build;
@@ -89,7 +88,6 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onDestroy() {
-		getActivity().unbindService(mServiceConnection);
 		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(mAppChangeObserver);
 		mViewModel.removeOnPropertyChangedCallback(onPropertyChangedCallback);
 		super.onDestroy();
@@ -97,12 +95,12 @@ public class AppListFragment extends Fragment {
 
 	// Use ShuttleServiceConnection to connect to remote service in profile via ServiceShuttle (see also MainActivity.bindService)
 	private final ServiceConnection mServiceConnection = new ShuttleServiceConnection() {
-		@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
+		@Override public void onServiceConnected(final IBinder service) {
 			mViewModel.setIslandManager(IIslandManager.Stub.asInterface(service));
 			Log.d(TAG, "Service connected");
 		}
 
-		@Override public void onServiceDisconnected(final ComponentName name) {
+		@Override public void onServiceDisconnected() {
 			mViewModel.setIslandManager(null);
 		}
 	};

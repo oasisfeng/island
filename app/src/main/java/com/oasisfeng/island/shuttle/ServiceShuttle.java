@@ -10,15 +10,21 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.RemoteException;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.SparseArray;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.util.Hacks;
 
 import java.util.List;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 /**
  * Bind to service via activity
@@ -34,7 +40,25 @@ public class ServiceShuttle extends Activity {
 	private static final String EXTRA_FLAGS = "flags";
 	private static final String EXTRA_HASH = "hash";
 
-	public static abstract class ShuttleServiceConnection extends IServiceConnection.Stub implements ServiceConnection {}
+	private static final boolean ALWAYS_USE_SHUTTLE = true;
+
+	public static abstract class ShuttleServiceConnection extends IServiceConnection.Stub implements ServiceConnection {
+
+		public abstract void onServiceConnected(final IBinder service);
+		public abstract void onServiceDisconnected();
+
+		@Override public final void onServiceConnected(final ComponentName name, final IBinder service) {
+			if (Thread.currentThread() != Looper.getMainLooper().getThread())
+				new Handler(Looper.getMainLooper()).post(() -> onServiceConnected(service));
+			else onServiceConnected(service);
+		}
+
+		@Override public final void onServiceDisconnected(final ComponentName name) {
+			if (Thread.currentThread() != Looper.getMainLooper().getThread())
+				new Handler(Looper.getMainLooper()).post(this::onServiceDisconnected);
+			else onServiceDisconnected();
+		}
+	}
 
 	/**
 	 * Please delegate the regular {@link Context#bindService(Intent, ServiceConnection, int)} of your components and application to this method.
@@ -44,18 +68,17 @@ public class ServiceShuttle extends Activity {
 	 * }</pre>
 	 */
 	public static boolean bindService(final Context context, final Intent service, final ServiceConnection conn, final int flags) {
-//		if (ActivityCompat.checkSelfPermission(context, Hacks.Permission.INTERACT_ACROSS_USERS) == PackageManager.PERMISSION_GRANTED) {
-//			final List<ResolveInfo> matches = context.getPackageManager().queryIntentServices(service, 0);
-//			for (final ResolveInfo match : matches) {
-//				Log.w("DEBUG", match.toString());
-//			}
-//		}
-		return GlobalStatus.profile != null && conn instanceof ShuttleServiceConnection
-				&& bindService(context, service, (ShuttleServiceConnection) conn, flags);
+		if (GlobalStatus.profile == null || ! (conn instanceof ShuttleServiceConnection)) return false;
+		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(context, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED)
+			if (Hacks.Context_bindServiceAsUser.invoke(service, conn, flags, GlobalStatus.profile).on(context)) {
+				Log.d(TAG, "Connecting to service in profile: " + service);
+				return true;
+			}
+		return bindServiceViaShuttle(context, service, (ShuttleServiceConnection) conn, flags);
 	}
 
-	private static boolean bindService(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
-		final ResolveInfo resolve = context.getPackageManager().resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
+	private static boolean bindServiceViaShuttle(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
+		@SuppressWarnings("deprecation") final ResolveInfo resolve = context.getPackageManager().resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
 		if (resolve == null) return false;		// Unresolvable even in disabled services
 		final Bundle extras = new Bundle(); extras.putBinder(EXTRA_SERVICE_CONNECTION, conn);
 		try {
@@ -64,13 +87,23 @@ public class ServiceShuttle extends Activity {
 
 			Activities.startActivity(context, new Intent(ACTION_BIND_SERVICE).putExtras(extras)
 					.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags).putExtra(EXTRA_HASH, System.identityHashCode(conn)));
+			Log.d(TAG, "Connecting to service in profile (via shuttle): " + service);
 			return true;
 		} catch (final ActivityNotFoundException e) {
 			return false;		// ServiceShuttle not ready in managed profile
 		}
 	}
 
-	public static boolean unbindService(final Context context, final IServiceConnection.Stub conn) {
+	public static boolean unbindService(final Context context, final ServiceConnection connection) {
+		if (GlobalStatus.profile == null || ! (connection instanceof ShuttleServiceConnection)) return false;
+		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(context, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) try {
+			context.unbindService(connection);
+			return true;
+		} catch (final IllegalArgumentException e) { return false; }		// IllegalArgumentException: Service not registered
+		return unbindService(context, (IServiceConnection.Stub) connection);
+	}
+
+	private static boolean unbindService(final Context context, final IServiceConnection.Stub conn) {
 		try {
 			Activities.startActivity(context, new Intent(ACTION_UNBIND_SERVICE).putExtra(EXTRA_HASH, System.identityHashCode(conn)));
 			return true;
@@ -119,6 +152,9 @@ public class ServiceShuttle extends Activity {
 		finish();
 	}
 
+	private static final String TAG = "Shuttle";
+
+	/** Delegate ServiceConnection running in target user, delivering callbacks back to the caller in originating user. */
 	static class DelegateServiceConnection implements ServiceConnection, IBinder.DeathRecipient {
 
 		DelegateServiceConnection(final Context context, final IServiceConnection delegate) throws RemoteException {

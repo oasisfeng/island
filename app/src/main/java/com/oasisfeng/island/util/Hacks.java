@@ -55,7 +55,7 @@ public class Hacks {
 				.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withParam(int.class);
 		LauncherApps_getApplicationInfo = Hack.onlyIf(SDK_INT >= N).into(LauncherApps.class).method("getApplicationInfo")
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class, UserHandle.class);
-		Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class).fallbackReturning(null)
+		Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class).fallbackReturning(false)
 				.withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
 	}
 }

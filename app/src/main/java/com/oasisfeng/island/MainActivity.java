@@ -87,8 +87,6 @@ public class MainActivity extends Activity {
 	}
 
 	@Override public void unbindService(final ServiceConnection conn) {
-		if (conn instanceof ServiceShuttle.ShuttleServiceConnection)
-			ServiceShuttle.unbindService(this, (ServiceShuttle.ShuttleServiceConnection) conn);
-		else super.unbindService(conn);
+		if (! ServiceShuttle.unbindService(this, conn)) super.unbindService(conn);
 	}
 }
