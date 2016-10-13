@@ -161,6 +161,10 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			queryApplicationInfoInProfile(pkg, info -> {
 				if (info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {	// Frozen
 					final IslandAppInfo new_info = new IslandAppInfo(IslandAppListProvider.this, user, info, mIslandAppMap.get().get(pkg));
+					if (! new_info.isHidden()) {
+						Log.w(TAG, "Correct the flag for hidden package: " + pkg);
+						new_info.setHidden(true);
+					}
 					mIslandAppMap.get().put(pkg, new_info);
 					notifyUpdate(Collections.singleton(new_info));
 				} else {	// Uninstalled in profile
@@ -171,11 +175,11 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 
 		@Override public void onPackageAdded(final String pkg, final UserHandle user) {
-			updatePackage(pkg, user, "pkg add");
+			updatePackage(pkg, user, true);
 		}
 
 		@Override public void onPackageChanged(final String pkg, final UserHandle user) {
-			updatePackage(pkg, user, "pkg change");
+			updatePackage(pkg, user, false);
 		}
 
 		@Override public void onPackagesAvailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
@@ -186,12 +190,16 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			Log.e(TAG, "onPackagesUnavailable() is unsupported");
 		}
 
-		private void updatePackage(final String pkg, final UserHandle user, final String reason) {
+		private void updatePackage(final String pkg, final UserHandle user, final boolean add) {
 			if (! user.equals(GlobalStatus.profile)) return;
-			Log.d(TAG, "Update: " + pkg + " for " + reason);
+			Log.d(TAG, "Update: " + pkg + (add ? " for pkg add" : " for pkg change"));
 			queryApplicationInfoInProfile(pkg, info -> {
 				if (info == null) return;
 				final IslandAppInfo app = new IslandAppInfo(IslandAppListProvider.this, user, info, mIslandAppMap.get().get(pkg));
+				if (add && app.isHidden()) {
+					Log.w(TAG, "Correct the flag for unhidden package: " + pkg);
+					app.setHidden(false);
+				}
 				mIslandAppMap.get().put(pkg, app);
 				notifyUpdate(Collections.singleton(app));
 			});

@@ -36,6 +36,15 @@ public class IslandAppInfo extends AppInfo {
 		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
 	}
 
+	void setHidden(final boolean state) {
+		if (SDK_INT >= M) {
+			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
+			if (private_flags != null)
+				Hacks.ApplicationInfo_privateFlags.set(this, state ? private_flags | PRIVATE_FLAG_HIDDEN : private_flags & ~ PRIVATE_FLAG_HIDDEN);
+		} else if (state) flags |= FLAG_HIDDEN;
+		else flags &= ~ FLAG_HIDDEN;
+	}
+
 	/** @return hidden state, or null if failed to */
 	private static Boolean isHidden(final ApplicationInfo info) {
 		if (SDK_INT >= M) {
@@ -49,6 +58,8 @@ public class IslandAppInfo extends AppInfo {
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
 	@SuppressWarnings("deprecation") private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(
 			() -> checkLaunchable(PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, TimeUnit.SECONDS);
+
+	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 
 	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base, final IslandAppInfo last) {
 		super(provider, base, last);
