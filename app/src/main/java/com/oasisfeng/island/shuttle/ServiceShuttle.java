@@ -24,6 +24,11 @@ import com.oasisfeng.island.util.Hacks;
 
 import java.util.List;
 
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
+import static android.content.Intent.FLAG_ACTIVITY_NO_HISTORY;
+import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 /**
@@ -38,7 +43,7 @@ public class ServiceShuttle extends Activity {
 	private static final String EXTRA_INTENT = "extra";
 	private static final String EXTRA_SERVICE_CONNECTION = "svc_conn";
 	private static final String EXTRA_FLAGS = "flags";
-	private static final String EXTRA_HASH = "hash";
+	private static final String EXTRA_CONNECTION_HASH = "hash";
 
 	private static final boolean ALWAYS_USE_SHUTTLE = true;
 
@@ -77,6 +82,9 @@ public class ServiceShuttle extends Activity {
 		return bindServiceViaShuttle(context, service, (ShuttleServiceConnection) conn, flags);
 	}
 
+	private static final int SHUTTLE_ACTIVITY_START_FLAGS = FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK
+			| FLAG_ACTIVITY_NO_USER_ACTION | FLAG_ACTIVITY_NO_ANIMATION | FLAG_ACTIVITY_NO_HISTORY;
+
 	private static boolean bindServiceViaShuttle(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
 		@SuppressWarnings("deprecation") final ResolveInfo resolve = context.getPackageManager().resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
 		if (resolve == null) return false;		// Unresolvable even in disabled services
@@ -85,8 +93,8 @@ public class ServiceShuttle extends Activity {
 			final Activity activity = Activities.findActivityFrom(context);
 			if (activity != null) activity.overridePendingTransition(0, 0);
 
-			Activities.startActivity(context, new Intent(ACTION_BIND_SERVICE).putExtras(extras)
-					.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags).putExtra(EXTRA_HASH, System.identityHashCode(conn)));
+			Activities.startActivity(context, new Intent(ACTION_BIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS).putExtras(extras)
+					.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags).putExtra(EXTRA_CONNECTION_HASH, System.identityHashCode(conn)));
 			Log.d(TAG, "Connecting to service in profile (via shuttle): " + service);
 			return true;
 		} catch (final ActivityNotFoundException e) {
@@ -105,7 +113,8 @@ public class ServiceShuttle extends Activity {
 
 	private static boolean unbindService(final Context context, final IServiceConnection.Stub conn) {
 		try {
-			Activities.startActivity(context, new Intent(ACTION_UNBIND_SERVICE).putExtra(EXTRA_HASH, System.identityHashCode(conn)));
+			Activities.startActivity(context, new Intent(ACTION_UNBIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS)
+					.putExtra(EXTRA_CONNECTION_HASH, System.identityHashCode(conn)));
 			return true;
 		} catch (final ActivityNotFoundException e) {
 			return false;		// ServiceShuttle not ready in managed profile
@@ -135,15 +144,15 @@ public class ServiceShuttle extends Activity {
 					final DelegateServiceConnection delegate_connection;
 					try {
 						delegate_connection = new DelegateServiceConnection(this, service_connection);
-						mConnections.put(intent.getIntExtra(EXTRA_HASH, 0), delegate_connection);
-						@SuppressWarnings("WrongConstant") final boolean result = getApplicationContext().bindService(service_intent,
-								delegate_connection, intent.getIntExtra(EXTRA_FLAGS, 0));
+						mConnections.put(intent.getIntExtra(EXTRA_CONNECTION_HASH, 0), delegate_connection);
+						@SuppressWarnings("WrongConstant") final boolean result = getApplicationContext()/* Application context for longer lifespan */
+								.bindService(service_intent,delegate_connection, intent.getIntExtra(EXTRA_FLAGS, 0));
 						if (result) setResult(RESULT_OK);
 					} catch (final RemoteException ignored) {}
 				}
 			}
 		} else if (ACTION_UNBIND_SERVICE.equals(intent.getAction())) {
-			final int hash = intent.getIntExtra(EXTRA_HASH, 0);
+			final int hash = intent.getIntExtra(EXTRA_CONNECTION_HASH, 0);
 			if (hash == 0) return;
 			final DelegateServiceConnection connection = mConnections.get(hash);
 			if (connection == null) return;
