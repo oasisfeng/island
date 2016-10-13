@@ -22,4 +22,8 @@ public class IslandApplication extends Application {
 	@Override public boolean bindService(final Intent service, final ServiceConnection conn, final int flags) {
 		return ServiceShuttle.bindService(this, service, conn, flags) || super.bindService(service, conn, flags);
 	}
+
+	@Override public void unbindService(final ServiceConnection conn) {
+		if (! ServiceShuttle.unbindService(this, conn)) super.unbindService(conn);
+	}
 }
