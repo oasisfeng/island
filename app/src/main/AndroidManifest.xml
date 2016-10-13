@@ -109,7 +109,7 @@
                   android:enabled="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
-                  android:theme="@style/android:Theme.Translucent.NoTitleBar"
+                  android:theme="@style/android:Theme.NoDisplay"
                   android:taskAffinity=":shuttle" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.BIND_SERVICE" />
