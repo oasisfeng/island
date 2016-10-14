@@ -37,6 +37,8 @@ import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppViewModel.State;
+import com.oasisfeng.island.shortcut.AppLaunchShortcut;
+import com.oasisfeng.island.util.Users;
 
 /**
  * View model for apps
@@ -80,9 +82,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public void onShortcutRequested(final View v) {
 		if (getSelection() == null) return;
-		try {
-			mController.createShortcut(getSelection().info.packageName);
-		} catch (final RemoteException ignored) {}
+		final String pkg = getSelection().info().packageName;
+		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
+		if (AppLaunchShortcut.createOnLauncher(mContext, pkg, Users.isOwner(getSelection().info().user))) {
+			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
+		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
 	}
 
 	public void onGreenifyRequested(final View v) {

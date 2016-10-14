@@ -31,6 +31,7 @@
         <activity android:name=".setup.SetupActivity" android:exported="true" android:theme="@style/SetupTheme" />
 
         <activity android:name=".shortcut.AppLaunchShortcut"
+                  android:enabled="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
                   android:theme="@style/android:Theme.Translucent.NoTitleBar"
@@ -46,6 +47,7 @@
         </activity>
 
         <activity-alias android:name=".shortcut.AppLaunchShortcutAlias"
+                        android:enabled="false"
                         android:targetActivity=".shortcut.AppLaunchShortcut" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
@@ -54,16 +56,6 @@
                 <data android:scheme="target" />
             </intent-filter>
         </activity-alias>
-
-        <activity android:name=".shortcut.AppLaunchShortcut$Installer"
-                  android:hardwareAccelerated="false"
-                  android:excludeFromRecents="true"
-                  android:theme="@style/android:Theme.Translucent.NoTitleBar" >
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.action.INSTALL_SHORTCUT" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
 
         <activity android:name=".engine.ActivityForwarder"
                   android:exported="false"

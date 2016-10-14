@@ -25,7 +25,6 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -39,7 +38,6 @@ import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.api.ApiTokenManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
-import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 
@@ -62,7 +60,6 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  */
 public class IslandManager extends IIslandManager.Stub {
 
-	private static final int REQUEST_CODE_INSTALL = 0x101;
 	private static final String GREENIFY_PKG = BuildConfig.DEBUG ? "com.oasisfeng.greenify.debug" : "com.oasisfeng.greenify";
 	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 208 : 215;	// TODO: The minimal version of Greenify with support for Island.
 
@@ -229,13 +226,6 @@ public class IslandManager extends IIslandManager.Stub {
 		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
 	}
 
-	@Override public void createShortcut(final String pkg) {
-		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
-		if (AppLaunchShortcut.createOnLauncher(mContext, pkg)) {
-			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
-		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
-	}
-
 	@Override public void greenify(final String pkg) {
 		Analytics.$().event("action_greenify").with("package", pkg).send();
 		final boolean greenify_installed = mLauncherApps.get().isPackageEnabled(GREENIFY_PKG, OWNER);
@@ -358,6 +348,11 @@ public class IslandManager extends IIslandManager.Stub {
 		mDevicePolicies.setProfileName(mContext.getString(R.string.profile_name));
 		// Enable the profile here, launcher will show all apps inside.
 		mDevicePolicies.setProfileEnabled();
+	}
+
+	public IslandManager resetForwarding() {
+		mDevicePolicies.clearCrossProfileIntentFilters();
+		return this;
 	}
 
 	public IslandManager enableForwarding(final IntentFilter filter, final int flags) {

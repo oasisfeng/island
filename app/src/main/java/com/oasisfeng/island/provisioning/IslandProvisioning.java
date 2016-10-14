@@ -23,6 +23,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
@@ -55,7 +56,7 @@ public class IslandProvisioning {
 	 *  [3,POST_PROVISION_REV> - Island provision is completed in previous version, but needs re-performing in this version. */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
-	private static final int POST_PROVISION_REV = 4;
+	private static final int POST_PROVISION_REV = 5;
 
 	public static boolean isEncryptionRequired() {
 		return SDK_INT < N
@@ -115,14 +116,14 @@ public class IslandProvisioning {
 		startProfileOwnerProvisioningIfNeeded(activity);
 	}
 
-	@SuppressLint("CommitPrefEdits") public void onProfileProvisioningComplete() {
+	@SuppressLint("CommitPrefEdits") public static void onProfileProvisioningComplete(final Context context) {
 		Log.d(TAG, "onProfileProvisioningComplete");
-		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
-		startProfileOwnerPostProvisioning();
+		startProfileOwnerPostProvisioning(context, new IslandManager(context));
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
 
-		MainActivity.startAsUser(mContext, GlobalStatus.OWNER);
+		MainActivity.startAsUser(context, GlobalStatus.OWNER);
 	}
 
 	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
@@ -135,44 +136,60 @@ public class IslandProvisioning {
 			return;		// Last attempt failed again, no more attempts.
 		} else if (state == 1) Log.w(TAG, "Last provision attempt might be interrupted, try provisioning one more time...");
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).commit();	// Avoid further attempts
+		if (state >= 3) Log.i(TAG, "Re-performing provision for new revision " + POST_PROVISION_REV);
 
-		if (state == 0)		// Managed profile provision was not performed, the profile may be enabled manually.
-			ProfileOwnerSystemProvisioning.start(new IslandManager(context));	// Simulate the stock managed profile provision
-
-		if (state >= 3) Log.i(TAG, "Re-performing post-provision for new revision " + POST_PROVISION_REV);
-		new IslandProvisioning(context).startProfileOwnerPostProvisioning();
+		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
+		// This is also required for manual provision via ADB shell.
+		final IslandManager island = new IslandManager(context);
+		island.resetForwarding();
+		ProfileOwnerSystemProvisioning.start(island);	// Simulate the stock managed profile provision
+		IslandProvisioning.startProfileOwnerPostProvisioning(context, island);
 
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
 	}
 
-	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
-	private void startProfileOwnerPostProvisioning() {
-		new SystemAppsManager(mContext, mIslandManager).prepareSystemApps();
-		mIslandManager.enableProfile();
-		enableAdditionalForwarding();
-		if (SDK_INT >= M) {
-			final DevicePolicies dpm = new DevicePolicies(mContext);
-			dpm.addUserRestriction(ALLOW_PARENT_PROFILE_APP_LINKING);
-			dpm.setPermissionGrantState(mContext.getPackageName(), "android.permission.INTERACT_ACROSS_USERS", PERMISSION_GRANT_STATE_GRANTED);
-		}
+	/**
+	 * All the preparations after the provisioning procedure of system ManagedProvisioning
+	 *
+	 * <p>{@link #POST_PROVISION_REV} must be increased if anything new is added in this method
+	 */
+	private static void startProfileOwnerPostProvisioning(final Context context, final IslandManager island) {
+		new SystemAppsManager(context, island).prepareSystemApps();
+		island.enableProfile();
+		enableAdditionalForwarding(island);
 
-		final PackageManager pm = mContext.getPackageManager();
+		if (SDK_INT >= M) {
+			final DevicePolicies dpm = new DevicePolicies(context);
+			dpm.addUserRestriction(ALLOW_PARENT_PROFILE_APP_LINKING);
+			dpm.setPermissionGrantState(context.getPackageName(), "android.permission.INTERACT_ACROSS_USERS", PERMISSION_GRANT_STATE_GRANTED);
+		}
+		final PackageManager pm = context.getPackageManager();
+
+		// Prepare AppLaunchShortcut
+		final ComponentName launchpad = new ComponentName(context, AppLaunchShortcut.class);
+		pm.setComponentEnabledSetting(launchpad, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+		final IntentFilter launchpad_filter = new IntentFilter(AppLaunchShortcut.ACTION_LAUNCH_CLONE);
+		launchpad_filter.addDataScheme("target");
+		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
+		launchpad_filter.addCategory(Intent.CATEGORY_LAUNCHER);
+		island.enableForwarding(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
+
 		// Prepare ServiceShuttle
-		pm.setComponentEnabledSetting(new ComponentName(mContext, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-		mIslandManager.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
-		mIslandManager.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_UNBIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+		pm.setComponentEnabledSetting(new ComponentName(context, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_UNBIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
-		mContext.getPackageManager().setComponentEnabledSetting(new ComponentName(mContext, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		pm.setComponentEnabledSetting(new ComponentName(context, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}
 
-	private void enableAdditionalForwarding() {
+	private static void enableAdditionalForwarding(final IslandManager island) {
 		// For sharing across Island (bidirectional)
-		mIslandManager.enableForwarding(new IntentFilter(Intent.ACTION_SEND), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+		island.enableForwarding(new IntentFilter(Intent.ACTION_SEND), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
 		// For web browser
 		final IntentFilter browser = new IntentFilter(Intent.ACTION_VIEW);
 		browser.addCategory(Intent.CATEGORY_BROWSABLE);
 		browser.addDataScheme("http"); browser.addDataScheme("https"); browser.addDataScheme("ftp");
-		mIslandManager.enableForwarding(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
+		island.enableForwarding(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
 	}
 
 	public static int getMaxSupportedUsers() {
@@ -193,13 +210,7 @@ public class IslandProvisioning {
 	}
 	private static final String RES_MAX_USERS = "config_multiuserMaximumUsers";
 
-	public IslandProvisioning(final Context context) {
-		mContext = context;
-		mIslandManager = new IslandManager(context);
-	}
-
-	private final Context mContext;
-	private final IslandManager mIslandManager;
+	private IslandProvisioning() {}
 
 	private static final String TAG = "Island.Provision";
 }

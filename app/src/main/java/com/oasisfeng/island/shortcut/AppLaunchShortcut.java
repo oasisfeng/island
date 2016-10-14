@@ -1,14 +1,13 @@
 package com.oasisfeng.island.shortcut;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -28,12 +27,6 @@ import com.oasisfeng.island.engine.IslandManager;
 
 import java.util.List;
 
-import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
-import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
-
 /**
  * Launch shortcut for apps on Island, from the owner user space
  *
@@ -43,110 +36,48 @@ import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
  */
 public class AppLaunchShortcut extends Activity {
 
-	private static final String ACTION_INSTALL_SHORTCUT = "com.oasisfeng.island.action.INSTALL_SHORTCUT";
-	private static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
+	public static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
 	private static final String ACTION_LAUNCH_APP = "com.oasisfeng.island.action.LAUNCH_APP";
 
-	/** Runs in owner user space to delegate the shortcut install broadcast */
-	public static class Installer extends Activity {
-
-		@Override protected void onCreate(final Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-			onNewIntent(getIntent());
-		}
-
-		@Override protected void onNewIntent(final Intent intent) {
-			final ComponentName launchpad = new ComponentName(this, AppLaunchShortcut.class);
-			// Disable launchpad in this user to make sure only the one in managed profile receives this intent
-			getPackageManager().setComponentEnabledSetting(launchpad, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-
-			final Intent install = new Intent().putExtras(intent.getExtras());
-			sendBroadcast(install.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
-			sendBroadcast(install.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
-			finish();
-		}
-	}
-
-	@Override protected void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		onNewIntent(getIntent());
-	}
-
-	public static boolean createOnLauncher(final Context context, final String pkg) {
-		final IslandManager island = new IslandManager(context);
+	public static boolean createOnLauncher(final Context context, final String pkg, final boolean owner) {
 		try {
-			if (! island.isDeviceOwner())		// The complex flow for managed profile
-				return createOnLauncherInManagedProfile(context, island, pkg);
-			final Bundle shortcut_payload = buildShortcutPayload(context, pkg, false);
-			if (shortcut_payload == null) return false;
-			broadcastShortcutInstall(context, shortcut_payload);
+			final Intent intent = buildShortcutIntent(context, pkg, owner);
+			if (intent == null) return false;
+			context.sendBroadcast(intent.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
+			context.sendBroadcast(intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
 			return true;
-		} catch (final PackageManager.NameNotFoundException e) {
-			return false;
-		}
-	}
-
-	/** Must be called in managed profile */
-	private static boolean createOnLauncherInManagedProfile(final Context context, final IslandManager island, final String pkg) throws PackageManager.NameNotFoundException {
-		// Make sure required forwarding rules are ready
-		final IntentFilter installer_filter = new IntentFilter(ACTION_INSTALL_SHORTCUT);
-		installer_filter.addCategory(Intent.CATEGORY_DEFAULT);
-		final IntentFilter launchpad_filter = new IntentFilter(ACTION_LAUNCH_CLONE);
-		launchpad_filter.addDataScheme("target");
-		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
-		launchpad_filter.addCategory(Intent.CATEGORY_LAUNCHER);
-		launchpad_filter.addCategory(Intent.CATEGORY_INFO);
-		island.enableForwarding(installer_filter, FLAG_PARENT_CAN_ACCESS_MANAGED)
-				.enableForwarding(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
-
-		// Disable installer in managed profile to make sure only the one in owner user receives this intent. ("android:singleUser" is supported for Activity since Android 6.0)
-		final ComponentName installer = new ComponentName(context, Installer.class);
-		context.getPackageManager().setComponentEnabledSetting(installer, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-
-		final Bundle shortcut_payload = buildShortcutPayload(context, pkg, true);
-		if (shortcut_payload == null) return false;
-		final Intent shortcut_request = new Intent(ACTION_INSTALL_SHORTCUT).putExtras(shortcut_payload).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		try {
-			context.startActivity(shortcut_request);
-			return true;
-		} catch (final ActivityNotFoundException e) {
-			Log.e(TAG, "Failed to send shortcut installation request.");
+		} catch (final NameNotFoundException e) {
+			Log.e(TAG, "Package not installed: " + pkg);
 			return false;
 		}
 	}
 
 	/** @return null if the given package has no launch entrance */
-	private static @Nullable Bundle buildShortcutPayload(final Context context, final String pkg, final boolean clone) throws PackageManager.NameNotFoundException {
+	private static @Nullable Intent buildShortcutIntent(final Context context, final String pkg, final boolean owner) throws NameNotFoundException {
 		final PackageManager pm = context.getPackageManager();
-		@SuppressWarnings("WrongConstant") final List<ResolveInfo> activities = pm.queryIntentActivities(
-				new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), GET_UNINSTALLED_PACKAGES);
+		@SuppressWarnings("deprecation") final List<ResolveInfo> activities = pm.queryIntentActivities(
+				new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), PackageManager.GET_UNINSTALLED_PACKAGES);
 		if (activities.isEmpty()) return null;
 
 		final ActivityInfo activity = activities.get(0).activityInfo;
 		final ComponentName component = new ComponentName(activity.packageName, activity.name);
 
-		final Intent launch_intent = new Intent(clone ? ACTION_LAUNCH_CLONE : ACTION_LAUNCH_APP).addCategory(Intent.CATEGORY_LAUNCHER)
+		final Intent launch_intent = new Intent(owner ? ACTION_LAUNCH_APP : ACTION_LAUNCH_CLONE).addCategory(Intent.CATEGORY_LAUNCHER)
 				.setData(Uri.fromParts("target", component.flattenToShortString(), null));
 
-		final Bundle payload = new Bundle();
-		payload.putParcelable(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
-		payload.putCharSequence(Intent.EXTRA_SHORTCUT_NAME, "\uD83C\uDF00" + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
-		@SuppressWarnings("WrongConstant") final Drawable d = pm.getActivityInfo(component, GET_UNINSTALLED_PACKAGES).loadIcon(pm);
+		final Intent intent = new Intent();
+		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
+		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, "\uD83C\uDF00" + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
+		@SuppressWarnings("deprecation") final Drawable d = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES).loadIcon(pm);
 		final Bitmap icon_bitmap = drawableToBitmap(d);
-		if (icon_bitmap != null) payload.putParcelable(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
+		if (icon_bitmap != null) intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
 		else {
 			final Context pkg_context = context.createPackageContext(pkg, 0);
 			final int icon = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;
-			payload.putParcelable(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon));
+			intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon));
 		}
-		payload.putBoolean("duplicate", false);
-		return payload;
-	}
-
-	private static void broadcastShortcutInstall(final Context context, final Bundle shortcut) {
-		final Intent install = new Intent().putExtras(shortcut);
-		context.sendBroadcast(install.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
-		context.sendBroadcast(install.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
+		intent.putExtra("duplicate", false);		// Special extra to prevent duplicate shortcut being created
+		return intent;
 	}
 
 	/** Runs in managed profile or device owner */
@@ -171,6 +102,11 @@ public class AppLaunchShortcut extends Activity {
 		return launcher.isActivityEnabled(component, user);
 	}
 
+	@Override protected void onCreate(final Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		onNewIntent(getIntent());
+	}
+
 	@Override protected void onNewIntent(final Intent intent) {
 		try {
 			handleIntent(intent);
@@ -189,7 +125,7 @@ public class AppLaunchShortcut extends Activity {
 	private static Bitmap drawableToBitmap(final Drawable d) {
 		if (d instanceof BitmapDrawable)
 			return ((BitmapDrawable) d).getBitmap();
-		if (d instanceof ColorDrawable) //TODO: working to support color drawable
+		if (d instanceof ColorDrawable) //TODO: Support color drawable
 			return null;
 		final Bitmap bitmap = Bitmap.createBitmap(d.getIntrinsicWidth(), d.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
 		final Canvas canvas = new Canvas(bitmap);

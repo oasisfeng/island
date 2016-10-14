@@ -19,7 +19,7 @@ public class IslandDeviceAdminReceiver extends DeviceAdminReceiver {
      * Note that the managed profile is not fully visible until it is enabled.
      */
     @Override public void onProfileProvisioningComplete(final Context context, final Intent intent) {
-        new IslandProvisioning(context).onProfileProvisioningComplete();
+        IslandProvisioning.onProfileProvisioningComplete(context);
     }
 
     /**
