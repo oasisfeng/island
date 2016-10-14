@@ -105,7 +105,7 @@ public class AppLaunchShortcut extends Activity {
 
 		final Bundle shortcut_payload = buildShortcutPayload(context, pkg, true);
 		if (shortcut_payload == null) return false;
-		final Intent shortcut_request = new Intent(ACTION_INSTALL_SHORTCUT).putExtras(shortcut_payload);
+		final Intent shortcut_request = new Intent(ACTION_INSTALL_SHORTCUT).putExtras(shortcut_payload).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		try {
 			context.startActivity(shortcut_request);
 			return true;
