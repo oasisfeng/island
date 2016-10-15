@@ -22,8 +22,6 @@ import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.util.Hacks;
 
-import java.util.List;
-
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
@@ -111,6 +109,7 @@ public class ServiceShuttle extends Activity {
 		return unbindService(context, (IServiceConnection.Stub) connection);
 	}
 
+	// TODO: Use service binder to unbind service, to get rid of the "work profile" toast and avoid breaking recent-task panel.
 	private static boolean unbindService(final Context context, final IServiceConnection.Stub conn) {
 		try {
 			Activities.startActivity(context, new Intent(ACTION_UNBIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS)
@@ -129,14 +128,10 @@ public class ServiceShuttle extends Activity {
 		final IServiceConnection service_connection = IServiceConnection.Stub.asInterface(intent.getExtras().getBinder(EXTRA_SERVICE_CONNECTION));
 
 		setResult(RESULT_CANCELED);
-		if (ACTION_BIND_SERVICE.equals(intent.getAction())) {
+		final int connection_hash = intent.getIntExtra(EXTRA_CONNECTION_HASH, 0);
+		if (connection_hash != 0 && ACTION_BIND_SERVICE.equals(intent.getAction())) {
 			final Intent service_intent = intent.getParcelableExtra(EXTRA_INTENT);
 			if (service_intent != null && service_connection != null) {
-				final List<ResolveInfo> matches = getPackageManager().queryIntentServices(service_intent, 0);
-				for (final ResolveInfo match : matches) {
-					Log.w("DEBUG", match.toString());
-				}
-
 				final ResolveInfo resolve = getPackageManager().resolveService(service_intent, 0);
 				if (resolve != null) {
 					final ServiceInfo service = resolve.serviceInfo;
@@ -144,19 +139,21 @@ public class ServiceShuttle extends Activity {
 					final DelegateServiceConnection delegate_connection;
 					try {
 						delegate_connection = new DelegateServiceConnection(this, service_connection);
-						mConnections.put(intent.getIntExtra(EXTRA_CONNECTION_HASH, 0), delegate_connection);
+						mConnections.put(connection_hash, delegate_connection);
 						@SuppressWarnings("WrongConstant") final boolean result = getApplicationContext()/* Application context for longer lifespan */
 								.bindService(service_intent,delegate_connection, intent.getIntExtra(EXTRA_FLAGS, 0));
 						if (result) setResult(RESULT_OK);
 					} catch (final RemoteException ignored) {}
 				}
 			}
-		} else if (ACTION_UNBIND_SERVICE.equals(intent.getAction())) {
-			final int hash = intent.getIntExtra(EXTRA_CONNECTION_HASH, 0);
-			if (hash == 0) return;
-			final DelegateServiceConnection connection = mConnections.get(hash);
+		} else if (connection_hash != 0 && ACTION_UNBIND_SERVICE.equals(intent.getAction())) {
+			final DelegateServiceConnection connection = mConnections.get(connection_hash);
 			if (connection == null) return;
-			getApplicationContext().unbindService(connection);
+			try {
+				getApplicationContext().unbindService(connection);
+			} catch (final IllegalArgumentException e) {
+				Log.e(TAG, "Failed to unbind service", e);
+			}
 		}
 		finish();
 	}
