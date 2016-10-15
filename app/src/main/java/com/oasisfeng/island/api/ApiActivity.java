@@ -1,7 +1,11 @@
 package com.oasisfeng.island.api;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
@@ -11,10 +15,13 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
+import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.engine.IslandManager;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * API via activity to cross the user border
@@ -41,13 +48,20 @@ public class ApiActivity extends Activity {
 	public static final String EXTRA_API_TOKEN = "token";	// String
 	public static final String EXTRA_ALWAYS = "always";		// Boolean (default: true)
 
+	private static final Map<String/* pkg */, Integer/* signature hash */> sCallerWhiteList = new HashMap<>(1);
+	static {
+		sCallerWhiteList.put("com.oasisfeng.greenify", -373128424);
+		if (BuildConfig.DEBUG) sCallerWhiteList.put("com.oasisfeng.greenify.debug", 0/* Any signature */);
+	}
+
 	/** The public API result code for invalid API token, a new token must be requested. */
 	private static final int RESULT_INVALID_TOKEN = Activity.RESULT_FIRST_USER;
 
 	/** @return activity result or null for "DO NOT setResult()" */
 	private @CheckResult Integer onStartCommand(final Intent intent) {
 		if (intent.getAction() == null) return RESULT_CANCELED;
-		if (! mApiTokens.verifyToken(intent.getStringExtra(EXTRA_API_TOKEN))) return RESULT_INVALID_TOKEN;
+		if (! verifyCaller(getCallingPackage()) && ! mApiTokens.verifyToken(intent.getStringExtra(EXTRA_API_TOKEN)))
+			return RESULT_INVALID_TOKEN;
 
 		switch (intent.getAction()) {
 		case ACTION_GET_APP_LIST:
@@ -81,7 +95,21 @@ public class ApiActivity extends Activity {
 		}
 	}
 
-	private boolean isForeground(final String pkg) {
+	private boolean verifyCaller(final String pkg) {
+		final Integer value = sCallerWhiteList.get(pkg);
+		if (value == null) return false;
+		final int signature_hash = value;
+		if (signature_hash == 0) return true;
+		try { @SuppressLint("PackageManagerGetSignatures")
+			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES);
+			for (final Signature signature : pkg_info.signatures)
+				if (signature.hashCode() != signature_hash) return false;
+			sCallerWhiteList.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
+			return true;
+		} catch (final PackageManager.NameNotFoundException e) { return false; }		// Should hardly happen
+	}
+
+	private static boolean isForeground(final String pkg) {
 		// TODO
 		return false;
 	}
