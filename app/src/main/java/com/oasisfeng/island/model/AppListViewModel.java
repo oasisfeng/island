@@ -148,7 +148,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public void onOwnerInstallationRequested(final View v) {
 		if (getSelection() == null) return;
-//		mController.installForOwner(getSelection().info.packageName);
+		final String pkg = getSelection().info().packageName;
+		v.getContext().startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
+		Analytics.$().event("action_install_outside").with("package", pkg).send();
 	}
 
 	public final void onFabClick(final View view) {

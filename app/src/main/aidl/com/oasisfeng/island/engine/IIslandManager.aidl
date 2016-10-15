@@ -15,7 +15,6 @@ interface IIslandManager {
 	boolean block(String pkg);
 	boolean unblock(String pkg);
 	void removeClone(String pkg);
-	void installForOwner(String pkg);
 	/** Destroy the current profile. */
 	void destroyProfile();
 }

@@ -203,13 +203,6 @@ public class IslandManager extends IIslandManager.Stub {
 		Activities.startActivity(mContext, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
 	}
 
-	@Override public void installForOwner(final String pkg) {
-		if (OWNER.equals(Process.myUserHandle())) return;
-		// Forward the installation
-		ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-		Analytics.$().event("action_install_outside").with("package", pkg).send();
-	}
-
 	private void showAppSettingActivity(final String pkg) {
 		enableSystemAppForActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", "", null)));
 		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
