@@ -16,10 +16,12 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
@@ -56,7 +58,7 @@ public class IslandProvisioning {
 	 *  [3,POST_PROVISION_REV> - Island provision is completed in previous version, but needs re-performing in this version. */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
-	private static final int POST_PROVISION_REV = 5;
+	private static final int POST_PROVISION_REV = 6;
 
 	public static boolean isEncryptionRequired() {
 		return SDK_INT < N
@@ -178,6 +180,13 @@ public class IslandProvisioning {
 		pm.setComponentEnabledSetting(new ComponentName(context, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
 		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_UNBIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
+
+		// Prepare API
+		pm.setComponentEnabledSetting(new ComponentName(context, ApiActivity.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+		island.enableForwarding(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+
 		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
 		pm.setComponentEnabledSetting(new ComponentName(context, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}

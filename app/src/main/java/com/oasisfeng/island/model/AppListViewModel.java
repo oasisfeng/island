@@ -1,5 +1,6 @@
 package com.oasisfeng.island.model;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -14,6 +15,7 @@ import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
@@ -36,6 +38,7 @@ import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
@@ -53,9 +56,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	public boolean include_sys_apps;
 	public transient @Nullable IIslandManager mController;
 
-	public AppListViewModel(final Context context) {
+	public AppListViewModel(final Activity activity) {
 		super(AppViewModel.class);
-		mContext = context;
+		mActivity = activity;
 		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
 			if (property == BR.selection) updateFab();
 		}});
@@ -84,14 +87,36 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info().packageName;
 		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
-		if (AppLaunchShortcut.createOnLauncher(mContext, pkg, Users.isOwner(getSelection().info().user))) {
-			Toast.makeText(mContext, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
-		} else Toast.makeText(mContext, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
+		if (AppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user))) {
+			Toast.makeText(mActivity, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
+		} else Toast.makeText(mActivity, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
 	}
 
 	public void onGreenifyRequested(final View v) {
 		if (getSelection() == null) return;
-//		mController.greenify(getSelection().info.packageName);
+		Analytics.$().event("action_greenify").with("package", getSelection().info().packageName).send();
+
+		final String mark = "greenify-explained";
+		final Boolean greenify_ready = GreenifyClient.checkGreenifyVersion(mActivity);
+		final boolean greenify_installed = greenify_ready != null;
+		final boolean unavailable_or_version_too_low = greenify_ready == null || ! greenify_ready;
+		if (unavailable_or_version_too_low || ! Scopes.app(mActivity).isMarked(mark)) {
+			String message = mActivity.getString(R.string.dialog_greenify_explanation);
+			if (greenify_installed && unavailable_or_version_too_low)
+				message += "\n\n" + mActivity.getString(R.string.dialog_greenify_version_too_low);
+			final int button = ! greenify_installed ? R.string.dialog_button_install : ! greenify_ready ? R.string.dialog_button_upgrade : R.string.dialog_button_continue;
+			new AlertDialog.Builder(mActivity).setTitle(R.string.dialog_greenify_title).setMessage(message).setPositiveButton(button, (d, w) -> {
+				if (! unavailable_or_version_too_low) {
+					Scopes.app(mActivity).mark(mark);
+					greenify(getSelection().info().packageName, getSelection().info().user);
+				} else GreenifyClient.openInAppMarket(mActivity);
+			}).show();
+		} else greenify(getSelection().info.packageName, getSelection().info().user);
+	}
+
+	private void greenify(final String pkg, final UserHandle user) {
+		if (! GreenifyClient.greenify(mActivity, pkg, user))
+			Toast.makeText(mActivity, R.string.toast_greenify_failed, Toast.LENGTH_LONG).show();
 	}
 
 	public void onBlockingRequested(final View v) {
@@ -115,9 +140,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		try {
 			mController.removeClone(pkg);
 		} catch (final RemoteException ignored) {
-			final LauncherApps launcher_apps = (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), GlobalStatus.profile, null, null);
-			Toast.makeText(mContext, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
+			Toast.makeText(mActivity, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -148,7 +173,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			Analytics.$().event("action_freeze").with("package", pkg).send();
 			try {
 				final boolean frozen = mController.freezeApp(pkg, "manual");
-				if (! frozen) Toast.makeText(mContext, "Failed to freeze", Toast.LENGTH_LONG).show();
+				if (! frozen) Toast.makeText(mActivity, "Failed to freeze", Toast.LENGTH_LONG).show();
 			} catch (final RemoteException ignored) {}
 			break;
 		case Unlock:
@@ -159,7 +184,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			// Do not clear selection, for quick launch with one more click
 			break;
 		case Enable:
-			final LauncherApps launcher_apps = (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
 			break;
 		}
@@ -173,13 +198,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} catch (final RemoteException ignored) { return; }		// FIXME: Error message
 		switch (check_result) {
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
-			Toast.makeText(mContext, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+			Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
-			Toast.makeText(mContext, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+			Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
-			new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_incapable_explanation)
-					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mContext, Config.URL_CANNOT_CLONE_EXPLAINED.get()))
+			new AlertDialog.Builder(mActivity).setMessage(R.string.dialog_clone_incapable_explanation)
+					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_CANNOT_CLONE_EXPLAINED.get()))
 					.setPositiveButton(android.R.string.cancel, null).show();
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
@@ -196,7 +221,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			break;
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
 			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			final ActivityInfo market_info = market_intent.resolveActivityInfo(mContext.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
+			final ActivityInfo market_info = market_intent.resolveActivityInfo(mActivity.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
 			if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
 				Analytics.$().setProperty("sys_market", market_info.packageName);
 			showExplanationBeforeCloning("clone-via-sys-market-explained", R.string.dialog_clone_via_sys_market_explanation, pkg);
@@ -222,9 +247,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private void showExplanationBeforeCloning(final String mark, final @StringRes int explanation, final String pkg) {
-		if (! Scopes.app(mContext).isMarked(mark)) {
-			new AlertDialog.Builder(mContext).setMessage(R.string.dialog_clone_via_install_explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-				Scopes.app(mContext).mark(mark);
+		if (! Scopes.app(mActivity).isMarked(mark)) {
+			new AlertDialog.Builder(mActivity).setMessage(R.string.dialog_clone_via_install_explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
+				Scopes.app(mActivity).mark(mark);
 				doCloneApp(pkg);
 			}).show();
 		} else doCloneApp(pkg);
@@ -289,7 +314,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 	};
 
-	private final Context mContext;
+	private final Activity mActivity;
 
 	private static final String TAG = "Island.VM";
 }

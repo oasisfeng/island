@@ -1,7 +1,6 @@
 package com.oasisfeng.island.engine;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
@@ -13,7 +12,6 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -29,13 +27,9 @@ import android.util.Log;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.app.Activities;
-import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.api.ApiActivity;
-import com.oasisfeng.island.api.ApiTokenManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -50,8 +44,6 @@ import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 /**
  * The engine of Island
@@ -59,9 +51,6 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  * Created by Oasis on 2016/4/5.
  */
 public class IslandManager extends IIslandManager.Stub {
-
-	private static final String GREENIFY_PKG = BuildConfig.DEBUG ? "com.oasisfeng.greenify.debug" : "com.oasisfeng.greenify";
-	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 208 : 215;	// TODO: The minimal version of Greenify with support for Island.
 
 	public IslandManager(final Context context) {
 		mContext = context;
@@ -224,60 +213,6 @@ public class IslandManager extends IIslandManager.Stub {
 	private void showAppSettingActivity(final String pkg) {
 		enableSystemAppForActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", "", null)));
 		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
-	}
-
-	@Override public void greenify(final String pkg) {
-		Analytics.$().event("action_greenify").with("package", pkg).send();
-		final boolean greenify_installed = mLauncherApps.get().isPackageEnabled(GREENIFY_PKG, OWNER);
-		int greenify_version = 0;
-		if (greenify_installed) try {
-			@SuppressWarnings({"WrongConstant", "deprecation"}) final PackageInfo info = mContext.getPackageManager()
-					.getPackageInfo(GREENIFY_PKG, PackageManager.GET_UNINSTALLED_PACKAGES);
-			greenify_version = info.versionCode;
-		} catch (final PackageManager.NameNotFoundException ignored) {}
-		final boolean unavailable_or_version_too_low = greenify_version < MIN_GREENIFY_VERSION;
-		final String mark = "greenify-explained";
-		if (unavailable_or_version_too_low || ! Scopes.app(mContext).isMarked(mark)) {
-			String message = mContext.getString(R.string.dialog_greenify_explanation);
-			if (greenify_installed && unavailable_or_version_too_low)
-				message += "\n\n" + mContext.getString(R.string.dialog_greenify_version_too_low);
-			final int button = ! greenify_installed ? R.string.dialog_button_install : unavailable_or_version_too_low ? R.string.dialog_button_upgrade : R.string.dialog_button_continue;
-			new AlertDialog.Builder(mContext).setTitle(R.string.dialog_greenify_title).setMessage(message)
-					.setPositiveButton(button, (d, w) -> {
-						if (unavailable_or_version_too_low) {
-							final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GREENIFY_PKG));
-							ActivityForwarder.startActivityAsOwner(mContext, mDevicePolicies, intent);
-						} else {
-							Scopes.app(mContext).mark(mark);
-							greenify(pkg);
-						}
-					}).show();
-			return;
-		}
-
-		final long user_sn = ((UserManager) mContext.getSystemService(USER_SERVICE)).getSerialNumberForUser(Process.myUserHandle());
-		final Intent intent = new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
-				.setData(Uri.parse("package:" + pkg + "#usn=" + user_sn))
-				.putExtra(ApiActivity.EXTRA_API_TOKEN, new ApiTokenManager(mContext).getToken(GREENIFY_PKG));
-		// Enable API for Greenify in this profile
-		final ComponentName api = new ComponentName(mContext, ApiActivity.class);
-		final PackageManager pm = mContext.getPackageManager();
-		// TODO: Ensure ApiActivity is also enabled after re-installation.
-		if (pm.getComponentEnabledSetting(api) != PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
-			pm.setComponentEnabledSetting(api, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-//			mDevicePolicies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
-
-//			final IntentFilter batch_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
-//			batch_filter.addDataScheme("packages");
-//			mDevicePolicies.addCrossProfileIntentFilter(batch_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Batch freeze API without data
-
-//			final IntentFilter single_filter = new IntentFilter(ApiActivity.ACTION_FREEZE);
-//			single_filter.addDataScheme("package");
-//			mDevicePolicies.addCrossProfileIntentFilter(single_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);	// Single freeze API with data
-		}
-		if (mContext instanceof Activity)
-			ActivityForwarder.startActivityForResultAsOwner((Activity) mContext, mDevicePolicies, intent, 0);
-		else throw new IllegalStateException("Not an activity context");
 	}
 
 	@Override public boolean block(final String pkg) {

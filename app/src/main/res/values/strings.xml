@@ -79,6 +79,7 @@
     <string name="toast_shortcut_created">Shortcut created on launcher</string>
     <string name="toast_shortcut_failed">Failed to create the shortcut</string>
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
+    <string name="toast_greenify_failed">Failed to greenify</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>
