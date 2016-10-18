@@ -186,6 +186,9 @@ public class IslandProvisioning {
 		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
+		// Disable Firebase (to improve process initialization performance)
+		pm.setComponentEnabledSetting(new ComponentName(context, "com.google.firebase.provider.FirebaseInitProvider"), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+
 		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
 		pm.setComponentEnabledSetting(new ComponentName(context, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}

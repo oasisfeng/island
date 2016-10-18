@@ -41,7 +41,7 @@ public class Hacks {
 	static {
 		Hack.setAssertionFailureHandler(e -> {
 			Log.e("Compatibility", e.getDebugInfo());
-			Analytics.$().event("compat_hacks").with("message", e.getMessage()).with("info", e.getDebugInfo()).send();
+			if (Users.isOwner()) Analytics.$().event("compat_hacks").with("message", e.getMessage()).with("info", e.getDebugInfo()).send();
 		});
 
 		ApplicationInfo_privateFlags = Hack.onlyIf(SDK_INT >= M).into(ApplicationInfo.class).field("privateFlags").fallbackTo(null);

@@ -6,6 +6,7 @@ import android.content.ServiceConnection;
 
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
+import com.oasisfeng.island.util.Users;
 
 /**
  * Application class
@@ -16,7 +17,7 @@ public class IslandApplication extends Application {
 
 	@Override public void onCreate() {
 		super.onCreate();
-		Analytics.setContext(this);
+		if (Users.isOwner()) Analytics.setContext(this);
 	}
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection conn, final int flags) {
