@@ -185,22 +185,23 @@ public class IslandManager extends IIslandManager.Stub {
 		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
-	@Override public void removeClone(final String pkg) {
+	@Override public boolean removeClone(final String pkg) {
 		final int flags;
 		try { @SuppressWarnings({"WrongConstant", "deprecation"})
 			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 			flags = info.flags;
 		} catch (final PackageManager.NameNotFoundException e) {
 			Log.e(TAG, "Try to remove non-existent clone: " + pkg);
-			return;
+			return false;
 		}
 		if ((flags & FLAG_SYSTEM) != 0) {
 			defreezeApp(pkg);	// App must not be hidden for startAppDetailsActivity() to work.
 			showAppSettingActivity(pkg);
 			Analytics.$().event("action_disable_sys_app").with("package", pkg).send();
-			return;
+			return false;		// TODO: Separate return value
 		}
 		Activities.startActivity(mContext, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
+		return true;
 	}
 
 	private void showAppSettingActivity(final String pkg) {
