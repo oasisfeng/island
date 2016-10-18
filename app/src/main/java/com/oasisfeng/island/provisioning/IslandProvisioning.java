@@ -58,7 +58,7 @@ public class IslandProvisioning {
 	 *  [3,POST_PROVISION_REV> - Island provision is completed in previous version, but needs re-performing in this version. */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
-	private static final int POST_PROVISION_REV = 6;
+	private static final int POST_PROVISION_REV = 7;
 
 	public static boolean isEncryptionRequired() {
 		return SDK_INT < N
@@ -179,7 +179,6 @@ public class IslandProvisioning {
 		// Prepare ServiceShuttle
 		pm.setComponentEnabledSetting(new ComponentName(context, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
 		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
-		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_UNBIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
 		pm.setComponentEnabledSetting(new ComponentName(context, ApiActivity.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);

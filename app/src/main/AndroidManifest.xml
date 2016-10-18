@@ -8,7 +8,7 @@
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" /> <!-- ServiceShuttle -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
 
@@ -105,7 +105,6 @@
                   android:taskAffinity=":shuttle" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.BIND_SERVICE" />
-                <action android:name="com.oasisfeng.island.action.UNBIND_SERVICE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
