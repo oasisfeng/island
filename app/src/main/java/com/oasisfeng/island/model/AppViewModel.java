@@ -1,5 +1,6 @@
 package com.oasisfeng.island.model;
 
+import android.content.Context;
 import android.databinding.ObservableBoolean;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -7,6 +8,7 @@ import android.support.annotation.StringRes;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
+import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.common.app.BaseAppViewModel;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -45,6 +47,8 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		return R.string.state_alive;
 	}
 
+	public boolean isExclusive(final Context context) { return ! Apps.of(context).isInstalledInCurrentUser(info.packageName); }
+
 	public IslandAppInfo info() { return (IslandAppInfo) info; }
 
 	public final State state;
@@ -66,8 +70,6 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	@Override public int compareTo(@NonNull final AppViewModel another) {
 		return ORDERING.compare(this, another);
 	}
-
-	public boolean isExclusive() { return false; }	// FIXME
 
 	private static final Ordering<AppViewModel> ORDERING = Ordering.natural()
 			.onResultOf((Function<AppViewModel, Comparable>) app -> app.state.order)		// Order by state
