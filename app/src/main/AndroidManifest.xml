@@ -109,6 +109,8 @@
             </intent-filter>
         </activity>
 
+        <service android:name=".shuttle.ShuttleKeeper" />
+
         <service android:name="com.oasisfeng.island.engine.IslandManager$AidlService" android:exported="false">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.engine.IIslandManager" />

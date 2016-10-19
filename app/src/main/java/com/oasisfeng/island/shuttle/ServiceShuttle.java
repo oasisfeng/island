@@ -9,7 +9,6 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -41,38 +40,57 @@ public class ServiceShuttle extends Activity {
 	private static final String EXTRA_SERVICE_CONNECTION = "svc_conn";
 	private static final String EXTRA_FLAGS = "flags";
 
-	private static final boolean ALWAYS_USE_SHUTTLE = true;
+	private static final boolean ALWAYS_USE_SHUTTLE = true;		// For test purpose
 
-	public static abstract class ShuttleServiceConnection extends IServiceConnection.Stub implements ServiceConnection {
+	public static abstract class ShuttleServiceConnection extends IServiceConnection.Stub implements ServiceConnection, IBinder.DeathRecipient {
 
 		public abstract void onServiceConnected(final IBinder service);
 		public abstract void onServiceDisconnected();
 
 		@Override public final void onServiceConnected(final ComponentName name, final IBinder service) { onServiceConnected(service); }
 
-		@Override public final void onServiceConnected(final ComponentName name, final IBinder service, final IBinder unbinder) {
+		@Override public final void onServiceConnected(final ComponentName name, final IBinder service, final IUnbinder unbinder) {
 			if (this.unbinder == this) {	// Unbind() is requested before
-				unbinder.pingBinder();
+				Log.d(TAG, "Unbind service just connected (delayed): " + name);
+				try { unbinder.unbind(); } catch (final RemoteException ignored) {}
+				return;
+			} else this.unbinder = unbinder.asBinder();
+			binder = service;
+			component = name;
+			Log.d(TAG, "Service connected: " + name.flattenToShortString());
+
+			try {
+				service.linkToDeath(this, 0);
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Service already died", e);
 				return;
 			}
-			this.unbinder = unbinder;
 			if (Thread.currentThread() != Looper.getMainLooper().getThread())
 				new Handler(Looper.getMainLooper()).post(() -> onServiceConnected(service));
 			else onServiceConnected(service);
 		}
 
 		@Override public final void onServiceDisconnected(final ComponentName name) {
+			Log.d(TAG, "Service disconnected: " + name.flattenToShortString());
 			if (Thread.currentThread() != Looper.getMainLooper().getThread())
 				new Handler(Looper.getMainLooper()).post(this::onServiceDisconnected);
 			else onServiceDisconnected();
 		}
 
+		@Override public void binderDied() {
+			Log.w(TAG, "Service died: " + component.flattenToShortString());
+			onServiceDisconnected();
+		}
+
 		boolean unbind() {
-			if (unbinder != null) return unbinder.pingBinder();
+			binder.unlinkToDeath(this, 0);
+			if (unbinder != null) try { return IUnbinder.Stub.asInterface(unbinder).unbind(); } catch (final RemoteException ignored) {}
 			unbinder = this;	// Special mark to indicate pending unbinding.
 			return true;
 		}
 
+		private IBinder binder;
+		private ComponentName component;
 		private IBinder unbinder;
 	}
 
@@ -125,6 +143,7 @@ public class ServiceShuttle extends Activity {
 
 	// TODO: Use service binder to unbind service, to get rid of the "work profile" toast and avoid breaking recent-task panel.
 	private static boolean unbindService(final ShuttleServiceConnection conn) {
+		Log.d(TAG, "Unbind service: " + (conn.component != null ? conn.component.flattenToShortString() : conn));
 		final boolean result = conn.unbind();
 		if (! result) Log.w(TAG, "Remote service died before unbinding: " + conn);
 		return result;
@@ -153,10 +172,10 @@ public class ServiceShuttle extends Activity {
 			if (resolve == null) return;
 			final ServiceInfo service = resolve.serviceInfo;
 			service_intent.setComponent(new ComponentName(service.packageName, service.name));
+			final Context binding_context = getApplicationContext();	// Application context for longer lifespan
 			try {
-				final DelegateServiceConnection delegate_connection = new DelegateServiceConnection(this, remote_connection);
-				@SuppressWarnings("WrongConstant") final boolean result = getApplicationContext()/* Application context for longer lifespan */
-						.bindService(service_intent, delegate_connection, intent.getIntExtra(EXTRA_FLAGS, 0));
+				final DelegateServiceConnection connection = new DelegateServiceConnection(binding_context, service_intent, remote_connection);
+				@SuppressWarnings("WrongConstant") final boolean result = binding_context.bindService(service_intent, connection, intent.getIntExtra(EXTRA_FLAGS, 0));
 				if (result) setResult(RESULT_OK);
 			} catch (final RemoteException ignored) {}
 		}
@@ -165,39 +184,46 @@ public class ServiceShuttle extends Activity {
 	private static final String TAG = "Shuttle";
 
 	/** Delegate ServiceConnection running in target user, delivering callbacks back to the caller in originating user. */
-	static class DelegateServiceConnection extends Binder implements ServiceConnection, IBinder.DeathRecipient {
+	static class DelegateServiceConnection extends IUnbinder.Stub implements ServiceConnection, IBinder.DeathRecipient {
 
-		DelegateServiceConnection(final Context context, final IBinder delegate) throws RemoteException {
-			this.context = context.getApplicationContext();
+		DelegateServiceConnection(final Context context, final Intent intent, final IBinder delegate) throws RemoteException {
+			this.context = context;
+			this.intent = intent.cloneFilter();
 			this.delegate = IServiceConnection.Stub.asInterface(delegate);
 			delegate.linkToDeath(this, 0);
 		}
 
 		@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
-			try { delegate.onServiceConnected(name, service, this); } catch (final RemoteException ignored) {}
+			try { delegate.onServiceConnected(name, service, this); }
+			catch (final RemoteException ignored) { return; }
+			ShuttleKeeper.onServiceConnected(context);
 		}
 
 		@Override public void onServiceDisconnected(final ComponentName name) {
-			try { delegate.onServiceDisconnected(name); } catch (final RemoteException ignored) {}
+			Log.w(TAG, "Service disconnected: " + intent);
+			try { delegate.onServiceDisconnected(name); }
+			catch (final RemoteException ignored) { return; }
 		}
 
-		/** Serve as an API for unbinding */
-		@Override public boolean pingBinder() {
+		@Override public void binderDied() {
+			Log.w(TAG, "Service client died, unbind service now.");
+			try { context.unbindService(this); } catch (final RuntimeException ignored) {}
+		}
+
+		@Override public boolean unbind() throws RemoteException {
+			Log.d(TAG, "Unbind service: " + intent);
 			try {
 				context.unbindService(this);
-				return true;
 			} catch (final RuntimeException e) {		// IllegalArgumentException: Service not registered
 				Log.e(TAG, "Failed to unbind service", e);
 				return false;
 			}
-		}
-
-		@Override public void binderDied() {
-			Log.w(TAG, "Remote service client died.");
-			try { context.unbindService(this); } catch (final RuntimeException ignored) {}
+			ShuttleKeeper.onServiceUnbind(context, intent);
+			return true;
 		}
 
 		private final Context context;
+		private final Intent intent;
 		private final IServiceConnection delegate;
 	}
 }
