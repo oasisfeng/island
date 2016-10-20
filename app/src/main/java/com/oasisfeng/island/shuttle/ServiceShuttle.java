@@ -14,11 +14,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
-import com.google.common.base.MoreObjects;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.model.GlobalStatus;
@@ -50,68 +48,6 @@ public class ServiceShuttle extends Activity {
 	private static final String EXTRA_SERVICE_CONNECTION = "svc_conn";
 	private static final String EXTRA_FLAGS = "flags";
 
-	public static abstract class ShuttleServiceConnection extends IServiceConnection.Stub implements ServiceConnection, IBinder.DeathRecipient {
-
-		public abstract void onServiceConnected(final IBinder service);
-		public abstract void onServiceDisconnected();
-
-		@Override public final void onServiceConnected(final ComponentName name, final IBinder service) { onServiceConnected(service); }
-
-		@Override public final void onServiceConnected(final ComponentName name, final IBinder service, final IUnbinder unbinder) {
-			if (this.unbinder == this) {	// Unbind() is requested before
-				Log.d(TAG, "Unbind service just connected (delayed): " + name);
-				try { unbinder.unbind(); } catch (final RemoteException ignored) {}
-				return;
-			} else this.unbinder = unbinder.asBinder();
-			binder = service;
-			component = name;
-			Log.d(TAG, "Service connected: " + name.flattenToShortString());
-
-			try {
-				service.linkToDeath(this, 0);
-				Log.v(TAG, "Start monitoring: " + this);
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Service already died", e);
-				return;
-			}
-			if (Thread.currentThread() != Looper.getMainLooper().getThread())
-				new Handler(Looper.getMainLooper()).post(() -> onServiceConnected(service));
-			else onServiceConnected(service);
-		}
-
-		@Override public final void onServiceDisconnected(final ComponentName name) {
-			Log.d(TAG, "Service disconnected: " + name.flattenToShortString());
-			if (Thread.currentThread() != Looper.getMainLooper().getThread())
-				new Handler(Looper.getMainLooper()).post(this::onServiceDisconnected);
-			else onServiceDisconnected();
-		}
-
-		@Override public void binderDied() {
-			Log.w(TAG, "Service died: " + (component != null ? component.flattenToShortString() : null));
-			onServiceDisconnected();
-		}
-
-		boolean unbind() {
-			if (binder != null) {
-				binder.unlinkToDeath(this, 0);
-				Log.v(TAG, "Stop monitoring: " + this);
-			}
-			if (unbinder != null) try { return IUnbinder.Stub.asInterface(unbinder).unbind(); } catch (final RemoteException ignored) {}
-			unbinder = this;	// Special mark to indicate pending unbinding.
-			return true;
-		}
-
-		@Override public String toString() {
-			if (component == null) return super.toString();
-			return MoreObjects.toStringHelper("ShuttleSvcConn").addValue(System.identityHashCode(this))
-					.add("comp", component.flattenToShortString()).add("binder", binder).toString();
-		}
-
-		private @Nullable IBinder binder;
-		private @Nullable ComponentName component;
-		private @Nullable IBinder unbinder;
-	}
-
 	/**
 	 * Please delegate the regular {@link Context#bindService(Intent, ServiceConnection, int)} of your components and application to this method.
 	 *
@@ -135,13 +71,13 @@ public class ServiceShuttle extends Activity {
 	private static boolean bindServiceViaShuttle(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
 		if (sPendingUnbind.remove(conn)) {		// Reuse the still connected service, which is pending disconnection.
 			Log.d(TAG, "Reuse service: " + conn);
-			sMainHandler.post(() -> conn.onServiceConnected(conn.binder));
+			sMainHandler.post(conn::callServiceConnected);
 			return true;
 		}
 
 		@SuppressWarnings("deprecation") final ResolveInfo resolve = context.getPackageManager().resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
 		if (resolve == null) return false;		// Unresolvable even in disabled services
-		final Bundle extras = new Bundle(); extras.putBinder(EXTRA_SERVICE_CONNECTION, conn);
+		final Bundle extras = new Bundle(); extras.putBinder(EXTRA_SERVICE_CONNECTION, conn.createDispatcher());
 		try {
 			final Activity activity = Activities.findActivityFrom(context);
 			if (activity != null) activity.overridePendingTransition(0, 0);

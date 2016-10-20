@@ -19,7 +19,7 @@ import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
-import com.oasisfeng.island.shuttle.ServiceShuttle;
+import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.util.Hacks;
 
 import java.util.ArrayList;
@@ -206,7 +206,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 	};
 
-	private final ServiceConnection mServiceConnection = new ServiceShuttle.ShuttleServiceConnection() {
+	private final ServiceConnection mServiceConnection = new ShuttleServiceConnection() {
 
 		@Override public void onServiceConnected(final IBinder service) {
 			onIslandServiceConnected(IIslandManager.Stub.asInterface(service));

@@ -37,7 +37,7 @@ import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppViewModel;
-import com.oasisfeng.island.shuttle.ServiceShuttle.ShuttleServiceConnection;
+import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 
 import java.util.Collection;
 import java.util.List;
