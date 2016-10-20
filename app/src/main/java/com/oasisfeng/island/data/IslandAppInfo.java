@@ -36,7 +36,7 @@ public class IslandAppInfo extends AppInfo {
 		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
 	}
 
-	void setHidden(final boolean state) {
+	public void setHidden(final boolean state) {
 		if (SDK_INT >= M) {
 			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
 			if (private_flags != null)

@@ -80,9 +80,10 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onStop() {
+		mViewModel.setIslandManager(null);
 		try {
 			getActivity().unbindService(mServiceConnection);
-		} catch (final RuntimeException ignored) {}
+		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
 		mBinding.getApps().clearSelection();
 		super.onStop();
 	}

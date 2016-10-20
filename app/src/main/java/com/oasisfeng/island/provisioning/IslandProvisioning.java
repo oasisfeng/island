@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -16,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.provider.FirebaseInitProvider;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.MainActivity;
@@ -165,11 +165,9 @@ public class IslandProvisioning {
 			dpm.addUserRestriction(ALLOW_PARENT_PROFILE_APP_LINKING);
 			dpm.setPermissionGrantState(context.getPackageName(), "android.permission.INTERACT_ACROSS_USERS", PERMISSION_GRANT_STATE_GRANTED);
 		}
-		final PackageManager pm = context.getPackageManager();
 
 		// Prepare AppLaunchShortcut
-		final ComponentName launchpad = new ComponentName(context, AppLaunchShortcut.class);
-		pm.setComponentEnabledSetting(launchpad, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+		setComponentEnabledSetting(context, AppLaunchShortcut.class, true);
 		final IntentFilter launchpad_filter = new IntentFilter(AppLaunchShortcut.ACTION_LAUNCH_CLONE);
 		launchpad_filter.addDataScheme("target");
 		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -177,20 +175,25 @@ public class IslandProvisioning {
 		island.enableForwarding(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare ServiceShuttle
-		pm.setComponentEnabledSetting(new ComponentName(context, ServiceShuttle.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+		setComponentEnabledSetting(context, ServiceShuttle.class, true);
 		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
-		pm.setComponentEnabledSetting(new ComponentName(context, ApiActivity.class), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+		setComponentEnabledSetting(context, ApiActivity.class, true);
 		island.enableForwarding(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Disable Firebase (to improve process initialization performance)
-		pm.setComponentEnabledSetting(new ComponentName(context, "com.google.firebase.provider.FirebaseInitProvider"), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		setComponentEnabledSetting(context, FirebaseInitProvider.class, false);
 
 		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
-		pm.setComponentEnabledSetting(new ComponentName(context, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		setComponentEnabledSetting(context, MainActivity.class, false);
+	}
+
+	private static void setComponentEnabledSetting(final Context context, final Class<?> clazz, final boolean enable_or_disable) {
+		final int new_state = enable_or_disable ? COMPONENT_ENABLED_STATE_ENABLED : COMPONENT_ENABLED_STATE_DISABLED;
+		context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, clazz), new_state, DONT_KILL_APP);
 	}
 
 	private static void enableAdditionalForwarding(final IslandManager island) {
