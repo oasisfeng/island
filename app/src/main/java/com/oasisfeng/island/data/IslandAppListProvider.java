@@ -147,6 +147,21 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		})) callback.accept(null);
 	}
 
+	public void refreshPackage(final String pkg, final UserHandle user, final boolean add) {
+		if (! user.equals(GlobalStatus.profile)) return;
+		Log.d(TAG, "Update: " + pkg + (add ? " for pkg add" : " for pkg change"));
+		queryApplicationInfoInProfile(pkg, info -> {
+			if (info == null) return;
+			final IslandAppInfo app = new IslandAppInfo(IslandAppListProvider.this, user, info, mIslandAppMap.get().get(pkg));
+			if (add && app.isHidden()) {
+				Log.w(TAG, "Correct the flag for unhidden package: " + pkg);
+				app.setHidden(false);
+			}
+			mIslandAppMap.get().put(pkg, app);
+			notifyUpdate(Collections.singleton(app));
+		});
+	}
+
 	private final Supplier<ConcurrentHashMap<String/* package */, IslandAppInfo>> mIslandAppMap = Suppliers.memoize(() -> {
 		final ConcurrentHashMap<String, IslandAppInfo> apps = new ConcurrentHashMap<>();
 		onStartLoadingIslandApps(apps);
@@ -175,11 +190,11 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 
 		@Override public void onPackageAdded(final String pkg, final UserHandle user) {
-			updatePackage(pkg, user, true);
+			refreshPackage(pkg, user, true);
 		}
 
 		@Override public void onPackageChanged(final String pkg, final UserHandle user) {
-			updatePackage(pkg, user, false);
+			refreshPackage(pkg, user, false);
 		}
 
 		@Override public void onPackagesAvailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
@@ -188,21 +203,6 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 		@Override public void onPackagesUnavailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
 			Log.e(TAG, "onPackagesUnavailable() is unsupported");
-		}
-
-		private void updatePackage(final String pkg, final UserHandle user, final boolean add) {
-			if (! user.equals(GlobalStatus.profile)) return;
-			Log.d(TAG, "Update: " + pkg + (add ? " for pkg add" : " for pkg change"));
-			queryApplicationInfoInProfile(pkg, info -> {
-				if (info == null) return;
-				final IslandAppInfo app = new IslandAppInfo(IslandAppListProvider.this, user, info, mIslandAppMap.get().get(pkg));
-				if (add && app.isHidden()) {
-					Log.w(TAG, "Correct the flag for unhidden package: " + pkg);
-					app.setHidden(false);
-				}
-				mIslandAppMap.get().put(pkg, app);
-				notifyUpdate(Collections.singleton(app));
-			});
 		}
 	};
 

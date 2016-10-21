@@ -19,7 +19,6 @@ import android.os.UserHandle;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
 import android.util.Log;
@@ -34,6 +33,7 @@ import com.oasisfeng.island.BR;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
@@ -42,6 +42,8 @@ import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
+
+import java.lang.reflect.Proxy;
 
 /**
  * View model for apps
@@ -54,7 +56,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private enum FabAction { None, Clone, Lock, Unlock, Enable }
 
 	public boolean include_sys_apps;
-	public transient @Nullable IIslandManager mController;
+	public transient IIslandManager mController = NULL_CONTROLLER;
 
 	public AppListViewModel(final Activity activity) {
 		super(AppViewModel.class);
@@ -176,12 +178,16 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			try {
 				final boolean frozen = mController.freezeApp(pkg, "manual");
 				if (! frozen) Toast.makeText(mActivity, "Failed to freeze", Toast.LENGTH_LONG).show();
-			} catch (final RemoteException ignored) {}
+				refreshAppStateAsSysBugWorkaround(pkg);
+			} catch (final RemoteException ignored) {
+				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
+			}
 			break;
 		case Unlock:
-			Analytics.$().event("action_defreeze").with("package", pkg).send();
+			Analytics.$().event("action_unfreeze").with("package", pkg).send();
 			try {
 				mController.defreezeApp(pkg);
+				refreshAppStateAsSysBugWorkaround(pkg);
 			} catch (final RemoteException ignored) {}
 			// Do not clear selection, for quick launch with one more click
 			break;
@@ -190,6 +196,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
 			break;
 		}
+	}
+
+	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */
+	private void refreshAppStateAsSysBugWorkaround(final String pkg) {
+		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, GlobalStatus.profile, false);
 	}
 
 	private void cloneApp(final String pkg) {
@@ -293,7 +304,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
 	}
 
-	public void setIslandManager(final IIslandManager manager) { mController = manager; }
+	public void setIslandManager(final IIslandManager manager) { mController = manager != null ? manager : NULL_CONTROLLER; }
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
@@ -319,4 +330,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private final Activity mActivity;
 
 	private static final String TAG = "Island.VM";
+	private static final IIslandManager NULL_CONTROLLER = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class},
+			(proxy, method, args) -> { throw new RemoteException("Not connected yet"); });
 }

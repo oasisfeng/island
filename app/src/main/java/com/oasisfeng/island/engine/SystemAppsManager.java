@@ -22,6 +22,7 @@ import android.util.Log;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.oasisfeng.island.util.Hacks;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,6 +63,7 @@ public class SystemAppsManager {
 			"com.android.webview",					// WebView provider (AOSP)
 			"com.android.vpndialogs",				// Required by VPN service app (e.g. ShadowSocks)
 			"com.android.documentsui",				// Document picker
+			Hacks.PrintManager_PRINT_SPOOLER_PACKAGE_NAME.get(),	// Print spooler (a critical bug will raise if this package is disabled)
 			// Enabled system apps with launcher activity by default
 			PACKAGE_GOOGLE_PLAY_STORE,				// Google Play Store to let user install apps directly within
 			"com.android.contacts",					// Contacts
