@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:propertyName="xFraction"
+                    android:valueFrom="0"
+                    android:valueTo="-1.0"
+                    android:duration="@integer/suwTransitionDuration"
+                    android:interpolator="@android:anim/linear_interpolator" />
+</set>
