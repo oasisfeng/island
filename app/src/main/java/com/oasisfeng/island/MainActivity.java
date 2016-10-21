@@ -32,10 +32,6 @@ public class MainActivity extends Activity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (savedInstanceState != null) {
-			setContentView(R.layout.activity_main);
-			return;
-		}
 
 		if (Users.isProfile()) {	// This activity should generally not be running in profile, unless the managed-profile provision is interrupted or manually performed.
 			IslandProvisioning.finishIncompleteProvisioning(this);
@@ -51,6 +47,7 @@ public class MainActivity extends Activity {
 				showSetupWizard();
 				return;
 			}
+			GlobalStatus.profile = profile;
 			final ComponentName profile_owner = IslandManager.getProfileOwner(this, profile);
 			if (profile_owner == null) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
 				if (IslandManager.launchApp(this, getPackageName(), profile))		// Try starting myself in profile to finish the provisioning.
@@ -70,11 +67,10 @@ public class MainActivity extends Activity {
 				showSetupWizard();
 				return;
 			}
-			GlobalStatus.profile = profile;
 		}
 
 		setContentView(R.layout.activity_main);
-		getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
+		if (savedInstanceState == null) getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
 	}
 
 	private void showSetupWizard() {
