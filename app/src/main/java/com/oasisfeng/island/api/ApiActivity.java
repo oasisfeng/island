@@ -2,6 +2,7 @@ package com.oasisfeng.island.api;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -46,6 +47,7 @@ public class ApiActivity extends Activity {
 	public static final String ACTION_FREEZE = "com.oasisfeng.island.action.FREEZE";
 	public static final String ACTION_GET_APP_LIST = "com.oasisfeng.island.action.GET_APP_LIST";
 	public static final String EXTRA_API_TOKEN = "token";	// String
+	public static final String EXTRA_CALLER_ID = "caller";	// PendingIntent whose creator package is considered the caller of API
 	public static final String EXTRA_ALWAYS = "always";		// Boolean (default: true)
 
 	private static final Map<String/* pkg */, Integer/* signature hash */> sCallerWhiteList = new HashMap<>(1);
@@ -60,7 +62,14 @@ public class ApiActivity extends Activity {
 	/** @return activity result or null for "DO NOT setResult()" */
 	private @CheckResult Integer onStartCommand(final Intent intent) {
 		if (intent.getAction() == null) return RESULT_CANCELED;
-		if (! verifyCaller(getCallingPackage()) && ! mApiTokens.verifyToken(intent.getStringExtra(EXTRA_API_TOKEN)))
+		String caller = getCallingPackage();
+		if (caller == null) {
+			final PendingIntent id = intent.getParcelableExtra(EXTRA_CALLER_ID);
+			if (id == null) return RESULT_INVALID_TOKEN;
+			caller = id.getCreatorPackage();
+			if (caller == null) return RESULT_INVALID_TOKEN;
+		}
+		if (! verifyCaller(caller) && ! mApiTokens.verifyToken(intent.getStringExtra(EXTRA_API_TOKEN)))
 			return RESULT_INVALID_TOKEN;
 
 		switch (intent.getAction()) {
@@ -139,4 +148,5 @@ public class ApiActivity extends Activity {
 
 	private ApiTokenManager mApiTokens;
 	private final Supplier<IslandManager> mIslandManager = Suppliers.memoize(() -> new IslandManager(this));
+	private static final String TAG = "API";
 }
