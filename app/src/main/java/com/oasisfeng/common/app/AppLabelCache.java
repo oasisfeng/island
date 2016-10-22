@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.oasisfeng.island.util.Hacks;
 
@@ -17,7 +19,7 @@ import java.util.Locale;
  *
  * Created by Oasis on 2016/8/11.
  */
-class AppLabelCache implements ComponentCallbacks {
+public class AppLabelCache implements ComponentCallbacks {
 
 	/** Get the cached label if valid. If not cached or invalid, trigger an asynchronous update. */
 	@Nullable String get(final AppInfo info) {
@@ -27,7 +29,9 @@ class AppLabelCache implements ComponentCallbacks {
 		final int cached_version = mStore.getInt(version_key, -1);
 		final String cached_label = mStore.getString(pkg, null);
 		if (cached_version == version) return cached_label;		// Use cached label only if version is matched.
+
 		// Load label asynchronously
+		Log.d(TAG, (cached_version == -1 ? "Load: " : "Reload: ") + info.packageName);
 		new AsyncTask<Void, Void, String>() {
 			@Override protected String doInBackground(final Void... params) {
 				final String label = info.loadLabel(mPackageManager).toString();
@@ -55,6 +59,7 @@ class AppLabelCache implements ComponentCallbacks {
 			@Override protected void onPostExecute(final String label) {
 				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
 				if (label == null ? cached_label == null : label.equals(cached_label)) return;	// Unchanged
+				Log.d(TAG, "Loaded: " + info.packageName + " = " + label);
 				mCallback.onLabelUpdate(pkg);
 			}
 		}.execute();
@@ -75,9 +80,13 @@ class AppLabelCache implements ComponentCallbacks {
 
 	@Override public void onLowMemory() {}
 
+	@VisibleForTesting public void invalidate() {
+		mStore.edit().clear().apply();
+	}
+
 	interface Callback { void onLabelUpdate(String pkg); }
 
-	AppLabelCache(final Context context, final Callback callback) {
+	public AppLabelCache(final Context context, final Callback callback) {
 		mStore = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 		mCallback = callback;
 		mPackageManager = context.getPackageManager();
@@ -99,4 +108,5 @@ class AppLabelCache implements ComponentCallbacks {
 	private static final String PREFS_NAME = "app_label_cache";
 	private static final String KEY_LANGUAGE_TAG = "_language_tag";
 	private static final String KEY_VERSION_CODE_SUFFIX = /* package + */":ver";
+	private static final String TAG = "AppLabelCache";
 }

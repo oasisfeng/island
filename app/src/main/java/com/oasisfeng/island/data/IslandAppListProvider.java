@@ -66,6 +66,17 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		return new IslandAppInfo(this, GlobalStatus.current_user, base, last);
 	}
 
+	@Override protected void onAppLabelUpdate(final String pkg) {
+		super.onAppLabelUpdate(pkg);
+		// The implementation in super method only updates entries for apps in owner user, here we update entries for apps in Island.
+		final IslandAppInfo entry = mIslandAppMap.get().get(pkg);
+		if (entry == null) return;
+		final IslandAppInfo new_entry = new IslandAppInfo(this, GlobalStatus.profile, entry, null);
+		mIslandAppMap.get().put(pkg, new_entry);
+
+		notifyUpdate(Collections.singleton(new_entry));
+	}
+
 	@Override public Stream<IslandAppInfo> installedApps() {
 		return RefStreams.concat(super.installedApps(), installedAppsInIsland());
 	}

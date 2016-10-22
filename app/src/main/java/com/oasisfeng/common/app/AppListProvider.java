@@ -146,7 +146,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	}
 
 	/** Called by {@link AppLabelCache} when app label is lazily-loaded or updated (changed from cache) */
-	private void onAppLabelUpdate(final String pkg) {
+	protected void onAppLabelUpdate(final String pkg) {
 		final T entry = mAppMap.get().get(pkg);
 		if (entry == null) return;
 		final T new_entry = createEntry(entry, null);
@@ -168,7 +168,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	String getCachedOrTempLabel(final AppInfo info) {
 		final String cached = mAppLabelCache.get().get(info);
 		if (cached != null) return cached;
-		return info.packageName;		// As temporary label
+		return info.nonLocalizedLabel != null ? info.nonLocalizedLabel.toString() : info.packageName;	// As temporary label
 	}
 
 	protected void notifyUpdate(final Collection<T> apps) { mEventRegistry.notifyCallbacks(apps, CALLBACK_UPDATE, null); }
