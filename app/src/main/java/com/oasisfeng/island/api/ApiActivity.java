@@ -10,6 +10,7 @@ import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
+import android.util.Log;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -46,18 +47,17 @@ public class ApiActivity extends Activity {
 
 	public static final String ACTION_FREEZE = "com.oasisfeng.island.action.FREEZE";
 	public static final String ACTION_GET_APP_LIST = "com.oasisfeng.island.action.GET_APP_LIST";
-	public static final String EXTRA_API_TOKEN = "token";	// String
 	public static final String EXTRA_CALLER_ID = "caller";	// PendingIntent whose creator package is considered the caller of API
 	public static final String EXTRA_ALWAYS = "always";		// Boolean (default: true)
 
-	private static final Map<String/* pkg */, Integer/* signature hash */> sCallerWhiteList = new HashMap<>(1);
+	private static final Map<String/* pkg */, Integer/* signature hash */> sVerifiedCallers = new HashMap<>(1);
 	static {
-		sCallerWhiteList.put("com.oasisfeng.greenify", -373128424);
-		if (BuildConfig.DEBUG) sCallerWhiteList.put("com.oasisfeng.greenify.debug", 0/* Any signature */);
+		sVerifiedCallers.put("com.oasisfeng.greenify", -373128424);
+		if (BuildConfig.DEBUG) sVerifiedCallers.put("com.oasisfeng.greenify.debug", 0/* Any signature */);
 	}
 
-	/** The public API result code for invalid API token, a new token must be requested. */
-	private static final int RESULT_INVALID_TOKEN = Activity.RESULT_FIRST_USER;
+	/** The public API result code for unverified identity. */
+	private static final int RESULT_UNVERIFIED_IDENTITY = Activity.RESULT_FIRST_USER;
 
 	/** @return activity result or null for "DO NOT setResult()" */
 	private @CheckResult Integer onStartCommand(final Intent intent) {
@@ -65,12 +65,12 @@ public class ApiActivity extends Activity {
 		String caller = getCallingPackage();
 		if (caller == null) {
 			final PendingIntent id = intent.getParcelableExtra(EXTRA_CALLER_ID);
-			if (id == null) return RESULT_INVALID_TOKEN;
+			if (id == null) return RESULT_UNVERIFIED_IDENTITY;
 			caller = id.getCreatorPackage();
-			if (caller == null) return RESULT_INVALID_TOKEN;
+			if (caller == null) return RESULT_UNVERIFIED_IDENTITY;
 		}
-		if (! verifyCaller(caller) && ! mApiTokens.verifyToken(intent.getStringExtra(EXTRA_API_TOKEN)))
-			return RESULT_INVALID_TOKEN;
+		Log.v(TAG, "API caller: " + caller);
+		if (! verifyCaller(caller)) return RESULT_UNVERIFIED_IDENTITY;
 
 		switch (intent.getAction()) {
 		case ACTION_GET_APP_LIST:
@@ -105,7 +105,7 @@ public class ApiActivity extends Activity {
 	}
 
 	private boolean verifyCaller(final String pkg) {
-		final Integer value = sCallerWhiteList.get(pkg);
+		final Integer value = sVerifiedCallers.get(pkg);
 		if (value == null) return false;
 		final int signature_hash = value;
 		if (signature_hash == 0) return true;
@@ -113,7 +113,7 @@ public class ApiActivity extends Activity {
 			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES);
 			for (final Signature signature : pkg_info.signatures)
 				if (signature.hashCode() != signature_hash) return false;
-			sCallerWhiteList.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
+			sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
 			return true;
 		} catch (final PackageManager.NameNotFoundException e) { return false; }		// Should hardly happen
 	}
@@ -131,7 +131,6 @@ public class ApiActivity extends Activity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mApiTokens = new ApiTokenManager(this);
 		onIntent(getIntent());
 	}
 
@@ -141,12 +140,13 @@ public class ApiActivity extends Activity {
 	}
 
 	private void onIntent(final Intent intent) {
+		Log.d(TAG, "API request: " + intent.toUri(0));
 		final Integer result = onStartCommand(intent);
 		if (result != null) setResult(result);
+		Log.d(TAG, "API result:" + result);
 		finish();
 	}
 
-	private ApiTokenManager mApiTokens;
 	private final Supplier<IslandManager> mIslandManager = Suppliers.memoize(() -> new IslandManager(this));
 	private static final String TAG = "API";
 }

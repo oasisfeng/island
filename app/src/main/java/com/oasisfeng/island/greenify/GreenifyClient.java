@@ -12,8 +12,6 @@ import android.os.UserManager;
 import android.support.annotation.Nullable;
 
 import com.oasisfeng.island.BuildConfig;
-import com.oasisfeng.island.api.ApiActivity;
-import com.oasisfeng.island.api.ApiTokenManager;
 
 import static android.content.Context.USER_SERVICE;
 
@@ -25,19 +23,19 @@ import static android.content.Context.USER_SERVICE;
 public class GreenifyClient {
 
 	private static final String GREENIFY_PKG = BuildConfig.DEBUG ? "com.oasisfeng.greenify.debug" : "com.oasisfeng.greenify";
-	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 208 : 218;	// TODO: The minimal version of Greenify with support for Island.
+	private static final String GREENIFY_ACTION = "com.oasisfeng.greenify.action.GREENIFY";
+	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 218 : 219;	// TODO: The minimal version of Greenify with support for Island.
 
 	public static boolean greenify(final Activity activity, final String pkg, final UserHandle user) {
 		final long user_sn = ((UserManager) activity.getSystemService(USER_SERVICE)).getSerialNumberForUser(user);
 		if (user_sn == -1) return false;
+		final Intent intent = new Intent(GREENIFY_ACTION).setPackage(GREENIFY_PKG).setData(Uri.parse("package:" + pkg + "#usn=" + user_sn));
 		try {
-			activity.startActivityForResult(new Intent("com.oasisfeng.greenify.action.GREENIFY").setPackage(GREENIFY_PKG)
-					.setData(Uri.parse("package:" + pkg + "#usn=" + user_sn))
-					.putExtra(ApiActivity.EXTRA_API_TOKEN, new ApiTokenManager(activity).getToken(GREENIFY_PKG)), 0);	// FIXME: Token is not verified in owner user.
-			return true;
+			activity.startActivityForResult(intent, 0);
 		} catch (final ActivityNotFoundException e) {
 			return false;
 		}
+		return true;
 	}
 
 	public static @Nullable Boolean checkGreenifyVersion(final Context context) {
