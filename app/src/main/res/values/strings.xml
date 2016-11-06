@@ -67,6 +67,7 @@
     <string name="dialog_deactivate_message">Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.</string>
     <string name="dialog_cannot_destroy_message">Cannot destroy Island due to privilege failure. Please try removing it in system \"Settings - Accounts - Remove work profile\".</string>
     <string name="dialog_add_shortcut">Add a shortcut to de-freeze and launch %1$s?</string>
+    <string name="dialog_provision_in_progress">Preparing Island…</string>
     <string name="dialog_button_continue">Continue</string>
     <string name="dialog_button_skip_with_root">Skip (root)</string>
     <string name="dialog_button_learn_more">Learn more</string>

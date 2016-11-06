@@ -19,7 +19,6 @@ import com.google.firebase.provider.FirebaseInitProvider;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.MainActivity;
-import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.engine.IslandManager;
@@ -54,8 +53,12 @@ import static android.os.UserManager.ALLOW_PARENT_PROFILE_APP_LINKING;
  */
 public class IslandProvisioning {
 
-	/** Provision state: 1 - Managed profile provision is completed, 2 - Island provision is started, POST_PROVISION_REV - Island provision is completed.
-	 *  [3,POST_PROVISION_REV> - Island provision is completed in previous version, but needs re-performing in this version. */
+	/**
+	 * Provision state:
+	 *   1 - Managed profile provision (stock) is completed
+	 *   2 - Island provision is started, POST_PROVISION_REV - Island provision is completed.
+	 *   [3,POST_PROVISION_REV> - Island provision is completed in previous version, but needs re-performing in this version.
+	 */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 7;
@@ -105,29 +108,23 @@ public class IslandProvisioning {
 	}
 	private static final String LEGACY_ACTION_PROVISION_MANAGED_DEVICE = "com.android.managedprovisioning.ACTION_PROVISION_MANAGED_DEVICE";
 
-	/** This method always runs in managed profile */
-	public static void finishIncompleteProvisioning(final Activity activity) {
-		if (! new IslandManager(activity).isProfileOwnerActive()) {
-			Analytics.$().event("inactive_device_admin").send();
-			activity.startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(activity))
-					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, activity.getString(R.string.dialog_reactivate_message)));
-			// TODO: Check result
-			return;
-		}
-		startProfileOwnerProvisioningIfNeeded(activity);
-	}
-
+	/** This is the normal procedure after ManagedProvision finished its provisioning, running in profile. */
 	@SuppressLint("CommitPrefEdits") public static void onProfileProvisioningComplete(final Context context) {
 		Log.d(TAG, "onProfileProvisioningComplete");
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
 		startProfileOwnerPostProvisioning(context, new IslandManager(context));
+		disableLauncherActivity(context);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
 
 		MainActivity.startAsUser(context, GlobalStatus.OWNER);
 	}
 
+	private static void disableLauncherActivity(final Context context) {
+		setComponentEnabledSetting(context, MainActivity.class, false);		// To mark the finish of post-provisioning
+	}
+
+	/** This method always runs in managed profile */
 	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
 		if (IslandManager.isDeviceOwner(context)) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -135,8 +132,13 @@ public class IslandProvisioning {
 		if (state >= POST_PROVISION_REV) return;	// Already provisioned (revision up to date)
 		if (state == 2) {
 			Log.w(TAG, "Last provision attempt failed, no more attempts...");
+//			Analytics.$().event("profile_post_provision_failed").send();
+			disableLauncherActivity(context);
 			return;		// Last attempt failed again, no more attempts.
-		} else if (state == 1) Log.w(TAG, "Last provision attempt might be interrupted, try provisioning one more time...");
+		} else if (state == 1) {
+			Log.w(TAG, "System provisioning might be interrupted, try our own provisioning once more...");
+//			Analytics.$().event("profile_provision_failed").send();
+		}
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).commit();	// Avoid further attempts
 		if (state >= 3) Log.i(TAG, "Re-performing provision for new revision " + POST_PROVISION_REV);
 
@@ -146,6 +148,7 @@ public class IslandProvisioning {
 		island.resetForwarding();
 		ProfileOwnerSystemProvisioning.start(island);	// Simulate the stock managed profile provision
 		IslandProvisioning.startProfileOwnerPostProvisioning(context, island);
+		disableLauncherActivity(context);
 
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
 	}
@@ -186,9 +189,6 @@ public class IslandProvisioning {
 
 		// Disable Firebase (to improve process initialization performance)
 		setComponentEnabledSetting(context, FirebaseInitProvider.class, false);
-
-		// Disable the launcher entry inside profile, to mark the finish of post-provisioning.
-		setComponentEnabledSetting(context, MainActivity.class, false);
 	}
 
 	private static void setComponentEnabledSetting(final Context context, final Class<?> clazz, final boolean enable_or_disable) {

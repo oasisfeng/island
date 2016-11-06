@@ -1,6 +1,8 @@
 package com.oasisfeng.island;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,12 +12,14 @@ import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.UserHandle;
 
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
+import com.oasisfeng.island.util.SimpleAsyncTask;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
@@ -33,9 +37,19 @@ public class MainActivity extends Activity {
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		if (Users.isProfile()) {	// This activity should generally not be running in profile, unless the managed-profile provision is interrupted or manually performed.
-			IslandProvisioning.finishIncompleteProvisioning(this);
-			finish();
+		if (Users.isProfile()) {	// Should generally not running in profile, unless the managed-profile provision is interrupted or manually performed.
+			if (! new IslandManager(this).isProfileOwnerActive()) {
+				Analytics.$().event("inactive_device_admin").send();
+				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(this))
+						.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
+				// TODO: Check result
+				finish();
+				return;
+			}
+			final ProgressDialog progress = ProgressDialog.show(this, null, getString(R.string.dialog_provision_in_progress), true/* indeterminate */, false/* cancelable */);
+			SimpleAsyncTask.execute(() -> IslandProvisioning.startProfileOwnerProvisioningIfNeeded(MainActivity.this),
+				() -> { progress.cancel(); finish(); });
 			return;
 		}
 
