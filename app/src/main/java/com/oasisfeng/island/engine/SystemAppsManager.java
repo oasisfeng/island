@@ -97,7 +97,8 @@ public class SystemAppsManager {
 			Carriers.CONTENT_URI.getAuthority(),	// Usually com.android.providers.telephony
 			MediaStore.AUTHORITY,					// Usually com.android.providers.media
 			"downloads",							// Usually com.android.providers.downloads
-			"com.android.externalstorage.documents" // Usually com.android.externalstorage
+			"com.android.externalstorage.documents",// Usually com.android.externalstorage
+			"logs"									// Samsung-specific voice-mail content provider (content://logs/from_vvm)
 	);
 
 	public static boolean isCritical(final String pkg) {
