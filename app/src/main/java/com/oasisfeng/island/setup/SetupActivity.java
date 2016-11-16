@@ -1,7 +1,6 @@
 package com.oasisfeng.island.setup;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 
 import com.android.setupwizardlib.util.SystemBarHelper;
@@ -20,9 +19,5 @@ public class SetupActivity extends Activity {
 		SystemBarHelper.hideSystemBars(getWindow());
 		setContentView(R.layout.activity_main);
 		getFragmentManager().beginTransaction().replace(R.id.container, new SetupWizardFragment()).commit();
-	}
-
-	@Override protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
 	}
 }

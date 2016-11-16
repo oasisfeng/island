@@ -2,6 +2,7 @@ package com.oasisfeng.island.provisioning;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -79,16 +80,15 @@ public class IslandProvisioning {
 	 * Initiates the managed profile provisioning. If we already have a managed profile set up on
 	 * this device, we will get an error dialog in the following provisioning phase.
 	 */
-	public static boolean provisionManagedProfile(final @NonNull Activity activity, final int request_code) {
+	public static boolean provisionManagedProfile(final @NonNull Fragment fragment, final int request_code) {
 		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
 		if (SDK_INT >= M) {
-			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class));
+			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(fragment.getActivity(), IslandDeviceAdminReceiver.class));
 			intent.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 		} else //noinspection deprecation
-			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, activity.getPackageName());
-		if (intent.resolveActivity(activity.getPackageManager()) == null) return false;
-		activity.startActivityForResult(intent, request_code);
-//		activity.finish();
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, fragment.getActivity().getPackageName());
+		if (intent.resolveActivity(fragment.getActivity().getPackageManager()) == null) return false;
+		fragment.startActivityForResult(intent, request_code);
 		return true;
 	}
 

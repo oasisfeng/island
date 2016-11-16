@@ -2,6 +2,7 @@ package com.oasisfeng.island.setup;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -13,11 +14,14 @@ import android.os.Parcelable;
 import android.support.annotation.StringRes;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 
 import eu.chainfire.libsuperuser.Shell;
@@ -51,7 +55,8 @@ public class SetupViewModel implements Parcelable {
 //		} else { has_other_owner = false; owner_name = null; }
 //	}
 
-	SetupViewModel onNavigateNext(final Activity activity) {
+	SetupViewModel onNavigateNext(final Fragment fragment) {
+		final Activity activity = fragment.getActivity();
 		if (SDK_INT >= N && ! activity.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE))
 			return buildErrorVM(activity, R.string.error_reason_provisioning_not_allowed);
 
@@ -85,7 +90,7 @@ public class SetupViewModel implements Parcelable {
 					@Override protected void onPostExecute(final Void ignored) {
 						if (is_encryption_required && ! IslandProvisioning.isEncryptionRequired())
 							Analytics.$().event("encryption_skipped").send();
-						setup(activity);
+						setup(fragment);
 					}
 				}.execute();
 				return null;
@@ -97,7 +102,9 @@ public class SetupViewModel implements Parcelable {
 			return next;
 		}
 
-		setup(activity);
+		if (! setup(fragment))
+			return buildErrorVM(activity, R.string.error_reason_managed_profile_not_supported);
+
 		return null;
 	}
 
@@ -105,17 +112,31 @@ public class SetupViewModel implements Parcelable {
 		WebContent.view(v.getContext(), Config.URL_PREREQUISITES.get());
 	}
 
+	static void onProvisioningFinished(final Context context) {
+		Log.i(TAG, "2nd stage of provision is done.");
+		GlobalStatus.profile = IslandManager.getManagedProfile(context);
+	}
+
 	static void onActivityResult(final Activity activity, final int request, final int result) {
+		// Activity result of managed provisioning is only delivered since Android 6.
 		if (request == REQUEST_PROVISION_MANAGED_PROFILE) {
 			if (result == Activity.RESULT_OK) {
-				Analytics.$().event("profile_provision_started").send();
+				Log.i(TAG, "1st stage of provision is done.");
+				Analytics.$().event("profile_provision_1st_stage_done").send();
+				Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
 				activity.finish();
-			} else if (result == Activity.RESULT_CANCELED) Analytics.$().event("profile_provision_cancelled").send();
+			} else if (result == Activity.RESULT_CANCELED) {
+				Log.i(TAG, "Provision is cancelled.");
+				Analytics.$().event("profile_provision_cancelled").send();
+			}
 		}
 	}
 
-	private static void setup(final Activity activity) {
-		IslandProvisioning.provisionManagedProfile(activity, REQUEST_PROVISION_MANAGED_PROFILE);
+	private static boolean setup(final Fragment fragment) {
+		final Activity activity = fragment.getActivity();
+		final boolean result = IslandProvisioning.provisionManagedProfile(fragment, REQUEST_PROVISION_MANAGED_PROFILE);
+		if (result && SDK_INT < M) activity.finish();		// No activity result on Android 5.x, thus we have to finish the activity now.
+		return result;
 	}
 
 	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int reason) {
