@@ -7,13 +7,16 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.android.Manifest;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
@@ -35,6 +38,7 @@ import java8.util.stream.RefStreams;
 import java8.util.stream.Stream;
 import java8.util.stream.StreamSupport;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 
@@ -88,23 +92,28 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	private void onStartLoadingIslandApps(final ConcurrentHashMap<String/* package */, IslandAppInfo> apps) {
 		Log.d(TAG, "Start loading apps...");
 		mLauncherApps.get().registerCallback(IslandAppListProvider.this.mCallback);
-		final UserHandle profile = GlobalStatus.profile;
 
 		context().registerReceiver(new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+			Log.i(TAG, "Profile added");
 			final ConcurrentHashMap<String, IslandAppInfo> new_apps = mIslandAppMap.get();
 			if (! new_apps.isEmpty()) {
 				Log.e(TAG, "Non-empty app list when profile is created.");
 				new_apps.clear();
 			}
-			onStartLoadingIslandApps(new_apps);
+			refresh(new_apps);
 			// Do not notify listeners, since this is a rare case. Client should take care of this by itself and reload all apps from provider.
 		}}, new IntentFilter(Intent.ACTION_MANAGED_PROFILE_ADDED));
 
 		context().registerReceiver(new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+			Log.i(TAG, "Profile removed");
 			mIslandAppMap.get().clear();
 		}}, new IntentFilter(Intent.ACTION_MANAGED_PROFILE_REMOVED));
 
-		if (profile != null) {		// Collect Island-specific apps
+		refresh(apps);
+	}
+
+	private void refresh(final Map<String, IslandAppInfo> apps) {
+		if (GlobalStatus.profile != null) {		// Collect Island-specific apps
 			if (SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {    // Since Android N, we can query ApplicationInfo directly
 				collectIslandApps_Api24(apps);
 			} else if (! Services.bind(context(), IIslandManager.class, mServiceConnection))
@@ -146,8 +155,25 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		notifyUpdate(updated);
 	}
 
-	/** Synchronous on Android 7+, asynchronous otherwise */
+	/** Synchronous on Android 6+, asynchronous otherwise
+	 *  @param callback will be invoked with the result, or null for failure (including {@link PackageManager.NameNotFoundException}. */
 	private void queryApplicationInfoInProfile(final String pkg, final Consumer<ApplicationInfo> callback) {
+		final UserHandle profile = GlobalStatus.profile;
+		if (profile == null) {
+			callback.accept(null);
+			return;
+		}
+		if (! Hacks.IPackageManager_getApplicationInfo.isAbsent() && ! Hacks.ActivityThread_getPackageManager.isAbsent()
+				&& ContextCompat.checkSelfPermission(context(), Manifest.permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) try {
+			final ApplicationInfo info = Hacks.IPackageManager_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO,
+					profile.hashCode()).on(Hacks.ActivityThread_getPackageManager.invoke().statically());
+			callback.accept(info);
+			return;
+		} catch (final RemoteException ignored) {		// Package manager died, this should hardly happen.
+			callback.accept(null);
+			return;
+		} catch (final SecurityException ignored) {}	// Fall-through. This should hardly happen as permission is checked.
+
 		if (SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
 			final ApplicationInfo info = Hacks.LauncherApps_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO, GlobalStatus.profile).on(mLauncherApps.get());
@@ -183,7 +209,12 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 		@Override public void onPackageRemoved(final String pkg, final UserHandle user) {
 			if (! user.equals(GlobalStatus.profile)) return;
-			if (mIslandAppMap.get().get(pkg).isHidden()) return;	// The removal callback is triggered by freezing.
+			final IslandAppInfo app = mIslandAppMap.get().get(pkg);
+			if (app == null) {
+				Log.e(TAG, "Removed package not found in Island: " + pkg);
+				return;
+			}
+			if (app.isHidden()) return;		// The removal callback is triggered by freezing.
 			queryApplicationInfoInProfile(pkg, info -> {
 				if (info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {	// Frozen
 					final IslandAppInfo new_info = new IslandAppInfo(IslandAppListProvider.this, user, info, mIslandAppMap.get().get(pkg));

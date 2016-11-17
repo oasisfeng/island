@@ -17,6 +17,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.provider.FirebaseInitProvider;
+import com.oasisfeng.android.Manifest;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.MainActivity;
@@ -166,7 +167,7 @@ public class IslandProvisioning {
 		if (SDK_INT >= M) {
 			final DevicePolicies dpm = new DevicePolicies(context);
 			dpm.addUserRestriction(ALLOW_PARENT_PROFILE_APP_LINKING);
-			dpm.setPermissionGrantState(context.getPackageName(), "android.permission.INTERACT_ACROSS_USERS", PERMISSION_GRANT_STATE_GRANTED);
+			dpm.setPermissionGrantState(context.getPackageName(), Manifest.permission.INTERACT_ACROSS_USERS, PERMISSION_GRANT_STATE_GRANTED);
 		}
 
 		// Prepare AppLaunchShortcut
