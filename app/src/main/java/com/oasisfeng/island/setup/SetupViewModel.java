@@ -20,8 +20,6 @@ import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 
 import eu.chainfire.libsuperuser.Shell;
@@ -110,11 +108,6 @@ public class SetupViewModel implements Parcelable {
 
 	public static void onExtraButtonClick(final View v) {
 		WebContent.view(v.getContext(), Config.URL_PREREQUISITES.get());
-	}
-
-	static void onProvisioningFinished(final Context context) {
-		Log.i(TAG, "2nd stage of provision is done.");
-		GlobalStatus.profile = IslandManager.getManagedProfile(context);
 	}
 
 	static void onActivityResult(final Activity activity, final int request, final int result) {

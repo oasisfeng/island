@@ -114,6 +114,7 @@ public class AppListFragment extends Fragment {
 	AppListProvider.PackageChangeObserver<IslandAppInfo> mAppChangeObserver = new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
 
 		@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
+			Log.i(TAG, "Package updated: " + apps);
 			final Predicate<IslandAppInfo> filters = activeFilters();
 			for (final IslandAppInfo app : apps) {
 				final IslandAppInfo last = app.getLastInfo();
@@ -129,6 +130,7 @@ public class AppListFragment extends Fragment {
 		}
 
 		@Override public void onPackageRemoved(final Collection<IslandAppInfo> apps) {
+			Log.i(TAG, "Package removed: " + apps);
 			final Predicate<IslandAppInfo> filters = activeFilters();
 			for (final IslandAppInfo app : apps)
 				if (filters.test(app)) mViewModel.removeApp(app.packageName);

@@ -72,7 +72,7 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 	}
 
 	@Override public void onNavigateNext() {
-		final SetupViewModel next_vm = mViewModel.onNavigateNext(getActivity());
+		final SetupViewModel next_vm = mViewModel.onNavigateNext(this);
 		if (next_vm == null) return;
 		final SetupWizardFragment next_fragment = new SetupWizardFragment();
 		next_fragment.setArguments(Bundles.build(b -> b.putParcelable(null, next_vm)));

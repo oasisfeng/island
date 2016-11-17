@@ -312,7 +312,6 @@ public class IslandManager extends IIslandManager.Stub {
 	private final DevicePolicies mDevicePolicies;
 	private final Supplier<LauncherApps> mLauncherApps;
 
-	private static final UserHandle OWNER = GlobalStatus.OWNER;
 	private static final String TAG = IslandManager.class.getSimpleName();
 
 	public static class AidlService extends Service {
