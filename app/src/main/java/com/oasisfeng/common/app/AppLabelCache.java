@@ -12,14 +12,15 @@ import android.util.Log;
 
 import com.oasisfeng.island.util.Hacks;
 
-import java.util.Locale;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Cache for app labels.
  *
  * Created by Oasis on 2016/8/11.
  */
-public class AppLabelCache implements ComponentCallbacks {
+class AppLabelCache implements ComponentCallbacks {
 
 	/** Get the cached label if valid. If not cached or invalid, trigger an asynchronous update. */
 	@Nullable String get(final AppInfo info) {
@@ -67,46 +68,38 @@ public class AppLabelCache implements ComponentCallbacks {
 	}
 
 	@Override public void onConfigurationChanged(final Configuration config) {
-		final Locale locale = config.locale;
-		if (locale.equals(mLocale)) return;
-		mLocale = locale;
-		onLocaleChanged(locale.toLanguageTag());
-	}
+		final String language_tags;
+		if (SDK_INT < N) //noinspection deprecation
+			language_tags = config.locale.toLanguageTag();
+		else language_tags = config.getLocales().toLanguageTags();
 
-	private void onLocaleChanged(final String language_tag) {
-		// Invalidate the whole cache
-		mStore.edit().clear().putString(KEY_LANGUAGE_TAG, language_tag).apply();
+		final String cache_language_tags = mStore.getString(KEY_LANGUAGE_TAGS, null);
+		if (language_tags.equals(cache_language_tags)) return;
+		mStore.edit().clear().putString(KEY_LANGUAGE_TAGS, language_tags).apply();	// Invalidate the whole cache
 	}
 
 	@Override public void onLowMemory() {}
 
-	@VisibleForTesting public void invalidate() {
+	@VisibleForTesting void invalidate() {
 		mStore.edit().clear().apply();
 	}
 
 	interface Callback { void onLabelUpdate(String pkg); }
 
-	public AppLabelCache(final Context context, final Callback callback) {
+	AppLabelCache(final Context context, final Callback callback) {
 		mStore = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 		mCallback = callback;
 		mPackageManager = context.getPackageManager();
 		context.registerComponentCallbacks(this);		// No un-registration since AppLabelCache is never released.
-
-		mLocale = context.getResources().getConfiguration().locale;
-		final String language_tag = mLocale.toLanguageTag();
-		final String cache_language_tag = mStore.getString(KEY_LANGUAGE_TAG, null);
-		if (! language_tag.equals(cache_language_tag)) {
-			onLocaleChanged(language_tag);
-		}
+		onConfigurationChanged(context.getResources().getConfiguration());
 	}
 
 	private final SharedPreferences mStore;
 	private final Callback mCallback;
 	private final PackageManager mPackageManager;
-	private Locale mLocale;
 
 	private static final String PREFS_NAME = "app_label_cache";
-	private static final String KEY_LANGUAGE_TAG = "_language_tag";
+	private static final String KEY_LANGUAGE_TAGS = "_language_tags";
 	private static final String KEY_VERSION_CODE_SUFFIX = /* package + */":ver";
 	private static final String TAG = "AppLabelCache";
 }
