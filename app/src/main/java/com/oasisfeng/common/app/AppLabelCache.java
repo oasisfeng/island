@@ -22,6 +22,8 @@ import static android.os.Build.VERSION_CODES.N;
  */
 class AppLabelCache implements ComponentCallbacks {
 
+	private static final boolean CLEAR_CACHE_UPON_START = Boolean.FALSE;
+
 	/** Get the cached label if valid. If not cached or invalid, trigger an asynchronous update. */
 	@Nullable String get(final AppInfo info) {
 		final String pkg = info.packageName;
@@ -88,6 +90,7 @@ class AppLabelCache implements ComponentCallbacks {
 
 	AppLabelCache(final Context context, final Callback callback) {
 		mStore = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		if (CLEAR_CACHE_UPON_START) mStore.edit().clear().apply();
 		mCallback = callback;
 		mPackageManager = context.getPackageManager();
 		context.registerComponentCallbacks(this);		// No un-registration since AppLabelCache is never released.
