@@ -21,6 +21,7 @@ import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.ProfileUser;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -136,7 +137,7 @@ public class ServiceShuttle extends Activity {
 		finish();
 	}
 
-	private void handleIntent(final Intent intent) {
+	@ProfileUser private void handleIntent(final Intent intent) {
 		setResult(RESULT_CANCELED);
 		final IBinder remote_connection = intent.getExtras().getBinder(EXTRA_SERVICE_CONNECTION);
 		if (remote_connection == null) return;
@@ -151,6 +152,7 @@ public class ServiceShuttle extends Activity {
 			final Context binding_context = getApplicationContext();	// Application context for longer lifespan
 			try {
 				final DelegateServiceConnection connection = new DelegateServiceConnection(binding_context, service_intent, remote_connection);
+				Log.d(TAG, "Bind " + remote_connection + " to " + intent);
 				@SuppressWarnings("WrongConstant") final boolean result = binding_context.bindService(service_intent, connection, intent.getIntExtra(EXTRA_FLAGS, 0));
 				if (result) setResult(RESULT_OK);
 			} catch (final RemoteException ignored) {}
@@ -161,16 +163,21 @@ public class ServiceShuttle extends Activity {
 	private static final String TAG = "Shuttle";
 
 	/** Delegate ServiceConnection running in target user, delivering callbacks back to the caller in originating user. */
-	static class DelegateServiceConnection extends IUnbinder.Stub implements ServiceConnection, IBinder.DeathRecipient {
+	private static class DelegateServiceConnection extends IUnbinder.Stub implements ServiceConnection, IBinder.DeathRecipient {
 
 		DelegateServiceConnection(final Context context, final Intent intent, final IBinder delegate) throws RemoteException {
 			this.context = context;
 			this.intent = intent.cloneFilter();
 			this.delegate = IServiceConnection.Stub.asInterface(delegate);
-			delegate.linkToDeath(this, 0);
 		}
 
 		@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
+			try {
+				delegate.asBinder().linkToDeath(this, 0);
+			} catch (final RemoteException e) {		// Already died
+				doUnbind();
+				return;
+			}
 			try { delegate.onServiceConnected(name, service, this); }
 			catch (final RemoteException ignored) { return; }
 			ShuttleKeeper.onServiceConnected(context);
@@ -178,17 +185,24 @@ public class ServiceShuttle extends Activity {
 
 		@Override public void onServiceDisconnected(final ComponentName name) {
 			Log.w(TAG, "Service disconnected: " + intent);
+			delegate.asBinder().unlinkToDeath(this, 0);
 			try { delegate.onServiceDisconnected(name); }
 			catch (final RemoteException ignored) {}
 		}
 
-		@Override public void binderDied() {
-			Log.w(TAG, "Service client died, unbind service now.");
-			try { context.unbindService(this); } catch (final RuntimeException ignored) {}
+		@Override public boolean unbind() throws RemoteException {
+			Log.d(TAG, "Unbind " + delegate.asBinder() + " from " + intent);
+			delegate.asBinder().unlinkToDeath(this, 0);
+			return doUnbind();
 		}
 
-		@Override public boolean unbind() throws RemoteException {
-			Log.d(TAG, "Unbind service: " + intent);
+		@Override public void binderDied() {
+			Log.w(TAG, "Service client died, unbind " + delegate.asBinder() + " from " + intent);
+			delegate.asBinder().unlinkToDeath(this, 0);
+			doUnbind();
+		}
+
+		private boolean doUnbind() {
 			try {
 				context.unbindService(this);
 			} catch (final RuntimeException e) {		// IllegalArgumentException: Service not registered
