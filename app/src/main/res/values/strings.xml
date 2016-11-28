@@ -4,15 +4,10 @@
     <string name="app_name">Island</string>
     <string name="profile_name">Island</string>
 
-    <string-array name="app_list_filters">
-        <item>Cloned</item>
-        <item>Cloneable</item>
-    </string-array>
-
-    <string-array name="app_list_filters_wo_profile">
-        <item>Frozen</item>
-        <item>All</item>
-    </string-array>
+    <string name="filter_cloned">Cloned</string>
+    <string name="filter_cloneable">Cloneable</string>
+    <string name="filter_frozen">Frozen</string>
+    <string name="filter_all">All</string>
 
     <string name="state_alive">Active</string>
     <string name="state_frozen">Frozen</string>
@@ -82,6 +77,8 @@
     <string name="toast_shortcut_failed">Failed to create the shortcut</string>
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
     <string name="toast_greenify_failed">Failed to greenify</string>
+
+    <string name="notification_standby_text">Standby</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>

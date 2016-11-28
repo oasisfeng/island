@@ -33,6 +33,7 @@ import com.oasisfeng.island.BR;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
@@ -44,19 +45,52 @@ import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
 
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.List;
+
+import java8.util.function.BooleanSupplier;
+import java8.util.function.Predicate;
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
 
 /**
  * View model for apps
  *
  * Created by Oasis on 2015/7/7.
  */
-@SuppressWarnings("unused")
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private enum FabAction { None, Clone, Lock, Unlock, Enable }
 
 	public boolean include_sys_apps;
 	public transient IIslandManager mController = NULL_CONTROLLER;
+	public final List<Filter.Entry> active_filters;
+
+	public enum Filter {
+		CLONED(R.string.filter_cloned,			GlobalStatus::hasProfile,	app -> Users.isProfile(app.user) && app.isInstalled()),
+		CLONEABLE(R.string.filter_cloneable,	GlobalStatus::hasProfile,	app -> Users.isOwner(app.user)),	// FIXME: Exclude already cloned
+
+		ALL(R.string.filter_all,				GlobalStatus::hasNoProfile, app -> true),
+		FROZEN(R.string.filter_frozen,			GlobalStatus::hasNoProfile,	app -> app.isHidden());
+
+		boolean visible() { return mVisibility.getAsBoolean(); }
+		Filter(final @StringRes int label,final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
+
+		private final @StringRes int mLabel;
+		private final BooleanSupplier mVisibility;
+		private final Predicate<IslandAppInfo> mFilter;
+
+		public class Entry {
+			Entry(final Context context) { mContext = context; }
+			Predicate<IslandAppInfo> filter() { return mFilter; }
+			@Override public String toString() { return mContext.getString(mLabel); }
+			private final Context mContext;
+		}
+	}
+
+	public Predicate<IslandAppInfo> onFilterChanged(final int index) {
+		return active_filters.get(index).filter();
+	}
 
 	public AppListViewModel(final Activity activity) {
 		super(AppViewModel.class);
@@ -64,6 +98,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
 			if (property == BR.selection) updateFab();
 		}});
+		active_filters = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 	}
 
 	private void updateFab() {
@@ -76,7 +111,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} else setFabAction(FabAction.None);
 	}
 
-	public final void onItemLaunchIconClick(final View view) {
+	public final void onItemLaunchIconClick(final View v) {
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info.packageName;
 		Analytics.$().event("action_launch").with("package", pkg).send();
@@ -155,7 +190,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		Analytics.$().event("action_install_outside").with("package", pkg).send();
 	}
 
-	public final void onFabClick(final View view) {
+	public final void onFabClick(final View v) {
 		final AppViewModel selection = getSelection();
 		if (selection == null) return;
 		final String pkg = selection.info.packageName;
@@ -204,7 +239,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private void cloneApp(final String pkg) {
-		final boolean allowed;
 		final int check_result;
 		try {
 			check_result = mController.cloneApp(pkg, false);

@@ -56,10 +56,6 @@ public class AppListFragment extends Fragment {
 
 	private static final String KStateKeyRecyclerView = "apps.recycler.layout";
 
-	private Predicate<IslandAppInfo> mExcludeSelf;
-	private static final Predicate<IslandAppInfo> CLONED = app -> app.user.hashCode() != 0 && app.isInstalled();
-	private static final Predicate<IslandAppInfo> CLONEABLE = app -> app.user.hashCode() == 0;		// FIXME: Exclude already cloned
-
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
@@ -166,11 +162,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	private void onListFilterChanged(final int index) {
-		switch (index) {
-		case 0: mAppsSubsetFilter = Predicates.and(mExcludeSelf, CLONED); break;
-		case 1: mAppsSubsetFilter = Predicates.and(mExcludeSelf, CLONEABLE); break;
-		default: throw new IllegalStateException();
-		}
+		mAppsSubsetFilter = Predicates.and(mExcludeSelf, mViewModel.onFilterChanged(index));
 		mViewModel.clearSelection();
 		rebuildAppViewModels();
 	}
@@ -282,5 +274,7 @@ public class AppListFragment extends Fragment {
 	private Predicate<IslandAppInfo> mAppsSubsetFilter;
 	private boolean mShowSystemApps;
 	private boolean mIsDeviceOwner;
+	private Predicate<IslandAppInfo> mExcludeSelf;
+
 	private static final String TAG = "Island.AppsUI";
 }
