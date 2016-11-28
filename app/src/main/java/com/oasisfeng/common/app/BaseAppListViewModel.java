@@ -40,6 +40,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 			mApps.updateItemAt(index, app);
 
 			if (mSelection == old_app_vm) {
+				mSelection = app;
 				app.selected.set(true);
 				notifyPropertyChanged(BR.selection);
 			}
