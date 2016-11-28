@@ -25,7 +25,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 	private transient T mSelection;
 
 	// TODO: Rebuild the whole AbstractAppListViewModel to keep immutability?
-	public void replaceApps(final List<T> apps) {
+	protected void replaceApps(final List<T> apps) {
 		mApps.clear();
 		mAppsByPackage.clear();
 		for (final T app : apps)
@@ -33,7 +33,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		mApps.addAll(apps);
 	}
 
-	public T putApp(final String pkg, final T app) {
+	protected T putApp(final String pkg, final T app) {
 		final T old_app_vm = mAppsByPackage.put(pkg, app);
 		if (old_app_vm != null) {
 			final int index = mApps.indexOf(old_app_vm);
@@ -60,7 +60,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		return mApps;
 	}
 
-	public void removeApp(final String pkg) {
+	protected void removeApp(final String pkg) {
 		if (pkg == null) return;
 		final T app = mAppsByPackage.remove(pkg);
 		if (app == null) return;

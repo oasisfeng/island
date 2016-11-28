@@ -46,12 +46,16 @@ import com.oasisfeng.island.util.Users;
 
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import java8.util.function.BooleanSupplier;
 import java8.util.function.Predicate;
+import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
+
+import static com.oasisfeng.island.data.IslandAppListProvider.NON_SYSTEM;
 
 /**
  * View model for apps
@@ -60,13 +64,13 @@ import java8.util.stream.StreamSupport;
  */
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
+	public final List<Filter.Entry> filter_primary_options;		// Referenced by <Spinner> in layout
+
 	private enum FabAction { None, Clone, Lock, Unlock, Enable }
 
-	public boolean include_sys_apps;
 	public transient IIslandManager mController = NULL_CONTROLLER;
-	public final List<Filter.Entry> active_filters;
 
-	public enum Filter {
+	@SuppressWarnings("unused") public enum Filter {
 		CLONED(R.string.filter_cloned,			GlobalStatus::hasProfile,	app -> Users.isProfile(app.user) && app.isInstalled()),
 		CLONEABLE(R.string.filter_cloneable,	GlobalStatus::hasProfile,	app -> Users.isOwner(app.user)),	// FIXME: Exclude already cloned
 
@@ -88,8 +92,27 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 	}
 
-	public Predicate<IslandAppInfo> onFilterChanged(final int index) {
-		return active_filters.get(index).filter();
+	public boolean areSystemAppsIncluded() { return mFilterIncludeSystemApps; }
+
+	private Predicate<IslandAppInfo> activeFilters() {
+		return mFilterIncludeSystemApps ? mFilterPrimary : Predicates.and(mFilterPrimary, NON_SYSTEM);
+	}
+
+	public void onFilterPrimaryChanged(final int index) {
+		mFilterPrimary = Predicates.and(mFilterExcludeSelf, filter_primary_options.get(index).filter());
+		rebuildAppViewModels();
+	}
+
+	public void onFilterSysAppsInclusionChanged(final boolean should_include) {
+		mFilterIncludeSystemApps = should_include;
+		rebuildAppViewModels();
+	}
+
+	private void rebuildAppViewModels() {
+		clearSelection();
+		final List<AppViewModel> apps = IslandAppListProvider.getInstance(mActivity).installedApps()
+				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+		replaceApps(apps);
 	}
 
 	public AppListViewModel(final Activity activity) {
@@ -98,7 +121,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
 			if (property == BR.selection) updateFab();
 		}});
-		active_filters = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
+		filter_primary_options = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
+		mFilterExcludeSelf = IslandAppListProvider.excludeSelf(activity);
 	}
 
 	private void updateFab() {
@@ -109,6 +133,25 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		case NotCloned: setFabAction(FabAction.Clone); break;
 		default: setFabAction(FabAction.None); break;
 		} else setFabAction(FabAction.None);
+	}
+
+	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
+		final Predicate<IslandAppInfo> filters = activeFilters();
+		for (final IslandAppInfo app : apps) {
+			final IslandAppInfo last = app.getLastInfo();
+			if (last != null && ! filters.test(last)) continue;
+			if (filters.test(app)) {
+				putApp(app.packageName, new AppViewModel(app));
+			} else if (last != null) removeApp(app.packageName);
+		}
+		updateFab();
+	}
+
+	public void onPackagesRemoved(final Collection<IslandAppInfo> apps) {
+		final Predicate<IslandAppInfo> filters = activeFilters();
+		for (final IslandAppInfo app : apps)
+			if (filters.test(app)) removeApp(app.packageName);
+		updateFab();
 	}
 
 	public final void onItemLaunchIconClick(final View v) {
@@ -362,6 +405,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	};
 
 	private final Activity mActivity;
+	private Predicate<IslandAppInfo> mFilterPrimary;
+	private final Predicate<IslandAppInfo> mFilterExcludeSelf;
+	private boolean mFilterIncludeSystemApps;
 
 	private static final String TAG = "Island.VM";
 	private static final IIslandManager NULL_CONTROLLER = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class},

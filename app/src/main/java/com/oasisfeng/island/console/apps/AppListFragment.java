@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.ServiceConnection;
 import android.databinding.Observable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -36,7 +35,6 @@ import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
-import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 
 import java.util.Collection;
@@ -44,12 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java8.util.function.Predicate;
-import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
-
-import static com.oasisfeng.island.data.IslandAppListProvider.NON_SYSTEM;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
@@ -64,7 +58,6 @@ public class AppListFragment extends Fragment {
 		mIslandManager = new IslandManager(activity);
 		mViewModel = new AppListViewModel(activity);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
-		mExcludeSelf = IslandAppListProvider.excludeSelf(activity);
 
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
@@ -111,14 +104,7 @@ public class AppListFragment extends Fragment {
 
 		@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
 			Log.i(TAG, "Package updated: " + apps);
-			final Predicate<IslandAppInfo> filters = activeFilters();
-			for (final IslandAppInfo app : apps) {
-				final IslandAppInfo last = app.getLastInfo();
-				if (last != null && ! filters.test(last)) continue;
-				if (filters.test(app)) {
-					mViewModel.putApp(app.packageName, new AppViewModel(app));
-				} else if (last != null) mViewModel.removeApp(app.packageName);
-			}
+			mViewModel.onPackagesUpdate(apps);
 // TODO
 //			Snackbars.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app.getLabel()),
 //					Snackbars.withAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg))).show();
@@ -127,9 +113,7 @@ public class AppListFragment extends Fragment {
 
 		@Override public void onPackageRemoved(final Collection<IslandAppInfo> apps) {
 			Log.i(TAG, "Package removed: " + apps);
-			final Predicate<IslandAppInfo> filters = activeFilters();
-			for (final IslandAppInfo app : apps)
-				if (filters.test(app)) mViewModel.removeApp(app.packageName);
+			mViewModel.onPackagesRemoved(apps);
 			invalidateOptionsMenu();
 		}
 	};
@@ -152,19 +136,13 @@ public class AppListFragment extends Fragment {
 		getActivity().setActionBar(mBinding.appbar);
 		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
-				onListFilterChanged(position);
+				mViewModel.onFilterPrimaryChanged(position);
 			}
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
 		});
-		// Work-around a bug in Android N DP4.
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) mBinding.appbar.inflateMenu(R.menu.main_actions);
+//		// Work-around a bug in Android N DP4.
+//		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) mBinding.appbar.inflateMenu(R.menu.main_actions);
 		return mBinding.getRoot();
-	}
-
-	private void onListFilterChanged(final int index) {
-		mAppsSubsetFilter = Predicates.and(mExcludeSelf, mViewModel.onFilterChanged(index));
-		mViewModel.clearSelection();
-		rebuildAppViewModels();
 	}
 
 	@Override public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
@@ -172,7 +150,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
-		menu.findItem(R.id.menu_show_system).setChecked(mShowSystemApps);
+		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		menu.findItem(R.id.menu_destroy).setVisible(! mIsDeviceOwner);
 		menu.findItem(R.id.menu_deactivate).setVisible(mIsDeviceOwner);
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
@@ -181,9 +159,9 @@ public class AppListFragment extends Fragment {
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.menu_show_system:
-			item.setChecked(mViewModel.include_sys_apps = mShowSystemApps = ! item.isChecked());	// Toggle the checked state
-			mViewModel.clearSelection();
-			rebuildAppViewModels();
+			final boolean should_include = ! item.isChecked();
+			mViewModel.onFilterSysAppsInclusionChanged(should_include);
+			item.setChecked(should_include);	// Toggle the checked state
 			return true;
 		case R.id.menu_destroy:
 		case R.id.menu_deactivate:
@@ -204,16 +182,6 @@ public class AppListFragment extends Fragment {
 		super.onViewStateRestored(saved_state);
 		if (saved_state != null)
 			mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(KStateKeyRecyclerView));
-	}
-
-	private void rebuildAppViewModels() {
-		final List<AppViewModel> apps = IslandAppListProvider.getInstance(getActivity()).installedApps()
-				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
-		mViewModel.replaceApps(apps);
-	}
-
-	private Predicate<IslandAppInfo> activeFilters() {
-		return mShowSystemApps ? mAppsSubsetFilter : Predicates.and(mAppsSubsetFilter, NON_SYSTEM);
 	}
 
 	public void destroy() {
@@ -271,10 +239,7 @@ public class AppListFragment extends Fragment {
 	private IslandManager mIslandManager;
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
-	private Predicate<IslandAppInfo> mAppsSubsetFilter;
-	private boolean mShowSystemApps;
 	private boolean mIsDeviceOwner;
-	private Predicate<IslandAppInfo> mExcludeSelf;
 
 	private static final String TAG = "Island.AppsUI";
 }
