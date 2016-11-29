@@ -27,6 +27,8 @@
     <string name="error_reason_low_ram">Not allowed on low-RAM device.</string>
     <string name="error_reason_multi_user_not_allowed">Multi-user is not allowed.</string>
 
+    <string name="tip_empty_app_list">No apps here.\nPlease switch to other view.</string>
+
     <string name="field_app_id">APP ID: %1$s</string>
     <string name="button_learn_more_online">Learn more (online)</string>
     <string name="button_instructions_online">Instructions (online)</string>
