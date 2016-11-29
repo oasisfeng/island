@@ -127,7 +127,8 @@ public class IslandProvisioning {
 
 	/** This method always runs in managed profile */
 	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
-		if (IslandManager.isDeviceOwner(context)) return;	// Do nothing for device owner
+		final IslandManager island = new IslandManager(context);
+		if (island.isDeviceOwner()) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
 		if (state >= POST_PROVISION_REV) return;	// Already provisioned (revision up to date)
@@ -145,7 +146,6 @@ public class IslandProvisioning {
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
-		final IslandManager island = new IslandManager(context);
 		island.resetForwarding();
 		ProfileOwnerSystemProvisioning.start(island);	// Simulate the stock managed profile provision
 		IslandProvisioning.startProfileOwnerPostProvisioning(context, island);

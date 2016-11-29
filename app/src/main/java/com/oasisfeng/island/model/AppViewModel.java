@@ -54,7 +54,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	public final State state;
 	private final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO
 
-	public AppViewModel(final IslandAppInfo info) {
+	AppViewModel(final IslandAppInfo info) {
 		super(info);
 		this.state = checkState();
 	}

@@ -37,8 +37,9 @@ public class MainActivity extends Activity {
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		final IslandManager island = new IslandManager(this);
 		if (Users.isProfile()) {	// Should generally not running in profile, unless the managed-profile provision is interrupted or manually performed.
-			if (! new IslandManager(this).isProfileOwnerActive()) {
+			if (! island.isProfileOwnerActive()) {
 				Analytics.$().event("inactive_device_admin").send();
 				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(this))
@@ -53,7 +54,7 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		final boolean is_device_owner = IslandManager.isDeviceOwner(this);
+		final boolean is_device_owner = island.isDeviceOwner();
 		final UserHandle profile = IslandManager.getManagedProfile(this);
 
 		if (! is_device_owner) {

@@ -71,11 +71,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	public transient IIslandManager mController = NULL_CONTROLLER;
 
 	@SuppressWarnings("unused") public enum Filter {
-		CLONED(R.string.filter_cloned,			GlobalStatus::hasProfile,	app -> Users.isProfile(app.user) && app.isInstalled()),
-		CLONEABLE(R.string.filter_cloneable,	GlobalStatus::hasProfile,	app -> Users.isOwner(app.user)),	// FIXME: Exclude already cloned
+		CLONED		(R.string.filter_cloned,     GlobalStatus::hasProfile,	app -> Users.isProfile(app.user) && app.isInstalled()),
+		CLONEABLE	(R.string.filter_cloneable,  GlobalStatus::hasProfile,	app -> Users.isOwner(app.user)),	// FIXME: Exclude already cloned
 
-		ALL(R.string.filter_all,				GlobalStatus::hasNoProfile, app -> true),
-		FROZEN(R.string.filter_frozen,			GlobalStatus::hasNoProfile,	app -> app.isHidden());
+		ALL			(R.string.filter_all,        GlobalStatus::hasNoProfile,	app -> true),
+		FROZEN		(R.string.filter_frozen,     GlobalStatus::hasNoProfile,	app -> app.isHidden());
 
 		boolean visible() { return mVisibility.getAsBoolean(); }
 		Filter(final @StringRes int label,final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
@@ -142,7 +142,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			if (last != null && ! filters.test(last)) continue;
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
-			} else if (last != null) removeApp(app.packageName);
+			} else removeApp(app.packageName);
 		}
 		updateFab();
 	}

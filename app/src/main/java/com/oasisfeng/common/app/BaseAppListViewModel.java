@@ -21,7 +21,7 @@ import java.util.Map;
 public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable {
 
 	private final ObservableSortedList<T> mApps;
-	private final Map<String, T> mAppsByPackage = new HashMap<>();
+	private final Map<String, T> mAppsByPackage = new HashMap<>();	// Enforced constraint: apps from different users must not be shown at the same time.
 	private transient T mSelection;
 
 	// TODO: Rebuild the whole AbstractAppListViewModel to keep immutability?
@@ -38,12 +38,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		if (old_app_vm != null) {
 			final int index = mApps.indexOf(old_app_vm);
 			mApps.updateItemAt(index, app);
-
-			if (mSelection == old_app_vm) {
-				mSelection = app;
-				app.selected.set(true);
-				notifyPropertyChanged(BR.selection);
-			}
+			if (mSelection == old_app_vm) setSelection(app);	// Keep the selection unchanged
 		} else mApps.add(app);
 		return app;
 	}
@@ -66,6 +61,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		final T app = mAppsByPackage.remove(pkg);
 		if (app == null) return;
 		mApps.remove(app);
+		if (mSelection == app) setSelection(null);
 	}
 
 	protected int size() { return mApps.size(); }

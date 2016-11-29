@@ -75,6 +75,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		// The implementation in super method only updates entries for apps in owner user, here we update entries for apps in Island.
 		final IslandAppInfo entry = mIslandAppMap.get().get(pkg);
 		if (entry == null) return;
+		Log.d(TAG, "Label updated: " + pkg);
 		final IslandAppInfo new_entry = new IslandAppInfo(this, GlobalStatus.profile, entry, null);
 		mIslandAppMap.get().put(pkg, new_entry);
 
@@ -260,5 +261,5 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
 
-	private static final String TAG = "Island.AppsProv";
+	private static final String TAG = "Island.AppListProv";
 }

@@ -236,11 +236,6 @@ public class IslandManager extends IIslandManager.Stub {
 		return mDevicePolicies.getManager().isDeviceOwnerApp(mContext.getPackageName());
 	}
 
-	public static boolean isDeviceOwner(final Context context) {
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
-		return dpm.isDeviceOwnerApp(context.getPackageName());
-	}
-
 	public static boolean isProfileOwner(final Context context) {
 		final UserHandle profile = getManagedProfile(context);
 		if (profile == null) return false;

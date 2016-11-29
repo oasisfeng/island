@@ -149,6 +149,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	protected void onAppLabelUpdate(final String pkg) {
 		final T entry = mAppMap.get().get(pkg);
 		if (entry == null) return;
+		Log.d(TAG, "Label updated: " + pkg);
 		final T new_entry = createEntry(entry, null);
 		mAppMap.get().put(pkg, new_entry);
 
