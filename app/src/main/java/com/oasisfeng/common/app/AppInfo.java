@@ -49,17 +49,6 @@ public class AppInfo extends ApplicationInfo {
 		return resolved != null;
 	}
 
-	/** Compare label without loading the string. */
-	boolean labelEquals(final AppInfo another) {
-		if (nonLocalizedLabel != null)
-			return another.nonLocalizedLabel != null && nonLocalizedLabel.toString().equals(another.nonLocalizedLabel.toString());
-		if (labelRes != 0)
-			return labelRes == another.labelRes;
-		if (name != null)
-			return name.equals(another.name);
-		return packageName.equals(another.packageName);
-	}
-
 	public AppInfo getLastInfo() { return mLastInfo; }
 
 	@NonNull protected Context context() { return mContext; }

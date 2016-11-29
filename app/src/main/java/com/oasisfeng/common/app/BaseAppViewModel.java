@@ -4,6 +4,7 @@ import android.databinding.BaseObservable;
 import android.databinding.ObservableBoolean;
 import android.databinding.ObservableField;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.View;
 
 import com.oasisfeng.android.ui.IconResizer;
@@ -42,7 +43,7 @@ public class BaseAppViewModel extends BaseObservable {
 	}
 
 	protected boolean isContentSameAs(final BaseAppViewModel another) {
-		return info.labelEquals(another.info);
+		return TextUtils.equals(info.getLabel(), another.info.getLabel());
 	}
 
 
