@@ -12,7 +12,6 @@ import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.UserHandle;
 
-import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.GlobalStatus;
@@ -40,7 +39,7 @@ public class MainActivity extends Activity {
 		final IslandManager island = new IslandManager(this);
 		if (Users.isProfile()) {	// Should generally not running in profile, unless the managed-profile provision is interrupted or manually performed.
 			if (! island.isProfileOwnerActive()) {
-				Analytics.$().event("inactive_device_admin").send();
+//				Analytics.$().event("inactive_device_admin").send();
 				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(this))
 						.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
@@ -54,23 +53,20 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		final boolean is_device_owner = island.isDeviceOwner();
-		final UserHandle profile = IslandManager.getManagedProfile(this);
+		GlobalStatus.device_owner = island.isDeviceOwner();
+		final UserHandle profile = GlobalStatus.profile = IslandManager.getManagedProfile(this);
 
-		if (! is_device_owner) {
-			if (profile == null) {
-				showSetupWizard();
-				return;
-			}
-			GlobalStatus.profile = profile;
+		if (profile != null) {
 			final ComponentName profile_owner = IslandManager.getProfileOwner(this, profile);
 			if (profile_owner == null) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
-				if (IslandManager.launchApp(this, getPackageName(), profile))		// Try starting myself in profile to finish the provisioning.
+				if (IslandManager.launchApp(this, getPackageName(), profile)) {        // Try starting myself in profile to finish the provisioning.
 					finish();
-				else showSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
-				return;
-			}
-			if (getPackageName().equals(profile_owner.getPackageName())) {
+					return;
+				} else if (! GlobalStatus.device_owner) {
+					showSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
+					return;
+				}
+			} else if (getPackageName().equals(profile_owner.getPackageName())) {
 				final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
 				final List<LauncherActivityInfo> our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile);
 				if (! our_activities_in_launcher.isEmpty()) {		// Main activity is left enabled, probably due to unfinished provisioning
@@ -78,11 +74,11 @@ public class MainActivity extends Activity {
 					finish();
 					return;
 				}
-			} else {		// Profile was not created by us
+			} else if (! GlobalStatus.device_owner) {		// Profile was not created by us, show setup wizard if not device admin.
 				showSetupWizard();
 				return;
 			}
-		}
+		} else if (! GlobalStatus.device_owner) showSetupWizard();
 
 		setContentView(R.layout.activity_main);
 		if (savedInstanceState == null) getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();

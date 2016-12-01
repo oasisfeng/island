@@ -6,6 +6,7 @@
 
     <string name="filter_cloned">Cloned</string>
     <string name="filter_cloneable">Cloneable</string>
+    <string name="filter_mainland">Mainland</string>
     <string name="filter_frozen">Frozen</string>
     <string name="filter_all">All</string>
 
@@ -32,6 +33,15 @@
     <string name="field_app_id">APP ID: %1$s</string>
     <string name="button_learn_more_online">Learn more (online)</string>
     <string name="button_instructions_online">Instructions (online)</string>
+
+    <string name="action_clone">Clone</string>
+    <string name="action_freeze">Freeze</string>
+    <string name="action_unfreeze">Unfreeze</string>
+    <string name="action_shortcut">Create launch shortcut</string>
+    <string name="action_greenify">Auto-freeze with Greenify</string>
+    <string name="action_remove_clone">Remove clone</string>
+    <string name="action_uninstall">Uninstall app</string>
+
     <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_greenify">Auto-freeze with Greenify</string>
     <string name="button_block">Block</string>
@@ -85,5 +95,6 @@
     <!-- General words -->
     <string name="exit">Exit</string>
     <string name="setup">Setup</string>
+    <string name="toast_error_freeze_failure">Failed to freeze</string>
 
 </resources>

@@ -28,21 +28,22 @@ public class IslandAppInfo extends AppInfo {
 	private static final int FLAG_HIDDEN = 1<<27;
 
 	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
+	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
 
-	public boolean isHidden() {
-		final Boolean hidden = isHidden(this);
-		if (hidden != null) return hidden;
-		// The fallback implementation
-		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
-	}
-
-	public void setHidden(final boolean state) {
+	void setHidden(final boolean state) {
 		if (SDK_INT >= M) {
 			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
 			if (private_flags != null)
 				Hacks.ApplicationInfo_privateFlags.set(this, state ? private_flags | PRIVATE_FLAG_HIDDEN : private_flags & ~ PRIVATE_FLAG_HIDDEN);
 		} else if (state) flags |= FLAG_HIDDEN;
 		else flags &= ~ FLAG_HIDDEN;
+	}
+
+	public boolean isHidden() {
+		final Boolean hidden = isHidden(this);
+		if (hidden != null) return hidden;
+		// The fallback implementation
+		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
 	}
 
 	/** @return hidden state, or null if failed to */

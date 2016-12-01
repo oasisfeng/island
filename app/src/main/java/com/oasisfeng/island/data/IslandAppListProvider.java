@@ -24,6 +24,7 @@ import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,6 +65,12 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	public static Predicate<IslandAppInfo> exclude(final String pkg) {
 		return app -> ! pkg.equals(app.packageName);
+	}
+
+	public IslandAppInfo get(final String pkg, final UserHandle user) {
+		if (Users.isOwner(user)) return super.get(pkg);
+		if (! Users.isProfile(user)) return null;
+		return mIslandAppMap.get().get(pkg);
 	}
 
 	@Override protected IslandAppInfo createEntry(final ApplicationInfo base, final IslandAppInfo last) {

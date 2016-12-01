@@ -41,9 +41,9 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 
 	public @StringRes int getStatusText() {
 // android:_text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.isExclusive() ? @string/status_exclusive : &quot;&quot;)}"
-		if (! info().isInstalled()) return R.string.state_not_cloned;
-		if (info().isHidden()) return R.string.state_frozen;
 		if (! info().enabled) return R.string.state_disabled;
+		if (info().isHidden()) return R.string.state_frozen;
+		if (! info().isInstalled()) return R.string.state_not_cloned;
 		return R.string.state_alive;
 	}
 

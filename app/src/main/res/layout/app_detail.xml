@@ -27,23 +27,22 @@
         android:elevation="@dimen/elevation_card_raised"
         app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
         app:behavior_hideable="true"
-        app:behavior_peekHeight="72dp"
+        app:behavior_peekHeight="88dp"
         bind:behavior_state="@{apps.selection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
         bind:behavior_bottomSheetCallback="@{apps.bottom_sheet_callback}"
         android:onClick="@{apps::onBottomSheetClick}">
 
-        <TextView
-            android:id="@+id/app_name"
+        <Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="@dimen/margin_small"
-            android:paddingBottom="@dimen/margin_tiny"
-            android:paddingStart="@dimen/margin_medium"
-            android:paddingEnd="@dimen/margin_medium"
-            android:maxLines="1"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="@{apps.selection.info.label}"
-            tools:text="@string/app_name" />
+            android:layout_height="?android:attr/actionBarSize"
+            android:background="?android:attr/colorPrimary"
+            android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
+            android:popupTheme="@style/AppThemeOverlay.Dark.Popup"
+            android:title="@{apps.selection.info.label}"
+            tools:title="@string/app_name"
+            bind:menu="@{apps.actions_menu}"
+            android:onMenuItemClick="@{apps::onActionClick}" />
 
         <TextView
             android:id="@+id/summary"
@@ -66,55 +65,6 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@{@string/field_app_id(apps.selection.info.packageName)}"
             tools:text="APP ID: com.oasisfeng.island" />
-
-        <Button style="@style/AppTheme.BorderlessActionButton"
-            android:enabled="@{apps.selection.info.launchable &amp;&amp; (apps.selection.state == State.Alive || apps.selection.state == State.Frozen)}"
-            android:onClick="@{apps::onShortcutRequested}"
-            android:text="@string/button_create_shortcut" />
-
-        <Button style="@style/AppTheme.BorderlessActionButton"
-            android:enabled="@{apps.selection.state == State.Alive || apps.selection.state == State.Frozen}"
-            android:onClick="@{apps::onGreenifyRequested}"
-            android:text="@string/button_greenify" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            bind:visible="@{BuildConfig.DEBUG &amp;&amp; VERSION.SDK_INT >= VERSION_CODES.N}"
-            android:orientation="horizontal" >
-
-            <Button style="@style/AppTheme.BorderlessActionButton"
-                    android:layout_weight="1"
-                    android:onClick="@{apps::onBlockingRequested}"
-                    android:text="@string/button_block" />
-
-            <Button style="@style/AppTheme.BorderlessActionButton"
-                    android:layout_weight="1"
-                    android:onClick="@{apps::onUnblockingRequested}"
-                    android:text="@string/button_unblock" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            bind:visible="@{apps.selection.info().user != null}" comment:x1="Never show installation-related actions in God mode"
-            android:orientation="horizontal" >
-
-            <Button style="@style/AppTheme.BorderlessActionButton"
-                android:layout_weight="1"
-                android:enabled="@{apps.selection.state != State.NotCloned}" comment:x2="Alive, Frozen and Disabled"
-                android:onClick="@{apps::onRemovalRequested}"
-                android:text="@{! apps.selection.isSystem() ? (apps.selection.isExclusive(context) ? @string/button_uninstall_clone : @string/button_remove_clone) : apps.selection.state == State.Disabled ? @string/button_enable_clone : @string/button_disable_clone}"
-                tools:text="@string/button_remove_clone" />
-
-            <Button style="@style/AppTheme.BorderlessActionButton"
-                android:layout_weight="1"
-                bind:visible="@{apps.selection == null || apps.selection.isExclusive(context) &amp;&amp; ! apps.selection.isSystem()}" comment:x3="apps.selection == null to workaround a weird out-of-sync issue"
-                android:onClick="@{apps::onOwnerInstallationRequested}"
-                android:text="@string/button_install_outside" />
-
-        </LinearLayout>
 
     </LinearLayout>
 

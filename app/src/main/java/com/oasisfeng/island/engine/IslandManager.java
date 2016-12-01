@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
@@ -35,6 +36,7 @@ import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 
+import java.lang.reflect.Proxy;
 import java.util.List;
 
 import java8.util.stream.Collectors;
@@ -51,6 +53,9 @@ import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
  * Created by Oasis on 2016/4/5.
  */
 public class IslandManager extends IIslandManager.Stub {
+
+	public static final IIslandManager NULL = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class},
+			(proxy, method, args) -> { throw new RemoteException("Not connected yet"); });
 
 	public IslandManager(final Context context) {
 		mContext = context;

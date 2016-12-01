@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.oasisfeng.island.databinding.AppListBinding;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 
 /**
@@ -20,7 +21,7 @@ public class AppPickerFragment extends Fragment {
 
 	@Override public void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mViewModel = new AppListViewModel(getActivity());
+		mViewModel = new AppListViewModel(getActivity(), IslandManager.NULL);
 	}
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {

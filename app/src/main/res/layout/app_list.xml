@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:bind="http://schemas.android.com/apk/res-auto"
         tools:context=".MainActivity">
 
@@ -60,24 +59,7 @@
             android:lineSpacingMultiplier="1.3"
             android:text="@string/tip_empty_app_list" />
 
-        <include layout="@layout/app_detail" bind:apps="@{apps}" />
-
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/fab_margin"
-            app:layout_anchor="@id/app_detail"
-            app:layout_anchorGravity="top|right|end"
-            app:layout_behavior="com.oasisfeng.island.util.FloatingActionButtonBehavior"
-            android:clickable="true"
-            android:src="@{apps.fabImage}"
-            bind:visible="@{apps.fabImage != 0}"
-            android:onClick="@{apps::onFabClick}"
-            app:backgroundTint="@{apps.fabBgColor}"
-            app:rippleColor="?android:attr/colorControlHighlight"
-            app:elevation="@dimen/fab_elevation"
-            app:pressedTranslationZ="@dimen/fab_elevation_pressed" />
+        <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" />
 
     </android.support.design.widget.CoordinatorLayout>
 

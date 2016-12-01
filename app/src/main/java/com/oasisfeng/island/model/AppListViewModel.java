@@ -9,19 +9,19 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.databinding.Bindable;
 import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
 import android.net.Uri;
 import android.os.RemoteException;
 import android.os.UserHandle;
-import android.support.annotation.ColorRes;
-import android.support.annotation.DrawableRes;
+import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -44,7 +44,6 @@ import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
 
-import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -66,19 +65,19 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public final List<Filter.Entry> filter_primary_options;		// Referenced by <Spinner> in layout
 
-	private enum FabAction { None, Clone, Lock, Unlock, Enable }
-
-	public transient IIslandManager mController = NULL_CONTROLLER;
+	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		CLONED		(R.string.filter_cloned,     GlobalStatus::hasProfile,	app -> Users.isProfile(app.user) && app.isInstalled()),
-		CLONEABLE	(R.string.filter_cloneable,  GlobalStatus::hasProfile,	app -> Users.isOwner(app.user)),	// FIXME: Exclude already cloned
+		Cloned		(R.string.filter_cloned,    () -> GlobalStatus.profile != null,   app -> Users.isProfile(app.user) && app.isInstalled()),
+		Cloneable	(R.string.filter_cloneable, () -> ! GlobalStatus.device_owner && GlobalStatus.profile != null, app -> Users.isOwner(app.user)),	// TODO: Exclude already cloned
 
-		ALL			(R.string.filter_all,        GlobalStatus::hasNoProfile,	app -> true),
-		FROZEN		(R.string.filter_frozen,     GlobalStatus::hasNoProfile,	app -> app.isHidden());
+		All			(R.string.filter_all,       () -> GlobalStatus.device_owner && GlobalStatus.profile == null,   app -> true),
+		Frozen		(R.string.filter_frozen,    () -> GlobalStatus.device_owner && GlobalStatus.profile == null,   app -> app.isHidden()),
 
+		Mainland	(R.string.filter_mainland,  () -> GlobalStatus.device_owner && GlobalStatus.profile != null,   app -> Users.isOwner(app.user))
+		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
-		Filter(final @StringRes int label,final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
+		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
 
 		private final @StringRes int mLabel;
 		private final BooleanSupplier mVisibility;
@@ -115,24 +114,31 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		replaceApps(apps);
 	}
 
-	public AppListViewModel(final Activity activity) {
+	public AppListViewModel(final Activity activity, final IIslandManager controller) {
 		super(AppViewModel.class);
 		mActivity = activity;
 		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
-			if (property == BR.selection) updateFab();
+			if (property == BR.selection) updateActions();
 		}});
 		filter_primary_options = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 		mFilterExcludeSelf = IslandAppListProvider.excludeSelf(activity);
+		mOwnerController = controller;
 	}
 
-	private void updateFab() {
-		if (getSelection() != null) switch (getSelection().state) {
-		case Alive: setFabAction(FabAction.Lock); break;
-		case Frozen: setFabAction(FabAction.Unlock); break;
-		case Disabled: setFabAction(FabAction.Enable); break;
-		case NotCloned: setFabAction(FabAction.Clone); break;
-		default: setFabAction(FabAction.None); break;
-		} else setFabAction(FabAction.None);
+	private void updateActions() {
+		final AppViewModel selection = getSelection();
+		if (selection == null) return;
+		final IslandAppInfo app = selection.info();
+		final UserHandle profile = GlobalStatus.profile;
+		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
+		final boolean exclusive = Users.isOwner(app.user) ? provider.get(app.packageName, profile) == null : provider.get(app.packageName) == null;
+		mActions.findItem(R.id.menu_freeze).setVisible(! app.isHidden() && app.enabled);
+		mActions.findItem(R.id.menu_unfreeze).setVisible(app.isHidden());
+		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
+		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && ! app.isSystem());		// TODO: Allow system app to be disabled / enabled
+		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
+		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
+		mActions.findItem(R.id.menu_greenify).setVisible(app.enabled);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -144,26 +150,84 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				putApp(app.packageName, new AppViewModel(app));
 			} else removeApp(app.packageName);
 		}
-		updateFab();
+		updateActions();
 	}
 
 	public void onPackagesRemoved(final Collection<IslandAppInfo> apps) {
 		final Predicate<IslandAppInfo> filters = activeFilters();
 		for (final IslandAppInfo app : apps)
 			if (filters.test(app)) removeApp(app.packageName);
-		updateFab();
+		updateActions();
 	}
 
 	public final void onItemLaunchIconClick(final View v) {
 		if (getSelection() == null) return;
-		final String pkg = getSelection().info.packageName;
-		Analytics.$().event("action_launch").with("package", pkg).send();
+		final IslandAppInfo app = getSelection().info();
+		Analytics.$().event("action_launch").with("package", app.packageName).send();
 		try {
-			mController.launchApp(pkg);
+			controller(app).launchApp(app.packageName);
 		} catch (final RemoteException ignored) {}
 	}
 
-	public void onShortcutRequested(final View v) {
+	public boolean onActionClick(final MenuItem item) {
+		final AppViewModel selection = getSelection();
+		if (selection == null) return false;
+		final IslandAppInfo app = selection.info();
+		final String pkg = app.packageName;
+		final IIslandManager controller = controller(app);
+
+		switch (item.getItemId()) {
+		case R.id.menu_clone:
+			cloneApp(app);
+			// Do not clear selection, for quick launch with one more click
+			break;
+		case R.id.menu_freeze:
+			// Select the next alive app, or clear selection.
+			final int next_index = indexOf(selection) + 1;
+			if (next_index >= size()) clearSelection();
+			else {
+				final AppViewModel next = getAppAt(next_index);
+				if (next.state == State.Alive)
+					setSelection(next);
+				else clearSelection();
+			}
+			Analytics.$().event("action_freeze").with("package", pkg).send();
+
+			try {
+				final boolean frozen = controller.freezeApp(pkg, "manual");
+				if (! frozen) Toast.makeText(mActivity, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
+				refreshAppStateAsSysBugWorkaround(pkg);
+			} catch (final RemoteException ignored) {
+				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
+			}
+			break;
+		case R.id.menu_unfreeze:
+			Analytics.$().event("action_unfreeze").with("package", pkg).send();
+			try {
+				controller.defreezeApp(pkg);
+				refreshAppStateAsSysBugWorkaround(pkg);
+				clearSelection();
+			} catch (final RemoteException ignored) {}
+			break;
+		case R.id.menu_remove:
+		case R.id.menu_uninstall:
+			onRemovalRequested();
+			break;
+		case R.id.menu_shortcut:
+			onShortcutRequested();
+			break;
+		case R.id.menu_greenify:
+			onGreenifyRequested();
+			break;
+//		case R.id.menu_enable:
+//			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+//			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
+//			break;
+		}
+		return true;
+	}
+
+	private void onShortcutRequested() {
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info().packageName;
 		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
@@ -172,9 +236,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} else Toast.makeText(mActivity, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
 	}
 
-	public void onGreenifyRequested(final View v) {
+	private void onGreenifyRequested() {
 		if (getSelection() == null) return;
-		Analytics.$().event("action_greenify").with("package", getSelection().info().packageName).send();
+		final IslandAppInfo app = getSelection().info();
+		Analytics.$().event("action_greenify").with("package", app.packageName).send();
 
 		final String mark = "greenify-explained";
 		final Boolean greenify_ready = GreenifyClient.checkGreenifyVersion(mActivity);
@@ -188,91 +253,41 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			new AlertDialog.Builder(mActivity).setTitle(R.string.dialog_greenify_title).setMessage(message).setPositiveButton(button, (d, w) -> {
 				if (! unavailable_or_version_too_low) {
 					Scopes.app(mActivity).mark(mark);
-					greenify(getSelection().info().packageName, getSelection().info().user);
+					greenify(app);
 				} else GreenifyClient.openInAppMarket(mActivity);
 			}).show();
-		} else greenify(getSelection().info.packageName, getSelection().info().user);
+		} else greenify(app);
 	}
 
-	private void greenify(final String pkg, final UserHandle user) {
-		if (! GreenifyClient.greenify(mActivity, pkg, user))
+	private void greenify(final IslandAppInfo app) {
+		if (! GreenifyClient.greenify(mActivity, app.packageName, app.user))
 			Toast.makeText(mActivity, R.string.toast_greenify_failed, Toast.LENGTH_LONG).show();
 	}
 
-	public void onBlockingRequested(final View v) {
+	public void onBlockingRequested() {
 		if (getSelection() == null) return;
 		try {
-			mController.block(getSelection().info.packageName);
+			controller(getSelection().info()).block(getSelection().info.packageName);
 		} catch (final RemoteException ignored) {}
 	}
 
-	public void onUnblockingRequested(final View v) {
+	public void onUnblockingRequested() {
 		if (getSelection() == null) return;
 		try {
-			mController.unblock(getSelection().info.packageName);
+			controller(getSelection().info()).unblock(getSelection().info.packageName);
 		} catch (final RemoteException ignored) {}
 	}
 
-	public void onRemovalRequested(final View v) {
+	private void onRemovalRequested() {
 		if (getSelection() == null) return;
-		final String pkg = getSelection().info.packageName;
-		Analytics.$().event("action_uninstall").with("package", pkg).send();
+		final IslandAppInfo app = getSelection().info();
+		Analytics.$().event("action_uninstall").with("package", app.packageName).send();
 		try {
-			mController.removeClone(pkg);
+			controller(app).removeClone(app.packageName);
 		} catch (final RemoteException ignored) {
 			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), GlobalStatus.profile, null, null);
+			launcher_apps.startAppDetailsActivity(new ComponentName(app.packageName, ""), GlobalStatus.profile, null, null);
 			Toast.makeText(mActivity, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
-		}
-	}
-
-	public void onOwnerInstallationRequested(final View v) {
-		if (getSelection() == null) return;
-		final String pkg = getSelection().info().packageName;
-		v.getContext().startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-		Analytics.$().event("action_install_outside").with("package", pkg).send();
-	}
-
-	public final void onFabClick(final View v) {
-		final AppViewModel selection = getSelection();
-		if (selection == null) return;
-		final String pkg = selection.info.packageName;
-		switch (fab_action) {
-		case Clone:
-			cloneApp(pkg);
-			// Do not clear selection, for quick launch with one more click
-			break;
-		case Lock:
-			// Select the next alive app, or clear selection.
-			final int next_index = indexOf(selection) + 1;
-			if (next_index >= size()) clearSelection();
-			else {
-				final AppViewModel next = getAppAt(next_index);
-				if (next.state == State.Alive)
-					setSelection(next);
-				else clearSelection();
-			}
-			Analytics.$().event("action_freeze").with("package", pkg).send();
-			try {
-				final boolean frozen = mController.freezeApp(pkg, "manual");
-				if (! frozen) Toast.makeText(mActivity, "Failed to freeze", Toast.LENGTH_LONG).show();
-				refreshAppStateAsSysBugWorkaround(pkg);
-			} catch (final RemoteException ignored) {
-				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
-			}
-			break;
-		case Unlock:
-			Analytics.$().event("action_unfreeze").with("package", pkg).send();
-			try {
-				mController.defreezeApp(pkg);
-				refreshAppStateAsSysBugWorkaround(pkg);
-			} catch (final RemoteException ignored) {}
-			// Do not clear selection, for quick launch with one more click
-			break;
-		case Enable:
-			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
-			break;
 		}
 	}
 
@@ -281,10 +296,17 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, GlobalStatus.profile, false);
 	}
 
-	private void cloneApp(final String pkg) {
+	private void cloneApp(final IslandAppInfo app) {
 		final int check_result;
+		final String pkg = app.packageName;
+		if (Users.isProfile(app.user)) {
+			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
+			Analytics.$().event("action_install_outside").with("package", pkg).send();
+			return;
+		}
+
 		try {
-			check_result = mController.cloneApp(pkg, false);
+			check_result = mProfileController.cloneApp(pkg, false);
 		} catch (final RemoteException ignored) { return; }		// FIXME: Error message
 		switch (check_result) {
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
@@ -321,7 +343,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private void doCloneApp(final String pkg) {
 		final int result; try {
-			result = mController.cloneApp(pkg, true);
+			result = mProfileController.cloneApp(pkg, true);
 		} catch (final RemoteException ignored) { return; }	// FIXME: Error message
 		switch (result) {
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
@@ -345,31 +367,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} else doCloneApp(pkg);
 	}
 
-	private void setFabAction(final FabAction action) {
-		if (action == fab_action) return;
-		fab_action = action;
-		notifyPropertyChanged(BR.fabImage);
-		notifyPropertyChanged(BR.fabBgColor);
-	}
-
-	private FabAction fab_action = FabAction.None;
-
-	@Bindable public @DrawableRes int getFabImage() {
-		switch (fab_action) {
-		case Clone: return R.drawable.ic_copy_24dp;
-		case Lock: return R.drawable.ic_lock_24dp;
-		case Unlock: return R.drawable.ic_unlock_24dp;
-		case Enable: return R.drawable.ic_enable_24dp;
-		default: return 0; }
-	}
-
-	@Bindable public @ColorRes int getFabBgColor() {
-		switch (fab_action) {
-		case Lock: return R.color.state_frozen;
-		case Clone: case Unlock: case Enable: return R.color.state_alive;
-		default: return 0; }
-	}
-
 	public final void onItemClick(final View view) {
 		final AppEntryBinding binding = DataBindingUtil.findBinding(view);
 		final AppViewModel clicked = binding.getApp();
@@ -381,7 +378,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
 	}
 
-	public void setIslandManager(final IIslandManager manager) { mController = manager != null ? manager : NULL_CONTROLLER; }
+	private IIslandManager controller(final IslandAppInfo app) {
+		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
+	}
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
@@ -405,11 +404,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	};
 
 	private final Activity mActivity;
+	private final IIslandManager mOwnerController;
+	public transient IIslandManager mProfileController;
+	public Menu mActions;
 	private Predicate<IslandAppInfo> mFilterPrimary;
 	private final Predicate<IslandAppInfo> mFilterExcludeSelf;
 	private boolean mFilterIncludeSystemApps;
 
 	private static final String TAG = "Island.VM";
-	private static final IIslandManager NULL_CONTROLLER = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class},
-			(proxy, method, args) -> { throw new RemoteException("Not connected yet"); });
 }

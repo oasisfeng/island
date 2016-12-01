@@ -56,7 +56,8 @@ public class AppListFragment extends Fragment {
 		final Activity activity = getActivity();
 
 		mIslandManager = new IslandManager(activity);
-		mViewModel = new AppListViewModel(activity);
+		mViewModel = new AppListViewModel(activity, mIslandManager);
+		mViewModel.mProfileController = IslandManager.NULL;
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
@@ -69,7 +70,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onStop() {
-		mViewModel.setIslandManager(null);
+		mViewModel.mProfileController = IslandManager.NULL;
 		try {
 			getActivity().unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
@@ -86,12 +87,12 @@ public class AppListFragment extends Fragment {
 	// Use ShuttleServiceConnection to connect to remote service in profile via ServiceShuttle (see also MainActivity.bindService)
 	private final ServiceConnection mServiceConnection = new ShuttleServiceConnection() {
 		@Override public void onServiceConnected(final IBinder service) {
-			mViewModel.setIslandManager(IIslandManager.Stub.asInterface(service));
+			mViewModel.mProfileController = IIslandManager.Stub.asInterface(service);
 			Log.d(TAG, "Service connected");
 		}
 
 		@Override public void onServiceDisconnected() {
-			mViewModel.setIslandManager(null);
+			mViewModel.mProfileController = IslandManager.NULL;
 		}
 	};
 
@@ -132,6 +133,7 @@ public class AppListFragment extends Fragment {
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
+		mViewModel.mActions = mBinding.details.toolbar.getMenu();
 		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
 		getActivity().setActionBar(mBinding.appbar);
 		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -223,7 +225,7 @@ public class AppListFragment extends Fragment {
 
 	private void destroyProfile() {
 		final Activity activity = getActivity();
-		final IIslandManager controller = mViewModel.mController;
+		final IIslandManager controller = mViewModel.mProfileController;
 		if (controller != null) try {
 			controller.destroyProfile();
 			activity.finish();

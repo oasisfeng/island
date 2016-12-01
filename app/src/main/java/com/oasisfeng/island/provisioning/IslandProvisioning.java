@@ -128,7 +128,7 @@ public class IslandProvisioning {
 	/** This method always runs in managed profile */
 	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
 		final IslandManager island = new IslandManager(context);
-		if (island.isDeviceOwner()) return;	// Do nothing for device owner
+		if (GlobalStatus.running_in_owner && island.isDeviceOwner()) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
 		if (state >= POST_PROVISION_REV) return;	// Already provisioned (revision up to date)
