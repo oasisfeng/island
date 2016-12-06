@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.print.PrintManager;
@@ -42,6 +44,7 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle> Context_bindServiceAsUser;
 	public static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked> ActivityThread_getPackageManager;
 	public static final Hack.HackedMethod3<ApplicationInfo, Object, RemoteException, Unchecked, Unchecked, String, Integer, Integer> IPackageManager_getApplicationInfo;
+	public static final Hack.HackedMethod3<ResolveInfo, PackageManager, Unchecked, Unchecked, Unchecked, Intent, Integer, Integer> PackageManager_resolveActivityAsUser;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
@@ -68,5 +71,7 @@ public class Hacks {
 		//ApplicationInfo getApplicationInfoAsUser(String packageName, @ApplicationInfoFlags int flags, @UserIdInt int userId) throws PackageManager.NameNotFoundException
 		IPackageManager_getApplicationInfo = Hack.into("android.content.pm.IPackageManager").method("getApplicationInfo").throwing(RemoteException.class)
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class/* flags */, int.class/* userId */);
+		PackageManager_resolveActivityAsUser = Hack.into(PackageManager.class).method("resolveActivityAsUser")
+				.returning(ResolveInfo.class).fallbackReturning(null).withParams(Intent.class, int.class, int.class);
 	}
 }
