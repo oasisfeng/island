@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class AppLaunchShortcut extends Activity {
 	private boolean launchApp(final Intent intent) {
 		final IslandManager island = new IslandManager(this);
 		final UserHandle user = Process.myUserHandle();
-		if (user.hashCode() == 0 && ! island.isDeviceOwner()) return false;
+		if (Users.isOwner(user) && ! island.isDeviceOwner()) return false;
 		final Uri uri = intent.getData();
 		if (uri == null) return false;
 

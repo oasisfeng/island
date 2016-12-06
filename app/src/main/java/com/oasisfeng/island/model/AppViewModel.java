@@ -12,6 +12,7 @@ import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.common.app.BaseAppViewModel;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.data.IslandAppInfo;
+import com.oasisfeng.island.util.Users;
 
 /**
  * View-model for app entry
@@ -32,7 +33,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	private State checkState() {
-		if (info().user.hashCode() == 0) return State.NotCloned;	// FIXME
+		if (Users.isOwner(info().user)) return State.NotCloned;	// FIXME
 //		if (! info().isInstalledInIsland()) return State.NotCloned;
 		if (! info.enabled) return State.Disabled;
 		if (info().isHidden()) return State.Frozen;

@@ -32,7 +32,7 @@ public class Users extends LocalContentProvider {
 	private static final String ACTION_USER_REMOVED = "android.intent.action.USER_REMOVED";
 
 	private static final UserHandle CURRENT = android.os.Process.myUserHandle();
-	private static final int CURRENT_ID = CURRENT.hashCode();
+	private static final int CURRENT_ID = toId(CURRENT);
 
 	public static UserHandle current() { return CURRENT; }
 
@@ -45,7 +45,7 @@ public class Users extends LocalContentProvider {
 
 	private void refreshUsers() {
 		final UserHandle profile = queryProfile();
-		sProfileId = profile != null ? profile.hashCode() : 0;
+		sProfileId = profile != null ? Users.toId(profile) : 0;
 	}
 
 	private @Nullable UserHandle queryProfile() {
@@ -58,10 +58,12 @@ public class Users extends LocalContentProvider {
 	}
 
 	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user
-	public static boolean isOwner(final UserHandle user) { return user.hashCode() == 0; }
+	public static boolean isOwner(final UserHandle user) { return toId(user) == 0; }
 
 	public static boolean isProfile() { return CURRENT_ID != 0 && sProfileId == CURRENT_ID; }
-	public static boolean isProfile(final UserHandle user) { return user.hashCode() == sProfileId; }
+	public static boolean isProfile(final UserHandle user) { return toId(user) == sProfileId; }
+
+	public static int toId(final UserHandle user) { return user.hashCode(); }
 
 	private final BroadcastReceiver mUserEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context c, final Intent i) {
 		refreshUsers();

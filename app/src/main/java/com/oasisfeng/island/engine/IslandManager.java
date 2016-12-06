@@ -35,6 +35,7 @@ import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Users;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
@@ -249,7 +250,7 @@ public class IslandManager extends IIslandManager.Stub {
 	}
 
 	public boolean isProfileOwnerActive() {
-		if (Process.myUserHandle().hashCode() == 0) throw new IllegalStateException("Must not be called in owner user");
+		if (Users.isOwner(Process.myUserHandle())) throw new IllegalStateException("Must not be called in owner user");
 		return mDevicePolicies.isAdminActive();
 	}
 
@@ -266,7 +267,7 @@ public class IslandManager extends IIslandManager.Stub {
 	public static @Nullable ComponentName getProfileOwner(final Context context, final @NonNull UserHandle profile) {
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		try {
-			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile.hashCode()).on(dpm);
+			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(Users.toId(profile)).on(dpm);
 		} catch (final IllegalArgumentException e) {
 			return null;
 		}
