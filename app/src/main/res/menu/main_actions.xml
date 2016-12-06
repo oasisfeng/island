@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools">
-    <item android:id="@+id/menu_show_system" android:title="@string/menu_show_all_apps" android:checkable="true" app:showAsAction="never" />
+    <item android:id="@+id/menu_show_system" android:title="@string/menu_show_hidden_sys_apps" android:checkable="true" app:showAsAction="never" />
     <item android:id="@+id/menu_test" android:title="Test" tools:ignore="HardcodedText" app:showAsAction="never" android:visible="false" />
     <item android:id="@+id/menu_destroy" android:title="@string/menu_destroy_island" app:showAsAction="never" />
     <item android:id="@+id/menu_deactivate" android:title="@string/menu_deactivate_island" app:showAsAction="never" android:visible="false" />

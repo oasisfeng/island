@@ -4,11 +4,8 @@
     <string name="app_name">Island</string>
     <string name="profile_name">Island</string>
 
-    <string name="filter_cloned">Cloned</string>
-    <string name="filter_cloneable">Cloneable</string>
+    <string name="filter_island">Island</string>
     <string name="filter_mainland">Mainland</string>
-    <string name="filter_frozen">Frozen</string>
-    <string name="filter_all">All</string>
 
     <string name="state_alive">Active</string>
     <string name="state_frozen">Frozen</string>
@@ -39,8 +36,8 @@
     <string name="action_unfreeze">Unfreeze</string>
     <string name="action_shortcut">Create launch shortcut</string>
     <string name="action_greenify">Auto-freeze with Greenify</string>
-    <string name="action_remove_clone">Remove clone</string>
-    <string name="action_uninstall">Uninstall app</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_uninstall">Uninstall</string>
 
     <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_greenify">Auto-freeze with Greenify</string>
@@ -52,7 +49,7 @@
     <string name="button_disable_clone">Disable clone</string>
     <string name="button_enable_clone">Enable clone</string>
 
-    <string name="menu_show_all_apps">Show system apps</string>
+    <string name="menu_show_hidden_sys_apps">Show hidden system apps</string>
     <string name="menu_remove_clone">Remove this clone</string>
     <string name="menu_destroy_island">Destroy Island…</string>
     <string name="menu_deactivate_island">Deactivate Island…</string>

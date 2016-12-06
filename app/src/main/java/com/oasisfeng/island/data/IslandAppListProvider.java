@@ -27,7 +27,6 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +49,6 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
-	/** System packages shown to user always even if no launcher activities */
-	public static final Collection<String> ALWAYS_VISIBLE_SYS_PKGS = Collections.singletonList("com.google.android.gms");
-	public static final Predicate<IslandAppInfo> NON_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
 	public static final Predicate<IslandAppInfo> NON_CRITICAL_SYSTEM = app -> ! SystemAppsManager.isCritical(app.packageName);
 
 	public static IslandAppListProvider getInstance(final Context context) {
@@ -174,7 +170,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		if (! Hacks.IPackageManager_getApplicationInfo.isAbsent() && ! Hacks.ActivityThread_getPackageManager.isAbsent()
 				&& ContextCompat.checkSelfPermission(context(), Manifest.permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) try {
 			final ApplicationInfo info = Hacks.IPackageManager_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO,
-					profile.hashCode()).on(Hacks.ActivityThread_getPackageManager.invoke().statically());
+					Users.toId(profile)).on(Hacks.ActivityThread_getPackageManager.invoke().statically());
 			callback.accept(info);
 			return;
 		} catch (final RemoteException ignored) {		// Package manager died, this should hardly happen.

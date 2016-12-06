@@ -21,11 +21,6 @@
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
             android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" -" tools:ignore="HardcodedText"/>
-
             <Spinner
                 android:id="@+id/filters"
                 android:entries="@{apps.filter_primary_options}"

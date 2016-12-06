@@ -1,5 +1,6 @@
 package com.oasisfeng.island.console.apps;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -36,6 +37,7 @@ import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
+import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
@@ -136,6 +138,8 @@ public class AppListFragment extends Fragment {
 		mViewModel.mActions = mBinding.details.toolbar.getMenu();
 		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
 		getActivity().setActionBar(mBinding.appbar);
+		final ActionBar actionbar = getActivity().getActionBar();
+		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
 		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
 				mViewModel.onFilterPrimaryChanged(position);
@@ -162,7 +166,7 @@ public class AppListFragment extends Fragment {
 		switch (item.getItemId()) {
 		case R.id.menu_show_system:
 			final boolean should_include = ! item.isChecked();
-			mViewModel.onFilterSysAppsInclusionChanged(should_include);
+			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
 			item.setChecked(should_include);	// Toggle the checked state
 			return true;
 		case R.id.menu_destroy:
@@ -189,7 +193,7 @@ public class AppListFragment extends Fragment {
 	public void destroy() {
 		final Activity activity = getActivity();
 		final Map<Boolean, List<IslandAppInfo>> partitions = IslandAppListProvider.getInstance(activity).installedApps()
-				.filter(IslandAppListProvider.NON_SYSTEM).collect(Collectors.partitioningBy(app -> app.user.hashCode() == 0 && app.isInstalled()));
+				.filter(AppListViewModel.NON_SYSTEM).collect(Collectors.partitioningBy(app -> Users.isOwner(app.user) && app.isInstalled()));
 		final Set<String> owner_installed = StreamSupport.stream(partitions.get(Boolean.TRUE)).map(app -> app.packageName).collect(Collectors.toSet());
 		final List<String> exclusive_clones = StreamSupport.stream(partitions.get(Boolean.FALSE))	// Island installed
 				.filter(app -> ! owner_installed.contains(app.packageName)).map(AppInfo::getLabel).collect(Collectors.toList());

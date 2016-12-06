@@ -46,6 +46,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import java8.util.function.BooleanSupplier;
@@ -53,8 +54,6 @@ import java8.util.function.Predicate;
 import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
-
-import static com.oasisfeng.island.data.IslandAppListProvider.NON_SYSTEM;
 
 /**
  * View model for apps
@@ -64,17 +63,15 @@ import static com.oasisfeng.island.data.IslandAppListProvider.NON_SYSTEM;
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public final List<Filter.Entry> filter_primary_options;		// Referenced by <Spinner> in layout
+	public static final Predicate<IslandAppInfo> NON_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
+	public static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
+	public static final Collection<String> ALWAYS_VISIBLE_SYS_PKGS = Collections.singletonList("com.google.android.gms");
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		Cloned		(R.string.filter_cloned,    () -> GlobalStatus.profile != null,   app -> Users.isProfile(app.user) && app.isInstalled()),
-		Cloneable	(R.string.filter_cloneable, () -> ! GlobalStatus.device_owner && GlobalStatus.profile != null, app -> Users.isOwner(app.user)),	// TODO: Exclude already cloned
-
-		All			(R.string.filter_all,       () -> GlobalStatus.device_owner && GlobalStatus.profile == null,   app -> true),
-		Frozen		(R.string.filter_frozen,    () -> GlobalStatus.device_owner && GlobalStatus.profile == null,   app -> app.isHidden()),
-
-		Mainland	(R.string.filter_mainland,  () -> GlobalStatus.device_owner && GlobalStatus.profile != null,   app -> Users.isOwner(app.user))
+		Island		(R.string.filter_island,    () -> GlobalStatus.profile != null,   app -> Users.isProfile(app.user) && app.isInstalled()),
+		Mainland	(R.string.filter_mainland,  () -> true,                           app -> Users.isOwner(app.user) && app.isInstalled()),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
 		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
@@ -94,7 +91,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	public boolean areSystemAppsIncluded() { return mFilterIncludeSystemApps; }
 
 	private Predicate<IslandAppInfo> activeFilters() {
-		return mFilterIncludeSystemApps ? mFilterPrimary : Predicates.and(mFilterPrimary, NON_SYSTEM);
+		return mFilterIncludeSystemApps ? mFilterPrimary : Predicates.and(mFilterPrimary, NON_HIDDEN_SYSTEM);
 	}
 
 	public void onFilterPrimaryChanged(final int index) {
@@ -102,7 +99,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		rebuildAppViewModels();
 	}
 
-	public void onFilterSysAppsInclusionChanged(final boolean should_include) {
+	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
 		mFilterIncludeSystemApps = should_include;
 		rebuildAppViewModels();
 	}
