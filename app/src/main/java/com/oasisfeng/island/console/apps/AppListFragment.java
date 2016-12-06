@@ -44,13 +44,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java8.util.Optional;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
 
-	private static final String KStateKeyRecyclerView = "apps.recycler.layout";
+	private static final String STATE_KEY_RECYCLER_VIEW = "apps.recycler.layout";
+	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -58,9 +60,8 @@ public class AppListFragment extends Fragment {
 		final Activity activity = getActivity();
 
 		mIslandManager = new IslandManager(activity);
-		mViewModel = new AppListViewModel(activity, mIslandManager);
+		mViewModel = new AppListViewModel();
 		mViewModel.mProfileController = IslandManager.NULL;
-		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
@@ -132,22 +133,26 @@ public class AppListFragment extends Fragment {
 		if (activity != null) activity.invalidateOptionsMenu();
 	}
 
-	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
+	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
-		mViewModel.mActions = mBinding.details.toolbar.getMenu();
 		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(0);
+		mViewModel.attach(getActivity(), mIslandManager, mBinding.details.toolbar.getMenu(), filter_primary);
+		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+
 		getActivity().setActionBar(mBinding.appbar);
 		final ActionBar actionbar = getActivity().getActionBar();
 		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
 		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
+				final Activity activity = getActivity();
+				if (activity == null) return;
 				mViewModel.onFilterPrimaryChanged(position);
 			}
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
 		});
-//		// Work-around a bug in Android N DP4.
-//		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) mBinding.appbar.inflateMenu(R.menu.main_actions);
 		return mBinding.getRoot();
 	}
 
@@ -181,13 +186,14 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
 		super.onSaveInstanceState(out_state);
-		out_state.putParcelable(KStateKeyRecyclerView, mBinding.appList.getLayoutManager().onSaveInstanceState());
+		out_state.putParcelable(STATE_KEY_RECYCLER_VIEW, mBinding.appList.getLayoutManager().onSaveInstanceState());
+		out_state.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mViewModel.getFilterPrimaryChoice());
 	}
 
 	@Override public void onViewStateRestored(final Bundle saved_state) {
 		super.onViewStateRestored(saved_state);
-		if (saved_state != null)
-			mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(KStateKeyRecyclerView));
+		if (saved_state == null) return;
+		mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(STATE_KEY_RECYCLER_VIEW));
 	}
 
 	public void destroy() {

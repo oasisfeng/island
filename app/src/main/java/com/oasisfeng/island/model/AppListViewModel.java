@@ -13,6 +13,8 @@ import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.support.annotation.MenuRes;
@@ -60,9 +62,8 @@ import java8.util.stream.StreamSupport;
  *
  * Created by Oasis on 2015/7/7.
  */
-public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
+public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
-	public final List<Filter.Entry> filter_primary_options;		// Referenced by <Spinner> in layout
 	public static final Predicate<IslandAppInfo> NON_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
 	public static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
 	public static final Collection<String> ALWAYS_VISIBLE_SYS_PKGS = Collections.singletonList("com.google.android.gms");
@@ -94,8 +95,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		return mFilterIncludeSystemApps ? mFilterPrimary : Predicates.and(mFilterPrimary, NON_HIDDEN_SYSTEM);
 	}
 
+	public int getFilterPrimaryChoice() { return mFilterPrimaryChoice; }
+
 	public void onFilterPrimaryChanged(final int index) {
-		mFilterPrimary = Predicates.and(mFilterExcludeSelf, filter_primary_options.get(index).filter());
+		if (mFilterPrimary != null && mFilterPrimaryChoice == index) return;
+		mFilterPrimary = Predicates.and(mFilterExcludeSelf, mFilterPrimaryOptions.get(index).filter());
 		rebuildAppViewModels();
 	}
 
@@ -111,15 +115,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		replaceApps(apps);
 	}
 
-	public AppListViewModel(final Activity activity, final IIslandManager controller) {
+	public AppListViewModel() {
 		super(AppViewModel.class);
-		mActivity = activity;
 		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
 			if (property == BR.selection) updateActions();
 		}});
-		filter_primary_options = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
+	}
+
+	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final int filter_primary_choice) {
+		mActivity = activity;
+		mOwnerController = owner_controller;
+		mActions = actions;
+		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 		mFilterExcludeSelf = IslandAppListProvider.excludeSelf(activity);
-		mOwnerController = controller;
+		onFilterPrimaryChanged(filter_primary_choice);
 	}
 
 	private void updateActions() {
@@ -379,6 +388,30 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
 	}
 
+	public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
+		return mFilterPrimaryOptions;
+	}
+
+	/* Parcelable */
+
+	private AppListViewModel(final Parcel in) {
+		super(AppViewModel.class);
+		mFilterPrimaryChoice = in.readByte();
+		mFilterIncludeSystemApps = in.readByte() != 0;
+	}
+
+	@Override public void writeToParcel(final Parcel dest, final int flags) {
+		dest.writeByte((byte) mFilterPrimaryChoice);
+		dest.writeByte((byte) (mFilterIncludeSystemApps ? 1 : 0));
+	}
+
+	@Override public int describeContents() { return 0; }
+	public static final Creator<AppListViewModel> CREATOR = new Creator<AppListViewModel>() {
+		@Override public AppListViewModel createFromParcel(final Parcel in) { return new AppListViewModel(in); }
+		@Override public AppListViewModel[] newArray(final int size) { return new AppListViewModel[size]; }
+	};
+
+
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
 		@Override public void onStateChanged(@NonNull final View bottom_sheet, final int new_state) {
@@ -400,13 +433,18 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 	};
 
-	private final Activity mActivity;
-	private final IIslandManager mOwnerController;
-	public transient IIslandManager mProfileController;
-	public Menu mActions;
-	private Predicate<IslandAppInfo> mFilterPrimary;
-	private final Predicate<IslandAppInfo> mFilterExcludeSelf;
+	/* Attachable fields */
+	private Activity mActivity;
+	private IIslandManager mOwnerController;
+	private Menu mActions;
+	private List<Filter.Entry> mFilterPrimaryOptions;
+	private Predicate<IslandAppInfo> mFilterExcludeSelf;
+	/* Parcelable fields */
+	private int mFilterPrimaryChoice;
 	private boolean mFilterIncludeSystemApps;
+	/* Transient fields */
+	public transient IIslandManager mProfileController;
+	private transient Predicate<IslandAppInfo> mFilterPrimary;
 
 	private static final String TAG = "Island.VM";
 }

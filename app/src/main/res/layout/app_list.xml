@@ -23,7 +23,7 @@
 
             <Spinner
                 android:id="@+id/filters"
-                android:entries="@{apps.filter_primary_options}"
+                android:entries="@{apps.filterPrimaryOptions}"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
