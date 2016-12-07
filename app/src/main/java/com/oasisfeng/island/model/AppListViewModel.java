@@ -138,7 +138,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppInfo app = selection.info();
 		final UserHandle profile = GlobalStatus.profile;
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
-		final boolean exclusive = Users.isOwner(app.user) ? provider.get(app.packageName, profile) == null : provider.get(app.packageName) == null;
+		final IslandAppInfo opposite = Users.isOwner(app.user) ? provider.get(app.packageName, profile) : provider.get(app.packageName);
+		final boolean exclusive = opposite == null || ! opposite.isInstalled();
 		mActions.findItem(R.id.menu_freeze).setVisible(! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
