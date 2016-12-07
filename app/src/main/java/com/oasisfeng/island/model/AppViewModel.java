@@ -3,9 +3,9 @@ package com.oasisfeng.island.model;
 import android.content.Context;
 import android.databinding.ObservableBoolean;
 import android.support.annotation.NonNull;
-import android.support.annotation.StringRes;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.util.Apps;
@@ -13,6 +13,8 @@ import com.oasisfeng.common.app.BaseAppViewModel;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.util.Users;
+
+import java.util.Arrays;
 
 /**
  * View-model for app entry
@@ -40,12 +42,18 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		return State.Alive;
 	}
 
-	public @StringRes int getStatusText() {
-// android:_text="@{(apps.selection.state == State.Alive ? @string/state_alive : apps.selection.state == State.Frozen ? @string/state_frozen : apps.selection.state == State.Disabled ? @string/state_disabled : apps.selection.state == State.NotCloned ? @string/state_not_cloned : null) + &quot; &quot; + ((apps.selection.state == State.Alive || apps.selection.state == State.Frozen) &amp;&amp; apps.selection.isExclusive() ? @string/status_exclusive : &quot;&quot;)}"
-		if (! info().enabled) return R.string.state_disabled;
-		if (info().isHidden()) return R.string.state_frozen;
-		if (! info().isInstalled()) return R.string.state_not_cloned;
-		return R.string.state_alive;
+	public CharSequence getStatusText(final Context context) {
+		final StringBuilder status = new StringBuilder();
+		if (! info().enabled) status.append(context.getString(R.string.status_disabled));
+		else if (info().isHidden()) status.append(context.getString(R.string.status_frozen));
+		else status.append(context.getString(R.string.status_alive));
+		final boolean is_system = isSystem();
+		final boolean exclusive = isExclusive(context);
+		if (is_system || exclusive) status.append(" (").append(Joiner.on(", ").skipNulls().join(Arrays.asList(
+				is_system ? context.getString(R.string.status_appendix_system) : null,
+				exclusive ? context.getString(R.string.status_appendix_exclusive) : null
+		))).append(')');
+		return status;
 	}
 
 	public boolean isExclusive(final Context context) { return ! Apps.of(context).isInstalledInCurrentUser(info.packageName); }

@@ -51,7 +51,7 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            bind:text="@{apps.selection.statusText}"
+            android:text="@{apps.selection.getStatusText(context)}"
             tools:text="Frozen" />
 
         <TextView
