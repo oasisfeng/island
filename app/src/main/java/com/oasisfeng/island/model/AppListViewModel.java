@@ -290,7 +290,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppInfo app = getSelection().info();
 		Analytics.$().event("action_uninstall").with("package", app.packageName).send();
 		try {
-			controller(app).removeClone(app.packageName);
+			final IIslandManager controller = controller(app);
+			if (app.isHidden()) controller.defreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
+			controller.removeClone(app.packageName);
 		} catch (final RemoteException ignored) {
 			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			launcher_apps.startAppDetailsActivity(new ComponentName(app.packageName, ""), GlobalStatus.profile, null, null);
