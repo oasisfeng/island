@@ -99,6 +99,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void onFilterPrimaryChanged(final int index) {
 		if (mFilterPrimary != null && mFilterPrimaryChoice == index) return;
+		mFilterPrimaryChoice = index;
 		mFilterPrimary = Predicates.and(mFilterExcludeSelf, mFilterPrimaryOptions.get(index).filter());
 		rebuildAppViewModels();
 	}
