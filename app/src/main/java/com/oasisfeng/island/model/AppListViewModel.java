@@ -217,6 +217,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 				clearSelection();
 			} catch (final RemoteException ignored) {}
 			break;
+		case R.id.menu_app_info:
+			try {
+				controller.unfreezeApp(pkg);	// Stock app info activity requires the app not hidden.
+				((LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE))
+						.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
+			} catch (final RemoteException ignored) {}
+			break;
 		case R.id.menu_remove:
 		case R.id.menu_uninstall:
 			onRemovalRequested();
