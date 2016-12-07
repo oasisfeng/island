@@ -82,7 +82,7 @@ public class IslandManager extends IIslandManager.Stub {
 		return mDevicePolicies.setApplicationHidden(pkg, true) || mDevicePolicies.isApplicationHidden(pkg);
 	}
 
-	@Override public boolean defreezeApp(final String pkg) {
+	@Override public boolean unfreezeApp(final String pkg) {
 		Log.i(TAG, "Defreeze: " + pkg);
 		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
 	}
@@ -201,7 +201,7 @@ public class IslandManager extends IIslandManager.Stub {
 			return false;
 		}
 		if ((flags & FLAG_SYSTEM) != 0) {
-			defreezeApp(pkg);	// App must not be hidden for startAppDetailsActivity() to work.
+			unfreezeApp(pkg);	// App must not be hidden for startAppDetailsActivity() to work.
 			showAppSettingActivity(pkg);
 			Analytics.$().event("action_disable_sys_app").with("package", pkg).send();
 			return false;		// TODO: Separate return value

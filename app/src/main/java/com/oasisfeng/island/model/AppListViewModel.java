@@ -211,7 +211,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		case R.id.menu_unfreeze:
 			Analytics.$().event("action_unfreeze").with("package", pkg).send();
 			try {
-				controller.defreezeApp(pkg);
+				controller.unfreezeApp(pkg);
 				refreshAppStateAsSysBugWorkaround(pkg);
 				clearSelection();
 			} catch (final RemoteException ignored) {}
@@ -291,7 +291,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		Analytics.$().event("action_uninstall").with("package", app.packageName).send();
 		try {
 			final IIslandManager controller = controller(app);
-			if (app.isHidden()) controller.defreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
+			if (app.isHidden()) controller.unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
 			controller.removeClone(app.packageName);
 		} catch (final RemoteException ignored) {
 			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);

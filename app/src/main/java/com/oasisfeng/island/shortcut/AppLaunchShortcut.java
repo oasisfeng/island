@@ -91,7 +91,7 @@ public class AppLaunchShortcut extends Activity {
 
 		// Ensure de-frozen
 		final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
-		island.defreezeApp(component.getPackageName());
+		island.unfreezeApp(component.getPackageName());
 
 		final LauncherApps launcher = (LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE);
 		try {
