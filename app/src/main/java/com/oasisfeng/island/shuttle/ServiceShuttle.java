@@ -92,6 +92,8 @@ public class ServiceShuttle extends Activity {
 		}
 	}
 
+	/** Beware: You should pass the <b>base</b> context instead of current context itself as the first parameter,
+	 *  otherwise {@link Context#unbindService(ServiceConnection)} will be called here, causing {@link StackOverflowError} */
 	public static boolean unbindService(final Context context, final ServiceConnection connection) {
 		if (GlobalStatus.profile == null || ! (connection instanceof ShuttleServiceConnection)) return false;
 		if (ALWAYS_USE_SHUTTLE || ActivityCompat.checkSelfPermission(context, Hacks.Permission.INTERACT_ACROSS_USERS) != PERMISSION_GRANTED)
