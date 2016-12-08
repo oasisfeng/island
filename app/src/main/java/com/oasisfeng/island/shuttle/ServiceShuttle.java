@@ -42,7 +42,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 public class ServiceShuttle extends Activity {
 
 	private static final long SHUTTLED_SERVICE_DISCONNECTION_DELAY = BuildConfig.DEBUG ? 5_000 : 30_000;	// Delay before actual disconnection from shuttled service
-	private static final boolean ALWAYS_USE_SHUTTLE = true;		// For test purpose
+	private static final boolean ALWAYS_USE_SHUTTLE = false;		// For test purpose
 
 	public static final String ACTION_BIND_SERVICE = "com.oasisfeng.island.action.BIND_SERVICE";
 	private static final String EXTRA_INTENT = "extra";
