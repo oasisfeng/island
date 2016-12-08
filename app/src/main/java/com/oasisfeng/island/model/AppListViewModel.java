@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
+import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.BR;
@@ -92,21 +93,27 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	public boolean areSystemAppsIncluded() { return mFilterIncludeSystemApps; }
 
 	private Predicate<IslandAppInfo> activeFilters() {
-		return mFilterIncludeSystemApps ? mFilterPrimary : Predicates.and(mFilterPrimary, NON_HIDDEN_SYSTEM);
+		return mActiveFilters;
 	}
 
 	public int getFilterPrimaryChoice() { return mFilterPrimaryChoice; }
 
 	public void onFilterPrimaryChanged(final int index) {
-		if (mFilterPrimary != null && mFilterPrimaryChoice == index) return;
+		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
-		mFilterPrimary = Predicates.and(mFilterExcludeSelf, mFilterPrimaryOptions.get(index).filter());
+		updateActiveFilters();
 		rebuildAppViewModels();
 	}
 
 	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
 		mFilterIncludeSystemApps = should_include;
+		updateActiveFilters();
 		rebuildAppViewModels();
+	}
+
+	private void updateActiveFilters() {
+		final Predicate<IslandAppInfo> primary_with_extras = Predicates.and(mFilterExtras, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
+		mActiveFilters = mFilterIncludeSystemApps ? primary_with_extras : Predicates.and(primary_with_extras, NON_HIDDEN_SYSTEM);
 	}
 
 	private void rebuildAppViewModels() {
@@ -128,7 +135,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mOwnerController = owner_controller;
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
-		mFilterExcludeSelf = IslandAppListProvider.excludeSelf(activity);
+		mFilterExtras = Predicates.and(IslandAppListProvider.excludeSelf(activity),
+				app -> Users.isOwner(app.user) || ! app.isSystem() || app.enabled);		// Exclude disabled sys-apps in profile
 		onFilterPrimaryChanged(filter_primary_choice);
 	}
 
@@ -143,7 +151,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions.findItem(R.id.menu_freeze).setVisible(! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
-		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && ! app.isSystem());		// TODO: Allow system app to be disabled / enabled
+		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.enabled));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(app.enabled);
@@ -152,8 +160,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
 		final Predicate<IslandAppInfo> filters = activeFilters();
 		for (final IslandAppInfo app : apps) {
-			final IslandAppInfo last = app.getLastInfo();
-			if (last != null && ! filters.test(last)) continue;
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
 			} else removeApp(app.packageName);
@@ -218,11 +224,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			} catch (final RemoteException ignored) {}
 			break;
 		case R.id.menu_app_info:
-			try {
-				controller.unfreezeApp(pkg);	// Stock app info activity requires the app not hidden.
-				((LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE))
-						.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-			} catch (final RemoteException ignored) {}
+			launchSettingsAppInfoActivity(app);
 			break;
 		case R.id.menu_remove:
 		case R.id.menu_uninstall:
@@ -240,6 +242,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 //			break;
 		}
 		return true;
+	}
+
+	private void launchSettingsAppInfoActivity(final IslandAppInfo app) {
+		try {
+			controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
+			((LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE))
+					.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
+		} catch (final RemoteException ignored) {}
 	}
 
 	private void onShortcutRequested() {
@@ -296,8 +306,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onRemovalRequested() {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_uninstall").with("package", app.packageName).send();
-		try {
+		Analytics.$().event("action_uninstall").with("package", app.packageName).with("system", app.isSystem() ? 1 : 0).send();
+		if (app.isSystem()) {
+			Dialogs.buildAlert(mActivity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
+					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
+		} else try {
 			final IIslandManager controller = controller(app);
 			if (app.isHidden()) controller.unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
 			controller.removeClone(app.packageName);
@@ -449,13 +462,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private IIslandManager mOwnerController;
 	private Menu mActions;
 	private List<Filter.Entry> mFilterPrimaryOptions;
-	private Predicate<IslandAppInfo> mFilterExcludeSelf;
+	private Predicate<IslandAppInfo> mFilterExtras;		// All other filters to apply always
 	/* Parcelable fields */
 	private int mFilterPrimaryChoice;
 	private boolean mFilterIncludeSystemApps;
 	/* Transient fields */
 	public transient IIslandManager mProfileController;
-	private transient Predicate<IslandAppInfo> mFilterPrimary;
+	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
 
-	private static final String TAG = "Island.VM";
+	private static final String TAG = "Island.Apps";
 }

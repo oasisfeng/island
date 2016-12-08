@@ -81,6 +81,8 @@
     <string name="dialog_button_destroy">Destroy</string>
     <string name="dialog_button_deactivate">Deactivate</string>
 
+    <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
+
     <string name="toast_setup_completed_and_wait">Setup is complete, please wait for the Island to start.</string>
     <string name="toast_already_cloned">Already cloned</string>
     <string name="toast_shortcut_created">Shortcut created on launcher</string>
