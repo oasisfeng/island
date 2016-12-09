@@ -9,6 +9,7 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.support.v4.content.ContextCompat;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
@@ -32,9 +33,6 @@ public class IslandAppInfo extends AppInfo {
 
 	private static final int PRIVATE_FLAG_HIDDEN = 1;
 	private static final int FLAG_HIDDEN = 1<<27;
-
-	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
-	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
 
 	void setHidden(final boolean state) {
 		if (SDK_INT >= M) {
@@ -81,6 +79,15 @@ public class IslandAppInfo extends AppInfo {
 	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base, final IslandAppInfo last) {
 		super(provider, base, last);
 		this.user = user;
+	}
+
+	@Override public String toString() {
+		final MoreObjects.ToStringHelper string = MoreObjects.toStringHelper(IslandAppInfo.class).add("user", user).add("pkg", packageName);
+		if (! isInstalled()) string.addValue("not installed");
+		if (isSystem()) string.addValue("system");
+		if (isHidden()) string.addValue("hidden");
+		if (! enabled) string.addValue("disabled");
+		return string.toString();
 	}
 
 	public final UserHandle user;

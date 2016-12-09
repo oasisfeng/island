@@ -13,9 +13,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.island.data.IslandAppInfo;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +40,9 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	public String getLabel() { return mLabel; }
+
+	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
+	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
 
 	/** Is launchable (and neither disabled nor hidden) */
 	public boolean isLaunchable() { return mIsLaunchable.get(); }
@@ -117,6 +122,14 @@ public class AppInfo extends ApplicationInfo {
 		if (packageName != null) dr = pm.getDrawable(packageName, icon, this);
 		if (dr == null) dr = pm.getDefaultActivityIcon();
 		return dr;
+	}
+
+	@Override public String toString() {
+		final MoreObjects.ToStringHelper string = MoreObjects.toStringHelper(IslandAppInfo.class).add("pkg", packageName);
+		if (! isInstalled()) string.addValue("not installed");
+		if (isSystem()) string.addValue("system");
+		if (! enabled) string.addValue("disabled");
+		return string.toString();
 	}
 
 	private final String mLabel;
