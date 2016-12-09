@@ -160,7 +160,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		for (final IslandAppInfo app : apps) {
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
-			} else removeApp(app.packageName);
+			} else if (app.getLastInfo() != null && filters.test(app.getLastInfo()))
+				removeApp(app.packageName);
 		}
 		updateActions();
 	}
