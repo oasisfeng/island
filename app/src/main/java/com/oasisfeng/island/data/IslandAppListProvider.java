@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -20,7 +21,6 @@ import com.oasisfeng.android.Manifest;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
-import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.util.Hacks;
@@ -49,24 +49,23 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
-	public static final Predicate<IslandAppInfo> NON_CRITICAL_SYSTEM = app -> ! SystemAppsManager.isCritical(app.packageName);
-
-	public static IslandAppListProvider getInstance(final Context context) {
-		return AppListProvider.getInstance(context);
-	}
-
-	public static Predicate<IslandAppInfo> excludeSelf(final Context context) {
-		return exclude(context.getPackageName());
-	}
-
-	public static Predicate<IslandAppInfo> exclude(final String pkg) {
-		return app -> ! pkg.equals(app.packageName);
-	}
+	public static @NonNull IslandAppListProvider getInstance(final Context context) { return AppListProvider.getInstance(context); }
+	public static @NonNull Predicate<IslandAppInfo> excludeSelf(final Context context) { return exclude(context.getPackageName()); }
+	public static @NonNull Predicate<IslandAppInfo> exclude(final String pkg) { return app -> ! pkg.equals(app.packageName); }
 
 	public IslandAppInfo get(final String pkg, final UserHandle user) {
 		if (Users.isOwner(user)) return super.get(pkg);
 		if (! Users.isProfile(user)) return null;
 		return mIslandAppMap.get().get(pkg);
+	}
+
+	public boolean isExclusive(final IslandAppInfo app) {
+		if (GlobalStatus.profile == null) {
+			if (! Users.isOwner(app.user)) throw new IllegalArgumentException("Known user: " + app);
+			return true;	// No profile
+		}
+		final IslandAppInfo opposite = Users.isOwner(app.user) ? get(app.packageName, GlobalStatus.profile) : get(app.packageName);
+		return opposite == null || ! opposite.isInstalled();
 	}
 
 	@Override protected IslandAppInfo createEntry(final ApplicationInfo base, final IslandAppInfo last) {

@@ -8,10 +8,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
-import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.common.app.BaseAppViewModel;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.data.IslandAppInfo;
+import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
@@ -48,15 +48,15 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		else if (info().isHidden()) status.append(context.getString(R.string.status_frozen));
 		else status.append(context.getString(R.string.status_alive));
 		final boolean is_system = isSystem();
-		final boolean exclusive = isExclusive(context);
-		if (is_system || exclusive) status.append(" (").append(Joiner.on(", ").skipNulls().join(Arrays.asList(
+		final boolean exclusive = IslandAppListProvider.getInstance(context).isExclusive(info());
+		final String appendixes = Joiner.on(", ").skipNulls().join(Arrays.asList(
 				is_system ? context.getString(R.string.status_appendix_system) : null,
-				exclusive ? context.getString(R.string.status_appendix_exclusive) : null
-		))).append(')');
+				Users.isOwner(info().user) ? (exclusive ? null : context.getString(R.string.status_appendix_cloned))
+						: (exclusive ? context.getString(R.string.status_appendix_exclusive) : null)
+		));
+		if (! appendixes.isEmpty()) status.append(" (").append(appendixes).append(')');
 		return status;
 	}
-
-	public boolean isExclusive(final Context context) { return ! Apps.of(context).isInstalledInCurrentUser(info.packageName); }
 
 	public IslandAppInfo info() { return (IslandAppInfo) info; }
 

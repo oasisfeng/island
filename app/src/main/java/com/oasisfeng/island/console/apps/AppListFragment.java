@@ -41,12 +41,9 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import java8.util.Optional;
 import java8.util.stream.Collectors;
-import java8.util.stream.StreamSupport;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
@@ -198,11 +195,10 @@ public class AppListFragment extends Fragment {
 
 	public void destroy() {
 		final Activity activity = getActivity();
-		final Map<Boolean, List<IslandAppInfo>> partitions = IslandAppListProvider.getInstance(activity).installedApps()
-				.filter(AppListViewModel.NON_SYSTEM).collect(Collectors.partitioningBy(app -> Users.isOwner(app.user) && app.isInstalled()));
-		final Set<String> owner_installed = StreamSupport.stream(partitions.get(Boolean.TRUE)).map(app -> app.packageName).collect(Collectors.toSet());
-		final List<String> exclusive_clones = StreamSupport.stream(partitions.get(Boolean.FALSE))	// Island installed
-				.filter(app -> ! owner_installed.contains(app.packageName)).map(AppInfo::getLabel).collect(Collectors.toList());
+		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
+		final List<String> exclusive_clones = provider.installedApps()
+				.filter(app -> Users.isProfile(app.user) && ! app.isSystem() && provider.isExclusive(app))
+				.map(AppInfo::getLabel).collect(Collectors.toList());
 
 		if (mIslandManager.isDeviceOwner()) {
 			new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
