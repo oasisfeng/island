@@ -65,7 +65,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			return true;	// No profile
 		}
 		final IslandAppInfo opposite = Users.isOwner(app.user) ? get(app.packageName, GlobalStatus.profile) : get(app.packageName);
-		return opposite == null || ! opposite.isInstalled();
+		return opposite == null || ! opposite.isInstalled() || ! opposite.shouldTreatAsEnabled();
 	}
 
 	@Override protected IslandAppInfo createEntry(final ApplicationInfo base, final IslandAppInfo last) {

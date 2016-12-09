@@ -26,6 +26,7 @@ public class GlobalStatus {
 		}
 	}
 
+	public static boolean hasProfile() { return profile != null; }
 	public static @Nullable UserHandle profile;		// Semi-immutable (until profile is created or destroyed)
 	@OwnerUser public static boolean device_owner;
 

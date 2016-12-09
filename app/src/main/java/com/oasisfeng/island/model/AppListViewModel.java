@@ -49,7 +49,6 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import java8.util.function.BooleanSupplier;
@@ -67,13 +66,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public static final Predicate<IslandAppInfo> NON_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
 	public static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
-	public static final Collection<String> ALWAYS_VISIBLE_SYS_PKGS = Collections.singletonList("com.google.android.gms");
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		Island		(R.string.filter_island,    () -> GlobalStatus.profile != null,   app -> Users.isProfile(app.user) && app.isInstalled()),
-		Mainland	(R.string.filter_mainland,  () -> true,                           app -> Users.isOwner(app.user) && app.isInstalled()),
+		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user) && app.isInstalled() && app.shouldTreatAsEnabled()),
+		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user) && app.isInstalled()),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
 		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
@@ -136,7 +134,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 		mFilterExtras = Predicates.and(IslandAppListProvider.excludeSelf(activity),
-				app -> Users.isOwner(app.user) || ! app.isSystem() || app.enabled);		// Exclude disabled sys-apps in profile
+				app -> app.isInstalled() && (Users.isOwner(app.user) || app.shouldTreatAsEnabled()));	// Exclude disabled sys-apps in profile
 		onFilterPrimaryChanged(filter_primary_choice);
 	}
 
@@ -146,12 +144,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppInfo app = selection.info();
 		final UserHandle profile = GlobalStatus.profile;
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
-		final IslandAppInfo opposite = Users.isOwner(app.user) ? provider.get(app.packageName, profile) : provider.get(app.packageName);
-		final boolean exclusive = opposite == null || ! opposite.isInstalled();
+		final boolean exclusive = provider.isExclusive(app);
+
 		mActions.findItem(R.id.menu_freeze).setVisible(! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
-		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.enabled));	// Disabled system app is treated as "removed".
+		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldTreatAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(app.enabled);
@@ -335,17 +333,22 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			return;
 		}
 
+		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, GlobalStatus.profile);
+		if (app_in_profile.isInstalled() && ! app_in_profile.enabled) {
+
+		}
+
 		try {
 			check_result = mProfileController.cloneApp(pkg, false);
 		} catch (final RemoteException ignored) { return; }		// FIXME: Error message
 		switch (check_result) {
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
-			Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+			Toast.makeText(mActivity, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
 			Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
-			new AlertDialog.Builder(mActivity).setMessage(R.string.dialog_clone_incapable_explanation)
+			Dialogs.buildAlert(mActivity, 0, R.string.dialog_clone_incapable_explanation)
 					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_CANNOT_CLONE_EXPLAINED.get()))
 					.setPositiveButton(android.R.string.cancel, null).show();
 			return;
@@ -390,7 +393,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void showExplanationBeforeCloning(final String mark, final @StringRes int explanation, final String pkg) {
 		if (! Scopes.app(mActivity).isMarked(mark)) {
-			new AlertDialog.Builder(mActivity).setMessage(R.string.dialog_clone_via_install_explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
+			Dialogs.buildAlert(mActivity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 				Scopes.app(mActivity).mark(mark);
 				doCloneApp(pkg);
 			}).show();

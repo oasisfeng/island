@@ -27,7 +27,6 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		Alive(1),
 		Frozen(2),
 		Disabled(3),	// System app only
-		NotCloned(3),	// Not installed in Island
 		Unknown(4);
 
 		State(final int order) { this.order = order; }
@@ -35,9 +34,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	private State checkState() {
-		if (Users.isOwner(info().user)) return State.NotCloned;	// FIXME
-//		if (! info().isInstalledInIsland()) return State.NotCloned;
-		if (! info.enabled) return State.Disabled;
+		if (! info().shouldTreatAsEnabled()) return State.Disabled;
 		if (info().isHidden()) return State.Frozen;
 		return State.Alive;
 	}
@@ -59,6 +56,10 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	public IslandAppInfo info() { return (IslandAppInfo) info; }
+
+	public String getDebugInfo() {
+		return "NULL";
+	}
 
 	public final State state;
 	private final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO

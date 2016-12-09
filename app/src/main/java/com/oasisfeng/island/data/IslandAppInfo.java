@@ -13,6 +13,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
@@ -43,9 +44,9 @@ public class IslandAppInfo extends AppInfo {
 		else flags &= ~ FLAG_HIDDEN;
 	}
 
-	/** System apps in profile user are treated differently for the user-facing meaning of "installed" */
-	@Override public boolean isInstalled() {
-		return super.isInstalled() && (Users.isOwner(user) || enabled);
+	/** Some system apps are hidden by post-provisioning, they should be treated as "disabled". */
+	public boolean shouldTreatAsEnabled() {
+		return enabled && (Users.isOwner(user) || ! isHidden() || ! SystemAppsManager.shouldTreatHiddenAsDisabled(context(), packageName));
 	}
 
 	public boolean isHidden() {
@@ -92,6 +93,7 @@ public class IslandAppInfo extends AppInfo {
 		if (isSystem()) string.addValue("system");
 		if (isHidden()) string.addValue("hidden");
 		if (! enabled) string.addValue("disabled");
+		else if (! shouldTreatAsEnabled()) string.addValue("disabled(*)");
 		return string.toString();
 	}
 
