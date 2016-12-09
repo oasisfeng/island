@@ -334,8 +334,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}
 
 		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, GlobalStatus.profile);
-		if (app_in_profile.isInstalled() && ! app_in_profile.enabled) {
-
+		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
+			launchSettingsAppInfoActivity(app_in_profile);
+			return;
 		}
 
 		try {
