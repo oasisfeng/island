@@ -43,6 +43,11 @@ public class IslandAppInfo extends AppInfo {
 		else flags &= ~ FLAG_HIDDEN;
 	}
 
+	/** System apps in profile user are treated differently for the user-facing meaning of "installed" */
+	@Override public boolean isInstalled() {
+		return super.isInstalled() && (Users.isOwner(user) || enabled);
+	}
+
 	public boolean isHidden() {
 		final Boolean hidden = isHidden(this);
 		if (hidden != null) return hidden;
