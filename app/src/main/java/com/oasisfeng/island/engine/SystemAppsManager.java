@@ -95,14 +95,15 @@ public class SystemAppsManager {
 			new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI)	// Contact picker, usually com.android.contacts
 	);
 	private static final Collection<String> sCriticalContentAuthorities = Arrays.asList(
-			ContactsContract.AUTHORITY,				// Usually com.android.providers.contacts
-			CallLog.AUTHORITY,						// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
-			CalendarContract.AUTHORITY,				// Usually com.android.providers.calendar
-			Carriers.CONTENT_URI.getAuthority(),	// Usually com.android.providers.telephony
-			MediaStore.AUTHORITY,					// Usually com.android.providers.media
-			"downloads",							// Usually com.android.providers.downloads
-			"com.android.externalstorage.documents",// Usually com.android.externalstorage
-			"logs"									// Samsung-specific voice-mail content provider (content://logs/from_vvm)
+			ContactsContract.AUTHORITY,					// Usually com.android.providers.contacts
+			CallLog.AUTHORITY,							// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
+			CalendarContract.AUTHORITY,					// Usually com.android.providers.calendar
+			Carriers.CONTENT_URI.getAuthority(),		// Usually com.android.providers.telephony
+			MediaStore.AUTHORITY,						// Usually com.android.providers.media
+			"downloads",								// Usually com.android.providers.downloads
+			"com.android.providers.downloads.documents",// Newer authority of com.android.providers.downloads
+			"com.android.externalstorage.documents",	// Usually com.android.externalstorage
+			"logs"										// Samsung-specific voice-mail content provider (content://logs/from_vvm)
 	);
 
 	public static boolean isCritical(final String pkg) {
