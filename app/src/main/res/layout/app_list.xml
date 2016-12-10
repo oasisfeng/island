@@ -10,52 +10,64 @@
         <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
     </data>
 
-    <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
+    <android.support.v4.widget.DrawerLayout
+        android:fitsSystemWindows="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-        <Toolbar
-            android:id="@+id/appbar"
+        <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="?android:attr/actionBarSize"
-            android:background="?android:attr/colorPrimary"
-            android:elevation="4dp"
-            android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-            android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
+            android:layout_height="match_parent" >
 
-            <Spinner
-                android:id="@+id/filters"
-                android:entries="@{apps.filterPrimaryOptions}"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
+            <Toolbar
+                android:id="@+id/appbar"
+                android:layout_width="match_parent"
+                android:layout_height="?android:attr/actionBarSize"
+                android:background="?android:attr/colorPrimary"
+                android:elevation="4dp"
+                android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
+                android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
 
-        </Toolbar>
+                <Spinner
+                    android:id="@+id/filters"
+                    android:entries="@{apps.filterPrimaryOptions}"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/app_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="?android:attr/actionBarSize"
-            android:paddingBottom="8dp"
-            android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
-            android:paddingEnd="-16dp"
-            android:clipToPadding="false"
-            android:background="@color/background"
-            bind:items="@{apps.items}"
-            bind:item_binder="@{apps.item_binder}"
-            tools:listitem="@layout/app_entry" />
+            </Toolbar>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            bind:visible="@{apps.items.isEmpty()}"
-            android:textAppearance="?android:textAppearanceLarge"
-            android:fontFamily="sans-serif-condensed"
-            android:lineSpacingMultiplier="1.3"
-            android:text="@string/tip_empty_app_list" />
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/app_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="?android:attr/actionBarSize"
+                android:paddingBottom="8dp"
+                android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
+                android:paddingEnd="-16dp"
+                android:clipToPadding="false"
+                android:background="@color/background"
+                bind:items="@{apps.items}"
+                bind:item_binder="@{apps.item_binder}"
+                tools:listitem="@layout/app_entry" />
 
-        <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                tools:visibility="gone"
+                bind:visible="@{apps.items.isEmpty()}"
+                android:textAppearance="?android:textAppearanceLarge"
+                android:fontFamily="sans-serif-condensed"
+                android:lineSpacingMultiplier="1.3"
+                android:text="@string/tip_empty_app_list" />
 
-    </android.support.design.widget.CoordinatorLayout>
+            <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" />
+
+        </android.support.design.widget.CoordinatorLayout>
+
+        <include android:id="@+id/drawer" layout="@layout/app_drawer" />
+
+    </android.support.v4.widget.DrawerLayout>
 
 </layout>
