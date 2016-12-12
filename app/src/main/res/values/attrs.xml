@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ScrimInsetsRelativeLayout">
+        <attr name="fitSystemMarginLeft" format="boolean" />
+        <attr name="fitSystemMarginRight" format="boolean" />
+        <attr name="fitSystemMarginTop" format="boolean" />
+        <attr name="fitSystemMarginBottom" format="boolean" />
+    </declare-styleable>
+</resources>

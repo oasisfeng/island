@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.oasisfeng.common.view.ScrimInsetsRelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:background="@android:color/background_light"
+    android:layout_gravity="start"
+    android:layout_width="320dp"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/banner"
+        android:elevation="4dp"
+        android:background="@drawable/setup_header"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"/>
+
+    <ImageButton
+        android:id="@+id/add"
+        android:src="@drawable/ic_add_24dp"
+        android:elevation="6dp"
+        android:background="@android:color/background_light"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_alignParentBottom="true"
+        app:fitSystemMarginBottom="true"
+        android:contentDescription="@string/drawer_button_add"/>
+
+    <ScrollView
+        android:layout_below="@id/banner"
+        android:layout_above="@id/add"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </ScrollView>
+
+</com.oasisfeng.common.view.ScrimInsetsRelativeLayout>
