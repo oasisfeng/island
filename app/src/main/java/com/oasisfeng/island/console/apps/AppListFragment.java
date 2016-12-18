@@ -142,14 +142,14 @@ public class AppListFragment extends Fragment {
 		getActivity().setActionBar(mBinding.appbar);
 		final ActionBar actionbar = getActivity().getActionBar();
 		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
-		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
-				final Activity activity = getActivity();
-				if (activity == null) return;
-				mViewModel.onFilterPrimaryChanged(position);
-			}
-			@Override public void onNothingSelected(final AdapterView<?> parent) {}
-		});
+		//mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+		//	@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
+		//		final Activity activity = getActivity();
+		//		if (activity == null) return;
+		//		mViewModel.onFilterPrimaryChanged(position);
+		//	}
+		//	@Override public void onNothingSelected(final AdapterView<?> parent) {}
+		//});
 		return mBinding.getRoot();
 	}
 

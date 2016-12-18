@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.databinding.Bindable;
 import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
@@ -94,11 +95,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return mActiveFilters;
 	}
 
-	public int getFilterPrimaryChoice() { return mFilterPrimaryChoice; }
+	@Bindable
+	public int getFilterPrimaryChoice() {
+		return mFilterPrimaryChoice;
+	}
 
 	public void onFilterPrimaryChanged(final int index) {
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
+        notifyPropertyChanged(BR.filterPrimaryChoice);
 		updateActiveFilters();
 		rebuildAppViewModels();
 	}

@@ -25,15 +25,18 @@
                 android:layout_height="?android:attr/actionBarSize"
                 android:background="?android:attr/colorPrimary"
                 android:elevation="4dp"
+                android:title="@{(apps.filterPrimaryChoice == 1) ? @string/filter_mainland : @string/filter_island}"
                 android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
                 android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
 
+                <!--
                 <Spinner
                     android:id="@+id/filters"
                     android:entries="@{apps.filterPrimaryOptions}"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
+                    -->
 
             </Toolbar>
 
@@ -66,7 +69,7 @@
 
         </android.support.design.widget.CoordinatorLayout>
 
-        <include android:id="@+id/drawer" layout="@layout/app_drawer" />
+        <include android:id="@+id/drawer" layout="@layout/app_drawer" bind:apps="@{apps}" bind:status="@{status}" />
 
     </android.support.v4.widget.DrawerLayout>
 
