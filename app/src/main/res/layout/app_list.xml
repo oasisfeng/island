@@ -19,28 +19,34 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
 
-            <Toolbar
-                android:id="@+id/appbar"
-                android:layout_width="match_parent"
-                android:layout_height="?android:attr/actionBarSize"
+            <com.oasisfeng.common.view.FloatingElevationRelativeLayout
                 android:background="?android:attr/colorPrimary"
                 android:elevation="4dp"
-                android:title="@{(apps.filterPrimaryChoice == 1) ? @string/filter_mainland : @string/filter_island}"
-                android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-                android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-                <!--
-                <Spinner
-                    android:id="@+id/filters"
-                    android:entries="@{apps.filterPrimaryOptions}"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
-                    -->
+                <Toolbar
+                    android:id="@+id/appbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?android:attr/actionBarSize"
+                    android:background="?android:attr/colorPrimary"
+                    android:title="@{(apps.filterPrimaryChoice == 1) ? @string/filter_mainland : @string/filter_island}"
+                    android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
+                    android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
 
-            </Toolbar>
+                    <!--
+                    <Spinner
+                        android:id="@+id/filters"
+                        android:entries="@{apps.filterPrimaryOptions}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
+                        -->
 
-            <android.support.v7.widget.RecyclerView
+                </Toolbar>
+            </com.oasisfeng.common.view.FloatingElevationRelativeLayout>
+
+            <com.oasisfeng.common.view.FloatingElevationRecyclerView
                 android:id="@+id/app_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
