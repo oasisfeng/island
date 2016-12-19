@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
+import android.support.v4.view.GravityCompat;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -141,7 +143,20 @@ public class AppListFragment extends Fragment {
 
 		getActivity().setActionBar(mBinding.appbar);
 		final ActionBar actionbar = getActivity().getActionBar();
-		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
+		if (actionbar != null) {
+			ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(getActivity(),
+					mBinding.drawer, R.string.drawer_icon_open, R.string.drawer_icon_close);
+			mBinding.drawer.addDrawerListener(drawerToggle);
+			actionbar.setDisplayHomeAsUpEnabled(true);
+			actionbar.setHomeButtonEnabled(true);
+			drawerToggle.syncState();
+            mBinding.appbar.setNavigationOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mBinding.drawer.openDrawer(GravityCompat.START);
+				}
+			});
+		}
 		//mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 		//	@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
 		//		final Activity activity = getActivity();

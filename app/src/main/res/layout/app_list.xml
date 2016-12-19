@@ -11,6 +11,7 @@
     </data>
 
     <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer"
         android:fitsSystemWindows="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -75,7 +76,7 @@
 
         </android.support.design.widget.CoordinatorLayout>
 
-        <include android:id="@+id/drawer" layout="@layout/app_drawer" bind:apps="@{apps}" bind:status="@{status}" />
+        <include android:id="@+id/drawer_content" layout="@layout/app_drawer" bind:apps="@{apps}" bind:status="@{status}" />
 
     </android.support.v4.widget.DrawerLayout>
 
