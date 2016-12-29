@@ -20,8 +20,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
 
-            <com.oasisfeng.common.view.FloatingElevationRelativeLayout
+            <RelativeLayout
                 android:background="?android:attr/colorPrimary"
+                bind:elevationChangeOnScroll="@{true}"
                 android:elevation="4dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -45,9 +46,9 @@
                         -->
 
                 </Toolbar>
-            </com.oasisfeng.common.view.FloatingElevationRelativeLayout>
+            </RelativeLayout>
 
-            <com.oasisfeng.common.view.FloatingElevationRecyclerView
+            <android.support.v7.widget.RecyclerView
                 android:id="@+id/app_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -57,6 +58,7 @@
                 android:paddingEnd="-16dp"
                 android:clipToPadding="false"
                 android:background="@color/background"
+                bind:elevationChangeOnScroll="@{true}"
                 bind:items="@{apps.items}"
                 bind:item_binder="@{apps.item_binder}"
                 tools:listitem="@layout/app_entry" />

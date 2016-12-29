@@ -13,15 +13,18 @@ import android.databinding.Bindable;
 import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.v7.widget.AppCompatDrawableManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -71,20 +74,35 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user) && app.isInstalled() && app.shouldTreatAsEnabled()),
-		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user) && app.isInstalled()),
+		Island		(R.string.filter_island,
+				R.string.description_island,
+				R.drawable.drawer_island,
+				GlobalStatus::hasProfile,
+				app -> Users.isProfile(app.user) && app.isInstalled() && app.shouldTreatAsEnabled()),
+		Mainland	(R.string.filter_mainland,
+				R.string.description_mainland,
+				R.drawable.drawer_mainland,
+				() -> true,
+				app -> Users.isOwner(app.user) && app.isInstalled()),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
-		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
+		Filter(final @StringRes int label, final @StringRes int description, @DrawableRes int banner, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) {
+			mLabel = label; mDescription = description; mBanner = banner; mVisibility = visibility; mFilter = filter;
+		}
 
 		private final @StringRes int mLabel;
+		private final @StringRes int mDescription;
+		private final @DrawableRes int mBanner;
 		private final BooleanSupplier mVisibility;
 		private final Predicate<IslandAppInfo> mFilter;
 
 		public class Entry {
 			Entry(final Context context) { mContext = context; }
 			Predicate<IslandAppInfo> filter() { return mFilter; }
-			@Override public String toString() { return mContext.getString(mLabel); }
+			public Drawable getBanner() { return AppCompatDrawableManager.get().getDrawable(mContext, mBanner); }
+			public String getLabel() { return mContext.getString(mLabel); }
+			public String getDescription() { return mContext.getString(mDescription); }
+			public void onClick() {}
 			private final Context mContext;
 		}
 	}
@@ -100,10 +118,22 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return mFilterPrimaryChoice;
 	}
 
+	@Bindable
+	public Filter.Entry getFilterEntryPrimaryChoice() {
+		return mFilterPrimaryOptions.get(mFilterPrimaryChoice);
+	}
+
+	public void select(final Filter.Entry entry) {
+		if (!mFilterPrimaryOptions.contains(entry)) throw new IllegalStateException("mFilterPrimaryOptions does not contain this entry:" + entry);
+		int position = mFilterPrimaryOptions.indexOf(entry);
+        onFilterPrimaryChanged(position);
+	}
+
 	public void onFilterPrimaryChanged(final int index) {
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
         notifyPropertyChanged(BR.filterPrimaryChoice);
+		notifyPropertyChanged(BR.filterEntryPrimaryChoice);
 		updateActiveFilters();
 		rebuildAppViewModels();
 	}
@@ -422,6 +452,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
 	}
 
+	@Bindable
 	public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
 		return mFilterPrimaryOptions;
 	}

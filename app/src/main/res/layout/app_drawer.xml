@@ -21,7 +21,7 @@
         <ImageView
             android:id="@+id/banner"
             android:importantForAccessibility="no"
-            android:src="@{(apps.filterPrimaryChoice == 1) ? @drawable/drawer_mainland : @drawable/drawer_island}"
+            bind:animatedSrc="@{apps.filterEntryPrimaryChoice.getBanner()}"
             android:scaleType="fitXY"
             android:background="@android:color/background_light"
             android:elevation="4dp"
@@ -52,33 +52,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <com.oasisfeng.island.view.drawerItemView
-                    android:clickable="true"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    bind:itemTitle="@{@string/filter_mainland}"
-                    bind:itemDescription="@{@string/description_mainland}"
-                    bind:itemSelected="@{apps.filterPrimaryChoice == 1}"
-                    android:onClick="@{() -> apps.onFilterPrimaryChanged(1)}"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                <include
+                    android:id="@+id/drawer_item_mainland"
+                    layout="@layout/app_drawer_item"
+                    bind:apps="@{apps}"
+                    bind:entry="@{apps.getFilterPrimaryOptions().get(0)}" />
 
-                <com.oasisfeng.island.view.drawerItemView
-                    android:clickable="true"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    bind:itemTitle="@{@string/filter_island}"
-                    bind:itemDescription="@{@string/description_island}"
-                    bind:itemSelected="@{apps.filterPrimaryChoice == 0}"
-                    android:onClick="@{() -> apps.onFilterPrimaryChanged(0)}"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                <include
+                    android:id="@+id/drawer_item_island"
+                    layout="@layout/app_drawer_item"
+                    bind:apps="@{apps}"
+                    bind:entry="@{apps.getFilterPrimaryOptions().get(1)}" />
 
             </LinearLayout>
 
