@@ -6,4 +6,6 @@
         <attr name="fitSystemMarginTop" format="boolean" />
         <attr name="fitSystemMarginBottom" format="boolean" />
     </declare-styleable>
+
+    <item name="image_view_src_animator" type="id" />
 </resources>
