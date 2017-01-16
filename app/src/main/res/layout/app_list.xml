@@ -42,13 +42,15 @@
             android:background="@color/background"
             bind:items="@{apps.items}"
             bind:item_binder="@{apps.item_binder}"
+            bind:item_layout="@{@layout/app_entry}"
+            bind:layout_manager="@{apps.layout_manager}"
             tools:listitem="@layout/app_entry" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            bind:visible="@{apps.items.isEmpty()}"
+            bind:shown="@{apps.items.isEmpty()}"
             android:textAppearance="?android:textAppearanceLarge"
             android:fontFamily="sans-serif-condensed"
             android:lineSpacingMultiplier="1.3"

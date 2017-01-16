@@ -11,7 +11,6 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
-import android.databinding.ViewDataBinding;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -21,6 +20,8 @@ import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -136,6 +137,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterExtras = Predicates.and(IslandAppListProvider.excludeSelf(activity),
 				app -> app.isInstalled() && (Users.isOwner(app.user) || app.shouldTreatAsEnabled()));	// Exclude disabled sys-apps in profile
 		onFilterPrimaryChanged(filter_primary_choice);
+		layout_manager = new LinearLayoutManager(activity);
 	}
 
 	private void updateActions() {
@@ -450,17 +452,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		@Override public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {}
 	};
 
-	public final ItemBinder<AppViewModel> item_binder = new ItemBinder<AppViewModel>() {
-
-		@Override public int getLayoutRes(final AppViewModel model) {
-			return R.layout.app_entry;
-		}
-
-		@Override public void onBind(final ViewDataBinding container, final AppViewModel model, final ViewDataBinding item) {
-			item.setVariable(BR.app, model);
-			item.setVariable(BR.apps, ((AppListBinding) container).getApps());
-		}
+	public final ItemBinder<AppViewModel> item_binder = (container, model, item) -> {
+		item.setVariable(BR.app, model);
+		item.setVariable(BR.apps, ((AppListBinding) container).getApps());
 	};
+	public RecyclerView.LayoutManager layout_manager;
 
 	/* Attachable fields */
 	private Activity mActivity;
