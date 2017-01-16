@@ -40,10 +40,10 @@
             android:paddingEnd="-16dp"
             android:clipToPadding="false"
             android:background="@color/background"
+            bind:layoutManager="@{apps.layout_manager}"
             bind:items="@{apps.items}"
             bind:item_binder="@{apps.item_binder}"
             bind:item_layout="@{@layout/app_entry}"
-            bind:layout_manager="@{apps.layout_manager}"
             tools:listitem="@layout/app_entry" />
 
         <TextView
