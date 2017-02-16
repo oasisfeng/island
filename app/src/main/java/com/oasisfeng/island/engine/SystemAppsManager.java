@@ -3,7 +3,6 @@ package com.oasisfeng.island.engine;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,6 +23,7 @@ import android.util.Log;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.ProfileUser;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
@@ -43,9 +42,7 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
  *
  * Created by Oasis on 2016/4/26.
  */
-public class SystemAppsManager {
-
-	private static final String SHARED_PREFS_DISABLED_SYSTEM_APPS = "disabled_system_apps";
+@ProfileUser public class SystemAppsManager {
 
 	static final String PACKAGE_GOOGLE_PLAY_SERVICES = "com.google.android.gms";
 	static final String PACKAGE_GOOGLE_PLAY_STORE = "com.android.vending";
@@ -166,22 +163,14 @@ public class SystemAppsManager {
 		final ImmutableList<ApplicationInfo> sys_apps_to_hide = FluentIterable.from(apps)
 				.filter(info -> (info.flags & FLAG_SYSTEM) != 0 && ! critical_sys_pkgs.contains(info.packageName))
 				.toList();
-		final SharedPreferences.Editor disabled_sys_apps = mContext.getSharedPreferences(SHARED_PREFS_DISABLED_SYSTEM_APPS, 0).edit();
 		for (final ApplicationInfo app : sys_apps_to_hide) {
 			if (hasSingleUserComponent(pm, app.packageName)) {
 				Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
 			} else {
 				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
 				mIslandManager.freezeApp(app.packageName, "provision");
-				// Record the disabled system apps during provisioning, to be later considered as disabled system app in Island UI.
-				disabled_sys_apps.putInt(app.packageName, COMPONENT_ENABLED_STATE_DISABLED);
 			}
 		}
-		disabled_sys_apps.apply();
-	}
-
-	public static boolean shouldTreatHiddenAsDisabled(final Context context, final String pkg) {
-		return context.getSharedPreferences(SHARED_PREFS_DISABLED_SYSTEM_APPS, 0).getInt(pkg, 0) == COMPONENT_ENABLED_STATE_DISABLED;
 	}
 
 	/** Enable system apps responsible for required intents. (package name unspecified) */

@@ -26,6 +26,7 @@ import com.google.common.collect.Iterables;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.AppListProvider;
+import com.oasisfeng.island.BR;
 import com.oasisfeng.island.BuildConfig;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.TempDebug;
@@ -35,7 +36,10 @@ import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.model.AppListViewModel;
+import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.util.Users;
 
@@ -65,15 +69,17 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onStart() {
 		super.onStart();
-		if (! Services.bind(getActivity(), IIslandManager.class, mServiceConnection))
+		mShuttleContext = new ShuttleContext(getActivity());
+		if (! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
 			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
 	}
 
 	@Override public void onStop() {
 		mViewModel.mProfileController = IslandManager.NULL;
 		try {
-			getActivity().unbindService(mServiceConnection);
+			mShuttleContext.unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
+		mShuttleContext = null;
 		mBinding.getApps().clearSelection();
 		super.onStop();
 	}
@@ -121,7 +127,7 @@ public class AppListFragment extends Fragment {
 
 	private final Observable.OnPropertyChangedCallback onPropertyChangedCallback = new Observable.OnPropertyChangedCallback() {
 		@Override public void onPropertyChanged(final Observable observable, final int var) {
-			if (var == com.oasisfeng.island.BR.selection) invalidateOptionsMenu();
+			if (var == BR.selection) invalidateOptionsMenu();
 		}
 	};
 
@@ -234,6 +240,7 @@ public class AppListFragment extends Fragment {
 		final IIslandManager controller = mViewModel.mProfileController;
 		if (controller != null) try {
 			controller.destroyProfile();
+			ClonedHiddenSystemApps.reset(activity, GlobalStatus.profile);
 			activity.finish();
 			return;
 		} catch (final RemoteException ignored) {}
@@ -248,6 +255,7 @@ public class AppListFragment extends Fragment {
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
 	private boolean mIsDeviceOwner;
+	private ShuttleContext mShuttleContext;
 
 	private static final String TAG = "Island.AppsUI";
 }

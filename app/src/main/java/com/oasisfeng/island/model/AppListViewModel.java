@@ -32,6 +32,7 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.BR;
 import com.oasisfeng.island.Config;
@@ -65,14 +66,13 @@ import java8.util.stream.StreamSupport;
  */
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
-	public static final Predicate<IslandAppInfo> NON_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
-	public static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
+	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user) && app.isInstalled() && app.shouldTreatAsEnabled()),
-		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user) && app.isInstalled()),
+		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user)),
+		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
 		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
@@ -111,8 +111,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void updateActiveFilters() {
-		final Predicate<IslandAppInfo> primary_with_extras = Predicates.and(mFilterExtras, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		mActiveFilters = mFilterIncludeSystemApps ? primary_with_extras : Predicates.and(primary_with_extras, NON_HIDDEN_SYSTEM);
+		final Predicate<IslandAppInfo> primary_with_shared = Predicates.and(mFilterShared, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
+		mActiveFilters = mFilterIncludeSystemApps ? Predicates.and(primary_with_shared, IslandAppInfo::shouldShowAsEnabled)
+				: Predicates.and(primary_with_shared, NON_HIDDEN_SYSTEM);
 	}
 
 	private void rebuildAppViewModels() {
@@ -134,8 +135,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mOwnerController = owner_controller;
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
-		mFilterExtras = Predicates.and(IslandAppListProvider.excludeSelf(activity),
-				app -> app.isInstalled() && (Users.isOwner(app.user) || app.shouldTreatAsEnabled()));	// Exclude disabled sys-apps in profile
+		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
 		onFilterPrimaryChanged(filter_primary_choice);
 		layout_manager = new LinearLayoutManager(activity);
 	}
@@ -148,10 +148,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final boolean exclusive = provider.isExclusive(app);
 
-		mActions.findItem(R.id.menu_freeze).setVisible(! app.isHidden() && app.enabled);
-		mActions.findItem(R.id.menu_unfreeze).setVisible(app.isHidden());
+		final boolean is_managed = ! Users.isOwner(app.user) || GlobalStatus.device_owner;
+		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
+		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
-		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldTreatAsEnabled()));	// Disabled system app is treated as "removed".
+		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(app.enabled);
@@ -175,7 +176,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		updateActions();
 	}
 
-	public final void onItemLaunchIconClick(final View v) {
+	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
 		Analytics.$().event("action_launch").with("package", app.packageName).send();
@@ -210,7 +211,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 			try {
 				final boolean frozen = controller.freezeApp(pkg, "manual");
-				if (! frozen) Toast.makeText(mActivity, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
+				if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
+				else Toast.makeText(mActivity, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
 				refreshAppStateAsSysBugWorkaround(pkg);
 			} catch (final RemoteException ignored) {
 				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
@@ -349,7 +351,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
 			Toast.makeText(mActivity, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
-			Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+			if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
+				try {
+					if (mProfileController.unfreezeApp(pkg))
+						app.stopTreatingHiddenSysAppAsDisabled();
+				} catch (final RemoteException ignored) {}    	// FIXME: Error message
+			} else Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
 			Dialogs.buildAlert(mActivity, 0, R.string.dialog_clone_incapable_explanation)
@@ -410,7 +417,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		setSelection(clicked != getSelection() ? clicked : null);	// Click the selected one to deselect
 	}
 
-	public final void onBottomSheetClick(final View view) {
+	@SuppressWarnings("MethodMayBeStatic") public final void onBottomSheetClick(final View view) {
 		final BottomSheetBehavior bottom_sheet = BottomSheetBehavior.from(view);
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
 	}
@@ -463,7 +470,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private IIslandManager mOwnerController;
 	private Menu mActions;
 	private List<Filter.Entry> mFilterPrimaryOptions;
-	private Predicate<IslandAppInfo> mFilterExtras;		// All other filters to apply always
+	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
 	/* Parcelable fields */
 	private int mFilterPrimaryChoice;
 	private boolean mFilterIncludeSystemApps;

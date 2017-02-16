@@ -13,7 +13,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
-import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
@@ -45,8 +44,16 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	/** Some system apps are hidden by post-provisioning, they should be treated as "disabled". */
-	public boolean shouldTreatAsEnabled() {
-		return enabled && (Users.isOwner(user) || ! isHidden() || ! SystemAppsManager.shouldTreatHiddenAsDisabled(context(), packageName));
+	public boolean shouldShowAsEnabled() {
+		return enabled && (Users.isOwner(user) || ! isHidden() || ! isSystem() || ! shouldTreatHiddenSysAppAsDisabled());
+	}
+
+	private boolean shouldTreatHiddenSysAppAsDisabled() {
+		return ! ((IslandAppListProvider) mProvider).isHiddenSysAppCloned(packageName);
+	}
+
+	public void stopTreatingHiddenSysAppAsDisabled() {
+		((IslandAppListProvider) mProvider).setHiddenSysAppCloned(packageName);
 	}
 
 	public boolean isHidden() {
@@ -87,14 +94,13 @@ public class IslandAppInfo extends AppInfo {
 		this.user = user;
 	}
 
-	@Override public String toString() {
-		final MoreObjects.ToStringHelper string = MoreObjects.toStringHelper(IslandAppInfo.class).add("user", user).add("pkg", packageName);
-		if (! isInstalled()) string.addValue("not installed");
-		if (isSystem()) string.addValue("system");
-		if (isHidden()) string.addValue("hidden");
-		if (! enabled) string.addValue("disabled");
-		else if (! shouldTreatAsEnabled()) string.addValue("disabled(*)");
-		return string.toString();
+	@Override public String toString() { return fillToString(MoreObjects.toStringHelper(IslandAppInfo.class)).toString(); }
+
+	@Override public MoreObjects.ToStringHelper fillToString(final MoreObjects.ToStringHelper helper) {
+		helper.add("user", Users.toId(user));
+		super.fillToString(helper);
+		if (isHidden()) helper.addValue(shouldTreatHiddenSysAppAsDisabled() ? "hidden (as disabled)" : "hidden");
+		return helper;
 	}
 
 	public final UserHandle user;

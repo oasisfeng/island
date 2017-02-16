@@ -126,8 +126,8 @@ public class DevicePolicies {
 		mDevicePolicyManager.setProfileEnabled(sCachedComponent);
 	}
 
-	@RequiresApi(M) public void setPermissionGrantState(final String pkg, final String permission, final int state) {
-		mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
+	@RequiresApi(M) public boolean setPermissionGrantState(final String pkg, final String permission, final int state) {
+		return mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
 	}
 
 	@RequiresApi(N) public Bundle getUserRestrictions() {

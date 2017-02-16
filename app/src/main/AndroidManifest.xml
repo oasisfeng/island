@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" /> <!-- ServiceShuttle -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" /> <!-- TBD -->
 
     <application android:name=".IslandApplication"
                  android:allowBackup="false"

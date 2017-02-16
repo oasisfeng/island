@@ -34,7 +34,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	private State checkState() {
-		if (! info().shouldTreatAsEnabled()) return State.Disabled;
+		if (! info().shouldShowAsEnabled()) return State.Disabled;
 		if (info().isHidden()) return State.Frozen;
 		return State.Alive;
 	}

@@ -5,10 +5,17 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
+
+import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.util.Hacks;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 /**
  * Context wrapper for service shuttle
@@ -17,30 +24,51 @@ import java.util.WeakHashMap;
  */
 public class ShuttleContext extends ContextWrapper {
 
+	public static final boolean ALWAYS_USE_SHUTTLE = ServiceShuttle.ALWAYS_USE_SHUTTLE;
+
 	public ShuttleContext(final Context base) { super(base); }
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
+		if (GlobalStatus.profile == null) return false;
+		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED)
+			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, GlobalStatus.profile).on(getBaseContext())) {
+				Log.d(TAG, "Connecting to service in profile: " + service);
+				return true;
+			}
+
 		final ShuttleServiceConnection existent = mConnections.get(connection);
 		final ShuttleServiceConnection shuttle_connection = existent != null ? existent : new ShuttleServiceConnection() {
 			@Override public void onServiceConnected(final IBinder service) {
 				connection.onServiceConnected(null, service);
 			}
-
 			@Override public void onServiceDisconnected() {
 				connection.onServiceDisconnected(null);
 			}
 		};
-		if (ServiceShuttle.bindService(this, service, shuttle_connection, flags)) {
-			if (existent == null) mConnections.put(connection, shuttle_connection);
-			return true;
-		} else return super.bindService(service, connection, flags);
+
+		final boolean result = ServiceShuttle.bindServiceViaShuttle(this, service, shuttle_connection, flags);
+		if (result && existent == null) mConnections.put(connection, shuttle_connection);
+		return result;
 	}
 
 	@Override public void unbindService(final ServiceConnection connection) {
+		if (GlobalStatus.profile == null) return;
 		final ShuttleServiceConnection shuttle_connection = mConnections.get(connection);
-		if (shuttle_connection == null || ! ServiceShuttle.unbindService(getBaseContext(), shuttle_connection))
-			super.unbindService(connection);
+		if (shuttle_connection == null || ! unbindService(shuttle_connection))
+			Log.e(TAG, "Service not registered: " + connection);
+	}
+
+	/** Beware: You should pass the <b>base</b> context instead of current context itself as the first parameter,
+	 *  otherwise {@link Context#unbindService(ServiceConnection)} will be called here, causing {@link StackOverflowError} */
+	boolean unbindService(final ShuttleServiceConnection connection) {
+		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) try {
+			getBaseContext().unbindService(connection);
+		} catch (final IllegalArgumentException e) { return false; }        // IllegalArgumentException: Service not registered
+		ServiceShuttle.unbindShuttledServiceDelayed(connection);
+		return true;
 	}
 
 	private final Map<ServiceConnection, ShuttleServiceConnection> mConnections = Collections.synchronizedMap(new WeakHashMap<>());
+
+	private static final String TAG = "ShuttleContext";
 }

@@ -6,7 +6,6 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.os.Bundle;
@@ -17,7 +16,6 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.setup.SetupActivity;
-import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.SimpleAsyncTask;
 import com.oasisfeng.island.util.Users;
 
@@ -48,7 +46,7 @@ public class MainActivity extends Activity {
 				return;
 			}
 			final ProgressDialog progress = ProgressDialog.show(this, null, getString(R.string.dialog_provision_in_progress), true/* indeterminate */, false/* cancelable */);
-			SimpleAsyncTask.execute(() -> IslandProvisioning.startProfileOwnerProvisioningIfNeeded(MainActivity.this),
+			SimpleAsyncTask.execute(() -> IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this),
 				() -> { progress.cancel(); finish(); });
 			return;
 		}
@@ -87,13 +85,5 @@ public class MainActivity extends Activity {
 	private void showSetupWizard() {
 		startActivity(new Intent(this, SetupActivity.class));
 		finish();
-	}
-
-	@Override public boolean bindService(final Intent service, final ServiceConnection conn, final int flags) {
-		return ServiceShuttle.bindService(this, service, conn, flags) || super.bindService(service, conn, flags);
-	}
-
-	@Override public void unbindService(final ServiceConnection conn) {
-		if (! ServiceShuttle.unbindService(getBaseContext(), conn)) super.unbindService(conn);
 	}
 }
