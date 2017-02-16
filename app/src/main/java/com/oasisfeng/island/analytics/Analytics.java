@@ -1,6 +1,9 @@
 package com.oasisfeng.island.analytics;
 
-import android.content.Context;
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
@@ -10,6 +13,7 @@ import android.util.Log;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.oasisfeng.island.util.Users;
 
 import org.intellij.lang.annotations.Pattern;
 
@@ -19,10 +23,10 @@ import org.intellij.lang.annotations.Pattern;
  * Created by Oasis on 2016/5/26.
  */
 
-public class Analytics {
+public class Analytics extends ContentProvider {
 
 	public void setProperty(final String key, final String value) {
-		mAnalytics.setUserProperty(key, value);
+		mAnalytics.get().setUserProperty(key, value);
 	}
 
 	public boolean setProperty(final String key, final boolean value) {
@@ -64,24 +68,30 @@ public class Analytics {
 
 	private synchronized Analytics reportEventInternal(final @NonNull String event, final @Nullable Bundle params) {
 		Log.d(TAG, "Event [" + event + "]: " + params);
-		mAnalytics.logEvent(event, params);
+		mAnalytics.get().logEvent(event, params);
 		return this;
 	}
 
-	public static void setContext(final Context context) {
-		sSingletonSupplier = Suppliers.memoize(() -> new Analytics(context.getApplicationContext()));
-	}
-
 	public static Analytics $() {
-		return sSingletonSupplier.get();
+		return sSingleton;
 	}
 
-	private Analytics(final Context context) {
-		mAnalytics = FirebaseAnalytics.getInstance(context);
+	@Override public boolean onCreate() {
+		if (Users.isOwner()) //noinspection ConstantConditions
+			sSingleton = this;
+		return true;
 	}
 
-	private static Supplier<Analytics> sSingletonSupplier = () -> { throw new IllegalStateException("Context is not set yet"); };
+	@Nullable @Override public Uri insert(final @NonNull Uri uri, final ContentValues values) {
+		return null;	// TODO
+	}
+	@Override public @Nullable Cursor query(final @NonNull Uri uri, final String[] projection, final String selection, final String[] selectionArgs, final String sortOrder) { return null; }
+	@Override public @Nullable String getType(final @NonNull Uri uri) { return null; }
+	@Override public int delete(final @NonNull Uri uri, final String selection, final String[] selectionArgs) { return 0; }
+	@Override public int update(final @NonNull Uri uri, final ContentValues values, final String selection, final String[] selectionArgs) { return 0; }
+
+	private static Analytics sSingleton;
 	private static final String TAG = "Analytics";
 
-	private final FirebaseAnalytics mAnalytics;
+	@SuppressWarnings("ConstantConditions") private final Supplier<FirebaseAnalytics> mAnalytics = Suppliers.memoize(() -> FirebaseAnalytics.getInstance(getContext()));
 }
