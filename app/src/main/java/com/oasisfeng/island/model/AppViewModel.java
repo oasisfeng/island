@@ -1,11 +1,11 @@
 package com.oasisfeng.island.model;
 
 import android.content.Context;
-import android.databinding.ObservableBoolean;
 import android.support.annotation.NonNull;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
@@ -62,11 +62,10 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	public final State state;
-	private final ObservableBoolean auto_freeze = new ObservableBoolean();		// TODO
 
 	AppViewModel(final IslandAppInfo info) {
 		super(info);
-		this.state = checkState();
+		state = checkState();
 	}
 
 	@Override public boolean isSameAs(final AppViewModel another) {
@@ -74,11 +73,15 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	@Override public boolean isContentSameAs(final AppViewModel another) {
-		return super.isContentSameAs(another) && state == another.state && auto_freeze.get() == another.auto_freeze.get();
+		return super.isContentSameAs(another) && state == another.state;
 	}
 
 	@Override public int compareTo(@NonNull final AppViewModel another) {
 		return ORDERING.compare(this, another);
+	}
+
+	@Override public String toString() {
+		return info().fillToString(MoreObjects.toStringHelper(AppViewModel.class)).add("state", state).toString();
 	}
 
 	private static final Ordering<AppViewModel> ORDERING = Ordering.natural()

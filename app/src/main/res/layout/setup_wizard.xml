@@ -22,7 +22,7 @@
             android:id="@+id/intro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            bind:visible="@{setup.message == null}"
+            bind:shown="@{setup.message == null}"
             android:text="@string/setup_island_intro"
             style="@style/contentContainer" />
 
@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             style="@style/contentContainer"
-            bind:visible="@{setup.message != null}"
+            bind:shown="@{setup.message != null}"
             tools:visibility="gone" >
 
             <TextView
@@ -45,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/AppTheme.BorderlessActionButton"
-                bind:visible="@{setup.button_extra != 0}"
+                bind:shown="@{setup.button_extra != 0}"
                 bind:text="@{setup.button_extra}"
                 android:onClick="@{setup::onExtraButtonClick}" />
         </LinearLayout>

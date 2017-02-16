@@ -45,7 +45,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	/** The implementation should be as fast as possible, since it may be called in mass. */
 	protected abstract T createEntry(final ApplicationInfo base, final T last);
 
-	protected static <T extends AppListProvider> T getInstance(final Context context) {
+	protected static @NonNull <T extends AppListProvider> T getInstance(final Context context) {
 		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(AUTHORITY);
 		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + AUTHORITY);
 		try {

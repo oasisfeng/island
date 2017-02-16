@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.StringRes;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -38,7 +39,7 @@ public class SetupViewModel implements Parcelable {
 
 	private static final int REQUEST_PROVISION_MANAGED_PROFILE = 1;
 
-	public String message;
+	public CharSequence message;
 	int button_back;
 	int button_next;
 	public int button_extra;
@@ -74,7 +75,7 @@ public class SetupViewModel implements Parcelable {
 		final boolean is_encryption_required = IslandProvisioning.isEncryptionRequired();
 		if (Analytics.$().setProperty("encryption_required", is_encryption_required)
 				&& ! Analytics.$().setProperty("encrypted_already", IslandProvisioning.isDeviceEncrypted(activity))) {
-			if (this.button_extra == R.string.button_instructions_online) {		// Next is clicked in this step
+			if (button_extra == R.string.button_instructions_online) {		// Next is clicked in this step
 				new AsyncTask<Void, Void, Void>() {
 					@Override protected Void doInBackground(final Void... params) {
 						try {
@@ -94,7 +95,7 @@ public class SetupViewModel implements Parcelable {
 				return null;
 			}
 			final SetupViewModel next = new SetupViewModel();
-			next.message = activity.getString(R.string.dialog_encryption_required);
+			next.message = activity.getText(R.string.dialog_encryption_required);
 			next.button_extra = R.string.button_instructions_online;
 			next.require_scroll_to_bottom = true;
 			return next;
@@ -154,7 +155,7 @@ public class SetupViewModel implements Parcelable {
 	SetupViewModel() {}
 
 	private SetupViewModel(final Parcel in) {
-		message = in.readString();
+		message = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
 		button_back = in.readInt();
 		button_next = in.readInt();
 		button_extra = in.readInt();
@@ -162,7 +163,7 @@ public class SetupViewModel implements Parcelable {
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeString(message);
+		TextUtils.writeToParcel(message, dest, 0);
 		dest.writeInt(button_back);
 		dest.writeInt(button_next);
 		dest.writeInt(button_extra);
