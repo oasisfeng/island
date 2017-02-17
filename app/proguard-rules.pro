@@ -16,18 +16,16 @@
 #   public *;
 #}
 
-# For @Keep to work
--keep @android.support.annotation.Keep class *
--keepclassmembers class * {
-    @android.support.annotation.Keep *;
-}
+# Guava library
+-dontwarn javax.annotation.**
+-dontwarn sun.misc.Unsafe
+-dontwarn com.google.common.**
 
 # For retrolambda
 -dontwarn java.lang.invoke.*
 
-# For Play services libraries
--dontwarn com.google.android.gms.**
--dontwarn com.google.common.**
+# For Services
+-keepnames interface ** extends android.os.IInterface
 
 # Remove logging
 #-assumenosideeffects class android.util.Log {
@@ -38,6 +36,15 @@
 #    public static int d(...);
 #    public static int e(...);
 #}
+
+# For @Keep to work
+-keep @android.support.annotation.Keep class *
+-keepclassmembers class * {
+    @android.support.annotation.Keep *;
+}
+
+# For generics reflection to work
+-keepattributes Signature
 
 # More debugging info (line number)
 -renamesourcefileattribute SourceFile
