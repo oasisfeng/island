@@ -148,14 +148,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final boolean exclusive = provider.isExclusive(app);
 
-		final boolean is_managed = ! Users.isOwner(app.user) || GlobalStatus.device_owner;
+		final boolean is_managed = GlobalStatus.device_owner || ! Users.isOwner(app.user);
 		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
 		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
-		mActions.findItem(R.id.menu_greenify).setVisible(app.enabled);
+		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
