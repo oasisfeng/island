@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -95,7 +94,7 @@ public class IslandProvisioning {
 
 	private static void provisionDeviceOwner(final @NonNull Activity activity, final int request_code) {
 		final Intent intent;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+		if (SDK_INT >= M)
 			intent = new Intent(ACTION_PROVISION_MANAGED_DEVICE)
 					.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class))
 					.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
@@ -148,7 +147,7 @@ public class IslandProvisioning {
 		// This is also required for manual provision via ADB shell.
 		island.resetForwarding();
 		ProfileOwnerSystemProvisioning.start(island);	// Simulate the stock managed profile provision
-		IslandProvisioning.startProfileOwnerPostProvisioning(context, island);
+		startProfileOwnerPostProvisioning(context, island);
 		disableLauncherActivity(context);
 
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();

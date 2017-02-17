@@ -47,7 +47,6 @@
         </activity>
 
         <activity-alias android:name=".shortcut.AppLaunchShortcutAlias"
-                        android:enabled="false"
                         android:targetActivity=".shortcut.AppLaunchShortcut" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
