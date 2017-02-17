@@ -154,7 +154,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
 		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
-		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
+		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled);
 	}
 
