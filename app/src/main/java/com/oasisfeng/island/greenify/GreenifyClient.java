@@ -24,7 +24,7 @@ import static android.content.Context.USER_SERVICE;
 public class GreenifyClient {
 
 	private static final String GREENIFY_ACTION = "com.oasisfeng.greenify.action.GREENIFY";
-	private static final int MIN_GREENIFY_VERSION = BuildConfig.DEBUG ? 218 : 219;	// TODO: The minimal version of Greenify with support for Island.
+	private static final int MIN_GREENIFY_VERSION = 306;	// Greenify 3.0 (build 5)
 
 	public static boolean greenify(final Activity activity, final String pkg, final UserHandle user) {
 		final long user_sn = ((UserManager) activity.getSystemService(USER_SERVICE)).getSerialNumberForUser(user);
