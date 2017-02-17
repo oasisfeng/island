@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -53,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import java8.util.Optional;
 import java8.util.function.BooleanSupplier;
 import java8.util.function.Predicate;
 import java8.util.function.Predicates;
@@ -65,6 +67,8 @@ import java8.util.stream.StreamSupport;
  * Created by Oasis on 2015/7/7.
  */
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
+
+	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
 
 	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
 
@@ -94,8 +98,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private Predicate<IslandAppInfo> activeFilters() {
 		return mActiveFilters;
 	}
-
-	public int getFilterPrimaryChoice() { return mFilterPrimaryChoice; }
 
 	public void onFilterPrimaryChanged(final int index) {
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
@@ -130,14 +132,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}});
 	}
 
-	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final int filter_primary_choice) {
+	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
 		mOwnerController = owner_controller;
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
-		onFilterPrimaryChanged(filter_primary_choice);
+		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
+				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
+		onFilterPrimaryChanged(filter_primary);
 		layout_manager = new LinearLayoutManager(activity);
+	}
+
+	public void onSaveInstanceState(final Bundle saved) {
+		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mFilterPrimaryChoice);
 	}
 
 	private void updateActions() {

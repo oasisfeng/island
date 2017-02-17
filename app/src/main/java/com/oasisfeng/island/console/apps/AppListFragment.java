@@ -34,9 +34,9 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.databinding.AppListBinding;
+import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleContext;
@@ -46,14 +46,12 @@ import com.oasisfeng.island.util.Users;
 import java.util.Collection;
 import java.util.List;
 
-import java8.util.Optional;
 import java8.util.stream.Collectors;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
 
 	private static final String STATE_KEY_RECYCLER_VIEW = "apps.recycler.layout";
-	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -141,8 +139,7 @@ public class AppListFragment extends Fragment {
 		mBinding.setApps(mViewModel);
 		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(0);
-		mViewModel.attach(getActivity(), mIslandManager, mBinding.details.toolbar.getMenu(), filter_primary);
+		mViewModel.attach(getActivity(), mIslandManager, mBinding.details.toolbar.getMenu(), saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
 		getActivity().setActionBar(mBinding.appbar);
@@ -190,7 +187,7 @@ public class AppListFragment extends Fragment {
 	@Override public void onSaveInstanceState(final Bundle out_state) {
 		super.onSaveInstanceState(out_state);
 		out_state.putParcelable(STATE_KEY_RECYCLER_VIEW, mBinding.appList.getLayoutManager().onSaveInstanceState());
-		out_state.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mViewModel.getFilterPrimaryChoice());
+		mViewModel.onSaveInstanceState(out_state);
 	}
 
 	@Override public void onViewStateRestored(final Bundle saved_state) {
