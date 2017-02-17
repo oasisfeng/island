@@ -53,19 +53,13 @@ public class ShuttleContext extends ContextWrapper {
 
 	@Override public void unbindService(final ServiceConnection connection) {
 		if (GlobalStatus.profile == null) return;
-		final ShuttleServiceConnection shuttle_connection = mConnections.get(connection);
-		if (shuttle_connection == null || ! unbindService(shuttle_connection))
-			Log.e(TAG, "Service not registered: " + connection);
-	}
-
-	/** Beware: You should pass the <b>base</b> context instead of current context itself as the first parameter,
-	 *  otherwise {@link Context#unbindService(ServiceConnection)} will be called here, causing {@link StackOverflowError} */
-	boolean unbindService(final ShuttleServiceConnection connection) {
-		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) try {
+		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) {
 			getBaseContext().unbindService(connection);
-		} catch (final IllegalArgumentException e) { return false; }        // IllegalArgumentException: Service not registered
-		ServiceShuttle.unbindShuttledServiceDelayed(connection);
-		return true;
+			return;
+		}
+		final ShuttleServiceConnection shuttle_connection = mConnections.get(connection);
+		if (shuttle_connection == null) Log.e(TAG, "Service not registered: " + connection);
+		else ServiceShuttle.unbindShuttledServiceDelayed(shuttle_connection);
 	}
 
 	private final Map<ServiceConnection, ShuttleServiceConnection> mConnections = Collections.synchronizedMap(new WeakHashMap<>());
