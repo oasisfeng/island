@@ -108,7 +108,7 @@ public class SetupViewModel implements Parcelable {
 	}
 
 	public static void onExtraButtonClick(final View v) {
-		WebContent.view(v.getContext(), Config.URL_PREREQUISITES.get());
+		WebContent.view(v.getContext(), Config.URL_SETUP.get());
 	}
 
 	static void onActivityResult(final Activity activity, final int request, final int result) {

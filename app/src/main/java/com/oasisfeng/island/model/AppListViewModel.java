@@ -368,7 +368,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
 			Dialogs.buildAlert(mActivity, 0, R.string.dialog_clone_incapable_explanation)
-					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_CANNOT_CLONE_EXPLAINED.get()))
+					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_FAQ.get()))
 					.setPositiveButton(android.R.string.cancel, null).show();
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:

@@ -4,14 +4,15 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 /**
- * All URLs
+ * Remotely configurable values, (default values are defined in config_defaults.xml)
  *
  * Created by Oasis on 2016/5/26.
  */
 public enum Config {
 
-	URL_CANNOT_CLONE_EXPLAINED("url_cannot_clone"),
-	URL_PREREQUISITES("url_prerequisites");
+	/* All keys must be consistent with config_defaults.xml */
+	URL_FAQ("url_faq"),
+	URL_SETUP("url_setup");
 
 	public String get() { return FirebaseRemoteConfig.getInstance().getString(key); }
 	Config(final String key) { this.key = key; }
