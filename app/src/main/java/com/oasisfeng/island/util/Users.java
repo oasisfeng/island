@@ -1,6 +1,5 @@
 package com.oasisfeng.island.util;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,15 +10,12 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.pattern.LocalContentProvider;
 
 import java.util.List;
 
 import static android.content.Context.USER_SERVICE;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 
 /**
  * Utility class for user-related helpers.
@@ -28,24 +24,24 @@ import static android.os.Build.VERSION_CODES.M;
  */
 public class Users extends LocalContentProvider {
 
-	private static final String ACTION_USER_ADDED = "android.intent.action.USER_ADDED";
-	private static final String ACTION_USER_REMOVED = "android.intent.action.USER_REMOVED";
-
 	private static final UserHandle CURRENT = android.os.Process.myUserHandle();
 	private static final int CURRENT_ID = toId(CURRENT);
 
 	public static UserHandle current() { return CURRENT; }
 
 	@Override public boolean onCreate() {
-		context().registerReceiver(mUserEventsObserver, IntentFilters.forActions(ACTION_USER_ADDED, ACTION_USER_REMOVED));
-		if (SDK_INT >= M) context().registerReceiver(mProvisioningObserver, new IntentFilter(DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED));
+		final int priority = IntentFilter.SYSTEM_HIGH_PRIORITY - 1;
+		context().registerReceiver(mProfileChangeObserver,
+				IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED, Intent.ACTION_MANAGED_PROFILE_REMOVED).inPriority(priority));
 		refreshUsers();
-		return super.onCreate();
+		return true;
 	}
 
 	private void refreshUsers() {
 		final UserHandle profile = queryProfile();
-		sProfileId = profile != null ? Users.toId(profile) : 0;
+		sProfileId = profile != null ? toId(profile) : 0;
+		Log.i(TAG, "Profile ID: " + profile);
+		GlobalStatus.profile = profile;
 	}
 
 	private @Nullable UserHandle queryProfile() {
@@ -65,13 +61,9 @@ public class Users extends LocalContentProvider {
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 
-	private final BroadcastReceiver mUserEventsObserver = new BroadcastReceiver() { @Override public void onReceive(final Context c, final Intent i) {
+	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context c, final Intent i) {
+		Log.i(TAG, "Profile changed");
 		refreshUsers();
-	}};
-
-	private final BroadcastReceiver mProvisioningObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
-		Log.i(TAG, "Profile provisioned");
-		GlobalStatus.profile = IslandManager.getManagedProfile(context);
 	}};
 
 	private static int sProfileId;		// 0 if no profile
