@@ -9,11 +9,11 @@ Isolated app can be frozen on demand, with launcher icon vanish and its backgrou
 How does it work
 ----------------
 
-Island takes advantage of the "managed profile" feature on Android 5.0+, which is the also the base of "Android for Work", to create an isolated sandbox for apps and their data.
+Island takes advantage of the "managed profile" feature on Android 5.0+, which is also the base of "Android for Work", to create an isolated sandbox for apps with their data.
 
-App needs to be cloned in Island first. Afterwards, the clone can run parallel aside from the original one. (even with different accounts signed-in) It can be frozen on demand by Island. (NO ROOT REQUIRED)
+App needs to be cloned in Island first. Afterwards, the clone can run parallel aside from the original one. (even with different accounts signed-in) It can be frozen on demand by Island. **(NO ROOT REQUIRED)**
 
-Currently, all operations are manual in Island. There's a plan to integrate Greenify with Island to provide automatic freezing feature.
+If [Greenify](https://play.google.com/store/apps/details?id=com.oasisfeng.greenify)ttps is also installed, apps can be frozen automatically, just like normal app hibernation in Greenify.
 
 
 Common use cases
@@ -43,9 +43,9 @@ In normal mode, Island only takes care of apps inside the Island space. The "God
 
 It is highly experimental and not ready for normal users. At present it is only recommended for advanced users who is well understanding what is going on the device and how to deal with unforeseeable troubles.
 
-The limitation in "God mode":
+The limitations in "God mode":
 
-- Google Play Store is not working as expected, apps could not be installed.  
+- Google Play Store is currently not working as expected, apps could not be installed inside.  
 (We are investigating this issue)
 - App Backup (Cloud backup for app data by Google Play services) will stop working.  
 (We are working on a solution for Android 7.1+)
