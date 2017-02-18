@@ -13,7 +13,7 @@ Island takes advantage of the "managed profile" feature on Android 5.0+, which i
 
 App needs to be cloned in Island first. Afterwards, the clone can run parallel aside from the original one. (even with different accounts signed-in) It can be frozen on demand by Island. **(NO ROOT REQUIRED)**
 
-If [Greenify](https://play.google.com/store/apps/details?id=com.oasisfeng.greenify)ttps is also installed, apps can be frozen automatically, just like normal app hibernation in Greenify.
+If [Greenify](https://play.google.com/store/apps/details?id=com.oasisfeng.greenify) is also installed, apps can be frozen automatically, just like normal app hibernation in Greenify.
 
 
 Common use cases
@@ -45,8 +45,9 @@ It is highly experimental and not ready for normal users. At present it is only 
 
 The limitations in "God mode":
 
-- Google Play Store is currently not working as expected, apps could not be installed inside.  
+- Google Play Store is currently not working as expected, apps could not be installed inside.  
 (We are investigating this issue)
+
 - App Backup (Cloud backup for app data by Google Play services) will stop working.  
 (We are working on a solution for Android 7.1+)
 
