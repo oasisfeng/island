@@ -1,6 +1,9 @@
-On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may got “incompatible with your device” message on Google Play Store, or be notified during the setup with error message “Sorry, your device (or ROM) is incompatible with Island”. In both cases, Island could still work on your device if setup manually.
+Setup Guide
+===========
 
-If you are prompted to encrypt your device first during the setup and you don't want device decription (which may significantly degrade overall I/O performance on low-end devices), this prerequisite could also be skipped if setup manually.
+On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may got “incompatible with your device” message on Google Play Store, or be notified during the setup with error message “Sorry, your device (or ROM) is incompatible with Island”, or other failures. In these cases, Island could probably still work on your device if setup manually.
+
+If you are prompted to encrypt your device during the setup, it means your device was not pre-encrypted out of box. If you don't want device decription (which may significantly degrade overall I/O performance on some low-end devices), it can be avoided with manual setup.
 
 
 Preparation
@@ -40,8 +43,8 @@ Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminRecei
 If all goes well, Island will show the app list.
 
 
-Manual setup for Island in experimental God mode
-------------------------------------------------
+Manual setup for Island in experimental "God mode"
+--------------------------------------------------
 
 **This "God mode" is not for normal users, and it is still highly experimental. Please do not setup this mode on your daily-use device.**
 
@@ -52,3 +55,5 @@ Manual setup for Island in experimental God mode
 If you get error message in this step, please try executing `settings put global device_provisioned 0` and then above `dpm ...` command again, followed by `settings put global device_provisioned 1`. (The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.).
 
 - Start Island app now and it will work in God mode.
+
+God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Just setup God mode first and then follow the steps to setup normal mode, as mentioned above.
