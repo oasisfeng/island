@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.island" android:versionCode="5" android:versionName="2.0 beta 1" >
+          package="com.oasisfeng.island" android:versionCode="6" android:versionName="2.0 beta 2" >
 
     <uses-feature android:name="android.software.device_admin" android:required="true" />
     <uses-feature android:name="android.software.managed_users" android:required="true" />
