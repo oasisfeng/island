@@ -23,6 +23,20 @@ Common use cases
 - **Archive rarely used apps.** Like the first case, keep them frozen until the next time you need it.
 - **Hide your private apps.**
 
+Experimental God mode
+---------------------
+
+In normal mode, Island only takes care of apps inside the Island space. The "God mode" is an experimental mode, in which Island takes control of **ALL** apps, both inside and outside Island space. For example, you can freeze any app without cloning it first.
+
+It is highly experimental and not ready for normal users. At present it is only recommended for advanced users who is well understanding what is going on the device and how to deal with unforeseeable troubles.
+
+The limitation in "God mode":
+
+- Google Play Store is not working as expected, apps could not be installed. (We are investigating this issue)
+- App Backup (Cloud backup for app data by Google Play services) will stop working. (We are working on a solution for Android 7.1+)
+
+God mode could only be setup manually. Please refer to the [Manual Setup](/setup.md) for details.
+
 Discussion and feedback
 -----------------------
 
