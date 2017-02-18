@@ -13,7 +13,7 @@ Island takes advantage of the "managed profile" feature on Android 5.0+, which i
 
 App needs to be cloned in Island first. Afterwards, the clone can run parallel aside from the original one. (even with different accounts signed-in) It can be frozen on demand by Island. **(NO ROOT REQUIRED)**
 
-If [Greenify](https://play.google.com/store/apps/details?id=com.oasisfeng.greenify) is also installed, apps can be frozen automatically, just like normal app hibernation in Greenify.
+If [Greenify](https://play.google.com/store/apps/details?id=com.oasisfeng.greenify) is also installed, apps can be frozen automatically by "Auto-freeze with Greenify" action (in the overflow menu), just like normal app hibernation in Greenify.
 
 
 Common use cases
