@@ -109,8 +109,8 @@ public class ApiActivity extends Activity {
 		if (value == null) return false;
 		final int signature_hash = value;
 		if (signature_hash == 0) return true;
-		try { @SuppressLint("PackageManagerGetSignatures")
-			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES);
+		try { @SuppressWarnings("deprecation") @SuppressLint("PackageManagerGetSignatures")
+			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES | PackageManager.GET_UNINSTALLED_PACKAGES);
 			for (final Signature signature : pkg_info.signatures)
 				if (signature.hashCode() != signature_hash) return false;
 			sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
