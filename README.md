@@ -5,6 +5,7 @@ What is "Island"
 
 Isolated app can be frozen on demand, with launcher icon vanish and its background behaviors completely blocked.
 
+
 How does it work
 ----------------
 
@@ -13,6 +14,7 @@ Island takes advantage of the "managed profile" feature on Android 5.0+, which i
 App needs to be cloned in Island first. Afterwards, the clone can run parallel aside from the original one. (even with different accounts signed-in) It can be frozen on demand by Island. (NO ROOT REQUIRED)
 
 Currently, all operations are manual in Island. There's a plan to integrate Greenify with Island to provide automatic freezing feature.
+
 
 Common use cases
 ----------------
@@ -23,6 +25,17 @@ Common use cases
 - **Archive rarely used apps.** Like the first case, keep them frozen until the next time you need it.
 - **Hide your private apps.**
 
+
+Manual setup
+------------
+
+On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may got "incompatible with your device" message on Google Play Store, or be notified during the setup with error message "Sorry, your device (or ROM) is incompatible with Island". In both cases, Island could still work on your device if setup manually.
+
+If you are prompted to encrypt your device first during the setup and you don't want device decription (which may significantly degrade overall I/O performance on low-end devices), this prerequisite could also be skipped if setup manually.
+
+Please refer to [Manual setup](/setup.md) for prerequisites and detailed steps.
+
+
 Experimental God mode
 ---------------------
 
@@ -32,15 +45,19 @@ It is highly experimental and not ready for normal users. At present it is only 
 
 The limitation in "God mode":
 
-- Google Play Store is not working as expected, apps could not be installed. (We are investigating this issue)
-- App Backup (Cloud backup for app data by Google Play services) will stop working. (We are working on a solution for Android 7.1+)
+- Google Play Store is not working as expected, apps could not be installed.  
+(We are investigating this issue)
+- App Backup (Cloud backup for app data by Google Play services) will stop working.  
+(We are working on a solution for Android 7.1+)
 
-God mode could only be setup manually. Please refer to the [Manual Setup](/setup.md) for details.
+God mode could only be [setup manually](/setup.md).
+
 
 Discussion and feedback
 -----------------------
 
 [XDA thread](https://forum.xda-developers.com/android/apps-games/closed-beta-test-incoming-companion-app-t3366295)
+
 
 DISCLAIMER
 ----------
