@@ -49,6 +49,6 @@ Manual setup for Island in experimental God mode
 
 - Execute in ADB shell: ```dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver```
 
-If you get error message in this step, please try execute `settings put global device_provisioned 0` and try above command again, and then `settings put global device_provisioned 1`. (The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.).
+If you get error message in this step, please try executing `settings put global device_provisioned 0` and then above `dpm ...` command again, followed by `settings put global device_provisioned 1`. (The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.).
 
 - Start Island app now and it will work in God mode.
