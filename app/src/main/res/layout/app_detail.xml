@@ -2,8 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:bind="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        xmlns:comment="http://schemas.android.com/tools">
+        xmlns:tools="http://schemas.android.com/tools">
 
     <data>
         <import type="android.content.pm.ApplicationInfo" />
@@ -61,10 +60,21 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:paddingTop="@dimen/margin_small"
-            android:paddingBottom="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@{@string/field_app_id(apps.selection.info.packageName)}"
             tools:text="APP ID: com.oasisfeng.island" />
+
+        <TextView
+            android:id="@+id/debug_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/margin_medium"
+            android:paddingEnd="@dimen/margin_medium"
+            android:paddingTop="@dimen/margin_small"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@{apps.selection.debugInfo}"
+            tools:text="DEBUG INFORMATION"
+            bind:shown="@{BuildConfig.DEBUG}" />
 
     </LinearLayout>
 

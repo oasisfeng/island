@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <defaultsMap>
     <entry>
-        <key>url_cannot_clone</key>
-        <value>http://forum.xda-developers.com/android/apps-games/closed-beta-test-incoming-companion-app-t3366295</value>
+        <key>url_faq</key>
+        <value>https://oasisfeng.github.com/island/faq</value>
     </entry>
     <entry>
-        <key>url_prerequisites</key>
-        <value>http://forum.xda-developers.com/android/apps-games/closed-beta-test-incoming-companion-app-t3366295</value>
+        <key>url_setup</key>
+        <value>https://oasisfeng.github.com/island/setup</value>
     </entry>
 </defaultsMap>

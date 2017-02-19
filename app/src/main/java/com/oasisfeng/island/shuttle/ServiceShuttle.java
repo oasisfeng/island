@@ -14,13 +14,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.BuildConfig;
-import com.oasisfeng.island.model.GlobalStatus;
-import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.ProfileUser;
 
 import java.util.Collections;
@@ -32,7 +29,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
 import static android.content.Intent.FLAG_ACTIVITY_NO_HISTORY;
 import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 /**
  * Bind to service via activity
@@ -42,34 +38,17 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 public class ServiceShuttle extends Activity {
 
 	private static final long SHUTTLED_SERVICE_DISCONNECTION_DELAY = BuildConfig.DEBUG ? 5_000 : 30_000;	// Delay before actual disconnection from shuttled service
-	private static final boolean ALWAYS_USE_SHUTTLE = false;		// For test purpose
+	public static final boolean ALWAYS_USE_SHUTTLE = Boolean.FALSE;		// For test purpose
 
 	public static final String ACTION_BIND_SERVICE = "com.oasisfeng.island.action.BIND_SERVICE";
 	private static final String EXTRA_INTENT = "extra";
 	private static final String EXTRA_SERVICE_CONNECTION = "svc_conn";
 	private static final String EXTRA_FLAGS = "flags";
 
-	/**
-	 * Please delegate the regular {@link Context#bindService(Intent, ServiceConnection, int)} of your components and application to this method.
-	 *
-	 * <pre>@Override public boolean bindService(Intent service, ServiceConnection conn, int flags) {
-	 *     return ServiceShuttle.bindService(this, service, conn, flags) || super.bindService(service, conn, flags);
-	 * }</pre>
-	 */
-	public static boolean bindService(final Context context, final Intent service, final ServiceConnection conn, final int flags) {
-		if (GlobalStatus.profile == null || ! (conn instanceof ShuttleServiceConnection)) return false;
-		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(context, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED)
-			if (Hacks.Context_bindServiceAsUser.invoke(service, conn, flags, GlobalStatus.profile).on(context)) {
-				Log.d(TAG, "Connecting to service in profile: " + service);
-				return true;
-			}
-		return bindServiceViaShuttle(context, service, (ShuttleServiceConnection) conn, flags);
-	}
-
 	private static final int SHUTTLE_ACTIVITY_START_FLAGS = FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK
 			| FLAG_ACTIVITY_NO_USER_ACTION | FLAG_ACTIVITY_NO_ANIMATION | FLAG_ACTIVITY_NO_HISTORY;
 
-	private static boolean bindServiceViaShuttle(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
+	static boolean bindServiceViaShuttle(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
 		if (sPendingUnbind.remove(conn)) {		// Reuse the still connected service, which is pending disconnection.
 			Log.d(TAG, "Reuse service: " + conn);
 			sMainHandler.post(conn::callServiceConnected);
@@ -92,24 +71,11 @@ public class ServiceShuttle extends Activity {
 		}
 	}
 
-	/** Beware: You should pass the <b>base</b> context instead of current context itself as the first parameter,
-	 *  otherwise {@link Context#unbindService(ServiceConnection)} will be called here, causing {@link StackOverflowError} */
-	public static boolean unbindService(final Context context, final ServiceConnection connection) {
-		if (GlobalStatus.profile == null || ! (connection instanceof ShuttleServiceConnection)) return false;
-		if (ALWAYS_USE_SHUTTLE || ActivityCompat.checkSelfPermission(context, Hacks.Permission.INTERACT_ACROSS_USERS) != PERMISSION_GRANTED)
-			return unbindShuttledServiceDelayed((ShuttleServiceConnection) connection);
-		try {
-			context.unbindService(connection);
-			return true;
-		} catch (final IllegalArgumentException e) { return false; }		// IllegalArgumentException: Service not registered
-	}
-
-	private static boolean unbindShuttledServiceDelayed(final ShuttleServiceConnection conn) {
+	static void unbindShuttledServiceDelayed(final ShuttleServiceConnection conn) {
 		Log.v(TAG, "Schedule service unbinding: " + conn);
 		sPendingUnbind.add(conn);
 		sMainHandler.removeCallbacks(sDelayedUnbindAll);
 		sMainHandler.postDelayed(sDelayedUnbindAll, SHUTTLED_SERVICE_DISCONNECTION_DELAY);
-		return true;
 	}
 
 	private static void unbindPendingShuttledServices() {

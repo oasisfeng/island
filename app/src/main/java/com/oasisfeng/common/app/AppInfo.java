@@ -30,8 +30,7 @@ public class AppInfo extends ApplicationInfo {
 
 	protected AppInfo(final AppListProvider provider, final ApplicationInfo base, final @Nullable AppInfo last) {
 		super(base);
-		//noinspection ConstantConditions, context should never be null
-		mContext = provider.getContext();
+		mProvider = provider;
 		mLabel = nonLocalizedLabel != null ? nonLocalizedLabel.toString() : provider.getCachedOrTempLabel(this);
 		if (last != null) {
 			mLastInfo = last;
@@ -56,8 +55,6 @@ public class AppInfo extends ApplicationInfo {
 
 	public AppInfo getLastInfo() { return mLastInfo; }
 
-	@NonNull protected Context context() { return mContext; }
-
 	interface IconFilter {
 		@UiThread Drawable process(Drawable raw_icon);
 	}
@@ -79,7 +76,7 @@ public class AppInfo extends ApplicationInfo {
 		else new AsyncTask<Void, Void, Drawable>() {
 
 			@Override protected Drawable doInBackground(final Void... params) {
-				return need_badge ? loadIcon(mContext.getPackageManager()) : loadUnbadgedIconCompat(mContext.getPackageManager());
+				return need_badge ? loadIcon(context().getPackageManager()) : loadUnbadgedIconCompat(context().getPackageManager());
 			}
 
 			@Override protected void onPostExecute(final Drawable drawable) {
@@ -124,17 +121,21 @@ public class AppInfo extends ApplicationInfo {
 		return dr;
 	}
 
-	@Override public String toString() {
-		final MoreObjects.ToStringHelper string = MoreObjects.toStringHelper(IslandAppInfo.class).add("pkg", packageName);
-		if (! isInstalled()) string.addValue("not installed");
-		if (isSystem()) string.addValue("system");
-		if (! enabled) string.addValue("disabled");
-		return string.toString();
+	@NonNull protected Context context() { return mProvider.context(); }
+
+	@Override public String toString() { return fillToString(MoreObjects.toStringHelper(IslandAppInfo.class)).toString(); }
+
+	protected MoreObjects.ToStringHelper fillToString(final MoreObjects.ToStringHelper helper) {
+		helper.add("pkg", packageName);
+		if (! isInstalled()) helper.addValue("not installed");
+		if (isSystem()) helper.addValue("system");
+		if (! enabled) helper.addValue("disabled");
+		return helper;
 	}
 
+	protected final AppListProvider mProvider;
 	private final String mLabel;
 	private Drawable mCachedIcon;
-	private final @NonNull Context mContext;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;
 }

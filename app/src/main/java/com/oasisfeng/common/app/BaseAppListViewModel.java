@@ -4,6 +4,7 @@ import android.databinding.BaseObservable;
 import android.databinding.Bindable;
 import android.databinding.ObservableList;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.island.BR;
@@ -36,10 +37,14 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 	protected T putApp(final String pkg, final T app) {
 		final T old_app_vm = mAppsByPackage.put(pkg, app);
 		if (old_app_vm != null) {
+			Log.d(TAG, "Update in place: " + pkg);
 			final int index = mApps.indexOf(old_app_vm);
 			mApps.updateItemAt(index, app);
 			if (mSelection == old_app_vm) setSelection(app);	// Keep the selection unchanged
-		} else mApps.add(app);
+		} else {
+			Log.d(TAG, "Put: " + pkg);
+			mApps.add(app);
+		}
 		return app;
 	}
 
@@ -60,6 +65,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		if (pkg == null) return;
 		final T app = mAppsByPackage.remove(pkg);
 		if (app == null) return;
+		Log.d(TAG, "Remove: " + pkg);
 		mApps.remove(app);
 		if (mSelection == app) setSelection(null);
 	}
@@ -75,9 +81,9 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 	}
 
 	protected void setSelection(final T selection) {
-		if (this.mSelection == selection) return;
-		if (this.mSelection != null) this.mSelection.selected.set(false);
-		this.mSelection = selection;
+		if (mSelection == selection) return;
+		if (mSelection != null) mSelection.selected.set(false);
+		mSelection = selection;
 		if (selection != null) selection.selected.set(true);
 		notifyPropertyChanged(BR.selection);
 	}
@@ -85,4 +91,6 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 	protected BaseAppListViewModel(final Class<T> clazz) {
 		mApps = new ObservableSortedList<>(clazz);
 	}
+
+	private static final String TAG = "Island.Apps.Base";
 }

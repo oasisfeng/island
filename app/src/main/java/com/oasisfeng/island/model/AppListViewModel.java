@@ -15,6 +15,7 @@ import android.databinding.Observable;
 import android.databinding.ViewDataBinding;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -24,7 +25,11 @@ import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.AppCompatDrawableManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,6 +40,7 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.BR;
 import com.oasisfeng.island.Config;
@@ -55,6 +61,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import java8.util.Optional;
 import java8.util.function.BooleanSupplier;
 import java8.util.function.Predicate;
 import java8.util.function.Predicates;
@@ -68,8 +75,9 @@ import java8.util.stream.StreamSupport;
  */
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
-	public static final Predicate<IslandAppInfo> NON_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
-	public static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
+	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
+
+	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
@@ -78,12 +86,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 				R.string.description_island,
 				R.drawable.drawer_island,
 				GlobalStatus::hasProfile,
-				app -> Users.isProfile(app.user) && app.isInstalled() && app.shouldTreatAsEnabled()),
+				app -> Users.isProfile(app.user)),
 		Mainland	(R.string.filter_mainland,
 				R.string.description_mainland,
 				R.drawable.drawer_mainland,
 				() -> true,
-				app -> Users.isOwner(app.user) && app.isInstalled()),
+				app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
 		Filter(final @StringRes int label, final @StringRes int description, @DrawableRes int banner, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) {
@@ -99,7 +107,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		public class Entry {
 			Entry(final Context context) { mContext = context; }
 			Predicate<IslandAppInfo> filter() { return mFilter; }
-			public Drawable getBanner() { return AppCompatDrawableManager.get().getDrawable(mContext, mBanner); }
+			public Drawable getBanner() { return ContextCompat.getDrawable(mContext, mBanner);}
 			public String getLabel() { return mContext.getString(mLabel); }
 			public String getDescription() { return mContext.getString(mDescription); }
 			public void onClick() {}
@@ -145,8 +153,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void updateActiveFilters() {
-		final Predicate<IslandAppInfo> primary_with_extras = Predicates.and(mFilterExtras, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		mActiveFilters = mFilterIncludeSystemApps ? primary_with_extras : Predicates.and(primary_with_extras, NON_HIDDEN_SYSTEM);
+		final Predicate<IslandAppInfo> primary_with_shared = Predicates.and(mFilterShared, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
+		mActiveFilters = mFilterIncludeSystemApps ? Predicates.and(primary_with_shared, IslandAppInfo::shouldShowAsEnabled)
+				: Predicates.and(primary_with_shared, NON_HIDDEN_SYSTEM);
 	}
 
 	private void rebuildAppViewModels() {
@@ -163,14 +172,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}});
 	}
 
-	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final int filter_primary_choice) {
+	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
 		mOwnerController = owner_controller;
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
-		mFilterExtras = Predicates.and(IslandAppListProvider.excludeSelf(activity),
-				app -> app.isInstalled() && (Users.isOwner(app.user) || app.shouldTreatAsEnabled()));	// Exclude disabled sys-apps in profile
-		onFilterPrimaryChanged(filter_primary_choice);
+		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
+		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
+				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
+		onFilterPrimaryChanged(filter_primary);
+		layout_manager = new LinearLayoutManager(activity);
+	}
+
+	public void onSaveInstanceState(final Bundle saved) {
+		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mFilterPrimaryChoice);
 	}
 
 	private void updateActions() {
@@ -181,13 +196,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final boolean exclusive = provider.isExclusive(app);
 
-		mActions.findItem(R.id.menu_freeze).setVisible(! app.isHidden() && app.enabled);
-		mActions.findItem(R.id.menu_unfreeze).setVisible(app.isHidden());
+		final boolean is_managed = GlobalStatus.device_owner || ! Users.isOwner(app.user);
+		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
+		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
-		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldTreatAsEnabled()));	// Disabled system app is treated as "removed".
+		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
-		mActions.findItem(R.id.menu_shortcut).setVisible(app.isLaunchable() && app.enabled);
-		mActions.findItem(R.id.menu_greenify).setVisible(app.enabled);
+		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
+		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -208,7 +224,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		updateActions();
 	}
 
-	public final void onItemLaunchIconClick(final View v) {
+	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
 		Analytics.$().event("action_launch").with("package", app.packageName).send();
@@ -243,7 +259,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 			try {
 				final boolean frozen = controller.freezeApp(pkg, "manual");
-				if (! frozen) Toast.makeText(mActivity, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
+				if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
+				else Toast.makeText(mActivity, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
 				refreshAppStateAsSysBugWorkaround(pkg);
 			} catch (final RemoteException ignored) {
 				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
@@ -382,11 +399,16 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
 			Toast.makeText(mActivity, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
-			Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+			if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
+				try {
+					if (mProfileController.unfreezeApp(pkg))
+						app.stopTreatingHiddenSysAppAsDisabled();
+				} catch (final RemoteException ignored) {}    	// FIXME: Error message
+			} else Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
 			Dialogs.buildAlert(mActivity, 0, R.string.dialog_clone_incapable_explanation)
-					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_CANNOT_CLONE_EXPLAINED.get()))
+					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_FAQ.get()))
 					.setPositiveButton(android.R.string.cancel, null).show();
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
@@ -443,7 +465,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		setSelection(clicked != getSelection() ? clicked : null);	// Click the selected one to deselect
 	}
 
-	public final void onBottomSheetClick(final View view) {
+	@SuppressWarnings("MethodMayBeStatic") public final void onBottomSheetClick(final View view) {
 		final BottomSheetBehavior bottom_sheet = BottomSheetBehavior.from(view);
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
 	}
@@ -486,24 +508,18 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		@Override public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {}
 	};
 
-	public final ItemBinder<AppViewModel> item_binder = new ItemBinder<AppViewModel>() {
-
-		@Override public int getLayoutRes(final AppViewModel model) {
-			return R.layout.app_entry;
-		}
-
-		@Override public void onBind(final ViewDataBinding container, final AppViewModel model, final ViewDataBinding item) {
-			item.setVariable(BR.app, model);
-			item.setVariable(BR.apps, ((AppListBinding) container).getApps());
-		}
+	public final ItemBinder<AppViewModel> item_binder = (container, model, item) -> {
+		item.setVariable(BR.app, model);
+		item.setVariable(BR.apps, ((AppListBinding) container).getApps());
 	};
+	public RecyclerView.LayoutManager layout_manager;
 
 	/* Attachable fields */
 	private Activity mActivity;
 	private IIslandManager mOwnerController;
 	private Menu mActions;
 	private List<Filter.Entry> mFilterPrimaryOptions;
-	private Predicate<IslandAppInfo> mFilterExtras;		// All other filters to apply always
+	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
 	/* Parcelable fields */
 	private int mFilterPrimaryChoice;
 	private boolean mFilterIncludeSystemApps;

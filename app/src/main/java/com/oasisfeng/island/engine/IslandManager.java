@@ -1,8 +1,11 @@
 package com.oasisfeng.island.engine;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,6 +26,7 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
@@ -39,14 +43,21 @@ import com.oasisfeng.island.util.Users;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.Map;
 
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
+import static android.Manifest.permission.PACKAGE_USAGE_STATS;
+import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
 import static android.content.Context.DEVICE_POLICY_SERVICE;
+import static android.content.Context.USAGE_STATS_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 
 /**
  * The engine of Island
@@ -185,7 +196,7 @@ public class IslandManager extends IIslandManager.Stub {
 	private boolean ensureInstallNonMarketAppAllowed() {
 		if (Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0) return true;
 		// We cannot directly enable this secure setting on Android 5.0.x.
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return false;
+		if (SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return false;
 
 		mDevicePolicies.setSecureSetting(Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
 		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
@@ -228,6 +239,20 @@ public class IslandManager extends IIslandManager.Stub {
 	@Override public void destroyProfile() {
 		mDevicePolicies.clearCrossProfileIntentFilters();
 		mDevicePolicies.getManager().wipeData(0);
+	}
+
+	@Override public String[] queryUsedPackagesDuring(final long begin_time, final long end_time) {
+		if (ContextCompat.checkSelfPermission(mContext, PACKAGE_USAGE_STATS) != PERMISSION_GRANTED) {
+			if (SDK_INT < M) return new String[0];
+			if (! mDevicePolicies.setPermissionGrantState(mContext.getPackageName(), PACKAGE_USAGE_STATS, PERMISSION_GRANT_STATE_GRANTED))
+				return new String[0];
+		}
+		@SuppressLint("InlinedApi") final UsageStatsManager usm = (UsageStatsManager) mContext.getSystemService(USAGE_STATS_SERVICE); /* hidden but accessible on API 21 */
+		final Map<String, UsageStats> stats = usm.queryAndAggregateUsageStats(begin_time, end_time);
+		if (stats == null) return new String[0];
+		final List<String> used_pkgs = StreamSupport.stream(stats.values()).filter(usage -> usage.getLastTimeUsed() != 0)
+				.map(UsageStats::getPackageName).collect(Collectors.toList());
+		return used_pkgs.toArray(new String[used_pkgs.size()]);
 	}
 
 	public void deactivateDeviceOwner() {
