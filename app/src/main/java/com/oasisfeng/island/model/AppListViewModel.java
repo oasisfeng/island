@@ -9,24 +9,30 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.databinding.Bindable;
 import android.databinding.DataBindingUtil;
 import android.databinding.Observable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.oasisfeng.android.base.Scopes;
@@ -41,6 +47,7 @@ import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
+import com.oasisfeng.island.databinding.AppDrawerItemBinding;
 import com.oasisfeng.island.databinding.AppEntryBinding;
 import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
@@ -75,20 +82,35 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user)),
-		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user)),
+		Island		(R.string.filter_island,
+				R.string.description_island,
+				R.drawable.drawer_island,
+				GlobalStatus::hasProfile,
+				app -> Users.isProfile(app.user)),
+		Mainland	(R.string.filter_mainland,
+				R.string.description_mainland,
+				R.drawable.drawer_mainland,
+				() -> true,
+				app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
-		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
+		Filter(final @StringRes int label, final @StringRes int description, @DrawableRes int banner, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) {
+			mLabel = label; mDescription = description; mBanner = banner; mVisibility = visibility; mFilter = filter;
+		}
 
 		private final @StringRes int mLabel;
+		private final @StringRes int mDescription;
+		private final @DrawableRes int mBanner;
 		private final BooleanSupplier mVisibility;
 		private final Predicate<IslandAppInfo> mFilter;
 
 		public class Entry {
 			Entry(final Context context) { mContext = context; }
 			Predicate<IslandAppInfo> filter() { return mFilter; }
-			@Override public String toString() { return mContext.getString(mLabel); }
+			public Drawable getBanner() { return ContextCompat.getDrawable(mContext, mBanner);}
+			public String getLabel() { return mContext.getString(mLabel); }
+			public String getDescription() { return mContext.getString(mDescription); }
+			public void onClick() {}
 			private final Context mContext;
 		}
 	}
@@ -99,9 +121,32 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return mActiveFilters;
 	}
 
-	public void onFilterPrimaryChanged(final int index) {
+	@Bindable
+	public int getFilterPrimaryChoice() {
+		return mFilterPrimaryChoice;
+	}
+
+	@Bindable
+	public boolean isDeviceOwner() {
+		return GlobalStatus.device_owner;
+	}
+
+	@Bindable
+	public Filter.Entry getFilterEntryPrimaryChoice() {
+		return mFilterPrimaryOptions.get(mFilterPrimaryChoice);
+	}
+
+	public void select(final Filter.Entry entry) {
+		if (!mFilterPrimaryOptions.contains(entry)) throw new IllegalStateException("mFilterPrimaryOptions does not contain this entry:" + entry);
+		int position = mFilterPrimaryOptions.indexOf(entry);
+        onFilterPrimaryChanged(position);
+	}
+
+	private void onFilterPrimaryChanged(final int index) {
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
+        notifyPropertyChanged(BR.filterPrimaryChoice);
+		notifyPropertyChanged(BR.filterEntryPrimaryChoice);
 		updateActiveFilters();
 		rebuildAppViewModels();
 	}
@@ -110,6 +155,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterIncludeSystemApps = should_include;
 		updateActiveFilters();
 		rebuildAppViewModels();
+	}
+
+	public void onDestroyClick() {
+		mAppListAction.onDestroyClick();
 	}
 
 	private void updateActiveFilters() {
@@ -132,7 +181,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}});
 	}
 
-	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final Bundle saved_state) {
+	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final LinearLayout drawerFilter, final Bundle saved_state) {
 		mActivity = activity;
 		mOwnerController = owner_controller;
 		mActions = actions;
@@ -140,6 +189,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
+		StreamSupport.stream(mFilterPrimaryOptions).forEach((entry) -> {
+			AppDrawerItemBinding binding = AppDrawerItemBinding.inflate(LayoutInflater.from(mActivity));
+			binding.setApps(this);
+            binding.setEntry(entry);
+			drawerFilter.addView(binding.getRoot());
+		});
 		onFilterPrimaryChanged(filter_primary);
 		layout_manager = new LinearLayoutManager(activity);
 	}
@@ -434,6 +489,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
 	}
 
+	@Bindable
 	public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
 		return mFilterPrimaryOptions;
 	}
@@ -457,6 +513,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		@Override public AppListViewModel[] newArray(final int size) { return new AppListViewModel[size]; }
 	};
 
+	public void setAppListAction(IAppListAction action) {
+		mAppListAction = action;
+	}
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
@@ -485,6 +544,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/* Transient fields */
 	public transient IIslandManager mProfileController;
 	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
+    private IAppListAction mAppListAction;
 
 	private static final String TAG = "Island.Apps";
+
+	public interface IAppListAction {
+
+		void onDestroyClick();
+
+	}
+
 }
