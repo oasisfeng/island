@@ -32,20 +32,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="?android:attr/actionBarSize"
                     android:background="?android:attr/colorPrimary"
-                    android:title="@{(apps.filterPrimaryChoice == 1) ? @string/filter_mainland : @string/filter_island}"
+                    android:title="@{apps.filterEntryPrimaryChoice.label}"
                     android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-                    android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
+                    android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
 
-                    <!--
-                    <Spinner
-                        android:id="@+id/filters"
-                        android:entries="@{apps.filterPrimaryOptions}"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
-                        -->
-
-                </Toolbar>
             </RelativeLayout>
 
             <android.support.v7.widget.RecyclerView
@@ -58,6 +48,7 @@
                 android:paddingEnd="-16dp"
                 android:clipToPadding="false"
                 android:background="@color/background"
+                bind:elevationChangeOnScroll="@{true}"
                 bind:layoutManager="@{apps.layout_manager}"
                 bind:items="@{apps.items}"
                 bind:item_binder="@{apps.item_binder}"

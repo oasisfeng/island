@@ -21,7 +21,7 @@
         <ImageView
             android:id="@+id/banner"
             android:importantForAccessibility="no"
-            bind:animatedSrc="@{apps.filterEntryPrimaryChoice.getBanner()}"
+            bind:animatedSrc="@{apps.filterEntryPrimaryChoice.banner}"
             android:scaleType="fitXY"
             android:background="@android:color/background_light"
             android:elevation="4dp"
@@ -29,42 +29,36 @@
             android:layout_width="match_parent"
             android:layout_height="186dp"/>
 
-        <ImageButton
-            android:id="@+id/settings"
-            android:src="@drawable/ic_settings_24dp"
-            android:elevation="6dp"
-            android:alpha="0.8"
+        <TextView
+            android:id="@+id/destroy"
+            android:onClick="@{() -> apps.onDestroyClick()}"
+            tools:text="@string/menu_deactivate_island"
+            android:text="@{apps.deviceOwner ? @string/menu_deactivate_island : @string/menu_destroy_island}"
+            android:drawableStart="@drawable/ic_exit_24dp"
+            android:drawablePadding="8dp"
+            android:clickable="true"
+            android:elevation="4dp"
             android:background="@android:color/background_light"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_alignParentBottom="true"
-            app:fitSystemMarginBottom="true"
-            android:contentDescription="@string/drawer_button_settings"/>
+            app:fitSystemMarginBottom="true"/>
 
         <ScrollView
             android:layout_below="@id/banner"
-            android:layout_above="@id/settings"
+            android:layout_above="@id/destroy"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
             <LinearLayout
+                android:id="@+id/drawer_filter"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <include
-                    android:id="@+id/drawer_item_mainland"
-                    layout="@layout/app_drawer_item"
-                    bind:apps="@{apps}"
-                    bind:entry="@{apps.getFilterPrimaryOptions().get(0)}" />
-
-                <include
-                    android:id="@+id/drawer_item_island"
-                    layout="@layout/app_drawer_item"
-                    bind:apps="@{apps}"
-                    bind:entry="@{apps.getFilterPrimaryOptions().get(1)}" />
-
-            </LinearLayout>
+                android:layout_height="wrap_content"/>
 
         </ScrollView>
 

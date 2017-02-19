@@ -29,7 +29,6 @@ public class AnimateElevationAdapter {
     @BindingAdapter("elevationChangeOnScroll")
     public static void setAnimator(final View view, final boolean enabled) {
         if (!enabled) return;
-        if (Build.VERSION.SDK_INT < LOLLIPOP) return;
         if (view instanceof RecyclerView) {
             registerRecyclerView((RecyclerView) view);
         } else {
@@ -57,7 +56,6 @@ public class AnimateElevationAdapter {
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private static void registerAnimationView(final View view) {
         final BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
