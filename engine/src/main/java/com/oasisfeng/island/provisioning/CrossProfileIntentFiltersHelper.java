@@ -20,7 +20,7 @@ import android.content.IntentFilter;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
 
-import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.util.DevicePolicies;
 
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH;
@@ -38,8 +38,8 @@ public class CrossProfileIntentFiltersHelper {
 		void addCrossProfileIntentFilter(IntentFilter filter, int user, int parent_user, int flags);
 	}
 
-	public static void setFilters(final IslandManager island) {
-		setFilters((filter, u, p, f) -> island.enableForwarding(filter, FLAG_PARENT_CAN_ACCESS_MANAGED), 0, 0);
+	public static void setFilters(final DevicePolicies policies) {
+		setFilters((filter, u, p, f) -> policies.addCrossProfileIntentFilter(filter, FLAG_PARENT_CAN_ACCESS_MANAGED), 0, 0);
 	}
 
 	public static void setFilters(PackageManager pm, int parentUserId, int managedProfileUserId) {

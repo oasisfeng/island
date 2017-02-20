@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.databinding.Observable;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -139,8 +141,14 @@ public class AppListFragment extends Fragment {
 		mBinding.setApps(mViewModel);
 		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-		mViewModel.attach(getActivity(), mIslandManager, mBinding.details.toolbar.getMenu(), saved_state);
-		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+		if (! Services.bind(getActivity(), IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
+			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
+				mViewModel.attach(getActivity(), IIslandManager.Stub.asInterface(service), mBinding.details.toolbar.getMenu(), saved_state);
+				mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+			}
+
+			@Override public void onServiceDisconnected(final ComponentName name) {}
+		})) throw new IllegalStateException("Module engine not installed");
 
 		getActivity().setActionBar(mBinding.appbar);
 		final ActionBar actionbar = getActivity().getActionBar();
@@ -154,6 +162,14 @@ public class AppListFragment extends Fragment {
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
 		});
 		return mBinding.getRoot();
+	}
+
+	@Override public void onDestroyView() {
+		if (mIslandManagerConnection != null) {
+			getActivity().unbindService(mIslandManagerConnection);
+			mIslandManagerConnection = null;
+		}
+		super.onDestroyView();
 	}
 
 	@Override public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
@@ -186,7 +202,8 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
 		super.onSaveInstanceState(out_state);
-		out_state.putParcelable(STATE_KEY_RECYCLER_VIEW, mBinding.appList.getLayoutManager().onSaveInstanceState());
+		final RecyclerView.LayoutManager layout_manager = mBinding.appList.getLayoutManager();
+		if (layout_manager != null) out_state.putParcelable(STATE_KEY_RECYCLER_VIEW, layout_manager.onSaveInstanceState());
 		mViewModel.onSaveInstanceState(out_state);
 	}
 
@@ -253,6 +270,7 @@ public class AppListFragment extends Fragment {
 	private AppListBinding mBinding;
 	private boolean mIsDeviceOwner;
 	private ShuttleContext mShuttleContext;
+	private ServiceConnection mIslandManagerConnection;
 
 	private static final String TAG = "Island.AppsUI";
 }

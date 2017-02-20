@@ -2,14 +2,14 @@ package com.oasisfeng.island.provisioning;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+import android.content.pm.LauncherApps;
+import android.os.UserHandle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -19,21 +19,19 @@ import com.google.firebase.provider.FirebaseInitProvider;
 import com.oasisfeng.android.Manifest;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
-import com.oasisfeng.island.MainActivity;
-import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.R;
 import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
+import com.oasisfeng.island.shuttle.ServiceShuttleActivity;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
-import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Modules;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
-import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
-import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
-import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
@@ -44,7 +42,6 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.UserManager.ALLOW_PARENT_PROFILE_APP_LINKING;
 
 /**
@@ -62,35 +59,7 @@ public class IslandProvisioning {
 	 */
 	private static final String PREF_KEY_PROVISION_STATE = "provision.state";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
-	private static final int POST_PROVISION_REV = 7;
-
-	public static boolean isEncryptionRequired() {
-		return SDK_INT < N
-				&& ! Hacks.SystemProperties_getBoolean.invoke("persist.sys.no_req_encrypt", false).statically();
-	}
-
-	public static boolean isDeviceEncrypted(final Context context) {
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-		final int status = dpm.getStorageEncryptionStatus();
-		return status == ENCRYPTION_STATUS_ACTIVE // TODO: || (SDK_INT >= N && StorageManager.isEncrypted())
-				|| (SDK_INT >= M && status == ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
-	}
-
-	/**
-	 * Initiates the managed profile provisioning. If we already have a managed profile set up on
-	 * this device, we will get an error dialog in the following provisioning phase.
-	 */
-	public static boolean provisionManagedProfile(final @NonNull Fragment fragment, final int request_code) {
-		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
-		if (SDK_INT >= M) {
-			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(fragment.getActivity(), IslandDeviceAdminReceiver.class));
-			intent.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
-		} else //noinspection deprecation
-			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, fragment.getActivity().getPackageName());
-		if (intent.resolveActivity(fragment.getActivity().getPackageManager()) == null) return false;
-		fragment.startActivityForResult(intent, request_code);
-		return true;
-	}
+	private static final int POST_PROVISION_REV = 8;
 
 	private static void provisionDeviceOwner(final @NonNull Activity activity, final int request_code) {
 		final Intent intent;
@@ -112,22 +81,34 @@ public class IslandProvisioning {
 	@SuppressLint("CommitPrefEdits") public static void onProfileProvisioningComplete(final Context context) {
 		Log.d(TAG, "onProfileProvisioningComplete");
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).commit();
-		startProfileOwnerPostProvisioning(context, new IslandManager(context));
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).apply();
+		startProfileOwnerPostProvisioning(context, new IslandManagerService(context), new DevicePolicies(context));
 		disableLauncherActivity(context);
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
-		MainActivity.startAsUser(context, GlobalStatus.OWNER);
+		launchMainActivityAsUser(context, GlobalStatus.OWNER);
 	}
 
-	private static void disableLauncherActivity(final Context context) {
-		setComponentEnabledSetting(context, MainActivity.class, false);		// To mark the finish of post-provisioning
+	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
+		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		final ComponentName activity = Modules.getMainLaunchActivity(context);
+		if (! apps.isActivityEnabled(activity, user)) return false;
+		apps.startMainActivity(activity, user, null, null);
+		return true;
+	}
+
+	private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning
+		try {
+			context.getPackageManager().setComponentEnabledSetting(Modules.getMainLaunchActivity(context), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		} catch (final SecurityException e) {
+			// FIXME: No permission to alter another module.
+		}
 	}
 
 	/** This method always runs in managed profile */
 	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
-		final IslandManager island = new IslandManager(context);
-		if (GlobalStatus.running_in_owner && island.isDeviceOwner()) return;	// Do nothing for device owner
+		final IslandManagerService island = new IslandManagerService(context);
+		if (GlobalStatus.running_in_owner && new IslandManager(context).isDeviceOwner()) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
 		if (state >= POST_PROVISION_REV) return;	// Already provisioned (revision up to date)
@@ -145,9 +126,10 @@ public class IslandProvisioning {
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
-		island.resetForwarding();
-		ProfileOwnerSystemProvisioning.start(island);	// Simulate the stock managed profile provision
-		startProfileOwnerPostProvisioning(context, island);
+		final DevicePolicies policies = new DevicePolicies(context);
+		policies.clearCrossProfileIntentFilters();
+		ProfileOwnerSystemProvisioning.start(policies);	// Simulate the stock managed profile provision
+		startProfileOwnerPostProvisioning(context, island, policies);
 		disableLauncherActivity(context);
 
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
@@ -158,10 +140,14 @@ public class IslandProvisioning {
 	 *
 	 * <p>{@link #POST_PROVISION_REV} must be increased if anything new is added in this method
 	 */
-	private static void startProfileOwnerPostProvisioning(final Context context, final IslandManager island) {
+	private static void startProfileOwnerPostProvisioning(final Context context, final IslandManagerService island, final DevicePolicies policies) {
 		new SystemAppsManager(context, island).prepareSystemApps();
-		island.enableProfile();
-		enableAdditionalForwarding(island);
+		Log.d(TAG, "Enable profile now.");
+		policies.setProfileName(context.getString(R.string.profile_name));
+		// Enable the profile here, launcher will show all apps inside.
+		policies.setProfileEnabled();
+
+		enableAdditionalForwarding(policies);
 
 		if (SDK_INT >= M) {
 			final DevicePolicies dpm = new DevicePolicies(context);
@@ -175,17 +161,17 @@ public class IslandProvisioning {
 		launchpad_filter.addDataScheme("target");
 		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
 		launchpad_filter.addCategory(Intent.CATEGORY_LAUNCHER);
-		island.enableForwarding(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare ServiceShuttle
-		setComponentEnabledSetting(context, ServiceShuttle.class, true);
-		island.enableForwarding(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		setComponentEnabledSetting(context, ServiceShuttleActivity.class, true);
+		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
 		setComponentEnabledSetting(context, ApiActivity.class, true);
-		island.enableForwarding(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
-		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
-		island.enableForwarding(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Disable Firebase (to improve process initialization performance)
 		setComponentEnabledSetting(context, FirebaseInitProvider.class, false);
@@ -196,33 +182,15 @@ public class IslandProvisioning {
 		context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, clazz), new_state, DONT_KILL_APP);
 	}
 
-	private static void enableAdditionalForwarding(final IslandManager island) {
+	private static void enableAdditionalForwarding(final DevicePolicies policies) {
 		// For sharing across Island (bidirectional)
-		island.enableForwarding(new IntentFilter(Intent.ACTION_SEND), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+		policies.addCrossProfileIntentFilter(new IntentFilter(Intent.ACTION_SEND), FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
 		// For web browser
 		final IntentFilter browser = new IntentFilter(Intent.ACTION_VIEW);
 		browser.addCategory(Intent.CATEGORY_BROWSABLE);
 		browser.addDataScheme("http"); browser.addDataScheme("https"); browser.addDataScheme("ftp");
-		island.enableForwarding(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
+		policies.addCrossProfileIntentFilter(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
 	}
-
-	public static int getMaxSupportedUsers() {
-		final Integer max_users = Hacks.SystemProperties_getInt.invoke("fw.max_users", - 1).statically();
-		if (max_users != null && max_users != -1) {
-			Analytics.$().setProperty("sys_prop.fw.max_users", max_users.toString());
-			return max_users;
-		}
-
-		final Resources sys_res = Resources.getSystem();
-		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
-		if (res != 0) {
-			final int sys_max_users = Resources.getSystem().getInteger(res);
-			Analytics.$().setProperty("sys_res." + RES_MAX_USERS, String.valueOf(sys_max_users));
-			return sys_max_users;
-		}
-		return 1;
-	}
-	private static final String RES_MAX_USERS = "config_multiuserMaximumUsers";
 
 	private IslandProvisioning() {}
 

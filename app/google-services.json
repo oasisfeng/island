@@ -49,6 +49,37 @@
           "status": 2
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:300744183229:android:26c51e4914d62dbd",
+        "android_client_info": {
+          "package_name": "com.oasisfeng.island.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "300744183229-3l3o615c7vgr6c7potuidccel5df9ngd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG-iZrDa_sYGMCF2nieBYUFGmShCC8lZI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
     }
   ],
   "configuration_version": "1"

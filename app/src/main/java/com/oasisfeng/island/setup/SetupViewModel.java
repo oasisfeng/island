@@ -6,11 +6,14 @@ import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.text.TextUtils;
 import android.util.Log;
@@ -21,11 +24,17 @@ import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.provisioning.IslandProvisioning;
+import com.oasisfeng.island.util.DeviceAdmins;
+import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Modules;
 
 import eu.chainfire.libsuperuser.Shell;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
+import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
+import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -36,6 +45,8 @@ import static android.os.Build.VERSION_CODES.N;
  * Created by Oasis on 2016/4/19.
  */
 public class SetupViewModel implements Parcelable {
+
+	private static final String RES_MAX_USERS = "config_multiuserMaximumUsers";
 
 	private static final int REQUEST_PROVISION_MANAGED_PROFILE = 1;
 
@@ -66,16 +77,16 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(activity, R.string.error_reason_low_ram);
 
 		if (SDK_INT < M) {
-			final int max_users = IslandProvisioning.getMaxSupportedUsers();
+			final int max_users = getMaxSupportedUsers();
 			if (max_users < 2) return buildErrorVM(activity, R.string.error_reason_multi_user_not_allowed);
 		}
 
 		// TODO Analytics.$().event("profile_owner_existent").with("package", profile_owner.getPackageName()).with("label", owner_label).send();
 
-		final boolean is_encryption_required = IslandProvisioning.isEncryptionRequired();
-		if (Analytics.$().setProperty("encryption_required", is_encryption_required)
-				&& ! Analytics.$().setProperty("encrypted_already", IslandProvisioning.isDeviceEncrypted(activity))) {
-			if (button_extra == R.string.button_instructions_online) {		// Next is clicked in this step
+		final boolean encryption_required = isEncryptionRequired();
+		if (Analytics.$().setProperty("encryption_required", encryption_required)
+				&& ! Analytics.$().setProperty("encrypted_already", isDeviceEncrypted(activity))) {
+			if (button_extra == R.string.button_instructions_online) {        // Next is clicked in this step
 				new AsyncTask<Void, Void, Void>() {
 					@Override protected Void doInBackground(final Void... params) {
 						try {
@@ -87,7 +98,7 @@ public class SetupViewModel implements Parcelable {
 					}
 
 					@Override protected void onPostExecute(final Void ignored) {
-						if (is_encryption_required && ! IslandProvisioning.isEncryptionRequired())
+						if (encryption_required && ! isEncryptionRequired())
 							Analytics.$().event("encryption_skipped").send();
 						setup(fragment);
 					}
@@ -105,6 +116,17 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(activity, R.string.error_reason_managed_profile_not_supported);
 
 		return null;
+	}
+
+	private static boolean isEncryptionRequired() {
+		return SDK_INT < N && ! Hacks.SystemProperties_getBoolean.invoke("persist.sys.no_req_encrypt", false).statically();
+	}
+
+	private static boolean isDeviceEncrypted(final Context context) {
+		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+		final int status = dpm.getStorageEncryptionStatus();
+		return status == ENCRYPTION_STATUS_ACTIVE // TODO: || (SDK_INT >= N && StorageManager.isEncrypted())
+				|| (SDK_INT >= M && status == ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
 	}
 
 	public static void onExtraButtonClick(final View v) {
@@ -128,7 +150,7 @@ public class SetupViewModel implements Parcelable {
 
 	private static boolean setup(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
-		final boolean result = IslandProvisioning.provisionManagedProfile(fragment, REQUEST_PROVISION_MANAGED_PROFILE);
+		final boolean result = provisionManagedProfile(fragment, REQUEST_PROVISION_MANAGED_PROFILE);
 		if (result && SDK_INT < M) activity.finish();		// No activity result on Android 5.x, thus we have to finish the activity now.
 		return result;
 	}
@@ -139,6 +161,36 @@ public class SetupViewModel implements Parcelable {
 		next.button_next = -1;
 		next.button_extra = R.string.button_learn_more_online;
 		return next;
+	}
+
+	/** Initiates the managed profile provisioning */
+	private static boolean provisionManagedProfile(final @NonNull Fragment fragment, final int request_code) {
+		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
+		if (SDK_INT >= M) {
+			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(fragment.getContext()));
+			intent.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
+		} else //noinspection deprecation
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
+		if (intent.resolveActivity(fragment.getActivity().getPackageManager()) == null) return false;
+		fragment.startActivityForResult(intent, request_code);
+		return true;
+	}
+
+	private static int getMaxSupportedUsers() {
+		final Integer max_users = Hacks.SystemProperties_getInt.invoke("fw.max_users", - 1).statically();
+		if (max_users != null && max_users != -1) {
+			Analytics.$().setProperty("sys_prop.fw.max_users", max_users.toString());
+			return max_users;
+		}
+
+		final Resources sys_res = Resources.getSystem();
+		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
+		if (res != 0) {
+			final int sys_max_users = Resources.getSystem().getInteger(res);
+			Analytics.$().setProperty("sys_res." + RES_MAX_USERS, String.valueOf(sys_max_users));
+			return sys_max_users;
+		}
+		return 1;
 	}
 
 	private static CharSequence readOwnerLabel(final Context context, final ComponentName owner) {

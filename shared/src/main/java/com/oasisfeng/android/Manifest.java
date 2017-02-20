@@ -1,6 +1,8 @@
 package com.oasisfeng.android;
 
 /**
+ * Manifest-related stuffs
+ *
  * Created by Oasis on 2016/11/17.
  */
 public class Manifest {

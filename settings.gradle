@@ -1,2 +1,2 @@
-include ':app', ':deagle'
+include 'engine', ':app', 'shared', ':deagle'
 project(':deagle').projectDir = new File(settingsDir, '../deagle/library')

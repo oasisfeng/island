@@ -5,17 +5,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.hack.Hack;
 
-import java.util.List;
-
-import static android.app.admin.DeviceAdminReceiver.ACTION_DEVICE_ADMIN_ENABLED;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 
@@ -138,16 +133,7 @@ public class DevicePolicies {
 
 	private static ComponentName getDeviceAdminComponent(final Context context) {
 		if (sCachedComponent != null) return sCachedComponent;
-		return sCachedComponent = detectDeviceAdminComponent(context);
-	}
-
-	private static ComponentName detectDeviceAdminComponent(final Context context) {
-		final List<ResolveInfo> receivers = context.getPackageManager().queryBroadcastReceivers(
-				new Intent(ACTION_DEVICE_ADMIN_ENABLED).setPackage(context.getPackageName()), 0);
-		if (receivers.isEmpty()) throw new IllegalStateException("No device admin component detected");
-		if (receivers.size() > 1) throw new IllegalStateException("Multiple device admin components detected");
-		final ActivityInfo receiver = receivers.get(0).activityInfo;
-		return new ComponentName(receiver.packageName, receiver.name);
+		return sCachedComponent = DeviceAdmins.getComponentName(context);
 	}
 
 	private final DevicePolicyManager mDevicePolicyManager;

@@ -1,0 +1,90 @@
+package com.oasisfeng.island.shuttle;
+
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import com.oasisfeng.android.app.Activities;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
+import static android.content.Intent.FLAG_ACTIVITY_NO_HISTORY;
+import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
+
+/**
+ * Mechanism create binding from owner user to service in profile, via a proxy activity.
+
+ * Created by Oasis on 2017/2/20.
+ */
+public class ServiceShuttle {
+
+	public static final String ACTION_BIND_SERVICE = "com.oasisfeng.island.action.BIND_SERVICE";
+	static final String EXTRA_INTENT = "extra";
+	static final String EXTRA_SERVICE_CONNECTION = "svc_conn";
+	static final String EXTRA_FLAGS = "flags";
+
+	private static final int SHUTTLE_ACTIVITY_START_FLAGS = FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK
+			| FLAG_ACTIVITY_NO_USER_ACTION | FLAG_ACTIVITY_NO_ANIMATION | FLAG_ACTIVITY_NO_HISTORY;
+	private static final long SHUTTLED_SERVICE_DISCONNECTION_DELAY = 5_000;	// Delay before actual disconnection from shuttled service
+
+	static boolean bindServiceViaShuttle(final Context context, final Intent service, final ShuttleServiceConnection conn, final int flags) {
+		if (sPendingUnbind.remove(conn)) {		// Reuse the still connected service, which is pending disconnection.
+			Log.d(TAG, "Reuse service: " + conn);
+			sMainHandler.post(conn::callServiceConnected);
+			return true;
+		}
+
+		@SuppressWarnings("deprecation") final ResolveInfo resolve = context.getPackageManager().resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
+		if (resolve == null) return false;		// Unresolvable even in disabled services
+		final Bundle extras = new Bundle(); extras.putBinder(EXTRA_SERVICE_CONNECTION, conn.createDispatcher());
+		try {
+			final Activity activity = Activities.findActivityFrom(context);
+			if (activity != null) activity.overridePendingTransition(0, 0);
+
+			Activities.startActivity(context, new Intent(ACTION_BIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS).putExtras(extras)
+					.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags));
+			Log.d(TAG, "Connecting to service in profile (via shuttle): " + service);
+			return true;
+		} catch (final ActivityNotFoundException e) {
+			return false;		// ServiceShuttle not ready in managed profile
+		}
+	}
+
+	static void unbindShuttledServiceDelayed(final ShuttleServiceConnection conn) {
+		Log.v(TAG, "Schedule service unbinding: " + conn);
+		sPendingUnbind.add(conn);
+		sMainHandler.removeCallbacks(sDelayedUnbindAll);
+		sMainHandler.postDelayed(sDelayedUnbindAll, SHUTTLED_SERVICE_DISCONNECTION_DELAY);
+	}
+
+	private static void unbindPendingShuttledServices() {
+		synchronized (sPendingUnbind) {
+			for (final ShuttleServiceConnection conn : sPendingUnbind) try {
+				Log.d(TAG, "Unbind service: " + conn);
+				final boolean result = conn.unbind();
+				if (! result) Log.w(TAG, "Remote service died before unbinding: " + conn);
+			} catch (final RuntimeException e) {
+				Log.e(TAG, "Error unbinding" + conn, e);
+			}
+			sPendingUnbind.clear();
+		}
+	}
+
+	private static final Set<ShuttleServiceConnection> sPendingUnbind = Collections.synchronizedSet(new HashSet<>());
+	private static final Handler sMainHandler = new Handler(Looper.getMainLooper());
+	private static final Runnable sDelayedUnbindAll = ServiceShuttle::unbindPendingShuttledServices;
+
+	private static final String TAG = "Shuttle";
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Island - Engine</string>
+    <string name="profile_name">Island</string>
+
+    <string name="notification_standby_text">Standby</string>
+    <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
+</resources>

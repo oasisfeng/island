@@ -18,7 +18,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
 import com.oasisfeng.island.BuildConfig;
-import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.engine.IslandManagerService;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,6 +147,6 @@ public class ApiActivity extends Activity {
 		finish();
 	}
 
-	private final Supplier<IslandManager> mIslandManager = Suppliers.memoize(() -> new IslandManager(this));
+	private final Supplier<IslandManagerService> mIslandManager = Suppliers.memoize(() -> new IslandManagerService(this));
 	private static final String TAG = "API";
 }

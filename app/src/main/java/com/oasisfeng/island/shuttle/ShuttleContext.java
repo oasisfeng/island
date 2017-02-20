@@ -24,7 +24,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
  */
 public class ShuttleContext extends ContextWrapper {
 
-	public static final boolean ALWAYS_USE_SHUTTLE = ServiceShuttle.ALWAYS_USE_SHUTTLE;
+	public static final boolean ALWAYS_USE_SHUTTLE = Boolean.FALSE;		// For test purpose
 
 	public ShuttleContext(final Context base) { super(base); }
 

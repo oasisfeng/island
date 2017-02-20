@@ -20,11 +20,6 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.oasisfeng.island.R;
-import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
@@ -35,10 +30,12 @@ import java.util.List;
  *
  * Created by Oasis on 2016/4/22.
  */
-public class AppLaunchShortcut extends Activity {
+public abstract class AppLaunchShortcut extends Activity {
 
 	public static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
 	private static final String ACTION_LAUNCH_APP = "com.oasisfeng.island.action.LAUNCH_APP";
+
+	protected abstract boolean prepareToLaunchApp(final ComponentName component);
 
 	public static boolean createOnLauncher(final Context context, final String pkg, final boolean owner) {
 		try {
@@ -83,16 +80,13 @@ public class AppLaunchShortcut extends Activity {
 
 	/** Runs in managed profile or device owner */
 	private boolean launchApp(final Intent intent) {
-		final IslandManager island = new IslandManager(this);
-		final UserHandle user = Process.myUserHandle();
-		if (Users.isOwner(user) && ! island.isDeviceOwner()) return false;
 		final Uri uri = intent.getData();
 		if (uri == null) return false;
 
-		// Ensure de-frozen
 		final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
-		island.unfreezeApp(component.getPackageName());
+		if (! prepareToLaunchApp(component)) return false;
 
+		final UserHandle user = Process.myUserHandle();
 		final LauncherApps launcher = (LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE);
 		try {
 			launcher.startMainActivity(component, user, intent.getSourceBounds(), null);
@@ -120,8 +114,10 @@ public class AppLaunchShortcut extends Activity {
 		final String action = intent.getAction();
 		if (! ACTION_LAUNCH_APP.equals(action) && ! ACTION_LAUNCH_CLONE.equals(action)) return;
 		if (! launchApp(intent))
-			Toast.makeText(this, R.string.toast_shortcut_invalid, Toast.LENGTH_LONG).show();
+			onLaunchFailed();
 	}
+
+	protected abstract void onLaunchFailed();
 
 	private static Bitmap drawableToBitmap(final Drawable d) {
 		if (d instanceof BitmapDrawable)

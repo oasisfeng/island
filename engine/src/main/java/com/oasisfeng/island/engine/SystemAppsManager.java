@@ -191,12 +191,12 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 		}
 	}
 
-	public SystemAppsManager(final Context context, final IslandManager island) {
+	public SystemAppsManager(final Context context, final IslandManagerService island) {
 		mContext = context;
 		mIslandManager = island;
 	}
 
 	private final Context mContext;
-	private final IslandManager mIslandManager;
+	private final IslandManagerService mIslandManager;
 	private static final String TAG = "Island.SysApps";
 }

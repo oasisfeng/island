@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.oasisfeng.island.shared">
+
+    <application>
+
+        <provider android:authorities="${applicationId}.users"
+                  android:name="com.oasisfeng.island.util.Users"
+                  android:exported="false"
+                  android:multiprocess="true" />
+
+        <provider android:authorities="${applicationId}.analytics"
+                  android:name="com.oasisfeng.island.analytics.Analytics"
+                  android:exported="false" />
+
+    </application>
+
+</manifest>

@@ -134,6 +134,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
+		layout_manager = new LinearLayoutManager(activity);
 		mOwnerController = owner_controller;
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
@@ -141,7 +142,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
 		onFilterPrimaryChanged(filter_primary);
-		layout_manager = new LinearLayoutManager(activity);
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {

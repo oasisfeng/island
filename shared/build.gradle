@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
@@ -6,23 +6,10 @@ android {
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "com.oasisfeng.island.mobile"
         minSdkVersion 21
         targetSdkVersion 25
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
-    }
-
-    dataBinding {
-        enabled true
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
     }
 
     compileOptions {
@@ -39,25 +26,24 @@ android {
     }
 
     // Enable lint checking in all build variants.
-    applicationVariants.all { variant ->
+    libraryVariants.all { variant ->
         variant.outputs.each { output ->
             def lintTask = tasks["lint${variant.name.capitalize()}"]
             output.assemble.dependsOn lintTask
         }
     }
-
-    repositories.flatDir {
-        dirs 'libs'
-    }
 }
 
 dependencies {
-    compile project(':shared')
-    compile 'com.android.support:design:25.1.1'
-    compile 'com.google.firebase:firebase-config:9.0.2'
-    compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
-    compile(name: 'setup-wizard-lib-platform-release', ext: 'aar')
+    compile project(':deagle')
+    compile 'com.google.guava:guava:19.0'
+    compile 'net.sourceforge.streamsupport:streamsupport:1.5.3'
+    compile 'org.jetbrains:annotations:13.0'
+    compile 'com.google.firebase:firebase-analytics:9.0.2'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    androidTestCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support:support-annotations:25.1.1'     // Resolve the dependency conflict
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test:rules:0.5'
 }
-
-// Must be at the bottom of this file
-apply plugin: 'com.google.gms.google-services'

@@ -1,30 +1,23 @@
 package com.oasisfeng.island.engine;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Service;
-import android.app.admin.DevicePolicyManager;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
-import android.os.RemoteException;
-import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -33,15 +26,11 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
-import com.oasisfeng.island.util.Hacks;
-import com.oasisfeng.island.util.Users;
 
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 
@@ -50,9 +39,7 @@ import java8.util.stream.StreamSupport;
 
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
-import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USAGE_STATS_SERVICE;
-import static android.content.Context.USER_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -64,12 +51,9 @@ import static android.os.Build.VERSION_CODES.M;
  *
  * Created by Oasis on 2016/4/5.
  */
-public class IslandManager extends IIslandManager.Stub {
+public class IslandManagerService extends IIslandManager.Stub {
 
-	public static final IIslandManager NULL = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class},
-			(proxy, method, args) -> { throw new RemoteException("Not connected yet"); });
-
-	public IslandManager(final Context context) {
+	public IslandManagerService(final Context context) {
 		mContext = context;
 		mDevicePolicies = new DevicePolicies(context);
 		mLauncherApps = Suppliers.memoize(() -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE));
@@ -96,14 +80,6 @@ public class IslandManager extends IIslandManager.Stub {
 	@Override public boolean unfreezeApp(final String pkg) {
 		Log.i(TAG, "Defreeze: " + pkg);
 		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
-	}
-
-	public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
-		final LauncherApps launcher_apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-		final List<LauncherActivityInfo> activities = launcher_apps.getActivityList(pkg, profile);
-		if (activities == null || activities.isEmpty()) return false;
-		launcher_apps.startMainActivity(activities.get(0).getComponentName(), profile, null, null);
-		return true;
 	}
 
 	@Override public boolean launchApp(final String pkg) {
@@ -134,29 +110,20 @@ public class IslandManager extends IIslandManager.Stub {
 		try { @SuppressWarnings({"WrongConstant", "deprecation"})
 			final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 			return cloneApp(info, do_it);
-		} catch (final PackageManager.NameNotFoundException ignored) { return CLONE_RESULT_NOT_FOUND; }
+		} catch (final PackageManager.NameNotFoundException ignored) { return IslandManager.CLONE_RESULT_NOT_FOUND; }
 	}
-
-	public static final int CLONE_RESULT_ALREADY_CLONED = 0;
-	public static final int CLONE_RESULT_OK_INSTALL = 1;
-	public static final int CLONE_RESULT_OK_SYS_APP = 2;
-	public static final int CLONE_RESULT_OK_GOOGLE_PLAY = 10;
-	public static final int CLONE_RESULT_UNKNOWN_SYS_MARKET = 11;
-
-	public static final int CLONE_RESULT_NOT_FOUND = -1;
-	public static final int CLONE_RESULT_NO_SYS_MARKET = -2;
 
 	private int cloneApp(final ApplicationInfo app_info, final boolean do_it) {
 		final String pkg = app_info.packageName;
 		if ((app_info.flags & FLAG_INSTALLED) != 0) {
 			Log.e(TAG, "Already cloned: " + pkg);
-			return CLONE_RESULT_ALREADY_CLONED;
+			return IslandManager.CLONE_RESULT_ALREADY_CLONED;
 		}
 
 		// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
 		if ((app_info.flags & FLAG_SYSTEM) != 0) {
 			if (do_it) enableSystemApp(pkg);
-			return CLONE_RESULT_OK_SYS_APP;
+			return IslandManager.CLONE_RESULT_OK_SYS_APP;
 		}
 
 		/* For non-system app, we initiate the manual installation process. */
@@ -171,25 +138,25 @@ public class IslandManager extends IIslandManager.Stub {
 			enableSystemAppForActivity(intent);				// Ensure package installer is enabled.
 			if (do_it) mContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));		// Launch package installer
 //			activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
-			return CLONE_RESULT_OK_INSTALL;
+			return IslandManager.CLONE_RESULT_OK_INSTALL;
 		}
 
 		// Launch market app (preferable Google Play Store)
 		final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		enableSystemAppForActivity(market_intent);
 		final ActivityInfo market_info = market_intent.resolveActivityInfo(mContext.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
-		if (market_info == null || (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
-			return CLONE_RESULT_NO_SYS_MARKET;
+		if (market_info == null || (market_info.applicationInfo.flags & FLAG_SYSTEM) == 0)	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
+			return IslandManager.CLONE_RESULT_NO_SYS_MARKET;
 
 		if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
 			if (do_it) {
 				enableSystemApp(SystemAppsManager.PACKAGE_GOOGLE_PLAY_SERVICES);	// Special dependency
 				mContext.startActivity(market_intent);
 			}
-			return CLONE_RESULT_OK_GOOGLE_PLAY;
+			return IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY;
 		} else {
 			if (do_it) mContext.startActivity(market_intent);
-			return CLONE_RESULT_UNKNOWN_SYS_MARKET;
+			return IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET;
 		}
 	}
 
@@ -255,66 +222,6 @@ public class IslandManager extends IIslandManager.Stub {
 		return used_pkgs.toArray(new String[used_pkgs.size()]);
 	}
 
-	public void deactivateDeviceOwner() {
-		Analytics.$().event("action_deactivate").send();
-		mDevicePolicies.clearCrossProfileIntentFilters();
-		mDevicePolicies.getManager().clearDeviceOwnerApp(mContext.getPackageName());
-		final Activity activity = Activities.findActivityFrom(mContext);
-		if (activity != null) activity.finish();
-	}
-
-	public boolean isDeviceOwner() {
-		return mDevicePolicies.getManager().isDeviceOwnerApp(mContext.getPackageName());
-	}
-
-	public static boolean isProfileOwner(final Context context) {
-		final UserHandle profile = getManagedProfile(context);
-		if (profile == null) return false;
-		final ComponentName profile_owner = getProfileOwner(context, profile);
-		return profile_owner != null && context.getPackageName().equals(profile_owner.getPackageName());
-	}
-
-	public boolean isProfileOwnerActive() {
-		if (Users.isOwner(Process.myUserHandle())) throw new IllegalStateException("Must not be called in owner user");
-		return mDevicePolicies.isAdminActive();
-	}
-
-	public static @Nullable UserHandle getManagedProfile(final Context context) {
-		final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
-		final List<UserHandle> profiles = um.getUserProfiles();
-		final UserHandle current_user = Process.myUserHandle();
-		for (final UserHandle profile : profiles)
-			if (! profile.equals(current_user)) return profile;   	// Only one managed profile is supported by Android at present.
-		return null;
-	}
-
-	/** @return the profile owner component, null for none or failure */
-	public static @Nullable ComponentName getProfileOwner(final Context context, final @NonNull UserHandle profile) {
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
-		try {
-			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(Users.toId(profile)).on(dpm);
-		} catch (final IllegalArgumentException e) {
-			return null;
-		}
-	}
-
-	public void enableProfile() {
-		Log.d(TAG, "Enable profile now.");
-		mDevicePolicies.setProfileName(mContext.getString(R.string.profile_name));
-		// Enable the profile here, launcher will show all apps inside.
-		mDevicePolicies.setProfileEnabled();
-	}
-
-	public IslandManager resetForwarding() {
-		mDevicePolicies.clearCrossProfileIntentFilters();
-		return this;
-	}
-
-	public IslandManager enableForwarding(final IntentFilter filter, final int flags) {
-		mDevicePolicies.addCrossProfileIntentFilter(filter, flags);
-		return this;
-	}
-
 	void enableSystemAppForActivity(final Intent intent) {
 		try {
 			final int result = mDevicePolicies.enableSystemApp(intent);
@@ -338,7 +245,7 @@ public class IslandManager extends IIslandManager.Stub {
 	private final DevicePolicies mDevicePolicies;
 	private final Supplier<LauncherApps> mLauncherApps;
 
-	private static final String TAG = IslandManager.class.getSimpleName();
+	private static final String TAG = IslandManagerService.class.getSimpleName();
 
 	public static class AidlService extends Service {
 
@@ -347,6 +254,6 @@ public class IslandManager extends IIslandManager.Stub {
 			return mStub.get();
 		}
 
-		private final Supplier<IslandManager> mStub = () -> new IslandManager(this);
+		private final Supplier<IslandManagerService> mStub = () -> new IslandManagerService(this);
 	}
 }

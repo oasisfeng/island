@@ -11,15 +11,20 @@ import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.UserHandle;
 
+import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.console.apps.AppListFragment;
+import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.GlobalStatus;
-import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.setup.SetupActivity;
-import com.oasisfeng.island.util.SimpleAsyncTask;
+import com.oasisfeng.island.util.DeviceAdmins;
+import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
+
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 public class MainActivity extends Activity {
 
@@ -39,15 +44,18 @@ public class MainActivity extends Activity {
 			if (! island.isProfileOwnerActive()) {
 //				Analytics.$().event("inactive_device_admin").send();
 				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, IslandDeviceAdminReceiver.getComponentName(this))
+						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(this))
 						.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
 				// TODO: Check result
 				finish();
 				return;
 			}
 			final ProgressDialog progress = ProgressDialog.show(this, null, getString(R.string.dialog_provision_in_progress), true/* indeterminate */, false/* cancelable */);
-			SimpleAsyncTask.execute(() -> IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this),
-				() -> { progress.cancel(); finish(); });
+			// Bind to the IslandManager, triggering IslandProvisioning.startProfileOwnerProvisioningIfNeeded().
+			Services.use(this, IIslandManager.class, IIslandManager.Stub::asInterface, service -> {
+				getPackageManager().setComponentEnabledSetting(new ComponentName(this, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+				progress.cancel(); finish();		// Binder is returned when the provisioning is done.
+			});
 			return;
 		}
 
@@ -64,7 +72,7 @@ public class MainActivity extends Activity {
 					showSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
 					return;
 				}
-			} else if (getPackageName().equals(profile_owner.getPackageName())) {
+			} else if (profile_owner.getPackageName().equals(Modules.MODULE_ENGINE)) {
 				final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
 				final List<LauncherActivityInfo> our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile);
 				if (! our_activities_in_launcher.isEmpty()) {		// Main activity is left enabled, probably due to unfinished provisioning

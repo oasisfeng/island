@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">Island</string>
-    <string name="profile_name">Island</string>
 
     <string name="filter_island">Island</string>
     <string name="filter_mainland">Mainland</string>
@@ -88,11 +87,8 @@
     <string name="toast_already_cloned">Already cloned</string>
     <string name="toast_shortcut_created">Shortcut created on launcher</string>
     <string name="toast_shortcut_failed">Failed to create the shortcut</string>
-    <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
     <string name="toast_greenify_failed">Failed to greenify</string>
     <string name="toast_internal_error">Sorry, an internal error occurred, please restart this app and try again.</string>
-
-    <string name="notification_standby_text">Standby</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>

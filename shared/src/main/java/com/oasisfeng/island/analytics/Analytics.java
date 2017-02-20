@@ -13,7 +13,6 @@ import android.util.Log;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.oasisfeng.island.util.Users;
 
 import org.intellij.lang.annotations.Pattern;
 
@@ -77,8 +76,7 @@ public class Analytics extends ContentProvider {
 	}
 
 	@Override public boolean onCreate() {
-		if (Users.isOwner()) //noinspection ConstantConditions
-			sSingleton = this;
+		sSingleton = this;
 		return true;
 	}
 
