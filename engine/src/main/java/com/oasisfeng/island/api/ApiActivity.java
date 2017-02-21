@@ -17,7 +17,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
-import com.oasisfeng.island.BuildConfig;
+import com.oasisfeng.island.engine.BuildConfig;
 import com.oasisfeng.island.engine.IslandManagerService;
 
 import java.util.Collections;

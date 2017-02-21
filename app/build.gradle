@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+if (! project.plugins.hasPlugin("com.android.library")) apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
@@ -6,7 +6,7 @@ android {
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "com.oasisfeng.island.mobile"
+        if (! rootProject.ext.assembly) applicationId "com.oasisfeng.island.mobile"
         minSdkVersion 21
         targetSdkVersion 25
 
@@ -15,14 +15,6 @@ android {
 
     dataBinding {
         enabled true
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
     }
 
     compileOptions {
@@ -36,14 +28,6 @@ android {
         xmlReport false
         textReport true
         textOutput "stdout"
-    }
-
-    // Enable lint checking in all build variants.
-    applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            def lintTask = tasks["lint${variant.name.capitalize()}"]
-            output.assemble.dependsOn lintTask
-        }
     }
 
     repositories.flatDir {

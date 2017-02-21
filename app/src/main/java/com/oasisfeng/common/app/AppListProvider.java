@@ -20,7 +20,6 @@ import android.util.Log;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.oasisfeng.island.BuildConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,14 +39,15 @@ import java8.util.stream.StreamSupport;
  */
 public abstract class AppListProvider<T extends AppInfo> extends ContentProvider {
 
-	private static final String AUTHORITY = BuildConfig.APPLICATION_ID + ".apps";
+	private static final String AUTHORITY_SUFFIX = ".apps";
 
 	/** The implementation should be as fast as possible, since it may be called in mass. */
 	protected abstract T createEntry(final ApplicationInfo base, final T last);
 
 	protected static @NonNull <T extends AppListProvider> T getInstance(final Context context) {
-		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(AUTHORITY);
-		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + AUTHORITY);
+		final String authority = context.getPackageName() + AUTHORITY_SUFFIX;		// Do not use BuildConfig.APPLICATION_ID
+		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(authority);
+		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + authority);
 		try {
 			final ContentProvider provider = client.getLocalContentProvider();
 			if (provider == null)

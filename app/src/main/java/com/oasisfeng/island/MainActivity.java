@@ -15,6 +15,7 @@ import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.util.DeviceAdmins;

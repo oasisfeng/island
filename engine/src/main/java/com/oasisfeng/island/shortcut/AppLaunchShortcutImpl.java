@@ -5,9 +5,9 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.widget.Toast;
 
-import com.oasisfeng.island.R;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.Users;
 
 /**

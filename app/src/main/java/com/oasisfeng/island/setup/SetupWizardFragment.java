@@ -11,8 +11,8 @@ import android.widget.Button;
 import com.android.setupwizardlib.SetupWizardLayout;
 import com.android.setupwizardlib.view.NavigationBar;
 import com.oasisfeng.android.os.Bundles;
-import com.oasisfeng.island.R;
-import com.oasisfeng.island.databinding.SetupWizardBinding;
+import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.mobile.databinding.SetupWizardBinding;
 
 /**
  * Setup wizard

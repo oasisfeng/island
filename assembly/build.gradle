@@ -1,0 +1,59 @@
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
+
+    defaultConfig {
+        applicationId "com.oasisfeng.island"
+        minSdkVersion 21
+        targetSdkVersion 25
+
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
+
+    dataBinding {
+        enabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        check 'NewApi'
+        abortOnError true
+        xmlReport false
+        textReport true
+        textOutput "stdout"
+    }
+
+    // Enable lint checking in all build variants.
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def lintTask = tasks["lint${variant.name.capitalize()}"]
+            output.assemble.dependsOn lintTask
+        }
+    }
+
+    repositories.flatDir {
+        dirs '../app/libs'
+    }
+}
+
+if (rootProject.ext.assembly) {
+    dependencies {
+        compile project(':engine')
+        compile project(':app')
+    }
+}

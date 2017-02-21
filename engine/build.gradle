@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+if (! project.plugins.hasPlugin("com.android.library")) apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
@@ -6,7 +6,7 @@ android {
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "com.oasisfeng.island"    // Share same application ID to ensure smooth device-admin transition between engine module and full app.
+        if (! rootProject.ext.assembly) applicationId "com.oasisfeng.island"    // Share same application ID to ensure smooth device-admin transition between engine module and full app.
         minSdkVersion 21
         targetSdkVersion 25
 
@@ -24,14 +24,6 @@ android {
         xmlReport false
         textReport true
         textOutput "stdout"
-    }
-
-    // Enable lint checking in all build variants.
-    applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            def lintTask = tasks["lint${variant.name.capitalize()}"]
-            output.assemble.dependsOn lintTask
-        }
     }
 }
 

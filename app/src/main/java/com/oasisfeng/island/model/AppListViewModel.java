@@ -9,7 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.databinding.DataBindingUtil;
+import android.databinding.Bindable;
 import android.databinding.Observable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -35,17 +35,15 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
-import com.oasisfeng.island.BR;
 import com.oasisfeng.island.Config;
-import com.oasisfeng.island.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.databinding.AppEntryBinding;
-import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.greenify.GreenifyClient;
+import com.oasisfeng.island.mobile.BR;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
@@ -100,6 +98,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public void onFilterPrimaryChanged(final int index) {
+		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(index) + " of " + mFilterPrimaryOptions);
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
 		updateActiveFilters();
@@ -132,16 +131,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}});
 	}
 
-	public void attach(final Activity activity, final IIslandManager owner_controller, final Menu actions, final Bundle saved_state) {
+	public void attach(final Activity activity, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
 		layout_manager = new LinearLayoutManager(activity);
-		mOwnerController = owner_controller;
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
+		notifyPropertyChanged(BR.filterPrimaryOptions);
 		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
 		onFilterPrimaryChanged(filter_primary);
+	}
+
+	public void setOwnerController(final IIslandManager controller) {
+		mOwnerController = controller;
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
@@ -200,13 +203,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final String pkg = app.packageName;
 		final IIslandManager controller = controller(app);
 
-		switch (item.getItemId()) {
-		case R.id.menu_clone:
+		final int id = item.getItemId();
+		if (id == R.id.menu_clone) {
 			cloneApp(app);
 			// Do not clear selection, for quick launch with one more click
-			break;
-		case R.id.menu_freeze:
-			// Select the next alive app, or clear selection.
+		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
 			final int next_index = indexOf(selection) + 1;
 			if (next_index >= size()) clearSelection();
 			else {
@@ -225,28 +226,22 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			} catch (final RemoteException ignored) {
 				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
 			}
-			break;
-		case R.id.menu_unfreeze:
+		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with("package", pkg).send();
 			try {
 				controller.unfreezeApp(pkg);
 				refreshAppStateAsSysBugWorkaround(pkg);
 				clearSelection();
 			} catch (final RemoteException ignored) {}
-			break;
-		case R.id.menu_app_info:
+		} else if (id == R.id.menu_app_info) {
 			launchSettingsAppInfoActivity(app);
-			break;
-		case R.id.menu_remove:
-		case R.id.menu_uninstall:
+		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
 			onRemovalRequested();
-			break;
-		case R.id.menu_shortcut:
+		} else if (id == R.id.menu_shortcut) {
 			onShortcutRequested();
-			break;
-		case R.id.menu_greenify:
+		} else if (id == R.id.menu_greenify) {
 			onGreenifyRequested();
-			break;
+
 //		case R.id.menu_enable:
 //			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 //			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
@@ -419,9 +414,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		} else doCloneApp(pkg);
 	}
 
-	public final void onItemClick(final View view) {
-		final AppEntryBinding binding = DataBindingUtil.findBinding(view);
-		final AppViewModel clicked = binding.getApp();
+	public final void onItemClick(final AppViewModel clicked) {
 		setSelection(clicked != getSelection() ? clicked : null);	// Click the selected one to deselect
 	}
 
@@ -434,7 +427,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
 	}
 
-	public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
+	@Bindable public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
 		return mFilterPrimaryOptions;
 	}
 
@@ -469,7 +462,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public final ItemBinder<AppViewModel> item_binder = (container, model, item) -> {
 		item.setVariable(BR.app, model);
-		item.setVariable(BR.apps, ((AppListBinding) container).getApps());
+		item.setVariable(BR.apps, this);
 	};
 	public RecyclerView.LayoutManager layout_manager;
 

@@ -45,7 +45,7 @@
             android:drawableStart="@{app.icon ?? @drawable/app_icon_empty}"
             android:drawableEnd="@{apps.selection == app &amp;&amp; app.info.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
             android:onViewAttachedToWindow="@{app::onViewAttached}"
-            android:onClick="@{apps::onItemClick}"
+            android:onClick="@{v -> apps.onItemClick(app)}"
             bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"
             tools:drawableStart="@mipmap/ic_launcher"
             tools:elevation="@dimen/elevation_card_resting"

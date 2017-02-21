@@ -9,7 +9,7 @@ import android.util.Log;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.oasisfeng.island.R;
+import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
 
 import static android.app.Notification.PRIORITY_MIN;

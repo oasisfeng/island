@@ -2,6 +2,8 @@ package com.oasisfeng.island;
 
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.oasisfeng.island.mobile.BuildConfig;
+import com.oasisfeng.island.mobile.R;
 
 /**
  * Remotely configurable values, (default values are defined in config_defaults.xml)

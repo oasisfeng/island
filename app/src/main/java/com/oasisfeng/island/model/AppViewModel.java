@@ -9,7 +9,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
-import com.oasisfeng.island.R;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.util.Users;

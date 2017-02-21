@@ -10,7 +10,7 @@
         <import type="android.os.Build.VERSION_CODES" />
         <import type="android.support.design.widget.BottomSheetBehavior" />
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
-        <import type="com.oasisfeng.island.BuildConfig" />
+        <import type="com.oasisfeng.island.mobile.BuildConfig" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
     </data>

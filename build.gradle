@@ -22,6 +22,13 @@ allprojects {
     }
 }
 
+// If assembly-public is being built, make all component modules as library. Otherwise they are built as application.
+ext.assembly = gradle.startParameter.taskNames.find { it.startsWith(":assembly") } != null;
+if (ext.assembly) {
+    project(':engine') apply plugin:'com.android.library'
+    project(':app') apply plugin:'com.android.library'
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

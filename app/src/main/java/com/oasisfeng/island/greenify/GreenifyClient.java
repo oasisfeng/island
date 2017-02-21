@@ -12,7 +12,7 @@ import android.os.UserManager;
 import android.support.annotation.Nullable;
 
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.island.BuildConfig;
+import com.oasisfeng.island.mobile.BuildConfig;
 
 import static android.content.Context.USER_SERVICE;
 

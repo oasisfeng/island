@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.oasisfeng.island" android:versionCode="6" android:versionName="2.0 beta 2" >
+
+    <application android:allowBackup="false"
+                 android:label="@string/app_name"
+                 android:icon="@mipmap/ic_launcher"
+                 android:theme="@style/AppTheme"
+                 tools:replace="android:label,android:icon" >
+        <activity android:name=".MainActivity" android:exported="true" />
+    </application>
+
+</manifest>

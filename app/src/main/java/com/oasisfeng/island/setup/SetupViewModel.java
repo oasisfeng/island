@@ -22,7 +22,7 @@ import android.widget.Toast;
 
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.island.Config;
-import com.oasisfeng.island.R;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.Hacks;

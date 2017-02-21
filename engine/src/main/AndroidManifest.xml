@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.island" android:versionCode="6" android:versionName="engine">
+          package="com.oasisfeng.island.engine" android:versionCode="6" android:versionName="engine">
 
     <uses-feature android:name="android.software.device_admin" android:required="true" />
     <uses-feature android:name="android.software.managed_users" android:required="true" />
@@ -17,7 +17,7 @@
                  android:supportsRtl="true"
                  tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <activity android:name=".shortcut.AppLaunchShortcut"
+        <activity android:name="com.oasisfeng.island.shortcut.AppLaunchShortcut"
                   android:enabled="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
@@ -34,7 +34,7 @@
         </activity>
 
         <activity-alias android:name=".shortcut.AppLaunchShortcutAlias"
-                        android:targetActivity=".shortcut.AppLaunchShortcut" >
+                        android:targetActivity="com.oasisfeng.island.shortcut.AppLaunchShortcut" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -43,7 +43,7 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name=".engine.ActivityForwarder"
+        <activity android:name=".ActivityForwarder"
                   android:exported="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
@@ -54,8 +54,8 @@
             </intent-filter>
         </activity>
 
-        <activity-alias android:name=".engine.InboundActivityForwarder"
-                        android:targetActivity=".engine.ActivityForwarder"
+        <activity-alias android:name=".InboundActivityForwarder"
+                        android:targetActivity=".ActivityForwarder"
                         android:exported="true" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FORWARD" />
@@ -63,7 +63,7 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name=".api.ApiActivity"
+        <activity android:name="com.oasisfeng.island.api.ApiActivity"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
                   android:alwaysRetainTaskState="true"
@@ -95,7 +95,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".shuttle.ShuttleKeeper" />
+        <service android:name="com.oasisfeng.island.shuttle.ShuttleKeeper" />
 
         <service android:name="com.oasisfeng.island.engine.IslandManagerService$AidlService" android:exported="false">
             <intent-filter>
@@ -103,7 +103,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:name=".IslandDeviceAdminReceiver"
+        <receiver android:name="com.oasisfeng.island.IslandDeviceAdminReceiver"
                   android:label="@string/app_name"
                   android:permission="android.permission.BIND_DEVICE_ADMIN" >
             <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />

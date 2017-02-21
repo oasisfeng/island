@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,17 +27,17 @@ import com.google.common.collect.Iterables;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.AppListProvider;
-import com.oasisfeng.island.BR;
-import com.oasisfeng.island.BuildConfig;
-import com.oasisfeng.island.R;
 import com.oasisfeng.island.TempDebug;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.databinding.AppListBinding;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.mobile.BR;
+import com.oasisfeng.island.mobile.BuildConfig;
+import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleContext;
@@ -80,7 +79,7 @@ public class AppListFragment extends Fragment {
 			mShuttleContext.unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
 		mShuttleContext = null;
-		mBinding.getApps().clearSelection();
+		mViewModel.clearSelection();
 		super.onStop();
 	}
 
@@ -139,12 +138,12 @@ public class AppListFragment extends Fragment {
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
-		mBinding.appList.setLayoutManager(new LinearLayoutManager(getActivity()));
+		mViewModel.attach(getActivity(), mBinding.details.toolbar.getMenu(), saved_state);
+		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
 		if (! Services.bind(getActivity(), IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
 			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
-				mViewModel.attach(getActivity(), IIslandManager.Stub.asInterface(service), mBinding.details.toolbar.getMenu(), saved_state);
-				mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+				mViewModel.setOwnerController(IIslandManager.Stub.asInterface(service));
 			}
 
 			@Override public void onServiceDisconnected(final ComponentName name) {}
@@ -184,18 +183,18 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_show_system:
+		final int id = item.getItemId();
+		if (id == R.id.menu_show_system) {
 			final boolean should_include = ! item.isChecked();
 			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
 			item.setChecked(should_include);	// Toggle the checked state
 			return true;
-		case R.id.menu_destroy:
-		case R.id.menu_deactivate:
+		} else if (id == R.id.menu_destroy || id == R.id.menu_deactivate) {
 			destroy();
 			return true;
-		case R.id.menu_test:
+		} else if (id == R.id.menu_test) {
 			TempDebug.run(getActivity());
+			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}

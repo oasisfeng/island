@@ -7,7 +7,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
-import com.oasisfeng.island.BR;
+import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.model.AppViewModel;
 
 import java.util.HashMap;
