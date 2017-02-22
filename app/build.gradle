@@ -38,7 +38,7 @@ android {
 dependencies {
     compile project(':shared')
     compile 'com.android.support:design:25.1.1'
-    compile 'com.google.firebase:firebase-config:9.0.2'
+    compile 'com.google.firebase:firebase-config:10.2.0'
     compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     compile(name: 'setup-wizard-lib-platform-release', ext: 'aar')
 }
