@@ -107,15 +107,17 @@ public class IslandManager extends IIslandManager.Stub {
 	}
 
 	@Override public boolean launchApp(final String pkg) {
-		if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
-			if (! mDevicePolicies.setApplicationHidden(pkg, false))
-				if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
-		}
-		try {
-			if (mDevicePolicies.isPackageSuspended(pkg))
-				mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
-		} catch (final PackageManager.NameNotFoundException ignored) {
-			return false;
+		if (! Users.isOwner() || GlobalStatus.device_owner) {
+			if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
+				if (! mDevicePolicies.setApplicationHidden(pkg, false))
+					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
+			}
+			try {
+				if (mDevicePolicies.isPackageSuspended(pkg))
+					mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
+			} catch (final PackageManager.NameNotFoundException ignored) {
+				return false;
+			}
 		}
 
 		final Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
