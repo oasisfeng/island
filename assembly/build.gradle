@@ -54,6 +54,6 @@ android {
 if (rootProject.ext.assembly) {
     dependencies {
         compile project(':engine')
-        compile project(':app')
+        compile project(':mobile')
     }
 }

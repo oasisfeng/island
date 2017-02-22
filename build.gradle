@@ -26,7 +26,7 @@ allprojects {
 ext.assembly = gradle.startParameter.taskNames.find { it.startsWith(":assembly") } != null;
 if (ext.assembly) {
     project(':engine') apply plugin:'com.android.library'
-    project(':app') apply plugin:'com.android.library'
+    project(':mobile') apply plugin:'com.android.library'
 }
 
 task clean(type: Delete) {
