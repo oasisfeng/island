@@ -210,7 +210,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	public void setHiddenSysAppCloned(final String pkg) {
-		mClonedHiddenSystemApps.get().setCloned(pkg);
+		if (GlobalStatus.hasProfile()) mClonedHiddenSystemApps.get().setCloned(pkg);
 	}
 
 	private final Supplier<ConcurrentHashMap<String/* package */, IslandAppInfo>> mIslandAppMap = Suppliers.memoize(() -> {

@@ -45,7 +45,7 @@ public class IslandAppInfo extends AppInfo {
 
 	/** Some system apps are hidden by post-provisioning, they should be treated as "disabled". */
 	public boolean shouldShowAsEnabled() {
-		return enabled && (Users.isOwner(user) || ! isHidden() || ! isSystem() || ! shouldTreatHiddenSysAppAsDisabled());
+		return enabled && (Users.isOwner(user) || ! isSystem() || ! isHidden() || ! shouldTreatHiddenSysAppAsDisabled());
 	}
 
 	private boolean shouldTreatHiddenSysAppAsDisabled() {
@@ -99,7 +99,7 @@ public class IslandAppInfo extends AppInfo {
 	@Override public MoreObjects.ToStringHelper fillToString(final MoreObjects.ToStringHelper helper) {
 		helper.add("user", Users.toId(user));
 		super.fillToString(helper);
-		if (isHidden()) helper.addValue(shouldTreatHiddenSysAppAsDisabled() ? "hidden (as disabled)" : "hidden");
+		if (isHidden()) helper.addValue(! Users.isOwner(user) && shouldTreatHiddenSysAppAsDisabled() ? "hidden (as disabled)" : "hidden");
 		return helper;
 	}
 

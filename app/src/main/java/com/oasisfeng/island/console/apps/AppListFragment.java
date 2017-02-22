@@ -68,13 +68,13 @@ public class AppListFragment extends Fragment {
 	@Override public void onStart() {
 		super.onStart();
 		mShuttleContext = new ShuttleContext(getActivity());
-		if (! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
+		if (GlobalStatus.hasProfile() && ! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
 			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
 	}
 
 	@Override public void onStop() {
 		mViewModel.mProfileController = IslandManager.NULL;
-		try {
+		if (GlobalStatus.hasProfile()) try {
 			mShuttleContext.unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
 		mShuttleContext = null;
