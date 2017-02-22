@@ -30,6 +30,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 import java.util.Map;
@@ -83,15 +84,17 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public boolean launchApp(final String pkg) {
-		if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
-			if (! mDevicePolicies.setApplicationHidden(pkg, false))
-				if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
-		}
-		try {
-			if (mDevicePolicies.isPackageSuspended(pkg))
-				mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
-		} catch (final PackageManager.NameNotFoundException ignored) {
-			return false;
+		if (! Users.isOwner() || GlobalStatus.device_owner) {
+			if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
+				if (! mDevicePolicies.setApplicationHidden(pkg, false))
+					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
+			}
+			try {
+				if (mDevicePolicies.isPackageSuspended(pkg))
+					mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
+			} catch (final PackageManager.NameNotFoundException ignored) {
+				return false;
+			}
 		}
 
 		final Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
