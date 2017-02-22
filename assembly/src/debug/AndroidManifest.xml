@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+          package="com.oasisfeng.island" android:versionCode="6" android:versionName="2.0 beta 2" >
+
+    <application android:allowBackup="false" android:label="@string/app_name" tools:replace="label">
+
+        <!-- Export components in engine to be accessible by other debug modules -->
+        <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity" android:exported="true" tools:replace="android:exported" />
+        <service android:name="com.oasisfeng.island.engine.IslandManagerService$AidlService" android:exported="true" tools:replace="android:exported" />
+
+    </application>
+
+</manifest>

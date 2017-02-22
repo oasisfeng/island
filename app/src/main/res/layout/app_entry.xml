@@ -49,7 +49,7 @@
             bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"
             tools:drawableStart="@mipmap/ic_launcher"
             tools:elevation="@dimen/elevation_card_resting"
-            tools:text="@string/app_name" /><!-- bind:app_label="@{app.pkg}" comment:x4="This binds text and drawableStart" -->
+            tools:text="Island" /><!-- bind:app_label="@{app.pkg}" comment:x4="This binds text and drawableStart" -->
 
     </FrameLayout>
 

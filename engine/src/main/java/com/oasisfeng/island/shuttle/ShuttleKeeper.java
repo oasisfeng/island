@@ -42,7 +42,8 @@ public class ShuttleKeeper extends Service {
 		Log.d(TAG, "Start");
 		mForegroundNotification = Suppliers.memoize(() ->
 				new Notification.Builder(this).setSmallIcon(android.R.drawable.stat_notify_sync_noanim).setPriority(PRIORITY_MIN)
-						.setContentTitle(SDK_INT >= N ? null : getString(R.string.app_name)).setSubText(getString(R.string.notification_standby_text)).build());
+						.setContentTitle(SDK_INT >= N ? null : getApplicationInfo().loadLabel(getPackageManager()))
+						.setSubText(getString(R.string.notification_standby_text)).build());
 	}
 
 	@Override public void onDestroy() {

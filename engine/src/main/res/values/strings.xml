@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Island - Engine</string>
     <string name="profile_name">Island</string>
 
     <string name="notification_standby_text">Standby</string>

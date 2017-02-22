@@ -3,15 +3,9 @@
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity"
-                  android:exported="true" tools:replace="android:exported" />
-
-        <service android:name=".IslandManagerService$AidlService"
-                 android:exported="true" tools:replace="android:exported">
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.engine.IIslandManager" />
-            </intent-filter>
-        </service>
+        <!-- Export components to be accessible by other debug modules -->
+        <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity" android:exported="true" tools:replace="android:exported" />
+        <service android:name=".IslandManagerService$AidlService" android:exported="true" tools:replace="android:exported" />
 
     </application>
 
