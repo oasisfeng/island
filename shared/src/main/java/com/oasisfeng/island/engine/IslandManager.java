@@ -56,6 +56,7 @@ public class IslandManager {
 		Analytics.$().event("action_deactivate").send();
 		mDevicePolicies.clearCrossProfileIntentFilters();
 		mDevicePolicies.getManager().clearDeviceOwnerApp(mContext.getPackageName());
+		mDevicePolicies.removeActiveAdmin();
 		final Activity activity = Activities.findActivityFrom(mContext);
 		if (activity != null) activity.finish();
 	}

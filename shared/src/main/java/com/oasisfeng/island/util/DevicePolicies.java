@@ -121,6 +121,11 @@ public class DevicePolicies {
 		mDevicePolicyManager.setProfileEnabled(sCachedComponent);
 	}
 
+	/** @see DevicePolicyManager#removeActiveAdmin(ComponentName) */
+	public void removeActiveAdmin() {
+		mDevicePolicyManager.removeActiveAdmin(sCachedComponent);
+	}
+
 	@RequiresApi(M) public boolean setPermissionGrantState(final String pkg, final String permission, final int state) {
 		return mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
 	}
