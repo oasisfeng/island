@@ -3,9 +3,10 @@ package com.oasisfeng.island.util;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.support.annotation.NonNull;
+import android.support.compat.BuildConfig;
 
 import com.google.common.base.Preconditions;
 
@@ -28,12 +29,17 @@ public class Modules {
 
 	public static @NonNull ComponentName getMainLaunchActivity(final Context context) {
 		if (sMainLaunchActivity != null) return sMainLaunchActivity;
-		final String this_pkg = context.getPackageName();
-		final Intent intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(this_pkg.equals(MODULE_ENGINE) ? MODULE_DEBUG_UI : this_pkg);
-		@SuppressWarnings("deprecation") final ActivityInfo activity = Preconditions.checkNotNull(context.getPackageManager().resolveActivity(intent,
-				MATCH_DEFAULT_ONLY | PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_UNINSTALLED_PACKAGES), "UI module not installed.").activityInfo;
-		return sMainLaunchActivity = new ComponentName(activity.packageName, activity.name);
+		sMainLaunchActivity = resolveMainActivityInPackage(context.getPackageManager(), context.getPackageName());
+		if (BuildConfig.DEBUG && sMainLaunchActivity == null)
+			sMainLaunchActivity = resolveMainActivityInPackage(context.getPackageManager(), MODULE_DEBUG_UI);
+		return Preconditions.checkNotNull(sMainLaunchActivity, "UI module not installed");
 	}
 
+	private static ComponentName resolveMainActivityInPackage(final PackageManager pm, final String pkg) {
+		final Intent intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg);
+		@SuppressWarnings("deprecation") final ResolveInfo resolved = pm.resolveActivity(intent,
+				MATCH_DEFAULT_ONLY | PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_UNINSTALLED_PACKAGES);
+		return resolved == null ? null : new ComponentName(resolved.activityInfo.packageName, resolved.activityInfo.name);
+	}
 	private static ComponentName sMainLaunchActivity;
 }
