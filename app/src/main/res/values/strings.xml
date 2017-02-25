@@ -33,6 +33,7 @@
     <string name="button_learn_more_online">Learn more (online)</string>
     <string name="button_instructions_online">Instructions (online)</string>
 
+    <string name="action_launch">Launch</string>
     <string name="action_clone">Clone</string>
     <string name="action_freeze">Freeze</string>
     <string name="action_unfreeze">Unfreeze</string>

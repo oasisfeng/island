@@ -91,6 +91,7 @@
 
         </RelativeLayout>
 
+        <!--
         <TextView
             android:visibility="gone"
             android:id="@+id/entry_name"
@@ -119,10 +120,11 @@
             android:drawableEnd="@{apps.selection == app &amp;&amp; app.info.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
             android:onViewAttachedToWindow="@{app::onViewAttached}"
             android:onClick="@{v -> apps.onItemClick(app)}"
-            bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"
+            bind:onDrawableEndClick="@{apps::launchApp}"
             comment:x4="This binds text and drawableStart"
             tools:elevation="@dimen/elevation_card_resting"
             tools:text="Island" />
+            -->
 
     </RelativeLayout>
 

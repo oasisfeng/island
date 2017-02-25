@@ -220,6 +220,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final boolean exclusive = provider.isExclusive(app);
 
 		final boolean is_managed = GlobalStatus.device_owner || ! Users.isOwner(app.user);
+		mActions.findItem(R.id.menu_launch).setVisible(app.isLaunchable());
 		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
@@ -248,15 +249,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		updateActions();
 	}
 
-	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
-		if (getSelection() == null) return;
-		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_launch").with("package", app.packageName).send();
-		try {
-			controller(app).launchApp(app.packageName);
-		} catch (final RemoteException ignored) {}
-	}
-
 	public boolean onActionClick(final MenuItem item) {
 		final AppViewModel selection = getSelection();
 		if (selection == null) return false;
@@ -265,10 +257,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IIslandManager controller = controller(app);
 
 		final int id = item.getItemId();
-		if (id == R.id.menu_clone) {
+		if (id == R.id.menu_launch) {
+            launchApp(app);
+		} else if (id == R.id.menu_clone) {
 			cloneApp(app);
 			// Do not clear selection, for quick launch with one more click
-		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
+		} else if (id == R.id.menu_freeze) { // Select the next alive app, or clear selection.
 			final int next_index = indexOf(selection) + 1;
 			if (next_index >= size()) clearSelection();
 			else {
@@ -395,6 +389,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */
 	private void refreshAppStateAsSysBugWorkaround(final String pkg) {
 		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, GlobalStatus.profile, false);
+	}
+
+	private void launchApp(IslandAppInfo app) {
+		Analytics.$().event("action_launch").with("package", app.packageName).send();
+		try {
+			controller(app).launchApp(app.packageName);
+		} catch (final RemoteException ignored) {}
 	}
 
 	private void cloneApp(final IslandAppInfo app) {

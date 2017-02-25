@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" tools:ignore="AppCompatResource" >
+    <item android:id="@+id/menu_launch" android:icon="@drawable/ic_launch_24dp" android:title="@string/action_launch" android:showAsAction="always" />
     <item android:id="@+id/menu_clone" android:icon="@drawable/ic_copy_24dp" android:title="@string/action_clone" android:showAsAction="always" />
     <item android:id="@+id/menu_freeze" android:icon="@drawable/ic_lock_24dp" android:title="@string/action_freeze" android:showAsAction="always" />
     <item android:id="@+id/menu_unfreeze" android:icon="@drawable/ic_unlock_24dp" android:title="@string/action_unfreeze" android:showAsAction="always" />
