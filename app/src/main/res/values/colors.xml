@@ -11,6 +11,6 @@
     <color name="text">#DF000000</color>
     <color name="bottom_sheet_background">@color/primary</color>
     <!-- Specific colors -->
-    <color name="state_alive">#FF6D00</color>
-    <color name="state_frozen">@color/primary_dark</color>
+    <color name="state_alive">@android:color/primary_text_light</color>
+    <color name="state_frozen">@android:color/secondary_text_light</color>
 </resources>

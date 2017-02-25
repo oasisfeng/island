@@ -7,6 +7,7 @@
     <string name="description_island">The work profile</string>
     <string name="description_mainland">The owner profile</string>
 
+    <string name="status_split">\ ·\ </string>
     <string name="status_alive">Active</string>
     <string name="status_frozen">Frozen</string>
     <string name="status_disabled">Disabled</string>

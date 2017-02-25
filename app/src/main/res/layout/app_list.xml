@@ -44,8 +44,6 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="?android:attr/actionBarSize"
                 android:paddingBottom="88dp"
-                android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
-                android:paddingEnd="-16dp"
                 android:clipToPadding="false"
                 android:background="@color/background"
                 bind:elevationChangeOnScroll="@{true}"

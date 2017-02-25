@@ -6,18 +6,93 @@
 
     <data>
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
+        <import type="android.view.View"/>
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="app" type="com.oasisfeng.island.model.AppViewModel" />
     </data>
 
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:paddingBottom="2dp"
+        android:layout_height="@dimen/app_entry_height"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:foreground="?android:selectableItemBackground"
         android:clipToPadding="false" comment:x2="Ensure the correct visual effect of elevation"
-        android:background="@{app.selected ? @color/background_highlight : @color/background}">
+        android:onClick="@{v -> apps.onItemClick(app)}"
+        bind:animatedElevation="@{app.selected ? @dimen/elevation_card_resting : 0}"
+        bind:animatedScaleX="@{app.selected ? 1.02f : 1}"
+        bind:animatedScaleY="@{app.selected ? 1.02f : 1}"
+        bind:animatedBackgroundColor="@{app.selected ? @color/background_highlight : @color/background}">
+
+        <ImageView
+            android:id="@+id/entry_icon"
+            android:importantForAccessibility="no"
+            tools:src="@mipmap/ic_launcher"
+            android:src="@{app.icon ?? @drawable/app_icon_empty}"
+            android:onViewAttachedToWindow="@{app::onViewAttached}"
+            android:scaleType="centerInside"
+            android:padding="6dp"
+            android:layout_marginStart="8dp"
+            android:layout_width="@dimen/app_entry_height"
+            android:layout_height="@dimen/app_entry_height"/>
+
+        <ImageView
+            android:id="@+id/entry_state_icon"
+            android:importantForAccessibility="no"
+            android:src="@{app.getStatusDrawable(context)}"
+            tools:src="@drawable/ic_lock_24dp"
+            android:tint="@color/black_38p_disable_hint_text"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_width="24dp"
+            android:layout_height="24dp"/>
+
+        <RelativeLayout
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/entry_icon"
+            android:layout_toStartOf="@id/entry_state_icon"
+            android:layout_marginStart="4dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/entry_title"
+                android:layout_alignParentTop="true"
+                tools:text="Island"
+                android:textAppearance="@style/font.subheading.light.primary"
+                android:text="@{app.info.label}"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/entry_state"
+                android:layout_toEndOf="@id/entry_title"
+                android:layout_alignTop="@id/entry_title"
+                android:layout_alignBottom="@id/entry_title"
+                android:text="@{app.getStatus(context)}"
+                tools:text=" · Frozen"
+                android:textAppearance="@style/font.body.light"
+                android:gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"/>
+
+            <TextView
+                android:id="@+id/entry_description"
+                android:layout_below="@id/entry_title"
+                android:layout_marginTop="2dp"
+                android:text="@{app.info().packageName}"
+                tools:text="com.oasisfeng.island"
+                android:textAppearance="@style/font.subheading.light"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </RelativeLayout>
 
         <TextView
+            android:visibility="gone"
             android:id="@+id/entry_name"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -27,7 +102,6 @@
             android:background="?android:attr/selectableItemBackground"
 
             comment:x3="The 'pop up' effect"
-            android:elevation="@{app.selected ? @dimen/elevation_card_resting : 0}"
             android:outlineProvider="bounds"
             android:scaleX="@{app.selected ? 1.01f : 1}"
             android:scaleY="@{app.selected ? 1.01f : 1}"
@@ -42,15 +116,14 @@
             android:drawablePadding="16dp"
 
             android:text="@{app.info.label}"
-            android:drawableStart="@{app.icon ?? @drawable/app_icon_empty}"
             android:drawableEnd="@{apps.selection == app &amp;&amp; app.info.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
             android:onViewAttachedToWindow="@{app::onViewAttached}"
             android:onClick="@{v -> apps.onItemClick(app)}"
             bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"
-            tools:drawableStart="@mipmap/ic_launcher"
+            comment:x4="This binds text and drawableStart"
             tools:elevation="@dimen/elevation_card_resting"
-            tools:text="Island" /><!-- bind:app_label="@{app.pkg}" comment:x4="This binds text and drawableStart" -->
+            tools:text="Island" />
 
-    </FrameLayout>
+    </RelativeLayout>
 
 </layout>
