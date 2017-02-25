@@ -1,9 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.island" android:versionCode="6" android:versionName="2.0 beta 2" >
+          package="com.oasisfeng.island" android:versionCode="7" android:versionName="2.0 beta 3" >
 
     <application android:allowBackup="false" android:label="@string/app_name" tools:replace="label">
 
-        <activity android:name=".MainActivity" android:exported="true" /> <!-- For Run/Debug Configuration in Android Studio to work properly -->
+        <activity android:name=".MainActivity" > <!-- For Run/Debug Configuration in Android Studio to work properly -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <receiver android:name="com.oasisfeng.island.IslandDeviceAdminReceiver"
                   android:label="@string/app_name" tools:replace="android:label" />

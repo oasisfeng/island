@@ -1,4 +1,5 @@
-if (! project.plugins.hasPlugin("com.android.library")) apply plugin: 'com.android.application'
+if (project.plugins.hasPlugin("com.android.library")) android { publishNonDefault true }
+else apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
@@ -28,5 +29,6 @@ android {
 }
 
 dependencies {
-    compile project(':shared')
+    debugCompile project(path: ':shared', configuration: 'debug')
+    releaseCompile project(path: ':shared', configuration: 'release')
 }
