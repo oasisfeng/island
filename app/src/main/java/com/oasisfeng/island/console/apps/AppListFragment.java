@@ -12,6 +12,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.support.v4.view.GravityCompat;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -50,7 +53,7 @@ import java.util.List;
 import java8.util.stream.Collectors;
 
 /** The main UI - App list */
-public class AppListFragment extends Fragment {
+public class AppListFragment extends Fragment implements AppListViewModel.IAppListAction {
 
 	private static final String STATE_KEY_RECYCLER_VIEW = "apps.recycler.layout";
 
@@ -103,7 +106,6 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onResume() {
 		super.onResume();
-		mIsDeviceOwner = mIslandManager.isDeviceOwner();
 	}
 
 	AppListProvider.PackageChangeObserver<IslandAppInfo> mAppChangeObserver = new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
@@ -138,8 +140,9 @@ public class AppListFragment extends Fragment {
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
-		mViewModel.attach(getActivity(), mBinding.details.toolbar.getMenu(), saved_state);
+		mViewModel.attach(getActivity(), mBinding.details.toolbar.getMenu(), mBinding.drawerContent.drawerFilter, saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+        mViewModel.setAppListAction(this);
 
 		if (! Services.bind(getActivity(), IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
 			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
@@ -151,15 +154,28 @@ public class AppListFragment extends Fragment {
 
 		getActivity().setActionBar(mBinding.appbar);
 		final ActionBar actionbar = getActivity().getActionBar();
-		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
-		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
-				final Activity activity = getActivity();
-				if (activity == null) return;
-				mViewModel.onFilterPrimaryChanged(position);
-			}
-			@Override public void onNothingSelected(final AdapterView<?> parent) {}
-		});
+		if (actionbar != null) {
+			ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(getActivity(),
+					mBinding.drawer, R.string.drawer_icon_open, R.string.drawer_icon_close);
+			mBinding.drawer.addDrawerListener(drawerToggle);
+			actionbar.setDisplayHomeAsUpEnabled(true);
+			actionbar.setHomeButtonEnabled(true);
+			drawerToggle.syncState();
+            mBinding.appbar.setNavigationOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mBinding.drawer.openDrawer(GravityCompat.START);
+				}
+			});
+		}
+		//mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+		//	@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
+		//		final Activity activity = getActivity();
+		//		if (activity == null) return;
+		//		mViewModel.onFilterPrimaryChanged(position);
+		//	}
+		//	@Override public void onNothingSelected(final AdapterView<?> parent) {}
+		//});
 		return mBinding.getRoot();
 	}
 
@@ -177,8 +193,6 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
-		menu.findItem(R.id.menu_destroy).setVisible(! mIsDeviceOwner);
-		menu.findItem(R.id.menu_deactivate).setVisible(mIsDeviceOwner);
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
@@ -188,9 +202,6 @@ public class AppListFragment extends Fragment {
 			final boolean should_include = ! item.isChecked();
 			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
 			item.setChecked(should_include);	// Toggle the checked state
-			return true;
-		} else if (id == R.id.menu_destroy || id == R.id.menu_deactivate) {
-			destroy();
 			return true;
 		} else if (id == R.id.menu_test) {
 			TempDebug.run(getActivity());
@@ -212,7 +223,9 @@ public class AppListFragment extends Fragment {
 		mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(STATE_KEY_RECYCLER_VIEW));
 	}
 
-	public void destroy() {
+
+	@Override
+	public void onDestroyClick() {
 		final Activity activity = getActivity();
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 		final List<String> exclusive_clones = provider.installedApps()
@@ -267,7 +280,6 @@ public class AppListFragment extends Fragment {
 	private IslandManager mIslandManager;
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
-	private boolean mIsDeviceOwner;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 
