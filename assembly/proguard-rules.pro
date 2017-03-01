@@ -16,7 +16,10 @@
 #   public *;
 #}
 
-# Guava library
+# For stream-support library (@IgnoreJava8API is a compile-time annotation)
+-dontwarn build.IgnoreJava8API
+
+# For Guava library
 -dontwarn javax.annotation.**
 -dontwarn sun.misc.Unsafe
 -dontwarn com.google.common.**
