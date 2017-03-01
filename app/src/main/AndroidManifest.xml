@@ -1,6 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.island.mobile" android:versionCode="6" android:versionName="mobile" >
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+          package="com.oasisfeng.island.mobile" android:sharedUserId="com.oasisfeng.island" android:versionName="mobile" android:versionCode="6" >
 
     <uses-feature android:name="android.software.device_admin" android:required="true" />
     <uses-feature android:name="android.software.managed_users" android:required="true" />
