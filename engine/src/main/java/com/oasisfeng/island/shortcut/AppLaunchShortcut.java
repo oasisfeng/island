@@ -11,11 +11,11 @@ import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.Users;
 
 /**
- * Implementation of {@link AppLaunchShortcut}
+ * Implementation of {@link AbstractAppLaunchShortcut}
  *
  * Created by Oasis on 2017/2/19.
  */
-public class AppLaunchShortcutImpl extends AppLaunchShortcut {
+public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 
 	protected boolean prepareToLaunchApp(final ComponentName component) {
 		final UserHandle user = Process.myUserHandle();

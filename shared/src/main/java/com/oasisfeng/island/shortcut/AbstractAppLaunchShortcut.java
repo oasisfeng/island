@@ -30,7 +30,7 @@ import java.util.List;
  *
  * Created by Oasis on 2016/4/22.
  */
-public abstract class AppLaunchShortcut extends Activity {
+public abstract class AbstractAppLaunchShortcut extends Activity {
 
 	public static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
 	private static final String ACTION_LAUNCH_APP = "com.oasisfeng.island.action.LAUNCH_APP";

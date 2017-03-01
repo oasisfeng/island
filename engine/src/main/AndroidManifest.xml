@@ -16,7 +16,7 @@
                  android:label="Island - Engine"
                  android:supportsRtl="true">
 
-        <activity android:name="com.oasisfeng.island.shortcut.AppLaunchShortcutImpl"
+        <activity android:name="com.oasisfeng.island.shortcut.AppLaunchShortcut"
                   android:enabled="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
@@ -33,7 +33,7 @@
         </activity>
 
         <activity-alias android:name=".shortcut.AppLaunchShortcutAlias"
-                        android:targetActivity="com.oasisfeng.island.shortcut.AppLaunchShortcutImpl" >
+                        android:targetActivity="com.oasisfeng.island.shortcut.AppLaunchShortcut" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -67,18 +67,20 @@
                   android:excludeFromRecents="true"
                   android:alwaysRetainTaskState="true"
                   android:taskAffinity=":api"
-                  android:enabled="false"
                   android:theme="@style/android:Theme.Translucent.NoTitleBar" >
+
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.GET_APP_LIST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            <intent-filter>
+
+            <intent-filter> <!-- Intent-filter with negative priority will match in profile first -->
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
-                <data android:scheme="packages"/> <!-- ssp: comma-separated package names -->
+                <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
             </intent-filter>
+
         </activity>
 
         <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity"

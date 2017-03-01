@@ -10,13 +10,14 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.provider.FirebaseInitProvider;
-import com.oasisfeng.android.Manifest;
+import com.oasisfeng.android.Manifest.permission;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.api.ApiActivity;
@@ -25,24 +26,20 @@ import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
-import com.oasisfeng.island.shuttle.ServiceShuttleActivity;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
+import com.oasisfeng.island.shuttle.ServiceShuttleActivity;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 
-import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
-import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
-import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
-import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
-import static android.os.UserManager.ALLOW_PARENT_PROFILE_APP_LINKING;
 
 /**
  * The one-time provisioning for newly created managed profile of Island
@@ -63,13 +60,13 @@ public class IslandProvisioning {
 
 	private static void provisionDeviceOwner(final @NonNull Activity activity, final int request_code) {
 		final Intent intent;
-		if (SDK_INT >= M)
-			intent = new Intent(ACTION_PROVISION_MANAGED_DEVICE)
-					.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class))
-					.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
-		else //noinspection deprecation
+		if (SDK_INT < M)	//noinspection deprecation
 			intent = new Intent(LEGACY_ACTION_PROVISION_MANAGED_DEVICE)
 					.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, activity.getPackageName());
+		else intent = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE)
+				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class))
+				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
+
 		if (intent.resolveActivity(activity.getPackageManager()) != null) {
 			activity.startActivityForResult(intent, request_code);
 			activity.finish();
@@ -151,13 +148,13 @@ public class IslandProvisioning {
 
 		if (SDK_INT >= M) {
 			final DevicePolicies dpm = new DevicePolicies(context);
-			dpm.addUserRestriction(ALLOW_PARENT_PROFILE_APP_LINKING);
-			dpm.setPermissionGrantState(context.getPackageName(), Manifest.permission.INTERACT_ACROSS_USERS, PERMISSION_GRANT_STATE_GRANTED);
+			dpm.addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+			dpm.setPermissionGrantState(context.getPackageName(), permission.INTERACT_ACROSS_USERS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
 		}
 
 		// Prepare AppLaunchShortcut
 		setComponentEnabledSetting(context, AppLaunchShortcut.class, true);
-		final IntentFilter launchpad_filter = new IntentFilter(AppLaunchShortcut.ACTION_LAUNCH_CLONE);
+		final IntentFilter launchpad_filter = new IntentFilter(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE);
 		launchpad_filter.addDataScheme("target");
 		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
 		launchpad_filter.addCategory(Intent.CATEGORY_LAUNCHER);

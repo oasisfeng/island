@@ -45,7 +45,7 @@ import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.AppViewModel.State;
-import com.oasisfeng.island.shortcut.AppLaunchShortcut;
+import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
@@ -262,7 +262,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info().packageName;
 		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
-		if (AppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user))) {
+		if (AbstractAppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user))) {
 			Toast.makeText(mActivity, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
 		} else Toast.makeText(mActivity, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
 	}
