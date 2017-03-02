@@ -53,6 +53,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	public static @NonNull IslandAppListProvider getInstance(final Context context) { return AppListProvider.getInstance(context); }
 	public static @NonNull Predicate<IslandAppInfo> excludeSelf(final Context context) { return exclude(context.getPackageName()); }
 	public static @NonNull Predicate<IslandAppInfo> exclude(final String pkg) { return app -> ! pkg.equals(app.packageName); }
+	public static @NonNull Predicate<IslandAppInfo> notContain(final String pkg) { return app -> ! app.packageName.contains(pkg); }
 
 	public @Nullable IslandAppInfo get(final String pkg, final UserHandle user) {
 		if (Users.isOwner(user)) return super.get(pkg);

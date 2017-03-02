@@ -172,7 +172,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void rebuildAppViewModels() {
 		clearSelection();
 		final List<AppViewModel> apps = IslandAppListProvider.getInstance(mActivity).installedApps()
-				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+				.filter(IslandAppListProvider.notContain("com.oasisfeng.island")).filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		replaceApps(apps);
 	}
 
