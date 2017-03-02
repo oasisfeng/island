@@ -102,7 +102,7 @@
             android:paddingEnd="32dp"
             android:background="?android:attr/selectableItemBackground"
 
-            comment:x3="The 'pop up' effect"
+            comment:x3="The 'remove up' effect"
             android:outlineProvider="bounds"
             android:scaleX="@{app.selected ? 1.01f : 1}"
             android:scaleY="@{app.selected ? 1.01f : 1}"

@@ -41,6 +41,7 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
+import com.oasisfeng.common.databinding.DrawerLayoutBindingAdapter.DrawerListener;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -77,6 +78,9 @@ import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
+
+	private static final String BACK_STACK_DRAWER = "drawer_view";
+	private static final String BACK_STACK_BOTTOM_SHEET = "bottom_sheet";
 
 	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
 
@@ -141,6 +145,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		if (!mFilterPrimaryOptions.contains(entry)) throw new IllegalStateException("mFilterPrimaryOptions does not contain this entry:" + entry);
 		int position = mFilterPrimaryOptions.indexOf(entry);
         onFilterPrimaryChanged(position);
+		Optional.ofNullable(mBackStack.remove(BACK_STACK_DRAWER)).ifPresent(BackNavigationViewModel.BackEntry::onBackPressed);
 	}
 
 	private void onFilterPrimaryChanged(final int index) {
@@ -526,13 +531,66 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mAppListAction = action;
 	}
 
+	public void setBackStack(BackNavigationViewModel backStack) {
+		mBackStack = backStack;
+	}
+
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
 		@Override public void onStateChanged(@NonNull final View bottom_sheet, final int new_state) {
-			if (new_state == BottomSheetBehavior.STATE_HIDDEN) clearSelection();
+			switch (new_state) {
+				case BottomSheetBehavior.STATE_HIDDEN:
+					onHidden(bottom_sheet);
+					break;
+				case BottomSheetBehavior.STATE_COLLAPSED:
+					onCollapsed(bottom_sheet);
+					break;
+				case BottomSheetBehavior.STATE_EXPANDED:
+					onExpanded(bottom_sheet);
+					break;
+			}
 		}
 
 		@Override public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {}
+
+		private void onHidden(View bottom_sheet){
+			clearSelection();
+			mBackStack.remove(BACK_STACK_BOTTOM_SHEET);
+		}
+
+		private void onCollapsed(View bottom_sheet) {
+			BackNavigationViewModel.BackEntry back = new BackNavigationViewModel.BackEntry() {
+				@Override
+				public boolean onBackPressed() {
+					clearSelection();
+					return true;
+				}
+			};
+			mBackStack.add(BACK_STACK_BOTTOM_SHEET, back);
+		}
+
+		private void onExpanded(View bottom_sheet) {
+
+		}
+	};
+
+	public final DrawerListener drawer_listener = new DrawerListener() {
+		@Override
+		public void onDrawerOpened(View drawerView) {
+			BackNavigationViewModel.BackEntry back = new BackNavigationViewModel.BackEntry() {
+				@Override
+				public boolean onBackPressed() {
+					getDrawer().closeDrawer(drawerView);
+					return true;
+				}
+			};
+			mBackStack.add(BACK_STACK_DRAWER, back);
+		}
+
+		@Override
+		public void onDrawerClosed(View drawerView) {
+			mBackStack.remove(BACK_STACK_DRAWER);
+		}
 	};
 
 	public final ItemBinder<AppViewModel> item_binder = (container, model, item) -> {
@@ -553,6 +611,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/* Transient fields */
 	public transient IIslandManager mProfileController;
 	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
+	private BackNavigationViewModel mBackStack;
     private IAppListAction mAppListAction;
 
 	private static final String TAG = "Island.Apps";

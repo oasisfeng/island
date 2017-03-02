@@ -13,6 +13,7 @@
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/drawer"
         android:fitsSystemWindows="true"
+        bind:drawerListener="@{apps.drawer_listener}"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 

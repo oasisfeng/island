@@ -14,7 +14,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v4.view.GravityCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,7 +21,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.google.common.base.Joiner;
@@ -42,6 +40,7 @@ import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
+import com.oasisfeng.island.model.BackNavigationViewModel;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
@@ -65,6 +64,8 @@ public class AppListFragment extends Fragment implements AppListViewModel.IAppLi
 		mIslandManager = new IslandManager(activity);
 		mViewModel = new AppListViewModel();
 		mViewModel.mProfileController = IslandManager.NULL;
+
+		mBackStack = new BackNavigationViewModel();
 
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
@@ -143,6 +144,7 @@ public class AppListFragment extends Fragment implements AppListViewModel.IAppLi
 		mViewModel.attach(getActivity(), mBinding.details.toolbar.getMenu(), mBinding.drawerContent.drawerFilter, saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
         mViewModel.setAppListAction(this);
+        mViewModel.setBackStack(mBackStack);
 
 		if (! Services.bind(getActivity(), IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
 			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
@@ -223,6 +225,9 @@ public class AppListFragment extends Fragment implements AppListViewModel.IAppLi
 		mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(STATE_KEY_RECYCLER_VIEW));
 	}
 
+	public boolean onBackPressed() {
+		return mBackStack.onBackPressed();
+	}
 
 	@Override
 	public void onDestroyClick() {
@@ -279,6 +284,7 @@ public class AppListFragment extends Fragment implements AppListViewModel.IAppLi
 
 	private IslandManager mIslandManager;
 	private AppListViewModel mViewModel;
+	private BackNavigationViewModel mBackStack;
 	private AppListBinding mBinding;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
