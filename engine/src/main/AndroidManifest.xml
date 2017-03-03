@@ -42,26 +42,6 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name=".ActivityForwarder"
-                  android:exported="false"
-                  android:hardwareAccelerated="false"
-                  android:excludeFromRecents="true"
-                  android:theme="@style/android:Theme.Translucent.NoTitleBar" >
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.action.FORWARD_ACTIVITY" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <activity-alias android:name=".InboundActivityForwarder"
-                        android:targetActivity=".ActivityForwarder"
-                        android:exported="true" >
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.action.FORWARD" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity-alias>
-
         <activity android:name="com.oasisfeng.island.api.ApiActivity"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
