@@ -38,7 +38,7 @@ android {
 
 dependencies {
     compile project(':deagle')
-    compile 'com.google.guava:guava:19.0'
+    compile 'com.google.guava:guava:20.0'
     compile 'net.sourceforge.streamsupport:streamsupport:1.5.3'
     compile 'org.jetbrains:annotations:13.0'
     compile 'com.google.firebase:firebase-analytics:10.2.0'
