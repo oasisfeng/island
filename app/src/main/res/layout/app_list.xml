@@ -35,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="?android:attr/actionBarSize"
-            android:paddingBottom="8dp"
+            android:paddingBottom="88dp"
             android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
             android:paddingEnd="-16dp"
             android:clipToPadding="false"
@@ -44,7 +44,7 @@
             bind:items="@{apps.items}"
             bind:item_binder="@{apps.item_binder}"
             bind:item_layout="@{@layout/app_entry}"
-            tools:listitem="@layout/app_entry" />
+            tools:listitem="@layout/app_entry" /> <!-- "paddingBottom" should be no less than "behavior_peekHeight" of bottom sheet. -->
 
         <TextView
             android:layout_width="match_parent"
