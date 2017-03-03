@@ -25,7 +25,9 @@ Type `adb -d shell` to open ADB shell, and execute the following commands one by
 
 - `pm create-user --profileOf 0 --managed Island`
 
-If succeed, you will be prompted with the ID of newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID. If you got "Error: couldn't create User.", you need to execute `setprop fw.max_users 10` first, then retry the command above.
+If succeed, you will be prompted with the ID of newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID.
+
+If you got "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
 
 - `pm install -r /data/app/com.oasisfeng.island-1/base.apk`
 
