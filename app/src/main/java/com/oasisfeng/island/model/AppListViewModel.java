@@ -59,6 +59,9 @@ import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
+import static android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM;
+import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
+
 /**
  * View model for apps
  *
@@ -166,7 +169,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
-		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled);
+		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled)
+				.setShowAsActionFlags(contains(GreenifyClient.getGreenifyPackage(null)) ? SHOW_AS_ACTION_IF_ROOM : SHOW_AS_ACTION_NEVER);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -344,6 +348,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, GlobalStatus.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
 			launchSettingsAppInfoActivity(app_in_profile);
+			return;
+		}
+
+		if (pkg.equals(GreenifyClient.getGreenifyPackage(mActivity))) {
+			Dialogs.buildAlert(mActivity, 0, R.string.dialog_never_clone_greenify).withOkButton(null).show();
 			return;
 		}
 

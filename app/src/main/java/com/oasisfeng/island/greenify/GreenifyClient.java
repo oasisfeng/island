@@ -57,7 +57,8 @@ public class GreenifyClient {
 		}
 	}
 
-	private static String getGreenifyPackage(final Context context) {
+	public static String getGreenifyPackage(final @Nullable Context context) {
+		if (context == null) return sGreenifyPackageName != null ? sGreenifyPackageName : GREENIFY_PKG;
 		if (sGreenifyPackageName == null) {
 			if (BuildConfig.DEBUG && Apps.of(context).isInstalledInCurrentUser(GREENIFY_DEBUG_PKG)) sGreenifyPackageName = GREENIFY_DEBUG_PKG;
 			else sGreenifyPackageName = GREENIFY_PKG;
