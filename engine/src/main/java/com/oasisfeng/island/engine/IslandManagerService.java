@@ -1,21 +1,20 @@
 package com.oasisfeng.island.engine;
 
+import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.app.Service;
+import android.app.admin.DevicePolicyManager;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.Process;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
@@ -23,10 +22,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -38,9 +34,6 @@ import java.util.Map;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
-import static android.Manifest.permission.PACKAGE_USAGE_STATS;
-import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
-import static android.content.Context.USAGE_STATS_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -57,7 +50,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 	public IslandManagerService(final Context context) {
 		mContext = context;
 		mDevicePolicies = new DevicePolicies(context);
-		mLauncherApps = Suppliers.memoize(() -> (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 	}
 
 	// TODO: Use ParceledSlickList instead of List
@@ -110,7 +102,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 	@Override public int cloneApp(final String pkg, final boolean do_it) {
 		final PackageManager pm = mContext.getPackageManager();
-		try { @SuppressWarnings({"WrongConstant", "deprecation"})
+		try { @SuppressWarnings("deprecation")
 			final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 			return cloneApp(info, do_it);
 		} catch (final PackageManager.NameNotFoundException ignored) { return IslandManager.CLONE_RESULT_NOT_FOUND; }
@@ -172,30 +164,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
-	@Override public boolean removeClone(final String pkg) {
-		final int flags;
-		try { @SuppressWarnings({"WrongConstant", "deprecation"})
-			final ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
-			flags = info.flags;
-		} catch (final PackageManager.NameNotFoundException e) {
-			Log.e(TAG, "Try to remove non-existent clone: " + pkg);
-			return false;
-		}
-		if ((flags & FLAG_SYSTEM) != 0) {
-			unfreezeApp(pkg);	// App must not be hidden for startAppDetailsActivity() to work.
-			showAppSettingActivity(pkg);
-			Analytics.$().event("action_disable_sys_app").with("package", pkg).send();
-			return false;		// TODO: Separate return value
-		}
-		Activities.startActivity(mContext, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", pkg, null)));
-		return true;
-	}
-
-	private void showAppSettingActivity(final String pkg) {
-		enableSystemAppForActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", "", null)));
-		mLauncherApps.get().startAppDetailsActivity(new ComponentName(pkg, ""), Process.myUserHandle(), null, null);
-	}
-
 	@Override public boolean block(final String pkg) {
 		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, true);
 		return failed == null || failed.length == 0;
@@ -212,12 +180,12 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public String[] queryUsedPackagesDuring(final long begin_time, final long end_time) {
-		if (ContextCompat.checkSelfPermission(mContext, PACKAGE_USAGE_STATS) != PERMISSION_GRANTED) {
+		if (ContextCompat.checkSelfPermission(mContext, permission.PACKAGE_USAGE_STATS) != PERMISSION_GRANTED) {
 			if (SDK_INT < M) return new String[0];
-			if (! mDevicePolicies.setPermissionGrantState(mContext.getPackageName(), PACKAGE_USAGE_STATS, PERMISSION_GRANT_STATE_GRANTED))
+			if (! mDevicePolicies.setPermissionGrantState(mContext.getPackageName(), permission.PACKAGE_USAGE_STATS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED))
 				return new String[0];
 		}
-		@SuppressLint("InlinedApi") final UsageStatsManager usm = (UsageStatsManager) mContext.getSystemService(USAGE_STATS_SERVICE); /* hidden but accessible on API 21 */
+		@SuppressLint("InlinedApi") final UsageStatsManager usm = (UsageStatsManager) mContext.getSystemService(Context.USAGE_STATS_SERVICE); /* hidden but accessible on API 21 */
 		final Map<String, UsageStats> stats = usm.queryAndAggregateUsageStats(begin_time, end_time);
 		if (stats == null) return new String[0];
 		final List<String> used_pkgs = StreamSupport.stream(stats.values()).filter(usage -> usage.getLastTimeUsed() != 0)
@@ -246,7 +214,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 	private final Context mContext;
 	private final DevicePolicies mDevicePolicies;
-	private final Supplier<LauncherApps> mLauncherApps;
 
 	private static final String TAG = IslandManagerService.class.getSimpleName();
 

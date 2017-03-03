@@ -29,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
@@ -321,9 +322,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			Dialogs.buildAlert(mActivity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
 		} else try {
-			final IIslandManager controller = controller(app);
-			if (app.isHidden()) controller.unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
-			controller.removeClone(app.packageName);
+			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
+			if (app.isSystem()) {
+				final LauncherApps launcher = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+				launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
+				Analytics.$().event("action_disable_sys_app").with("package", app.packageName).send();
+			} else Activities.startActivity(mActivity, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", app.packageName, null))
+					.putExtra(Intent.EXTRA_USER, app.user));
 		} catch (final RemoteException ignored) {
 			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			launcher_apps.startAppDetailsActivity(new ComponentName(app.packageName, ""), GlobalStatus.profile, null, null);

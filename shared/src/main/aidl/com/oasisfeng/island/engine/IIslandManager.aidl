@@ -14,7 +14,6 @@ interface IIslandManager {
 	boolean launchApp(String pkg);
 	boolean block(String pkg);
 	boolean unblock(String pkg);
-	boolean removeClone(String pkg);
 	/** Destroy the current profile. */
 	void destroyProfile();
 	/** Query the used packages during the given time span. (works on Android 6+ or Android 5.x with PACKAGE_USAGE_STATS permission granted manually) */
