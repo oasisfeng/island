@@ -12,7 +12,7 @@ First of all, you need to connect your Android device to a computer with USB cab
 
 To check whether the USB-connected Android device is properly recognized by your computer, type the following command in the shell (or Command Prompt on Windows):
 
-```adb devices```
+`adb devices`
 
 If no device is listed in the output, your Android device is not correctly recognized by the computer.
 
@@ -23,11 +23,11 @@ Manual setup for Island
 -----------------------
 Type `adb -d shell` to open ADB shell, and execute the following commands one by one in sequence:
 
-- ```pm create-user --profileOf 0 --managed Island```
+- `pm create-user --profileOf 0 --managed Island`
 
 If succeed, you will be prompted with the ID of newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID.
 
-- ```pm install -r /data/app/com.oasisfeng.island-1/base.apk```
+- `pm install -r /data/app/com.oasisfeng.island-1/base.apk`
 
 If you get "file not found" error, use "-2" instead of "-1" in above command and try again.
 
@@ -36,7 +36,9 @@ If it does not work, you may need to execute `am start-user <user-id>` first and
 - Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`  
 Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
 
-- ```am start-user <user id>```
+- `am start-user <user id>`
+
+- `pm grant com.oasisfeng.island android.permission.INTERACT_ACROSS_USERS`
 
 - Start Island app
 
@@ -50,7 +52,7 @@ Manual setup for Island in experimental "God mode"
 
 - Remove all accounts and work profile in Settings - Accounts.
 
-- Execute in ADB shell: ```dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver```
+- Execute in ADB shell: `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`
 
 If you get error message in this step, please try executing `settings put global device_provisioned 0` and then above `dpm ...` command again, followed by `settings put global device_provisioned 1`. (The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.).
 
