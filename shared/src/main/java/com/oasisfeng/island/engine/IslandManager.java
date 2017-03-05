@@ -56,7 +56,9 @@ public class IslandManager {
 		Analytics.$().event("action_deactivate").send();
 		mDevicePolicies.clearCrossProfileIntentFilters();
 		mDevicePolicies.getManager().clearDeviceOwnerApp(mContext.getPackageName());
-		mDevicePolicies.removeActiveAdmin();
+		try {
+			mDevicePolicies.removeActiveAdmin();			// Since Android 7.1, clearDeviceOwnerApp() itself does remove active device-admin,
+		} catch (final SecurityException ignored) {}		//   thus SecurityException will be thrown here.
 		final Activity activity = Activities.findActivityFrom(mContext);
 		if (activity != null) activity.finish();
 	}
