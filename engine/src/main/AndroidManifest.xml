@@ -17,14 +17,13 @@
                  android:supportsRtl="true">
 
         <activity android:name="com.oasisfeng.island.shortcut.AppLaunchShortcut"
-                  android:enabled="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
                   android:theme="@style/android:Theme.Translucent.NoTitleBar"
                   android:clearTaskOnLaunch="true"
                   android:taskAffinity=":shortcut"
                   android:launchMode="singleTask" > <!-- Most important attribute: launchMode="singleTask" -->
-            <intent-filter>
+            <intent-filter android:priority="-1"> <!-- Negative priority cause intent matching preferably in profile -->
                 <action android:name="com.oasisfeng.island.action.LAUNCH_CLONE" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -32,7 +31,7 @@
             </intent-filter>
         </activity>
 
-        <activity-alias android:name=".shortcut.AppLaunchShortcutAlias"
+        <activity-alias android:name="com.oasisfeng.island.shortcut.AppLaunchShortcutAlias"
                         android:targetActivity="com.oasisfeng.island.shortcut.AppLaunchShortcut" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />

@@ -17,13 +17,12 @@ import com.oasisfeng.island.util.Users;
  */
 public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 
-	protected boolean prepareToLaunchApp(final ComponentName component) {
+	@Override protected boolean prepareToLaunchApp(final ComponentName component) {
 		final UserHandle user = Process.myUserHandle();
 		if (Users.isOwner(user) && ! new IslandManager(this).isDeviceOwner()) return false;
 
 		// Ensure de-frozen
-		new IslandManagerService(this).unfreezeApp(component.getPackageName());
-		return true;
+		return new IslandManagerService(this).unfreezeApp(component.getPackageName());
 	}
 
 	@Override protected void onLaunchFailed() {

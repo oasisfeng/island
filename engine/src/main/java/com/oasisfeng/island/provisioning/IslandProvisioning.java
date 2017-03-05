@@ -27,7 +27,6 @@ import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
-import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.shuttle.ServiceShuttleActivity;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -153,7 +152,6 @@ public class IslandProvisioning {
 		}
 
 		// Prepare AppLaunchShortcut
-		setComponentEnabledSetting(context, AppLaunchShortcut.class, true);
 		final IntentFilter launchpad_filter = new IntentFilter(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE);
 		launchpad_filter.addDataScheme("target");
 		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -165,7 +163,6 @@ public class IslandProvisioning {
 		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
-		setComponentEnabledSetting(context, ApiActivity.class, true);
 		policies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
