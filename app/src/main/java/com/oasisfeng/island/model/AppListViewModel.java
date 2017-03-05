@@ -11,22 +11,27 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.databinding.Bindable;
 import android.databinding.Observable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
@@ -36,6 +41,7 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
+import com.oasisfeng.common.databinding.DrawerLayoutBindingAdapter.DrawerListener;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -45,6 +51,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.mobile.databinding.AppDrawerItemBinding;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.util.Users;
@@ -72,25 +79,43 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
 
+	private static final String BACK_STACK_DRAWER = "drawer_view";
+	private static final String BACK_STACK_BOTTOM_SHEET = "bottom_sheet";
+
 	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("unused") public enum Filter {
-		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user)),
-		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user)),
+		Island		(R.string.filter_island,
+				R.string.description_island,
+				R.drawable.drawer_island,
+				GlobalStatus::hasProfile,
+				app -> Users.isProfile(app.user)),
+		Mainland	(R.string.filter_mainland,
+				R.string.description_mainland,
+				R.drawable.drawer_mainland,
+				() -> true,
+				app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
-		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
+		Filter(final @StringRes int label, final @StringRes int description, @DrawableRes int banner, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) {
+			mLabel = label; mDescription = description; mBanner = banner; mVisibility = visibility; mFilter = filter;
+		}
 
 		private final @StringRes int mLabel;
+		private final @StringRes int mDescription;
+		private final @DrawableRes int mBanner;
 		private final BooleanSupplier mVisibility;
 		private final Predicate<IslandAppInfo> mFilter;
 
 		public class Entry {
 			Entry(final Context context) { mContext = context; }
 			Predicate<IslandAppInfo> filter() { return mFilter; }
-			@Override public String toString() { return mContext.getString(mLabel); }
+			public Drawable getBanner() { return ContextCompat.getDrawable(mContext, mBanner);}
+			public String getLabel() { return mContext.getString(mLabel); }
+			public String getDescription() { return mContext.getString(mDescription); }
+			public void onClick() {}
 			private final Context mContext;
 		}
 	}
@@ -101,10 +126,34 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return mActiveFilters;
 	}
 
-	public void onFilterPrimaryChanged(final int index) {
+	@Bindable
+	public int getFilterPrimaryChoice() {
+		return mFilterPrimaryChoice;
+	}
+
+	@Bindable
+	public boolean isDeviceOwner() {
+		return GlobalStatus.device_owner;
+	}
+
+	@Bindable
+	public Filter.Entry getFilterEntryPrimaryChoice() {
+		return mFilterPrimaryOptions.get(mFilterPrimaryChoice);
+	}
+
+	public void select(final Filter.Entry entry) {
+		if (!mFilterPrimaryOptions.contains(entry)) throw new IllegalStateException("mFilterPrimaryOptions does not contain this entry:" + entry);
+		int position = mFilterPrimaryOptions.indexOf(entry);
+        onFilterPrimaryChanged(position);
+		Optional.ofNullable(mBackStack.remove(BACK_STACK_DRAWER)).ifPresent(BackNavigationViewModel.BackEntry::onBackPressed);
+	}
+
+	private void onFilterPrimaryChanged(final int index) {
 		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(index) + " of " + mFilterPrimaryOptions);
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
+        notifyPropertyChanged(BR.filterPrimaryChoice);
+		notifyPropertyChanged(BR.filterEntryPrimaryChoice);
 		updateActiveFilters();
 		rebuildAppViewModels();
 	}
@@ -113,6 +162,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterIncludeSystemApps = should_include;
 		updateActiveFilters();
 		rebuildAppViewModels();
+	}
+
+	public void onDestroyClick() {
+		mAppListAction.onDestroyClick();
 	}
 
 	private void updateActiveFilters() {
@@ -124,7 +177,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void rebuildAppViewModels() {
 		clearSelection();
 		final List<AppViewModel> apps = IslandAppListProvider.getInstance(mActivity).installedApps()
-				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+				.filter(IslandAppListProvider.notContain("com.oasisfeng.island")).filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		replaceApps(apps);
 	}
 
@@ -135,7 +188,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}});
 	}
 
-	public void attach(final Activity activity, final Menu actions, final Bundle saved_state) {
+	public void attach(final Activity activity, final Menu actions, final LinearLayout drawerFilter, final Bundle saved_state) {
 		mActivity = activity;
 		layout_manager = new LinearLayoutManager(activity);
 		mActions = actions;
@@ -144,6 +197,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
+		StreamSupport.stream(mFilterPrimaryOptions)
+				.map((entry) -> {
+					AppDrawerItemBinding binding = AppDrawerItemBinding.inflate(LayoutInflater.from(mActivity));
+					binding.setEntry(entry);
+					binding.setApps(this);
+					return binding;
+				})
+				.forEach((binding) -> drawerFilter.addView(binding.getRoot()));
 		onFilterPrimaryChanged(filter_primary);
 	}
 
@@ -164,6 +225,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final boolean exclusive = provider.isExclusive(app);
 
 		final boolean is_managed = GlobalStatus.device_owner || ! Users.isOwner(app.user);
+		mActions.findItem(R.id.menu_launch).setVisible(app.isLaunchable());
 		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
@@ -192,15 +254,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		updateActions();
 	}
 
-	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
-		if (getSelection() == null) return;
-		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_launch").with("package", app.packageName).send();
-		try {
-			controller(app).launchApp(app.packageName);
-		} catch (final RemoteException ignored) {}
-	}
-
 	public boolean onActionClick(final MenuItem item) {
 		final AppViewModel selection = getSelection();
 		if (selection == null) return false;
@@ -209,10 +262,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IIslandManager controller = controller(app);
 
 		final int id = item.getItemId();
-		if (id == R.id.menu_clone) {
+		if (id == R.id.menu_launch) {
+            launchApp(app);
+		} else if (id == R.id.menu_clone) {
 			cloneApp(app);
 			// Do not clear selection, for quick launch with one more click
-		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
+		} else if (id == R.id.menu_freeze) { // Select the next alive app, or clear selection.
 			final int next_index = indexOf(selection) + 1;
 			if (next_index >= size()) clearSelection();
 			else {
@@ -341,6 +396,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, GlobalStatus.profile, false);
 	}
 
+	private void launchApp(IslandAppInfo app) {
+		Analytics.$().event("action_launch").with("package", app.packageName).send();
+		try {
+			controller(app).launchApp(app.packageName);
+		} catch (final RemoteException ignored) {}
+	}
+
 	private void cloneApp(final IslandAppInfo app) {
 		final int check_result;
 		final String pkg = app.packageName;
@@ -441,7 +503,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
 	}
 
-	@Bindable public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
+	@Bindable
+	public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
 		return mFilterPrimaryOptions;
 	}
 
@@ -464,14 +527,70 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		@Override public AppListViewModel[] newArray(final int size) { return new AppListViewModel[size]; }
 	};
 
+	public void setAppListAction(IAppListAction action) {
+		mAppListAction = action;
+	}
+
+	public void setBackStack(BackNavigationViewModel backStack) {
+		mBackStack = backStack;
+	}
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
 		@Override public void onStateChanged(@NonNull final View bottom_sheet, final int new_state) {
-			if (new_state == BottomSheetBehavior.STATE_HIDDEN) clearSelection();
+			switch (new_state) {
+				case BottomSheetBehavior.STATE_HIDDEN:
+					onHidden(bottom_sheet);
+					break;
+				case BottomSheetBehavior.STATE_COLLAPSED:
+					onCollapsed(bottom_sheet);
+					break;
+				case BottomSheetBehavior.STATE_EXPANDED:
+					onExpanded(bottom_sheet);
+					break;
+			}
 		}
 
 		@Override public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {}
+
+		private void onHidden(View bottom_sheet){
+			clearSelection();
+			mBackStack.remove(BACK_STACK_BOTTOM_SHEET);
+		}
+
+		private void onCollapsed(View bottom_sheet) {
+			BackNavigationViewModel.BackEntry back = new BackNavigationViewModel.BackEntry() {
+				@Override
+				public boolean onBackPressed() {
+					clearSelection();
+					return true;
+				}
+			};
+			mBackStack.add(BACK_STACK_BOTTOM_SHEET, back);
+		}
+
+		private void onExpanded(View bottom_sheet) {
+
+		}
+	};
+
+	public final DrawerListener drawer_listener = new DrawerListener() {
+		@Override
+		public void onDrawerOpened(View drawerView) {
+			BackNavigationViewModel.BackEntry back = new BackNavigationViewModel.BackEntry() {
+				@Override
+				public boolean onBackPressed() {
+					getDrawer().closeDrawer(drawerView);
+					return true;
+				}
+			};
+			mBackStack.add(BACK_STACK_DRAWER, back);
+		}
+
+		@Override
+		public void onDrawerClosed(View drawerView) {
+			mBackStack.remove(BACK_STACK_DRAWER);
+		}
 	};
 
 	public final ItemBinder<AppViewModel> item_binder = (container, model, item) -> {
@@ -492,6 +611,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/* Transient fields */
 	public transient IIslandManager mProfileController;
 	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
+	private BackNavigationViewModel mBackStack;
+    private IAppListAction mAppListAction;
 
 	private static final String TAG = "Island.Apps";
+
+	public interface IAppListAction {
+
+		void onDestroyClick();
+
+	}
+
 }

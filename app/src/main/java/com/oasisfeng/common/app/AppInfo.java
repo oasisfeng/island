@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -17,6 +18,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.common.util.IconNormalizer;
 import com.oasisfeng.island.data.IslandAppInfo;
 
 import java.util.concurrent.TimeUnit;
@@ -56,7 +58,7 @@ public class AppInfo extends ApplicationInfo {
 	public AppInfo getLastInfo() { return mLastInfo; }
 
 	interface IconFilter {
-		@UiThread Drawable process(Drawable raw_icon);
+		@UiThread Drawable process(Drawable raw_icon, float scale);
 	}
 
 	interface IconConsumer {
@@ -72,15 +74,22 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	@UiThread private void loadIcon(final @Nullable IconFilter filter, final IconConsumer consumer, final boolean need_badge) {
+		class DrawableInfo {
+			final Drawable drawable;
+			final float scale;
+			DrawableInfo(Drawable drawable, float scale) {this.drawable = drawable; this.scale = scale;}
+		}
 		if (mCachedIcon != null) consumer.accept(mCachedIcon);
-		else new AsyncTask<Void, Void, Drawable>() {
+		else new AsyncTask<Void, Void, DrawableInfo>() {
 
-			@Override protected Drawable doInBackground(final Void... params) {
-				return need_badge ? loadIcon(context().getPackageManager()) : loadUnbadgedIconCompat(context().getPackageManager());
+			@Override protected DrawableInfo doInBackground(final Void... params) {
+				Drawable drawable = need_badge ? loadIcon(context().getPackageManager()) : loadUnbadgedIconCompat(context().getPackageManager());
+				float scale = sNormalizer.getScale(drawable);
+				return new DrawableInfo(drawable, scale);
 			}
 
-			@Override protected void onPostExecute(final Drawable drawable) {
-				final Drawable icon = (filter != null ? filter.process(drawable) : drawable);
+			@Override protected void onPostExecute(final DrawableInfo info) {
+				final Drawable icon = (filter != null ? filter.process(info.drawable, info.scale) : info.drawable);
 				mCachedIcon = icon;
 				consumer.accept(icon);
 			}
@@ -134,6 +143,8 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	protected final AppListProvider mProvider;
+
+	private static IconNormalizer sNormalizer = new IconNormalizer(2 * Resources.getSystem().getDimensionPixelSize(android.R.dimen.app_icon_size));
 	private final String mLabel;
 	private Drawable mCachedIcon;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */

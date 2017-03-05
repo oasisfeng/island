@@ -1,7 +1,9 @@
 package com.oasisfeng.island.model;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -9,9 +11,9 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
-import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
@@ -37,6 +39,35 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		if (! info().shouldShowAsEnabled()) return State.Disabled;
 		if (info().isHidden()) return State.Frozen;
 		return State.Alive;
+	}
+
+	public CharSequence getStatus(final Context context) {
+		String split = context.getString(R.string.status_split);
+		switch (state) {
+			case Alive:
+			    return null;
+			case Frozen:
+				return split + context.getString(R.string.status_frozen);
+			case Disabled:
+			case Unknown:
+				return split + context.getString(R.string.status_disabled);
+            default:
+            	throw new IllegalStateException("Unknown state: " + state.name());
+		}
+	}
+
+
+	public Drawable getStatusDrawable(final Context context) {
+		switch (state) {
+			case Alive:
+				return null;
+			case Frozen:
+			case Disabled:
+			case Unknown:
+				return ContextCompat.getDrawable(context, R.drawable.ic_lock_24dp);
+			default:
+				throw new IllegalStateException("Unknown state: " + state.name());
+		}
 	}
 
 	public CharSequence getStatusText(final Context context) {

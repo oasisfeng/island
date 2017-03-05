@@ -4,6 +4,10 @@
     <string name="filter_island">Island</string>
     <string name="filter_mainland">Mainland</string>
 
+    <string name="description_island">The work profile</string>
+    <string name="description_mainland">The owner profile</string>
+
+    <string name="status_split">\ ·\ </string>
     <string name="status_alive">Active</string>
     <string name="status_frozen">Frozen</string>
     <string name="status_disabled">Disabled</string>
@@ -29,6 +33,7 @@
     <string name="button_learn_more_online">Learn more (online)</string>
     <string name="button_instructions_online">Instructions (online)</string>
 
+    <string name="action_launch">Launch</string>
     <string name="action_clone">Clone</string>
     <string name="action_freeze">Freeze</string>
     <string name="action_unfreeze">Unfreeze</string>
@@ -80,6 +85,10 @@
     <string name="dialog_button_upgrade">Upgrade</string>
     <string name="dialog_button_destroy">Destroy</string>
     <string name="dialog_button_deactivate">Deactivate</string>
+
+    <string name="drawer_button_settings">Settings</string>
+    <string name="drawer_icon_open">Open drawer</string>
+    <string name="drawer_icon_close">Close drawer</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
 

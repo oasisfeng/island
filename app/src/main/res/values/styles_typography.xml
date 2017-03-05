@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="font"/>
+
+    <style name="font.button">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="font.body">
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineSpacingMultiplier">1.1</item>
+    </style>
+
+    <style name="font.subheading">
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineSpacingMultiplier">1.1</item>
+    </style>
+
+    <style name="font.title">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="font.headline">
+        <item name="android:textSize">24sp</item>
+        <item name="android:lineSpacingMultiplier">1.1</item>
+    </style>
+
+    <style name="font.display1">
+        <item name="android:textSize">34sp</item>
+    </style>
+
+    <!-- light -->
+
+    <style name="font.button.light">
+        <item name="android:textColor">@color/black_54p_secondary_text</item>
+    </style>
+
+    <style name="font.body.light">
+        <item name="android:textColor">@color/black_54p_secondary_text</item>
+    </style>
+
+    <style name="font.subheading.light">
+        <item name="android:textColor">@color/black_54p_secondary_text</item>
+    </style>
+
+    <style name="font.title.light">
+        <item name="android:textColor">@color/black_54p_secondary_text</item>
+    </style>
+
+    <style name="font.headline.light">
+        <item name="android:textColor">@color/black_54p_secondary_text</item>
+    </style>
+
+    <style name="font.display1.light">
+        <item name="android:textColor">@color/black_54p_secondary_text</item>
+    </style>
+
+    <!-- light primary -->
+
+    <style name="font.button.light.primary">
+        <item name="android:textColor">@color/black_87p_primary_text</item>
+    </style>
+
+    <style name="font.body.light.primary">
+        <item name="android:textColor">@color/black_87p_primary_text</item>
+    </style>
+
+    <style name="font.subheading.light.primary">
+        <item name="android:textColor">@color/black_87p_primary_text</item>
+    </style>
+
+    <style name="font.title.light.primary">
+        <item name="android:textColor">@color/black_87p_primary_text</item>
+    </style>
+
+    <style name="font.headline.light.primary">
+        <item name="android:textColor">@color/black_87p_primary_text</item>
+    </style>
+
+    <style name="font.display1.light.primary">
+        <item name="android:textColor">@color/black_87p_primary_text</item>
+    </style>
+
+    <!-- light disabled -->
+
+    <style name="font.button.light.disabled">
+        <item name="android:textColor">@color/black_38p_disable_hint_text</item>
+    </style>
+
+    <style name="font.body.light.disabled">
+        <item name="android:textColor">@color/black_38p_disable_hint_text</item>
+    </style>
+
+    <style name="font.subheading.light.disabled">
+        <item name="android:textColor">@color/black_38p_disable_hint_text</item>
+    </style>
+
+    <style name="font.title.light.disabled">
+        <item name="android:textColor">@color/black_38p_disable_hint_text</item>
+    </style>
+
+    <style name="font.headline.light.disabled">
+        <item name="android:textColor">@color/black_38p_disable_hint_text</item>
+    </style>
+
+    <style name="font.display1.light.disabled">
+        <item name="android:textColor">@color/black_38p_disable_hint_text</item>
+    </style>
+
+    <!-- dark -->
+
+    <style name="font.button.dark">
+        <item name="android:textColor">@color/white_70p_secondary_text</item>
+    </style>
+
+    <style name="font.body.dark">
+        <item name="android:textColor">@color/white_70p_secondary_text</item>
+    </style>
+
+    <style name="font.subheading.dark">
+        <item name="android:textColor">@color/white_70p_secondary_text</item>
+    </style>
+
+    <style name="font.title.dark">
+        <item name="android:textColor">@color/white_70p_secondary_text</item>
+    </style>
+
+    <style name="font.headline.dark">
+        <item name="android:textColor">@color/white_70p_secondary_text</item>
+    </style>
+
+    <style name="font.display1.dark">
+        <item name="android:textColor">@color/white_70p_secondary_text</item>
+    </style>
+
+    <!-- dark primary -->
+
+    <style name="font.button.dark.primary">
+        <item name="android:textColor">@color/white_100p_primary_text</item>
+    </style>
+
+    <style name="font.body.dark.primary">
+        <item name="android:textColor">@color/white_100p_primary_text</item>
+    </style>
+
+    <style name="font.subheading.dark.primary">
+        <item name="android:textColor">@color/white_100p_primary_text</item>
+    </style>
+
+    <style name="font.title.dark.primary">
+        <item name="android:textColor">@color/white_100p_primary_text</item>
+    </style>
+
+    <style name="font.headline.dark.primary">
+        <item name="android:textColor">@color/white_100p_primary_text</item>
+    </style>
+
+    <style name="font.display1.dark.primary">
+        <item name="android:textColor">@color/white_100p_primary_text</item>
+    </style>
+
+    <!-- dark disabled -->
+
+    <style name="font.button.dark.disabled">
+        <item name="android:textColor">@color/white_30p_disable_hint_text</item>
+    </style>
+
+    <style name="font.body.dark.disabled">
+        <item name="android:textColor">@color/white_30p_disable_hint_text</item>
+    </style>
+
+    <style name="font.subheading.dark.disabled">
+        <item name="android:textColor">@color/white_30p_disable_hint_text</item>
+    </style>
+
+    <style name="font.title.dark.disabled">
+        <item name="android:textColor">@color/white_30p_disable_hint_text</item>
+    </style>
+
+    <style name="font.headline.dark.disabled">
+        <item name="android:textColor">@color/white_30p_disable_hint_text</item>
+    </style>
+
+    <style name="font.display1.dark.disabled">
+        <item name="android:textColor">@color/white_30p_disable_hint_text</item>
+    </style>
+
+</resources>

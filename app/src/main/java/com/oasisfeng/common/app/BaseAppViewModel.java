@@ -7,7 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.View;
 
-import com.oasisfeng.android.ui.IconResizer;
+import com.oasisfeng.common.util.IconResizer;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 

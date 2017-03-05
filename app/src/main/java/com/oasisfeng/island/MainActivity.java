@@ -10,6 +10,7 @@ import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.support.annotation.Nullable;
 
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.console.apps.AppListFragment;
@@ -88,11 +89,22 @@ public class MainActivity extends Activity {
 		} else if (! GlobalStatus.device_owner) showSetupWizard();
 
 		setContentView(R.layout.activity_main);
-		if (savedInstanceState == null) getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
+		if (savedInstanceState == null) {
+			mAppListFragment = new AppListFragment();
+			getFragmentManager().beginTransaction().replace(R.id.container, mAppListFragment).commit();
+		}
+	}
+
+	@Override public void onBackPressed() {
+		if (mAppListFragment != null && mAppListFragment.onBackPressed()) return;
+		super.onBackPressed();
 	}
 
 	private void showSetupWizard() {
 		startActivity(new Intent(this, SetupActivity.class));
 		finish();
 	}
+
+	private @Nullable AppListFragment mAppListFragment;
+
 }

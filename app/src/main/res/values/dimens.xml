@@ -31,4 +31,7 @@
     <dimen name="content_text_size">16sp</dimen>
     <dimen name="content_padding_between_text">16dp</dimen>
 
+    <!-- For app entry -->
+    <dimen name="app_entry_height">64dp</dimen>
+
 </resources>
