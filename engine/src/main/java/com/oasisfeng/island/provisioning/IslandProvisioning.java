@@ -1,7 +1,7 @@
 package com.oasisfeng.island.provisioning;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.app.IntentService;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,16 +12,13 @@ import android.content.pm.LauncherApps;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.firebase.provider.FirebaseInitProvider;
 import com.oasisfeng.android.Manifest.permission;
 import com.oasisfeng.android.content.IntentFilters;
-import com.oasisfeng.island.IslandDeviceAdminReceiver;
 import com.oasisfeng.island.api.ApiActivity;
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.engine.SystemAppsManager;
@@ -43,7 +40,7 @@ import static android.os.Build.VERSION_CODES.M;
  *
  * Created by Oasis on 2016/4/26.
  */
-public class IslandProvisioning {
+public class IslandProvisioning extends IntentService {
 
 	/**
 	 * Provision state:
@@ -55,32 +52,21 @@ public class IslandProvisioning {
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 8;
 
-	private static void provisionDeviceOwner(final @NonNull Activity activity, final int request_code) {
-		final Intent intent;
-		if (SDK_INT < M)	//noinspection deprecation
-			intent = new Intent(LEGACY_ACTION_PROVISION_MANAGED_DEVICE)
-					.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, activity.getPackageName());
-		else intent = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE)
-				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, new ComponentName(activity, IslandDeviceAdminReceiver.class))
-				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
-
-		if (intent.resolveActivity(activity.getPackageManager()) != null) {
-			activity.startActivityForResult(intent, request_code);
-			activity.finish();
-		} else Toast.makeText(activity, "Sorry, Island is not supported by your device.", Toast.LENGTH_SHORT).show();
-	}
-	private static final String LEGACY_ACTION_PROVISION_MANAGED_DEVICE = "com.android.managedprovisioning.ACTION_PROVISION_MANAGED_DEVICE";
-
 	/** This is the normal procedure after ManagedProvision finished its provisioning, running in profile. */
-	@SuppressLint("CommitPrefEdits") public static void onProfileProvisioningComplete(final Context context) {
+	public static void onProfileProvisioningComplete(final Context context) {
 		Log.d(TAG, "onProfileProvisioningComplete");
-		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		context.startService(new Intent(context, IslandProvisioning.class));
+	}
+
+	@Override protected void onHandleIntent(@Nullable final Intent intent) {
+		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).apply();
-		startProfileOwnerPostProvisioning(context, new IslandManagerService(context), new DevicePolicies(context));
-		disableLauncherActivity(context);
+		startProfileOwnerPostProvisioning(this, new IslandManagerService(this), new DevicePolicies(this));
+		disableLauncherActivity(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
-		launchMainActivityAsUser(context, GlobalStatus.OWNER);
+		if (! launchMainActivityAsUser(this, GlobalStatus.OWNER))
+			Log.e(TAG, "Failed to launch main activity in owner user.");
 	}
 
 	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
@@ -101,8 +87,8 @@ public class IslandProvisioning {
 
 	/** This method always runs in managed profile */
 	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
+		if (GlobalStatus.running_in_owner) return;	// Do nothing in owner user
 		final IslandManagerService island = new IslandManagerService(context);
-		if (GlobalStatus.running_in_owner && new IslandManager(context).isDeviceOwner()) return;	// Do nothing for device owner
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
 		if (state >= POST_PROVISION_REV) return;	// Already provisioned (revision up to date)
@@ -115,18 +101,21 @@ public class IslandProvisioning {
 			Log.w(TAG, "System provisioning might be interrupted, try our own provisioning once more...");
 //			Analytics.$().event("profile_provision_failed").send();
 		}
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).commit();	// Avoid further attempts
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).apply();		// Avoid further attempts
 		if (state >= 3) Log.i(TAG, "Re-performing provision for new revision " + POST_PROVISION_REV);
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
 		final DevicePolicies policies = new DevicePolicies(context);
 		policies.clearCrossProfileIntentFilters();
+
 		ProfileOwnerSystemProvisioning.start(policies);	// Simulate the stock managed profile provision
+
 		startProfileOwnerPostProvisioning(context, island, policies);
+
 		disableLauncherActivity(context);
 
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).commit();
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 	}
 
 	/**
@@ -178,7 +167,7 @@ public class IslandProvisioning {
 		policies.addCrossProfileIntentFilter(browser, FLAG_PARENT_CAN_ACCESS_MANAGED);
 	}
 
-	private IslandProvisioning() {}
+	public IslandProvisioning() { super("Provisioning"); }
 
 	private static final String TAG = "Island.Provision";
 }

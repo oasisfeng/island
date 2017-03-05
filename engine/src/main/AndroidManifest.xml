@@ -75,6 +75,7 @@
             </intent-filter>
         </activity>
 
+        <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" />
         <service android:name="com.oasisfeng.island.shuttle.ShuttleKeeper" />
 
         <service android:name=".IslandManagerService$AidlService" android:exported="false">

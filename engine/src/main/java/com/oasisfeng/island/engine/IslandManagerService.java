@@ -220,7 +220,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	public static class AidlService extends Service {
 
 		@Nullable @Override public IBinder onBind(final Intent intent) {
-			if (! GlobalStatus.running_in_owner) IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this);
+			IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this);
 			return mStub.get();
 		}
 
