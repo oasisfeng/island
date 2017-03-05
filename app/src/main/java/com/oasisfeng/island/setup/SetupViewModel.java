@@ -13,6 +13,8 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.text.TextUtils;
@@ -20,10 +22,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.island.Config;
-import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
@@ -32,9 +36,6 @@ import eu.chainfire.libsuperuser.Shell;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
-import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
-import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
-import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -67,8 +68,22 @@ public class SetupViewModel implements Parcelable {
 
 	SetupViewModel onNavigateNext(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
-		if (SDK_INT >= N && ! activity.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE))
+		if (SDK_INT >= N && ! activity.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) {
+			// Might be caused by incomplete provisioning.
+			final UserHandle profile = IslandManager.getManagedProfile(activity);
+			if (profile == null) {
+				final int profile_id = IslandManager.getManagedProfileWithDisabled(activity);
+				if (profile_id != 0) {
+					final ComponentName profile_owner = IslandManager.getProfileOwner(activity, profile_id);
+					if (profile_owner != null) {
+						if (activity.getPackageName().equals(profile_owner.getPackageName()))
+							return buildErrorVM(activity, R.string.error_reason_provisioning_incomplete, R.string.button_account_settings);
+						else return buildErrorVM(activity, R.string.error_reason_other_work_profile, R.string.button_account_settings);
+					}
+				}
+			}
 			return buildErrorVM(activity, R.string.error_reason_provisioning_not_allowed);
+		}
 
 		if (! activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS))
 			return buildErrorVM(activity, R.string.error_reason_managed_profile_not_supported);
@@ -126,11 +141,17 @@ public class SetupViewModel implements Parcelable {
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
 		final int status = dpm.getStorageEncryptionStatus();
 		return status == ENCRYPTION_STATUS_ACTIVE // TODO: || (SDK_INT >= N && StorageManager.isEncrypted())
-				|| (SDK_INT >= M && status == ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
+				|| (SDK_INT >= M && status == DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
 	}
 
-	public static void onExtraButtonClick(final View v) {
-		WebContent.view(v.getContext(), Config.URL_SETUP.get());
+	public void onExtraButtonClick(final View v) {
+		final Context context = v.getContext();
+		if (button_extra == R.string.button_learn_more_online)
+			WebContent.view(context, Config.URL_SETUP.get());
+		else if (button_extra == R.string.button_account_settings)
+			Activities.startActivity(context, new Intent(Settings.ACTION_SYNC_SETTINGS));
+		else throw new IllegalStateException();
+		if (context instanceof Activity) ((Activity) context).finish();
 	}
 
 	static void onActivityResult(final Activity activity, final int request, final int result) {
@@ -155,11 +176,15 @@ public class SetupViewModel implements Parcelable {
 		return result;
 	}
 
-	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int reason) {
+	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message) {
+		return buildErrorVM(context, message, R.string.button_learn_more_online);
+	}
+
+	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message, final @StringRes int button_extra) {
 		final SetupViewModel next = new SetupViewModel();
-		next.message = context.getString(R.string.error_rom_incompatible, context.getString(reason));
+		next.message = context.getText(message);
 		next.button_next = -1;
-		next.button_extra = R.string.button_learn_more_online;
+		next.button_extra = button_extra;
 		return next;
 	}
 
@@ -167,8 +192,8 @@ public class SetupViewModel implements Parcelable {
 	private static boolean provisionManagedProfile(final @NonNull Fragment fragment, final int request_code) {
 		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
 		if (SDK_INT >= M) {
-			intent.putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(fragment.getContext()));
-			intent.putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(fragment.getContext()));
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 		} else //noinspection deprecation
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
 		if (intent.resolveActivity(fragment.getActivity().getPackageManager()) == null) return false;

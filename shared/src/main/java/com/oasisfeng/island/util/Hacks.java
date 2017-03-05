@@ -11,7 +11,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.print.PrintManager;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.oasisfeng.hack.Hack;
@@ -45,6 +47,7 @@ public class Hacks {
 	public static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked> ActivityThread_getPackageManager;
 	public static final Hack.HackedMethod3<ApplicationInfo, Object, RemoteException, Unchecked, Unchecked, String, Integer, Integer> IPackageManager_getApplicationInfo;
 	public static final Hack.HackedMethod3<ResolveInfo, PackageManager, Unchecked, Unchecked, Unchecked, Intent, Integer, Integer> PackageManager_resolveActivityAsUser;
+	@RequiresApi(N) public static final Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean> UserManager_getProfileIds;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
@@ -73,5 +76,7 @@ public class Hacks {
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class/* flags */, int.class/* userId */);
 		PackageManager_resolveActivityAsUser = Hack.into(PackageManager.class).method("resolveActivityAsUser")
 				.returning(ResolveInfo.class).fallbackReturning(null).withParams(Intent.class, int.class, int.class);
+		UserManager_getProfileIds = Hack.into(UserManager.class).method("getProfileIds").returning(int[].class).fallbackReturning(null)
+				.withParams(int.class, boolean.class);
 	}
 }

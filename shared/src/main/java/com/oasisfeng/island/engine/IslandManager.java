@@ -10,8 +10,8 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.analytics.Analytics;
@@ -23,14 +23,18 @@ import com.oasisfeng.island.util.Users;
 import java.lang.reflect.Proxy;
 import java.util.List;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Controller of Island
  *
  * Created by Oasis on 2017/2/20.
  */
+@ParametersAreNonnullByDefault
 public class IslandManager {
 
 	public static final int CLONE_RESULT_ALREADY_CLONED = 0;
@@ -88,11 +92,25 @@ public class IslandManager {
 		return null;
 	}
 
+	/** @return profile ID, or 0 if none */
+	@RequiresApi(N) public static int getManagedProfileWithDisabled(final Context context) {
+		final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false).on(context.getSystemService(UserManager.class));
+		final int current_user = Process.myUserHandle().hashCode();
+		for (final int profile : profiles)
+			if (profile != current_user) return profile;   			// Only one managed profile is supported by Android at present.
+		return 0;
+	}
+
 	/** @return the profile owner component, null for none or failure */
-	public static @Nullable ComponentName getProfileOwner(final Context context, final @NonNull UserHandle profile) {
+	public static @Nullable ComponentName getProfileOwner(final Context context, final UserHandle profile) {
+		return getProfileOwner(context, Users.toId(profile));
+	}
+
+	/** @return the profile owner component, null for none or failure */
+	public static @Nullable ComponentName getProfileOwner(final Context context, final int profile) {
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		try {
-			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(Users.toId(profile)).on(dpm);
+			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(dpm);
 		} catch (final IllegalArgumentException e) {
 			return null;
 		}
