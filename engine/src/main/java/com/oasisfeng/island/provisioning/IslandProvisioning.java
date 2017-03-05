@@ -28,14 +28,12 @@ import com.oasisfeng.island.engine.SystemAppsManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
-import com.oasisfeng.island.shuttle.ServiceShuttleActivity;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -159,7 +157,6 @@ public class IslandProvisioning {
 		policies.addCrossProfileIntentFilter(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare ServiceShuttle
-		setComponentEnabledSetting(context, ServiceShuttleActivity.class, true);
 		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
@@ -168,12 +165,7 @@ public class IslandProvisioning {
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Disable Firebase (to improve process initialization performance)
-		setComponentEnabledSetting(context, FirebaseInitProvider.class, false);
-	}
-
-	private static void setComponentEnabledSetting(final Context context, final Class<?> clazz, final boolean enable_or_disable) {
-		final int new_state = enable_or_disable ? COMPONENT_ENABLED_STATE_ENABLED : COMPONENT_ENABLED_STATE_DISABLED;
-		context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, clazz), new_state, DONT_KILL_APP);
+		context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, FirebaseInitProvider.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}
 
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {
