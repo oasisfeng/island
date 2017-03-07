@@ -13,6 +13,8 @@ import android.util.Log;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crash.FirebaseCrash;
+import com.oasisfeng.island.shared.BuildConfig;
 
 import org.intellij.lang.annotations.Pattern;
 
@@ -34,9 +36,7 @@ public class Analytics extends ContentProvider {
 	}
 
 	public interface Event {
-		@CheckResult Event with(String key, String value);
-		@CheckResult Event with(String key, long value);
-		@CheckResult Event with(String key, double value);
+		@CheckResult Event with(Param key, String value);
 		void send();
 	}
 
@@ -44,18 +44,8 @@ public class Analytics extends ContentProvider {
 		final Bundle bundle = new Bundle();
 		return new Event() {
 
-			@Override public @CheckResult Event with(final String key, final String value) {
-				bundle.putString(key, value);
-				return this;
-			}
-
-			@Override public @CheckResult Event with(final String key, final long value) {
-				bundle.putLong(key, value);
-				return this;
-			}
-
-			@Override public @CheckResult Event with(final String key, final double value) {
-				bundle.putDouble(key, value);
+			@Override public @CheckResult Event with(final Param key, final String value) {
+				bundle.putString(key.key, value);
 				return this;
 			}
 
@@ -63,6 +53,14 @@ public class Analytics extends ContentProvider {
 				reportEventInternal(event, bundle.isEmpty() ? null : bundle);
 			}
 		};
+	}
+
+	public void report(final Throwable t) {
+		if (BuildConfig.DEBUG) Log.e(TAG, "About to report", t);
+		FirebaseCrash.report(t);
+		// TODO: Verify the reach rate of the following redundant reporting via event.
+		final Bundle bundle = new Bundle(); bundle.putString(FirebaseAnalytics.Param.LOCATION, t.getMessage());
+		reportEventInternal("temp_error", bundle);
 	}
 
 	private synchronized Analytics reportEventInternal(final @NonNull String event, final @Nullable Bundle params) {
@@ -92,4 +90,12 @@ public class Analytics extends ContentProvider {
 	private static final String TAG = "Analytics";
 
 	@SuppressWarnings("ConstantConditions") private final Supplier<FirebaseAnalytics> mAnalytics = Suppliers.memoize(() -> FirebaseAnalytics.getInstance(getContext()));
+
+	public enum Param {
+		ITEM_ID(FirebaseAnalytics.Param.ITEM_ID),
+		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY);
+
+		Param(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String key) { this.key = key; }
+		final String key;
+	}
 }

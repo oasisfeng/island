@@ -195,7 +195,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_launch").with("package", app.packageName).send();
+		Analytics.$().event("action_launch").with(Analytics.Param.ITEM_ID, app.packageName).send();
 		try {
 			controller(app).launchApp(app.packageName);
 		} catch (final RemoteException ignored) {}
@@ -221,7 +221,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 					setSelection(next);
 				else clearSelection();
 			}
-			Analytics.$().event("action_freeze").with("package", pkg).send();
+			Analytics.$().event("action_freeze").with(Analytics.Param.ITEM_ID, pkg).send();
 
 			try {
 				final boolean frozen = controller.freezeApp(pkg, "manual");
@@ -232,7 +232,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
 			}
 		} else if (id == R.id.menu_unfreeze) {
-			Analytics.$().event("action_unfreeze").with("package", pkg).send();
+			Analytics.$().event("action_unfreeze").with(Analytics.Param.ITEM_ID, pkg).send();
 			try {
 				controller.unfreezeApp(pkg);
 				refreshAppStateAsSysBugWorkaround(pkg);
@@ -266,7 +266,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onShortcutRequested() {
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info().packageName;
-		Analytics.$().event("action_create_shortcut").with("package", pkg).send();
+		Analytics.$().event("action_create_shortcut").with(Analytics.Param.ITEM_ID, pkg).send();
 		if (AbstractAppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user))) {
 			Toast.makeText(mActivity, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
 		} else Toast.makeText(mActivity, R.string.toast_shortcut_failed, Toast.LENGTH_SHORT).show();
@@ -275,7 +275,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onGreenifyRequested() {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_greenify").with("package", app.packageName).send();
+		Analytics.$().event("action_greenify").with(Analytics.Param.ITEM_ID, app.packageName).send();
 
 		final String mark = "greenify-explained";
 		final Boolean greenify_ready = GreenifyClient.checkGreenifyVersion(mActivity);
@@ -317,7 +317,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onRemovalRequested() {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_uninstall").with("package", app.packageName).with("system", app.isSystem() ? 1 : 0).send();
+		Analytics.$().event("action_uninstall").with(Analytics.Param.ITEM_ID, app.packageName).with(Analytics.Param.ITEM_CATEGORY, "system").send();
 		if (app.isSystem()) {
 			Dialogs.buildAlert(mActivity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
@@ -326,7 +326,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			if (app.isSystem()) {
 				final LauncherApps launcher = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 				launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-				Analytics.$().event("action_disable_sys_app").with("package", app.packageName).send();
+				Analytics.$().event("action_disable_sys_app").with(Analytics.Param.ITEM_ID, app.packageName).send();
 			} else Activities.startActivity(mActivity, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", app.packageName, null))
 					.putExtra(Intent.EXTRA_USER, app.user));
 		} catch (final RemoteException ignored) {
@@ -346,7 +346,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final String pkg = app.packageName;
 		if (Users.isProfile(app.user)) {
 			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-			Analytics.$().event("action_install_outside").with("package", pkg).send();
+			Analytics.$().event("action_install_outside").with(Analytics.Param.ITEM_ID, pkg).send();
 			return;
 		}
 
@@ -381,15 +381,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 					.setPositiveButton(android.R.string.cancel, null).show();
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
-			Analytics.$().event("clone_sys").with("package", pkg).send();
+			Analytics.$().event("clone_sys").with(Analytics.Param.ITEM_ID, pkg).send();
 			doCloneApp(pkg);
 			break;
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
-			Analytics.$().event("clone_install").with("package", pkg).send();
+			Analytics.$().event("clone_install").with(Analytics.Param.ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-install-explained", R.string.dialog_clone_via_install_explanation, pkg);
 			break;
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
-			Analytics.$().event("clone_app").with("package", pkg).send();
+			Analytics.$().event("clone_app").with(Analytics.Param.ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-google-play-explained", R.string.dialog_clone_via_google_play_explanation, pkg);
 			break;
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
