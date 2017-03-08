@@ -1,6 +1,5 @@
 package com.oasisfeng.island.engine;
 
-import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -13,7 +12,6 @@ import android.os.UserManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
-import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
@@ -62,8 +60,6 @@ public class IslandManager {
 		try {
 			mDevicePolicies.removeActiveAdmin();			// Since Android 7.1, clearDeviceOwnerApp() itself does remove active device-admin,
 		} catch (final SecurityException ignored) {}		//   thus SecurityException will be thrown here.
-		final Activity activity = Activities.findActivityFrom(mContext);
-		if (activity != null) activity.finish();
 	}
 
 	public boolean isDeviceOwner() {

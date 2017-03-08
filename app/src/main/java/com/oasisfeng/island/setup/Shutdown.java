@@ -36,7 +36,11 @@ public class Shutdown {
 	public static void requestDeviceOwnerDeactivation(final Activity activity) {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 				.setMessage(R.string.dialog_deactivate_message)
-				.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> new IslandManager(activity).deactivateDeviceOwner())
+				.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> {
+					new IslandManager(activity).deactivateDeviceOwner();
+					activity.finish();
+					System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
+				})
 				.setPositiveButton(android.R.string.no, null).show();
 	}
 
@@ -83,6 +87,7 @@ public class Shutdown {
 				island.destroyProfile();
 				ClonedHiddenSystemApps.reset(activity, GlobalStatus.profile);
 				activity.finish();
+				System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
 			} catch (final RemoteException ignored) {}
 		})) showPromptForProfileManualRemoval(activity);
 	}
