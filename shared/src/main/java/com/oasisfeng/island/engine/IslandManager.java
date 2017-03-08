@@ -111,8 +111,8 @@ public class IslandManager {
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		try {
 			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(dpm);
-		} catch (final IllegalArgumentException e) {
-			return null;
+		} catch (final RuntimeException e) {	// IllegalArgumentException("Requested profile owner for invalid userId", re) on API 21~23
+			return null;						//   or RuntimeException by RemoteException.rethrowFromSystemServer() on API 24+
 		}
 	}
 
