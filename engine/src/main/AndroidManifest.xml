@@ -64,7 +64,6 @@
 
         <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity"
                   android:exported="false"
-                  android:enabled="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
                   android:theme="@style/android:Theme.NoDisplay"
