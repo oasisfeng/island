@@ -58,7 +58,6 @@ public class IslandManager {
 
 	public void deactivateDeviceOwner() {
 		Analytics.$().event("action_deactivate").send();
-		mDevicePolicies.clearCrossProfileIntentFilters();
 		mDevicePolicies.getManager().clearDeviceOwnerApp(mContext.getPackageName());
 		try {
 			mDevicePolicies.removeActiveAdmin();			// Since Android 7.1, clearDeviceOwnerApp() itself does remove active device-admin,
