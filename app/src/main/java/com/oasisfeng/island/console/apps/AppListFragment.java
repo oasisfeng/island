@@ -5,11 +5,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.databinding.Observable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -40,6 +42,7 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.util.Users;
@@ -187,16 +190,12 @@ public class AppListFragment extends Fragment {
 		if (id == R.id.menu_show_system) {
 			final boolean should_include = ! item.isChecked();
 			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
-			item.setChecked(should_include);	// Toggle the checked state
-			return true;
-		} else if (id == R.id.menu_destroy || id == R.id.menu_deactivate) {
-			destroy();
-			return true;
-		} else if (id == R.id.menu_test) {
-			TempDebug.run(getActivity());
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
+			item.setChecked(should_include);    // Toggle the checked state
+		} else if (id == R.id.menu_settings) startActivity(new Intent(getActivity(), SettingsActivity.class));
+		else if (id == R.id.menu_destroy || id == R.id.menu_deactivate) destroy();
+		else if (id == R.id.menu_test) TempDebug.run(getActivity());
+		else return super.onOptionsItemSelected(item);
+		return true;
 	}
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
@@ -240,12 +239,20 @@ public class AppListFragment extends Fragment {
 								.setNeutralButton(R.string.dialog_button_destroy, (dd, ww) -> destroyProfile())
 								.setPositiveButton(android.R.string.no, null).show();
 					}).show();
-		} else {
-			new AlertDialog.Builder(activity).setMessage(R.string.dialog_cannot_destroy_message)
-					.setNegativeButton(android.R.string.ok, null).show();
-			Analytics.$().event("cannot_destroy").send();
-		}
+		} else showPromptForProfileManualRemoval(activity);
 	}
+
+	private static void showPromptForProfileManualRemoval(final Activity activity) {
+		final AlertDialog.Builder dialog = new AlertDialog.Builder(activity).setMessage(R.string.dialog_cannot_destroy_message)
+				.setNegativeButton(android.R.string.ok, null);
+		final Intent intent = new Intent(Settings.ACTION_SYNC_SETTINGS);
+		if (intent.resolveActivity(activity.getPackageManager()) == null) intent.setAction(Settings.ACTION_SETTINGS);	// Fallback to entrance of Settings
+		if (intent.resolveActivity(activity.getPackageManager()) != null)
+			dialog.setPositiveButton(R.string.open_settings, (d, w) -> activity.startActivity(intent));
+		dialog.show();
+		Analytics.$().event("cannot_destroy").send();
+	}
+
 	private static final int MAX_DESTROYING_APPS_LIST = 8;
 
 	private void destroyProfile() {
@@ -258,7 +265,7 @@ public class AppListFragment extends Fragment {
 			return;
 		} catch (final RemoteException ignored) {}
 
-		Toast.makeText(activity, "Failed", Toast.LENGTH_LONG).show();
+		showPromptForProfileManualRemoval(activity);
 	}
 
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */
