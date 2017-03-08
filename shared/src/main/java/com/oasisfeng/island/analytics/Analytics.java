@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -18,12 +17,14 @@ import com.oasisfeng.island.shared.BuildConfig;
 
 import org.intellij.lang.annotations.Pattern;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 /**
  * Abstraction for analytics service
  *
  * Created by Oasis on 2016/5/26.
  */
-
+@ParametersAreNonnullByDefault
 public class Analytics extends ContentProvider {
 
 	public void setProperty(final String key, final String value) {
@@ -50,7 +51,7 @@ public class Analytics extends ContentProvider {
 			}
 
 			@Override public void send() {
-				reportEventInternal(event, bundle.isEmpty() ? null : bundle);
+				reportEventInternal(event, bundle);
 			}
 		};
 	}
@@ -63,8 +64,8 @@ public class Analytics extends ContentProvider {
 		reportEventInternal("temp_error", bundle);
 	}
 
-	private synchronized Analytics reportEventInternal(final @NonNull String event, final @Nullable Bundle params) {
-		Log.d(TAG, "Event [" + event + "]: " + params);
+	private synchronized Analytics reportEventInternal(final String event, final Bundle params) {
+		Log.d(TAG, params.isEmpty() ? "Event: " + event : "Event: " + event + " " + params);
 		mAnalytics.get().logEvent(event, params);
 		return this;
 	}
@@ -78,13 +79,13 @@ public class Analytics extends ContentProvider {
 		return true;
 	}
 
-	@Nullable @Override public Uri insert(final @NonNull Uri uri, final ContentValues values) {
+	@Nullable @Override public Uri insert(final Uri uri, final @Nullable ContentValues values) {
 		return null;	// TODO
 	}
-	@Override public @Nullable Cursor query(final @NonNull Uri uri, final String[] projection, final String selection, final String[] selectionArgs, final String sortOrder) { return null; }
-	@Override public @Nullable String getType(final @NonNull Uri uri) { return null; }
-	@Override public int delete(final @NonNull Uri uri, final String selection, final String[] selectionArgs) { return 0; }
-	@Override public int update(final @NonNull Uri uri, final ContentValues values, final String selection, final String[] selectionArgs) { return 0; }
+	@Override public @Nullable Cursor query(final Uri uri, final @Nullable String[] projection, final @Nullable String selection, final @Nullable String[] selectionArgs, final @Nullable String sortOrder) { return null; }
+	@Override public @Nullable String getType(final Uri uri) { return null; }
+	@Override public int delete(final Uri uri, final @Nullable String selection, final @Nullable String[] selectionArgs) { return 0; }
+	@Override public int update(final Uri uri, final @Nullable ContentValues values, final @Nullable String selection, final @Nullable String[] selectionArgs) { return 0; }
 
 	private static Analytics sSingleton;
 	private static final String TAG = "Analytics";
@@ -93,8 +94,9 @@ public class Analytics extends ContentProvider {
 
 	public enum Param {
 		ITEM_ID(FirebaseAnalytics.Param.ITEM_ID),
-		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY);
-
+		ITEM_NAME(FirebaseAnalytics.Param.ITEM_NAME),
+		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY),
+		;
 		Param(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String key) { this.key = key; }
 		final String key;
 	}

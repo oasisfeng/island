@@ -1,9 +1,9 @@
 package com.oasisfeng.island.setup;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -13,9 +13,9 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.text.TextUtils;
 import android.util.Log;
@@ -68,33 +68,33 @@ public class SetupViewModel implements Parcelable {
 
 	SetupViewModel onNavigateNext(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
-		if (SDK_INT >= N && ! activity.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) {
-			// Might be caused by incomplete provisioning.
-			final UserHandle profile = IslandManager.getManagedProfile(activity);
-			if (profile == null) {
-				final int profile_id = IslandManager.getManagedProfileWithDisabled(activity);
-				if (profile_id != 0) {
-					final ComponentName profile_owner = IslandManager.getProfileOwner(activity, profile_id);
-					if (profile_owner != null) {
-						if (activity.getPackageName().equals(profile_owner.getPackageName()))
-							return buildErrorVM(activity, R.string.error_reason_provisioning_incomplete, R.string.button_account_settings);
-						else return buildErrorVM(activity, R.string.error_reason_other_work_profile, R.string.button_account_settings);
-					}
+		if (SDK_INT >= N && activity.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE))
+			return startManagedProvisioning(fragment);	// DevicePolicyManager.isProvisioningAllow() provides one-stop prerequisites check.
+
+		// FIXME: Analytics.$().event("setup_lack_managed_users").send();
+		final boolean has_managed_users = activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
+		if (! has_managed_users)
+			return buildErrorVM(activity, R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
+
+		// Check for incomplete provisioning.
+		if (SDK_INT >= N && IslandManager.getManagedProfile(activity) == null) {
+			final int profile_id = IslandManager.getManagedProfileWithDisabled(activity);
+			if (profile_id != 0) {
+				final ComponentName profile_owner = IslandManager.getProfileOwner(activity, profile_id);
+				if (profile_owner != null) {
+					if (! activity.getPackageName().equals(profile_owner.getPackageName())) {
+						final CharSequence owner_label = readOwnerLabel(activity, profile_owner);
+						final Analytics.Event reason = reason("existent_work_profile").with(Analytics.Param.ITEM_ID, profile_owner.getPackageName());
+						return buildErrorVM(activity, R.string.setup_error_other_work_profile, R.string.button_account_settings,
+								owner_label == null ? reason : reason.with(Analytics.Param.ITEM_NAME, owner_label.toString()));
+					} else return buildErrorVM(activity, R.string.setup_error_provisioning_incomplete, R.string.button_account_settings,
+							reason("provisioning_incomplete"));
 				}
 			}
-			return buildErrorVM(activity, R.string.error_reason_provisioning_not_allowed);
 		}
 
-		if (! activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS))
-			return buildErrorVM(activity, R.string.error_reason_managed_profile_not_supported);
-
-		if (((ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE)).isLowRamDevice())
-			return buildErrorVM(activity, R.string.error_reason_low_ram);
-
-		if (SDK_INT < M) {
-			final int max_users = getMaxSupportedUsers();
-			if (max_users < 2) return buildErrorVM(activity, R.string.error_reason_multi_user_not_allowed);
-		}
+		if (SDK_INT < M && getMaxSupportedUsers() < 2)
+			return buildErrorVM(activity, R.string.setup_error_multi_user_not_allowed, reason("sys_prop.fw.max_users"));
 
 		// TODO Analytics.$().event("profile_owner_existent").with("package", profile_owner.getPackageName()).with("label", owner_label).send();
 
@@ -115,7 +115,7 @@ public class SetupViewModel implements Parcelable {
 					@Override protected void onPostExecute(final Void ignored) {
 						if (encryption_required && ! isEncryptionRequired())
 							Analytics.$().event("encryption_skipped").send();
-						setup(fragment);
+						startManagedProvisioning(fragment);
 					}
 				}.execute();
 				return null;
@@ -127,10 +127,11 @@ public class SetupViewModel implements Parcelable {
 			return next;
 		}
 
-		if (! setup(fragment))
-			return buildErrorVM(activity, R.string.error_reason_managed_profile_not_supported);
+		return startManagedProvisioning(fragment);
+	}
 
-		return null;
+	private static Analytics.Event reason(final String reason) {
+		return Analytics.$().event("setup_island_failure").with(Analytics.Param.ITEM_CATEGORY, reason);
 	}
 
 	private static boolean isEncryptionRequired() {
@@ -169,18 +170,24 @@ public class SetupViewModel implements Parcelable {
 		}
 	}
 
-	private static boolean setup(final Fragment fragment) {
+	private static SetupViewModel startManagedProvisioning(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
-		final boolean result = provisionManagedProfile(fragment, REQUEST_PROVISION_MANAGED_PROFILE);
-		if (result && SDK_INT < M) activity.finish();		// No activity result on Android 5.x, thus we have to finish the activity now.
-		return result;
+		final Intent intent = buildManagedProfileProvisioningIntent(activity);
+		try {
+			fragment.startActivityForResult(intent, REQUEST_PROVISION_MANAGED_PROFILE);
+			if (SDK_INT < M) activity.finish();		// No activity result on Android 5.x, thus we have to finish the activity now.
+			return null;
+		} catch (final ActivityNotFoundException e) {
+			return buildErrorVM(activity, R.string.error_reason_missing_managed_provisioning, reason("lack_managed_provisioning"));
+		}
 	}
 
-	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message) {
-		return buildErrorVM(context, message, R.string.button_learn_more_online);
+	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message, final Analytics.Event event) {
+		return buildErrorVM(context, message, R.string.button_learn_more_online, event);
 	}
 
-	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message, final @StringRes int button_extra) {
+	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message, final @StringRes int button_extra, final Analytics.Event event) {
+		event.send();
 		final SetupViewModel next = new SetupViewModel();
 		next.message = context.getText(message);
 		next.button_next = -1;
@@ -188,17 +195,21 @@ public class SetupViewModel implements Parcelable {
 		return next;
 	}
 
-	/** Initiates the managed profile provisioning */
-	private static boolean provisionManagedProfile(final @NonNull Fragment fragment, final int request_code) {
+	private static Intent buildManagedProfileProvisioningIntent(final Context context) {
 		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
 		if (SDK_INT >= M) {
-			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(fragment.getContext()));
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(context));
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 		} else //noinspection deprecation
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
-		if (intent.resolveActivity(fragment.getActivity().getPackageManager()) == null) return false;
-		fragment.startActivityForResult(intent, request_code);
-		return true;
+		return intent;
+	}
+
+	/** Initiates the managed device provisioning */
+	@RequiresApi(M) private static Intent buildManagedDeviceProvisioningIntent(final @NonNull Fragment fragment, final int request_code) {
+		return new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE)
+				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(fragment.getContext()))
+				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 	}
 
 	private static int getMaxSupportedUsers() {

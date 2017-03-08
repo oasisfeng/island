@@ -18,12 +18,11 @@
     <string name="setup_button">Build the Island now</string>
     <string name="setup_cleanup_hint">If anything goes wrong during the setup procedure, you can always remove all the data created by Island via \"Settings - Account - Remove work profile\".</string>
     <string name="error_rom_incompatible">Sorry, your device (or ROM) is incompatible with Island.\n\n> %s\n\nPlease refer to the online FAQ for possible solutions.</string>
-    <string name="error_reason_provisioning_not_allowed">Sorry, work profile provisioning is not allowed on this device.</string>
-    <string name="error_reason_managed_profile_not_supported">Sorry, the required feature \"Managed Profile\" is not supported on this device.</string>
-    <string name="error_reason_low_ram">Sorry, the required feature \"Managed Profile\" is not supported on low memory device.</string>
-    <string name="error_reason_multi_user_not_allowed">Sorry, the required \"Multi-User\" mechanism is disabled on this device.</string>
-    <string name="error_reason_provisioning_incomplete">Sorry, the last setup attempt might be unsuccessful, please remove \"Work Profile\" in Account Settings and try again.</string>
-    <string name="error_reason_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed in Account Settings first.</string>
+    <string name="setup_error_managed_profile_not_supported">Sorry, the required feature \"Managed Profile\" is not supported on this device.</string>
+    <string name="setup_error_multi_user_not_allowed">Sorry, the required \"Multi-User\" mechanism is disabled on this device.</string>
+    <string name="setup_error_provisioning_incomplete">Sorry, the last setup attempt might be unsuccessful, please remove \"Work Profile\" in Account Settings and try again.</string>
+    <string name="setup_error_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed in Account Settings first.</string>
+    <string name="error_reason_missing_managed_provisioning">Sorry, the required \"Android for Work\" feature may not be fully supported on your device.</string>
 
     <string name="tip_empty_app_list">No apps here.\nPlease switch to other view.</string>
 
