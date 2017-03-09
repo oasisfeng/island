@@ -16,7 +16,7 @@
                  android:label="Island - Mobile"
                  android:icon="@mipmap/ic_launcher"
                  android:supportsRtl="true"
-                 android:theme="@style/AppTheme">
+                 android:theme="@style/AppTheme.NoActionBar">
 
         <activity android:name="com.oasisfeng.island.MainActivity">
             <intent-filter>
@@ -26,12 +26,17 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:exported="true" android:theme="@style/SetupTheme" />
+        <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
 
         <provider android:authorities="${applicationId}.apps"
                   android:name="com.oasisfeng.island.data.IslandAppListProvider"
                   android:exported="false"
                   android:multiprocess="true" />
+
+        <activity android:name="com.oasisfeng.island.settings.SettingsActivity"
+                  android:label="@string/settings_title"
+                  android:theme="@android:style/Theme.Material.Settings"
+                  android:parentActivityName="com.oasisfeng.island.MainActivity" />
 
     </application>
 

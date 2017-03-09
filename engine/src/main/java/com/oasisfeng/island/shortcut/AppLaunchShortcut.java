@@ -10,11 +10,14 @@ import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.Users;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 /**
  * Implementation of {@link AbstractAppLaunchShortcut}
  *
  * Created by Oasis on 2017/2/19.
  */
+@ParametersAreNonnullByDefault
 public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 
 	@Override protected boolean prepareToLaunchApp(final ComponentName component) {

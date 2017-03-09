@@ -27,7 +27,7 @@
     <string name="tip_empty_app_list">No apps here.\nPlease switch to other view.</string>
 
     <string name="field_app_id">APP ID: %1$s</string>
-    <string name="button_learn_more_online">Learn more (online)</string>
+    <string name="button_learn_more_online">Learn more\n(online)</string>
     <string name="button_instructions_online">Instructions (online)</string>
     <string name="button_account_settings">Account Settings</string>
 
@@ -51,10 +51,10 @@
     <string name="button_enable_clone">Enable clone</string>
 
     <string name="menu_show_hidden_sys_apps">Show hidden system apps</string>
-    <string name="menu_remove_clone">Remove this clone</string>
-    <string name="menu_destroy_island">Destroy Island…</string>
-    <string name="menu_deactivate_island">Deactivate Island…</string>
+    <string name="menu_settings">Settings</string>
+
     <string name="menu_launch_app">Launch app</string>
+    <string name="menu_remove_clone">Remove this clone</string>
 
     <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_incompatible_rom">Sorry, your device or ROM does not support \"Managed Profile\" feature, which is required by Island.</string>
@@ -97,5 +97,31 @@
     <string name="exit">Exit</string>
     <string name="setup">Setup</string>
     <string name="open_settings">Open Settings</string>
+
+    <!-- Settings -->
+
+    <string name="settings_title">Settings</string>
+
+    <string name="pref_general_header">General</string>
+    <string name="pref_general_launch_shortcut_prefix_title">Launch shortcut prefix</string>
+
+    <string name="pref_privacy_header">Privacy Protection</string>
+    <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>
+    <string name="pref_privacy_notification_for_clone_summary">Show notification of potential privacy exposure for cloned apps</string>
+
+    <string name="pref_setup_header">Setup &amp; Shutdown</string>
+    <string name="pref_setup_island_title">Island</string>
+    <string name="pref_setup_island_summary_managed">Managed</string>
+    <string name="pref_setup_island_summary_managed_other">Existent Work profile is not managed by Island.\nClick the side icon to remove.</string>
+    <string name="pref_setup_island_summary_incomplete">Setup incomplete.\nClick the side icon to rebuild.</string>
+    <string name="pref_setup_island_summary_not_setup">Not setup yet.\nIsland can only be setup manually if mainland is managed, since Android 6.0.\nClick the side icon to open online setup guide.</string>
+    <string name="pref_setup_island_summary_pending_setup">Not setup yet.\nClick the side icon to setup.</string>
+    <string name="pref_setup_mainland_title">Mainland</string>
+    <string name="pref_setup_mainland_summary_managed">Managed</string>
+    <string name="pref_setup_mainland_summary_not_managed">Normal</string>
+
+    <string name="pref_about_header">About</string>
+    <string name="pref_about_version_title">Version</string>
+    <string name="pref_about_licenses_title">Licenses</string>
 
 </resources>

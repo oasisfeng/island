@@ -35,7 +35,6 @@ import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.settings.SettingsActivity;
-import com.oasisfeng.island.setup.Shutdown;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 
@@ -51,7 +50,6 @@ public class AppListFragment extends Fragment {
 		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
 
-		mIslandManager = new IslandManager(activity);
 		mViewModel = new AppListViewModel();
 		mViewModel.mProfileController = IslandManager.NULL;
 
@@ -93,11 +91,6 @@ public class AppListFragment extends Fragment {
 		}
 	};
 
-	@Override public void onResume() {
-		super.onResume();
-		mIsDeviceOwner = mIslandManager.isDeviceOwner();
-	}
-
 	AppListProvider.PackageChangeObserver<IslandAppInfo> mAppChangeObserver = new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
 
 		@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
@@ -129,6 +122,7 @@ public class AppListFragment extends Fragment {
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
 		mBinding = AppListBinding.inflate(inflater, container, false);
+		mBinding.setApps(mViewModel);
 		mBinding.setApps(mViewModel);
 		mViewModel.attach(getActivity(), mBinding.details.toolbar.getMenu(), saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
@@ -169,8 +163,6 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
-		menu.findItem(R.id.menu_destroy).setVisible(! mIsDeviceOwner);
-		menu.findItem(R.id.menu_deactivate).setVisible(mIsDeviceOwner);
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
@@ -181,8 +173,6 @@ public class AppListFragment extends Fragment {
 			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
 			item.setChecked(should_include);    // Toggle the checked state
 		} else if (id == R.id.menu_settings) startActivity(new Intent(getActivity(), SettingsActivity.class));
-		else if (id == R.id.menu_destroy) Shutdown.requestProfileRemoval(getActivity());
-		else if (id == R.id.menu_deactivate) Shutdown.requestDeviceOwnerDeactivation(getActivity());
 		else if (id == R.id.menu_test) TempDebug.run(getActivity());
 		else return super.onOptionsItemSelected(item);
 		return true;
@@ -204,10 +194,8 @@ public class AppListFragment extends Fragment {
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */
 	public AppListFragment() {}
 
-	private IslandManager mIslandManager;
 	private AppListViewModel mViewModel;
 	private AppListBinding mBinding;
-	private boolean mIsDeviceOwner;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 

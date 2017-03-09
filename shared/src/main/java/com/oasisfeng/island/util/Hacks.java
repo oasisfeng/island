@@ -42,6 +42,7 @@ public class Hacks {
 	public static final Hack.HackedMethod2<Boolean, Void, Unchecked, Unchecked, Unchecked, String, Boolean> SystemProperties_getBoolean;
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer> SystemProperties_getInt;
 	public static final Hack.HackedMethod1<ComponentName, DevicePolicyManager, IllegalArgumentException, Unchecked, Unchecked, Integer> DevicePolicyManager_getProfileOwnerAsUser;
+	public static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked> DevicePolicyManager_getDeviceOwner;
 	public static final Hack.HackedMethod3<ApplicationInfo, LauncherApps, Unchecked, Unchecked, Unchecked, String, Integer, UserHandle> LauncherApps_getApplicationInfo;
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle> Context_bindServiceAsUser;
 	public static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked> ActivityThread_getPackageManager;
@@ -66,6 +67,8 @@ public class Hacks {
 				.returning(int.class).fallbackReturning(null).withParams(String.class, int.class);
 		DevicePolicyManager_getProfileOwnerAsUser = Hack.into(DevicePolicyManager.class).method("getProfileOwnerAsUser")
 				.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withParam(int.class);
+		DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
+				.returning(String.class).fallbackReturning(null).withoutParams();
 		LauncherApps_getApplicationInfo = Hack.onlyIf(SDK_INT >= N).into(LauncherApps.class).method("getApplicationInfo")
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class, UserHandle.class);
 		Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class).fallbackReturning(false)

@@ -23,6 +23,8 @@ import android.util.Log;
 
 import java.util.List;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 /**
  * Launch shortcut for apps on Island, from the owner user space
  *
@@ -30,6 +32,7 @@ import java.util.List;
  *
  * Created by Oasis on 2016/4/22.
  */
+@ParametersAreNonnullByDefault
 public abstract class AbstractAppLaunchShortcut extends Activity {
 
 	public static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
@@ -37,9 +40,9 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 
 	protected abstract boolean prepareToLaunchApp(final ComponentName component);
 
-	public static boolean createOnLauncher(final Context context, final String pkg, final boolean owner) {
+	public static boolean createOnLauncher(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) {
 		try {
-			final Intent intent = buildShortcutIntent(context, pkg, owner);
+			final Intent intent = buildShortcutIntent(context, pkg, owner, shortcut_prefix);
 			if (intent == null) return false;
 			context.sendBroadcast(intent.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
 			context.sendBroadcast(intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
@@ -51,7 +54,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 	}
 
 	/** @return null if the given package has no launch entrance */
-	private static @Nullable Intent buildShortcutIntent(final Context context, final String pkg, final boolean owner) throws NameNotFoundException {
+	private static @Nullable Intent buildShortcutIntent(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) throws NameNotFoundException {
 		final PackageManager pm = context.getPackageManager();
 		@SuppressWarnings("deprecation") final List<ResolveInfo> activities = pm.queryIntentActivities(
 				new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), PackageManager.GET_UNINSTALLED_PACKAGES);
@@ -65,7 +68,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 
 		final Intent intent = new Intent();
 		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
-		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, "\uD83C\uDF00" + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
+		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut_prefix + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
 		@SuppressWarnings("deprecation") final Drawable d = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES).loadIcon(pm);
 		final Bitmap icon_bitmap = drawableToBitmap(d);
 		if (icon_bitmap != null) intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
@@ -97,7 +100,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		return launcher.isActivityEnabled(component, user);
 	}
 
-	@Override protected void onCreate(final Bundle savedInstanceState) {
+	@Override protected void onCreate(final @Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		onNewIntent(getIntent());
 	}

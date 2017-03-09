@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" tools:context="com.oasisfeng.island.settings.SettingsActivity">
+
+    <Preference android:key="@string/key_version" android:title="@string/pref_about_version_title" tools:summary="1.0 beta 1" />
+
+    <PreferenceScreen android:title="@string/pref_about_licenses_title">
+        <PreferenceCategory android:title="@string/pref_about_licenses_title">
+            <PreferenceScreen android:title="Android Open Source Project" android:summary="Apache License, Version 2.0">
+                <intent android:action="android.intent.action.VIEW" android:data="https://source.android.com/" />
+            </PreferenceScreen>
+            <PreferenceScreen android:title="Deagle Library" android:summary="Apache License, Version 2.0">
+                <intent android:action="android.intent.action.VIEW" android:data="https://github.com/oasisfeng/deagle" />
+            </PreferenceScreen>
+            <PreferenceScreen android:title="Stream Support" android:summary="GNU General Public License, version 2, with the Classpath Exception">
+                <intent android:action="android.intent.action.VIEW" android:data="https://github.com/streamsupport/streamsupport" />
+            </PreferenceScreen>
+            <PreferenceScreen android:title="Guava" android:summary="Apache License, Version 2.0">
+                <intent android:action="android.intent.action.VIEW" android:data="https://github.com/google/guava" />
+            </PreferenceScreen>
+            <PreferenceScreen android:title="libsuperuser" android:summary="Apache License, Version 2.0">
+                <intent android:action="android.intent.action.VIEW" android:data="https://github.com/Chainfire/libsuperuser" />
+            </PreferenceScreen>
+        </PreferenceCategory>
+    </PreferenceScreen>
+
+</PreferenceScreen>

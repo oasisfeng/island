@@ -1,0 +1,23 @@
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <header
+        android:fragment="com.oasisfeng.island.settings.SettingsActivity$GeneralPreferenceFragment"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/pref_general_header" />
+
+    <header
+        android:fragment="com.oasisfeng.island.settings.SettingsActivity$PrivacyPreferenceFragment"
+        android:icon="@drawable/ic_block_black_24dp"
+        android:title="@string/pref_privacy_header" />
+
+    <header
+        android:fragment="com.oasisfeng.island.settings.SetupPreferenceFragment"
+        android:icon="@drawable/ic_power_settings_new_black_24dp"
+        android:title="@string/pref_setup_header" />
+
+    <header
+        android:fragment="com.oasisfeng.island.settings.SettingsActivity$AboutFragment"
+        android:icon="@drawable/ic_info_black_24dp"
+        android:title="@string/pref_about_header" />
+
+</preference-headers>
