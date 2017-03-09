@@ -27,6 +27,8 @@ import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
+import com.oasisfeng.island.util.ProfileUser;
+import com.oasisfeng.island.util.Users;
 
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
@@ -55,6 +57,7 @@ public class IslandProvisioning extends IntentService {
 	/** This is the normal procedure after ManagedProvision finished its provisioning, running in profile. */
 	public static void onProfileProvisioningComplete(final Context context) {
 		Log.d(TAG, "onProfileProvisioningComplete");
+		if (Users.isOwner()) return;		// Nothing to do for managed device provisioning.
 		context.startService(new Intent(context, IslandProvisioning.class));
 	}
 
@@ -85,8 +88,7 @@ public class IslandProvisioning extends IntentService {
 		}
 	}
 
-	/** This method always runs in managed profile */
-	@SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
+	@ProfileUser @SuppressLint("CommitPrefEdits") public static void startProfileOwnerProvisioningIfNeeded(final Context context) {
 		if (GlobalStatus.running_in_owner) return;	// Do nothing in owner user
 		final IslandManagerService island = new IslandManagerService(context);
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
