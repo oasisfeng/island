@@ -1,8 +1,10 @@
 package com.oasisfeng.island.engine;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SyncAdapterType;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -158,19 +160,25 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 			Log.i(TAG, "Critical package for authority \"" + authority + "\": " + provider.packageName);
 			critical_sys_pkgs.add(provider.packageName);
 		}
+		// Detect non-launchable system components with sync adapter.
+		final SyncAdapterType[] adapters = ContentResolver.getSyncAdapterTypes();
+		final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+		for (final SyncAdapterType adapter : adapters) {
+			final ProviderInfo provider = pm.resolveContentProvider(adapter.authority, 0);
+			if ((provider.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue;			// Only system apps.
+			if (launch_intent.setPackage(provider.packageName).resolveActivity(pm) != null) continue;	// without launcher entrance.
+			Log.i(TAG, "Critical package for sync adapter of authority \"" + adapter.authority + "\": " + provider.packageName);
+			critical_sys_pkgs.add(provider.packageName);
+		}
 
 		final List<ApplicationInfo> apps = pm.getInstalledApplications(0);
 		final ImmutableList<ApplicationInfo> sys_apps_to_hide = FluentIterable.from(apps)
-				.filter(info -> (info.flags & FLAG_SYSTEM) != 0 && ! critical_sys_pkgs.contains(info.packageName))
-				.toList();
-		for (final ApplicationInfo app : sys_apps_to_hide) {
-			if (hasSingleUserComponent(pm, app.packageName)) {
-				Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
-			} else {
+				.filter(info -> (info.flags & FLAG_SYSTEM) != 0 && ! critical_sys_pkgs.contains(info.packageName)).toList();
+		for (final ApplicationInfo app : sys_apps_to_hide)
+			if (! hasSingleUserComponent(pm, app.packageName)) {
 				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
 				mIslandManager.freezeApp(app.packageName, "provision");
-			}
-		}
+			} else Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
 	}
 
 	/** Enable system apps responsible for required intents. (package name unspecified) */
