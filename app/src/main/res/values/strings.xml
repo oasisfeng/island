@@ -31,7 +31,8 @@
     <string name="button_instructions_online">Instructions (online)</string>
     <string name="button_account_settings">Account Settings</string>
 
-    <string name="action_clone">Clone</string>
+    <string name="action_clone">Clone to Island</string>
+    <string name="action_clone_back">Clone to mainland</string>
     <string name="action_freeze">Freeze</string>
     <string name="action_unfreeze">Unfreeze</string>
     <string name="action_shortcut">Create launch shortcut</string>

@@ -61,7 +61,7 @@ import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
-import static android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM;
+import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
 import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
 
 /**
@@ -164,15 +164,16 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final boolean exclusive = provider.isExclusive(app);
 
-		final boolean is_managed = GlobalStatus.device_owner || ! Users.isOwner(app.user);
+		final boolean in_owner = Users.isOwner(app.user), is_managed = GlobalStatus.device_owner || ! in_owner;
 		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
-		mActions.findItem(R.id.menu_clone).setVisible(profile != null && exclusive);
+		mActions.findItem(R.id.menu_clone).setVisible(in_owner && profile != null && exclusive);
+		mActions.findItem(R.id.menu_clone_back).setVisible(! in_owner && exclusive);
 		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled)
-				.setShowAsActionFlags(contains(GreenifyClient.getGreenifyPackage(null)) ? SHOW_AS_ACTION_IF_ROOM : SHOW_AS_ACTION_NEVER);
+				.setShowAsActionFlags(contains(GreenifyClient.getGreenifyPackage(null)) ? SHOW_AS_ACTION_ALWAYS : SHOW_AS_ACTION_NEVER);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -212,7 +213,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final int id = item.getItemId();
 		if (id == R.id.menu_clone) {
 			cloneApp(app);
-			// Do not clear selection, for quick launch with one more click
+			clearSelection();
+		} else if (id == R.id.menu_clone_back) {
+			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
+			Analytics.$().event("action_install_outside").with(Analytics.Param.ITEM_ID, pkg).send();
+			clearSelection();
 		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
 			final int next_index = indexOf(selection) + 1;
 			if (next_index >= size()) clearSelection();
@@ -346,12 +351,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void cloneApp(final IslandAppInfo app) {
 		final int check_result;
 		final String pkg = app.packageName;
-		if (Users.isProfile(app.user)) {
-			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-			Analytics.$().event("action_install_outside").with(Analytics.Param.ITEM_ID, pkg).send();
-			return;
-		}
-
 		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, GlobalStatus.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
 			launchSettingsAppInfoActivity(app_in_profile);
