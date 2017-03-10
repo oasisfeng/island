@@ -108,7 +108,7 @@
 
     <string name="pref_privacy_header">Privacy Protection</string>
     <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>
-    <string name="pref_privacy_notification_for_clone_summary">Show notification of potential privacy exposure for cloned apps</string>
+    <string name="pref_privacy_notification_for_clone_summary">Show notification for potential privacy exposure in cloned apps</string>
 
     <string name="pref_setup_header">Setup &amp; Shutdown</string>
     <string name="pref_setup_island_title">Island</string>

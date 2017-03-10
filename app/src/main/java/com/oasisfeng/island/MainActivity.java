@@ -29,14 +29,6 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 public class MainActivity extends Activity {
 
-	public static boolean startAsUser(final Context context, final UserHandle user) {
-		final LauncherApps apps = (LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE);
-		final ComponentName activity = new ComponentName(context, MainActivity.class);
-		if (! apps.isActivityEnabled(activity, user)) return false;
-		apps.startMainActivity(activity, user, null, null);
-		return true;
-	}
-
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
