@@ -9,6 +9,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.UserManager;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -23,6 +25,7 @@ import android.util.Log;
 
 import com.google.common.base.Supplier;
 import com.oasisfeng.android.util.Apps;
+import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -143,9 +146,9 @@ public class IslandManagerService extends IIslandManager.Stub {
 		if (market_info == null || (market_info.applicationInfo.flags & FLAG_SYSTEM) == 0)	// Only privileged app market could install. (TODO: Should check "privileged" instead of system)
 			return IslandManager.CLONE_RESULT_NO_SYS_MARKET;
 
-		if (SystemAppsManager.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
+		if (WellKnownPackages.PACKAGE_GOOGLE_PLAY_STORE.equals(market_info.applicationInfo.packageName)) {
 			if (do_it) {
-				enableSystemApp(SystemAppsManager.PACKAGE_GOOGLE_PLAY_SERVICES);	// Special dependency
+				enableSystemApp(WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES);	// Special dependency
 				mContext.startActivity(market_intent);
 			}
 			return IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY;
@@ -193,7 +196,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return used_pkgs.toArray(new String[used_pkgs.size()]);
 	}
 
-	void enableSystemAppForActivity(final Intent intent) {
+	public void enableSystemAppForActivity(final Intent intent) {
 		try {
 			final int result = mDevicePolicies.enableSystemApp(intent);
 			if (result > 0) Log.d(TAG, result + " system apps enabled for: " + intent);
@@ -204,10 +207,13 @@ public class IslandManagerService extends IIslandManager.Stub {
 		}
 	}
 
-	private void enableSystemApp(final String pkg) {
+	public void enableSystemApp(final String pkg) {
 		try {
 			mDevicePolicies.enableSystemApp(pkg);
-		} catch (final IllegalArgumentException e) {
+		} catch (final RuntimeException e) {
+			// May throw NPE (on Android 5.x, see commit 637baaf0db76f9e1e51eeab077ffb85da0ff9308 in platform_frameworks_base)
+			// 	 or IllegalArgumentException (on Android 6+) if package is not present on this device.
+			if (e instanceof NullPointerException || (e instanceof IllegalArgumentException && e.getMessage().contains("not present"))) return;
 			Log.e(TAG, "Failed to enable: " + pkg, e);
 		}
 	}
@@ -220,10 +226,16 @@ public class IslandManagerService extends IIslandManager.Stub {
 	public static class AidlService extends Service {
 
 		@Nullable @Override public IBinder onBind(final Intent intent) {
-			IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this);
-			return mStub.get();
+			final IslandManagerService island = mStub.get();
+			if (Users.isProfile()) {
+				final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+				IslandProvisioning.enableCriticalSystemAppsIfNeeded(this, island, prefs);
+				IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this, prefs);
+			}
+			return island;
 		}
 
+		// Postpone the instantiation after service is attached for a valid context.
 		private final Supplier<IslandManagerService> mStub = () -> new IslandManagerService(this);
 	}
 }

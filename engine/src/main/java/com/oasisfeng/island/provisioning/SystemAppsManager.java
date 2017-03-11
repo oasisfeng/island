@@ -1,10 +1,8 @@
-package com.oasisfeng.island.engine;
+package com.oasisfeng.island.provisioning;
 
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SyncAdapterType;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -23,8 +21,8 @@ import android.provider.Settings;
 import android.provider.Telephony.Carriers;
 import android.util.Log;
 
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
+import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.ProfileUser;
 
@@ -33,6 +31,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
@@ -47,10 +48,7 @@ import static android.os.Build.VERSION_CODES.N;
  *
  * Created by Oasis on 2016/4/26.
  */
-@ProfileUser public class SystemAppsManager {
-
-	static final String PACKAGE_GOOGLE_PLAY_SERVICES = "com.google.android.gms";
-	static final String PACKAGE_GOOGLE_PLAY_STORE = "com.android.vending";
+@ProfileUser class SystemAppsManager {
 
 	/** This list serves as a known common package names for quick filtering */
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
@@ -71,13 +69,13 @@ import static android.os.Build.VERSION_CODES.N;
 			"com.android.documentsui",				// Document picker
 			Hacks.PrintManager_PRINT_SPOOLER_PACKAGE_NAME.get(),	// Print spooler (a critical bug will raise if this package is disabled)
 			// Enabled system apps with launcher activity by default
-			PACKAGE_GOOGLE_PLAY_STORE,				// Google Play Store to let user install apps directly within
+			WellKnownPackages.PACKAGE_GOOGLE_PLAY_STORE,				// Google Play Store to let user install apps directly within
 			"com.android.contacts",					// Contacts
 			"com.android.providers.downloads.ui",	// Downloads
 			// Essential Google packages
 			"com.google.android.gsf",				// Google services framework
 			"com.google.android.packageinstaller",	// Package installer (Google)
-			PACKAGE_GOOGLE_PLAY_SERVICES,			// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
+			WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES,			// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
 			"com.google.android.feedback",			// Used by GMS for crash report
 			"com.google.android.webview",			// WebView provider (Google)
 			"com.google.android.contacts",			// Contacts (Google)
@@ -109,13 +107,9 @@ import static android.os.Build.VERSION_CODES.N;
 			"logs"													// Samsung-specific voice-mail content provider (content://logs/from_vvm)
 	);
 
-	public static boolean isCritical(final String pkg) {
-		return sCriticalSystemPkgs.contains(pkg);	// TODO: Intent-based matching on sCriticalActivityIntents
-	}
-
 	/**
-	 * Determine whether a package is a "system package", in which case certain things (like
-	 * disabling notifications or disabling the package altogether) should be disallowed.
+	 * Determine whether a package is a "system package", in which case certain things
+	 * (like disabling notifications or disabling the package altogether) should be disallowed.
 	 */
 	public boolean isSystemSignature(final PackageInfo pkg) {
 		if (sSystemSignature == null) {
@@ -139,51 +133,60 @@ import static android.os.Build.VERSION_CODES.N;
 		} catch (final PackageManager.NameNotFoundException ignored) { return null; }
 	}
 
-	public void prepareSystemApps() {
-		disableNonCriticalSystemApps();
+	void prepareSystemApps() {
+		disableNonCriticalSystemPackages();
 		enableRequiredSystemApps();
 	}
 
 	/** This is generally not necessary on AOSP but will eliminate various problems on custom ROMs */
-	private void disableNonCriticalSystemApps() {
+	private void disableNonCriticalSystemPackages() {
 		final PackageManager pm = mContext.getPackageManager();
-		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
-		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
-		for (final Intent intent : sCriticalActivityIntents) {
-			mIslandManager.enableSystemAppForActivity(intent);
-			final List<ResolveInfo> activities = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
-			FluentIterable.from(activities).filter(info -> (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) != 0)
-					.transform(info -> info.activityInfo.packageName)
-					.filter(pkg -> { Log.i(TAG, "Critical package for " + intent + ": " + pkg); return true; })
-					.copyInto(critical_sys_pkgs);
-		}
-		// Detect package names for critical content providers, as an addition to the white-list of well-known ones.
-		for (final String authority : sCriticalContentAuthorities) {
-			if (authority == null) continue;		// Nullable for version-specific authorities
-			final ProviderInfo provider = pm.resolveContentProvider(authority, 0);
-			if (provider == null || (provider.applicationInfo.flags & FLAG_SYSTEM) == 0 || (provider.flags & FLAG_SINGLE_USER) != 0) continue;
-			Log.i(TAG, "Critical package for authority \"" + authority + "\": " + provider.packageName);
-			critical_sys_pkgs.add(provider.packageName);
-		}
-		// Detect non-launchable system components with sync adapter.
-		final SyncAdapterType[] adapters = ContentResolver.getSyncAdapterTypes();
-		final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
-		for (final SyncAdapterType adapter : adapters) {
-			final ProviderInfo provider = pm.resolveContentProvider(adapter.authority, 0);
-			if ((provider.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue;			// Only system apps.
-			if (launch_intent.setPackage(provider.packageName).resolveActivity(pm) != null) continue;	// without launcher entrance.
-			Log.i(TAG, "Critical package for sync adapter of authority \"" + adapter.authority + "\": " + provider.packageName);
-			critical_sys_pkgs.add(provider.packageName);
-		}
-
-		final List<ApplicationInfo> apps = pm.getInstalledApplications(0);
-		final ImmutableList<ApplicationInfo> sys_apps_to_hide = FluentIterable.from(apps)
-				.filter(info -> (info.flags & FLAG_SYSTEM) != 0 && ! critical_sys_pkgs.contains(info.packageName)).toList();
-		for (final ApplicationInfo app : sys_apps_to_hide)
+		final Set<String> critical_sys_pkgs = detectCriticalSystemPackages(pm, mIslandManager, 0);
+		for (final ApplicationInfo app : pm.getInstalledApplications(0)) {
+			if ((app.flags & FLAG_SYSTEM) == 0 || critical_sys_pkgs.contains(app.packageName)) continue;
 			if (! hasSingleUserComponent(pm, app.packageName)) {
 				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
 				mIslandManager.freezeApp(app.packageName, "provision");
 			} else Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
+		}
+	}
+
+	static Set<String> detectCriticalSystemPackages(final PackageManager pm, final IslandManagerService island, final int flags) {
+		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
+		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
+		for (final Intent intent : sCriticalActivityIntents) {
+			island.enableSystemAppForActivity(intent);
+			final List<String> pkgs = StreamSupport.stream(pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY))
+					.filter(info -> (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) != 0)
+					.map(info -> info.activityInfo.packageName)
+					.collect(Collectors.toList());
+			Log.i(TAG, "Critical package(s) for " + intent + ": " + pkgs);
+			critical_sys_pkgs.addAll(pkgs);
+		}
+		// Detect package names for critical content providers, as an addition to the white-list of well-known ones.
+		for (final String authority : sCriticalContentAuthorities) {
+			if (authority == null) continue;		// Nullable for version-specific authorities
+			final ProviderInfo provider = pm.resolveContentProvider(authority, flags);
+			if (provider == null || (provider.applicationInfo.flags & FLAG_SYSTEM) == 0 || (provider.flags & FLAG_SINGLE_USER) != 0) continue;
+			Log.i(TAG, "Critical package for authority \"" + authority + "\": " + provider.packageName);
+			critical_sys_pkgs.add(provider.packageName);
+		}
+		// Detect non-launchable system components with sync adapter (never use ContentResolver.getSyncAdapterTypes() which only returns unfrozen adapters)
+		final List<ResolveInfo> adapters = pm.queryIntentServices(new Intent("android.content.SyncAdapter"), flags);
+		final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).addCategory(Intent.CATEGORY_DEFAULT);
+		String pkg2skip = null;
+		for (final ResolveInfo resolved : adapters) {
+			final ServiceInfo adapter = resolved.serviceInfo;
+			if ((adapter.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue;		// Only system apps
+			final String pkg = adapter.packageName;
+			if (pkg.equals(pkg2skip)) continue;
+			pkg2skip = null;	// The start of adapters in the next package
+			if (pm.resolveActivity(launch_intent.setPackage(pkg), flags) == null) {
+				Log.i(TAG, "Critical sync adapter: " + pkg + "/" + adapter.name);		// Only if not launchable package.
+				critical_sys_pkgs.add(pkg);
+			} else pkg2skip = pkg;		// Skip all other adapters in the same package.
+		}
+		return critical_sys_pkgs;
 	}
 
 	/** Enable system apps responsible for required intents. (package name unspecified) */
@@ -204,7 +207,7 @@ import static android.os.Build.VERSION_CODES.N;
 		}
 	}
 
-	public SystemAppsManager(final Context context, final IslandManagerService island) {
+	SystemAppsManager(final Context context, final IslandManagerService island) {
 		mContext = context;
 		mIslandManager = island;
 	}
