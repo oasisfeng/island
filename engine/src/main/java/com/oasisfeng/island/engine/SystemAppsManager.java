@@ -12,6 +12,7 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
+import android.provider.BlockedNumberContract;
 import android.provider.CalendarContract;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
@@ -38,6 +39,8 @@ import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Manage the critical system apps in Island
@@ -94,15 +97,16 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 			new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI)	// Contact picker, usually com.android.contacts
 	);
 	private static final Collection<String> sCriticalContentAuthorities = Arrays.asList(
-			ContactsContract.AUTHORITY,					// Usually com.android.providers.contacts
-			CallLog.AUTHORITY,							// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
-			CalendarContract.AUTHORITY,					// Usually com.android.providers.calendar
-			Carriers.CONTENT_URI.getAuthority(),		// Usually com.android.providers.telephony
-			MediaStore.AUTHORITY,						// Usually com.android.providers.media
-			"downloads",								// Usually com.android.providers.downloads
-			"com.android.providers.downloads.documents",// Newer authority of com.android.providers.downloads
-			"com.android.externalstorage.documents",	// Usually com.android.externalstorage
-			"logs"										// Samsung-specific voice-mail content provider (content://logs/from_vvm)
+			ContactsContract.AUTHORITY,								// Usually com.android.providers.contacts
+			CallLog.AUTHORITY,										// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
+			CalendarContract.AUTHORITY,								// Usually com.android.providers.calendar
+			Carriers.CONTENT_URI.getAuthority(),					// Usually com.android.providers.telephony
+			MediaStore.AUTHORITY,									// Usually com.android.providers.media
+			SDK_INT >= N ? BlockedNumberContract.AUTHORITY : null,	// Usually com.android.providers.blockednumber (required by phone app)
+			"downloads",											// Usually com.android.providers.downloads
+			"com.android.providers.downloads.documents",			// Newer authority of com.android.providers.downloads
+			"com.android.externalstorage.documents",				// Usually com.android.externalstorage
+			"logs"													// Samsung-specific voice-mail content provider (content://logs/from_vvm)
 	);
 
 	public static boolean isCritical(final String pkg) {
@@ -155,6 +159,7 @@ import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 		}
 		// Detect package names for critical content providers, as an addition to the white-list of well-known ones.
 		for (final String authority : sCriticalContentAuthorities) {
+			if (authority == null) continue;		// Nullable for version-specific authorities
 			final ProviderInfo provider = pm.resolveContentProvider(authority, 0);
 			if (provider == null || (provider.applicationInfo.flags & FLAG_SYSTEM) == 0 || (provider.flags & FLAG_SINGLE_USER) != 0) continue;
 			Log.i(TAG, "Critical package for authority \"" + authority + "\": " + provider.packageName);
