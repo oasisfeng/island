@@ -181,12 +181,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
 		final Predicate<IslandAppInfo> filters = activeFilters();
-		for (final IslandAppInfo app : apps) {
+		for (final IslandAppInfo app : apps)
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
-			} else if (app.getLastInfo() != null && filters.test(app.getLastInfo()))
-				removeApp(app.packageName);
-		}
+			} else removeApp(app.packageName);
 		updateActions();
 	}
 
