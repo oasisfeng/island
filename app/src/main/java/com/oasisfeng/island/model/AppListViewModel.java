@@ -102,12 +102,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return mActiveFilters;
 	}
 
-	public void onFilterPrimaryChanged(final int index) {
-		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(index) + " of " + mFilterPrimaryOptions);
+	@Bindable public int getFilterPrimaryChoice() { return mFilterPrimaryChoice; }
+
+	public void setFilterPrimaryChoice(final int index) {
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
 		mFilterPrimaryChoice = index;
+		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(index) + " of " + mFilterPrimaryOptions);
 		updateActiveFilters();
 		rebuildAppViewModels();
+		notifyPropertyChanged(BR.filterPrimaryChoice);
 	}
 
 	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
@@ -145,7 +148,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
-		onFilterPrimaryChanged(filter_primary);
+		setFilterPrimaryChoice(filter_primary);
 	}
 
 	public void setOwnerController(final IIslandManager controller) {

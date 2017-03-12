@@ -10,7 +10,6 @@ import android.databinding.Observable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -121,10 +120,10 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
-		mBinding = AppListBinding.inflate(inflater, container, false);
-		mBinding.setApps(mViewModel);
-		mBinding.setApps(mViewModel);
-		mViewModel.attach(getActivity(), mBinding.details.toolbar.getMenu(), saved_state);
+		final AppListBinding binding = AppListBinding.inflate(inflater, container, false);
+		binding.setApps(mViewModel);
+		binding.setApps(mViewModel);
+		mViewModel.attach(getActivity(), binding.details.toolbar.getMenu(), saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
 		if (! Services.bind(getActivity(), IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
@@ -135,18 +134,19 @@ public class AppListFragment extends Fragment {
 			@Override public void onServiceDisconnected(final ComponentName name) {}
 		})) throw new IllegalStateException("Module engine not installed");
 
-		getActivity().setActionBar(mBinding.appbar);
+		getActivity().setActionBar(binding.appbar);
 		final ActionBar actionbar = getActivity().getActionBar();
 		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
-		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+		binding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
 				final Activity activity = getActivity();
 				if (activity == null) return;
-				mViewModel.onFilterPrimaryChanged(position);
+				mViewModel.setFilterPrimaryChoice(position);
 			}
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
 		});
-		return mBinding.getRoot();
+		binding.executePendingBindings();		// This ensures all view state being fully restored
+		return binding.getRoot();
 	}
 
 	@Override public void onDestroyView() {
@@ -180,22 +180,13 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
 		super.onSaveInstanceState(out_state);
-		final RecyclerView.LayoutManager layout_manager = mBinding.appList.getLayoutManager();
-		if (layout_manager != null) out_state.putParcelable(STATE_KEY_RECYCLER_VIEW, layout_manager.onSaveInstanceState());
 		mViewModel.onSaveInstanceState(out_state);
-	}
-
-	@Override public void onViewStateRestored(final Bundle saved_state) {
-		super.onViewStateRestored(saved_state);
-		if (saved_state == null) return;
-		mBinding.appList.getLayoutManager().onRestoreInstanceState(saved_state.getParcelable(STATE_KEY_RECYCLER_VIEW));
 	}
 
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */
 	public AppListFragment() {}
 
 	private AppListViewModel mViewModel;
-	private AppListBinding mBinding;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 
