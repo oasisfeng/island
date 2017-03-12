@@ -79,7 +79,7 @@ public class Hacks {
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class/* flags */, int.class/* userId */);
 		PackageManager_resolveActivityAsUser = Hack.into(PackageManager.class).method("resolveActivityAsUser")
 				.returning(ResolveInfo.class).fallbackReturning(null).withParams(Intent.class, int.class, int.class);
-		UserManager_getProfileIds = Hack.into(UserManager.class).method("getProfileIds").returning(int[].class).fallbackReturning(null)
-				.withParams(int.class, boolean.class);
+		UserManager_getProfileIds = Hack.onlyIf(SDK_INT >= N).into(UserManager.class).method("getProfileIds")
+				.returning(int[].class).fallbackReturning(null).withParams(int.class, boolean.class);
 	}
 }
