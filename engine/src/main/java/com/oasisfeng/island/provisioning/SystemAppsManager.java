@@ -173,7 +173,7 @@ import static android.os.Build.VERSION_CODES.N;
 		}
 		// Detect non-launchable system components with sync adapter (never use ContentResolver.getSyncAdapterTypes() which only returns unfrozen adapters)
 		final List<ResolveInfo> adapters = pm.queryIntentServices(new Intent("android.content.SyncAdapter"), flags);
-		final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).addCategory(Intent.CATEGORY_DEFAULT);
+		final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
 		String pkg2skip = null;
 		for (final ResolveInfo resolved : adapters) {
 			final ServiceInfo adapter = resolved.serviceInfo;
