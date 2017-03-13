@@ -12,7 +12,9 @@ import android.os.UserManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
+import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
@@ -109,6 +111,11 @@ public class IslandManager {
 		} catch (final RuntimeException e) {	// IllegalArgumentException("Requested profile owner for invalid userId", re) on API 21~23
 			return null;						//   or RuntimeException by RemoteException.rethrowFromSystemServer() on API 24+
 		}
+	}
+
+	public static boolean useServiceInProfile(final Context context, final Services.ServiceReadyThrows<IIslandManager, RemoteException> procedure) {
+		return Services.use(context instanceof ShuttleContext || Users.isProfile() ? context : new ShuttleContext(context),
+				IIslandManager.class, IIslandManager.Stub::asInterface, procedure);
 	}
 
 	public IslandManager(final Context context) {

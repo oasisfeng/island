@@ -18,4 +18,5 @@ interface IIslandManager {
 	void destroyProfile();
 	/** Query the used packages during the given time span. (works on Android 6+ or Android 5.x with PACKAGE_USAGE_STATS permission granted manually) */
 	String[] queryUsedPackagesDuring(long begin_time, long end_time);
+	void provision();
 }

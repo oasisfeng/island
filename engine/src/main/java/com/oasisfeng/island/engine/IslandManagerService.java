@@ -196,6 +196,16 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return used_pkgs.toArray(new String[used_pkgs.size()]);
 	}
 
+	@Override public void provision() {
+		provision(mContext, this, true/* always */);
+	}
+
+	private static void provision(final Context context, final IslandManagerService island, final boolean always) {
+		final SharedPreferences prefs = always ? null : PreferenceManager.getDefaultSharedPreferences(context);
+		IslandProvisioning.enableCriticalSystemAppsIfNeeded(context, island, prefs);
+		IslandProvisioning.startProfileOwnerProvisioningIfNeeded(context, prefs);
+	}
+
 	public void enableSystemAppForActivity(final Intent intent) {
 		try {
 			final int result = mDevicePolicies.enableSystemApp(intent);
@@ -227,11 +237,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 		@Nullable @Override public IBinder onBind(final Intent intent) {
 			final IslandManagerService island = mStub.get();
-			if (Users.isProfile()) {
-				final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-				IslandProvisioning.enableCriticalSystemAppsIfNeeded(this, island, prefs);
-				IslandProvisioning.startProfileOwnerProvisioningIfNeeded(this, prefs);
-			}
+			if (Users.isProfile()) provision(this, island, false/* always */);
 			return island;
 		}
 

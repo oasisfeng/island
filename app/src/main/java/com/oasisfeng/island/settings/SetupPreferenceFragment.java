@@ -1,15 +1,18 @@
 package com.oasisfeng.island.settings;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.preference.Preference;
 import android.provider.Settings;
+import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.WebContent;
@@ -49,6 +52,20 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			final ComponentName profile_owner = IslandManager.getProfileOwner(activity, profile);
 			if (profile_owner != null && Modules.MODULE_ENGINE.equals(profile_owner.getPackageName())) {    // Normal (managed by Island)
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed, R.drawable.ic_delete_forever_black_24dp, this::startProfileShutdown);
+				final Preference pref_reprovisioning = findPreference(getString(R.string.key_setup_island_reprovision));
+				pref_reprovisioning.setEnabled(true);
+				pref_reprovisioning.setOnPreferenceClickListener(p -> IslandManager.useServiceInProfile(activity, island -> {
+					final ProgressDialog progress_dialog = ProgressDialog.show(activity, null, getString(R.string.dialog_provision_in_progress));
+					progress_dialog.show();
+					try {
+						island.provision();
+						Toast.makeText(activity, R.string.toast_done, Toast.LENGTH_SHORT).show();
+					} catch (final RemoteException e) {
+						Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+					} finally {
+						progress_dialog.dismiss();
+					}
+				}));
 			} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed_other,
 					R.drawable.ic_delete_forever_black_24dp, this::startAccountSettingActivity);
 		} else if (SDK_INT >= N && (disabled_profile = IslandManager.getManagedProfileWithDisabled(activity)) != 0) {

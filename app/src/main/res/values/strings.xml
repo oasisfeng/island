@@ -86,6 +86,7 @@
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
 
+    <string name="toast_done">Done</string>
     <string name="toast_setup_completed_and_wait">Setup is complete, please wait for the Island to start.</string>
     <string name="toast_already_cloned">Already cloned</string>
     <string name="toast_shortcut_created">Shortcut created on launcher</string>
@@ -120,6 +121,9 @@
     <string name="pref_setup_mainland_title">Mainland</string>
     <string name="pref_setup_mainland_summary_managed">Managed</string>
     <string name="pref_setup_mainland_summary_not_managed">Normal</string>
+    <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
+    <string name="pref_setup_island_reprovision_title">Re-provision Island</string>
+    <string name="pref_setup_island_reprovision_summary">This may help to fix issues in Island.\nAll apps and data will be preserved.</string>
 
     <string name="pref_about_header">About</string>
     <string name="pref_about_version_title">Version</string>

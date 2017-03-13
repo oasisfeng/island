@@ -94,8 +94,8 @@ public class IslandProvisioning extends IntentService {
 		}
 	}
 
-	public static void enableCriticalSystemAppsIfNeeded(final Context context, final IslandManagerService island, final SharedPreferences prefs) {
-		if (checkRevision(prefs, PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION, UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION) == -1) return;
+	public static void enableCriticalSystemAppsIfNeeded(final Context context, final IslandManagerService island, final @Nullable SharedPreferences prefs) {
+		if (prefs != null && checkRevision(prefs, PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION, UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION) == -1) return;
 		@SuppressWarnings("deprecation") final Set<String> pkgs
 				= SystemAppsManager.detectCriticalSystemPackages(context.getPackageManager(), island, PackageManager.GET_UNINSTALLED_PACKAGES);
 		for (final String pkg : pkgs) try {
@@ -113,22 +113,23 @@ public class IslandProvisioning extends IntentService {
 		return revision;
 	}
 
-	@ProfileUser public static void startProfileOwnerProvisioningIfNeeded(final Context context, final SharedPreferences prefs) {
+	@ProfileUser public static void startProfileOwnerProvisioningIfNeeded(final Context context, final @Nullable SharedPreferences prefs) {
 		if (GlobalStatus.running_in_owner) return;	// Do nothing in owner user
 		final IslandManagerService island = new IslandManagerService(context);
-		final int state = checkRevision(prefs, PREF_KEY_PROVISION_STATE, POST_PROVISION_REV);
-		if (state == -1) return;		// Already provisioned (revision up to date)
-		if (state == 2) {
-			Log.w(TAG, "Last provision attempt failed, no more attempts...");
+		if (prefs != null) {
+			final int state = checkRevision(prefs, PREF_KEY_PROVISION_STATE, POST_PROVISION_REV);
+			if (state == -1) return;		// Already provisioned (revision up to date)
+			if (state == 2) {
+				Log.w(TAG, "Last provision attempt failed, no more attempts...");
 //			Analytics.$().event("profile_post_provision_failed").send();
-			disableLauncherActivity(context);
-			return;		// Last attempt failed again, no more attempts.
-		} else if (state == 1) {
-			Log.w(TAG, "System provisioning might be interrupted, try our own provisioning once more...");
+				disableLauncherActivity(context);
+				return;		// Last attempt failed again, no more attempts.
+			} else if (state == 1) {
+				Log.w(TAG, "System provisioning might be interrupted, try our own provisioning once more...");
 //			Analytics.$().event("profile_provision_failed").send();
+			} else if (state >= 3) Log.i(TAG, "Re-performing provision for new revision " + POST_PROVISION_REV);
+			prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).apply();		// Avoid further attempts
 		}
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 2).apply();		// Avoid further attempts
-		if (state >= 3) Log.i(TAG, "Re-performing provision for new revision " + POST_PROVISION_REV);
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
@@ -141,7 +142,7 @@ public class IslandProvisioning extends IntentService {
 
 		disableLauncherActivity(context);
 
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
+		if (prefs != null) prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 	}
 
 	/**
