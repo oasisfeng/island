@@ -127,9 +127,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void rebuildAppViewModels() {
 		clearSelection();
-		final List<AppViewModel> apps = IslandAppListProvider.getInstance(mActivity).installedApps()
-				.filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
+		final List<AppViewModel> apps = provider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		replaceApps(apps);
+		final IslandAppInfo greenify = provider.get(GreenifyClient.getGreenifyPackage(provider.getContext()));
+		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
 
 	public AppListViewModel() {
@@ -176,7 +178,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
 		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled)
-				.setShowAsActionFlags(contains(GreenifyClient.getGreenifyPackage(null)) ? SHOW_AS_ACTION_ALWAYS : SHOW_AS_ACTION_NEVER);
+				.setShowAsActionFlags(mGreenifyAvailable ? SHOW_AS_ACTION_ALWAYS : SHOW_AS_ACTION_NEVER);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -494,6 +496,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/* Transient fields */
 	public transient IIslandManager mProfileController;
 	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
+	private transient boolean mGreenifyAvailable;
 
 	private static final String TAG = "Island.Apps";
 }
