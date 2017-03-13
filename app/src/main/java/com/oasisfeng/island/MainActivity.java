@@ -11,9 +11,7 @@ import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.UserHandle;
 
-import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.console.apps.AppListFragment;
-import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.GlobalStatus;
@@ -45,7 +43,7 @@ public class MainActivity extends Activity {
 			}
 			final ProgressDialog progress = ProgressDialog.show(this, null, getString(R.string.dialog_provision_in_progress), true/* indeterminate */, false/* cancelable */);
 			// Bind to the IslandManager, triggering IslandProvisioning.startProfileOwnerProvisioningIfNeeded().
-			Services.use(this, IIslandManager.class, IIslandManager.Stub::asInterface, service -> {
+			IslandManager.useServiceInProfile(this, service -> {
 				getPackageManager().setComponentEnabledSetting(new ComponentName(this, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 				progress.cancel(); finish();		// Binder is returned when the provisioning is done.
 			});

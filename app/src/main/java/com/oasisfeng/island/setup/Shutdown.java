@@ -8,16 +8,13 @@ import android.provider.Settings;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
-import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
-import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.GlobalStatus;
-import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
@@ -82,7 +79,7 @@ public class Shutdown {
 	}
 
 	private static void destroyProfile(final Activity activity) {
-		if (! Services.use(new ShuttleContext(activity), IIslandManager.class, IIslandManager.Stub::asInterface, island -> {
+		if (! IslandManager.useServiceInProfile(activity, island -> {
 			try {
 				island.destroyProfile();
 				ClonedHiddenSystemApps.reset(activity, GlobalStatus.profile);

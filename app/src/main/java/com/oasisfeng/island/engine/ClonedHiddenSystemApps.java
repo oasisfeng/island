@@ -7,11 +7,9 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
-import com.oasisfeng.android.service.Services;
 import com.oasisfeng.android.util.SafeSharedPreferences;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.OwnerUser;
 
 import java8.util.function.Consumer;
@@ -59,7 +57,7 @@ import static android.os.Build.VERSION_CODES.M;
 		else try { begin_time = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).firstInstallTime; }
 		catch (final PackageManager.NameNotFoundException e) { throw new IllegalStateException("Cannot retrieve package info"); }
 
-		Services.use(new ShuttleContext(context), IIslandManager.class, IIslandManager.Stub::asInterface, island -> {
+		IslandManager.useServiceInProfile(context, island -> {
 			final String[] used_pkgs = island.queryUsedPackagesDuring(begin_time, System.currentTimeMillis());
 			final SharedPreferences.Editor editor = mStore.edit().clear();
 			if (used_pkgs.length > 0) {

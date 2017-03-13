@@ -17,10 +17,10 @@ import android.util.Log;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.Hacks;
@@ -122,7 +122,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		if (GlobalStatus.profile != null) {		// Collect Island-specific apps
 			if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {    // Since Android N, we can query ApplicationInfo directly
 				collectIslandApps_Api24(apps);
-			} else if (! Services.use(mShuttleContext.get(), IIslandManager.class, IIslandManager.Stub::asInterface, this::onIslandServiceConnected))
+			} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), this::onIslandServiceConnected))
 				Log.w(TAG, "Failed to connect to Island");
 
 //			// Get all apps with launcher activity in profile.
@@ -184,7 +184,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
 			final ApplicationInfo info = Hacks.LauncherApps_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO, GlobalStatus.profile).on(mLauncherApps.get());
 			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
-		} else if (! Services.use(mShuttleContext.get(), IIslandManager.class, IIslandManager.Stub::asInterface, service -> {
+		} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), service -> {
 			final ApplicationInfo info = service.getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
 		})) callback.accept(null);
