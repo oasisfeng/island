@@ -21,6 +21,8 @@ import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.oasisfeng.island.model.GlobalStatus;
+
 import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -68,15 +70,14 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 
 		final Intent intent = new Intent();
 		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
-		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut_prefix + activity.loadLabel(pm));	// TODO: Unicode lock char: \uD83D\uDD12
-		@SuppressWarnings("deprecation") final Drawable d = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES).loadIcon(pm);
-		final Bitmap icon_bitmap = drawableToBitmap(d);
-		if (icon_bitmap != null) intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
-		else {
+		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut_prefix + activity.loadLabel(pm));
+		@SuppressWarnings("deprecation") final Drawable icon = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES).loadIcon(pm);
+		final Bitmap icon_bitmap = drawableToBitmap(owner ? icon : pm.getUserBadgedIcon(icon, GlobalStatus.profile));
+		if (icon_bitmap == null) {
 			final Context pkg_context = context.createPackageContext(pkg, 0);
-			final int icon = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;
-			intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon));
-		}
+			final int icon_res = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;
+			intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon_res));
+		} else intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
 		intent.putExtra("duplicate", false);		// Special extra to prevent duplicate shortcut being created
 		return intent;
 	}
