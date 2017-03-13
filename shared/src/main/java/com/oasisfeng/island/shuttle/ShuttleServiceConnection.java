@@ -86,7 +86,7 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 
 		@Override public String toString() {
 			if (mConnectedService == null) return super.toString();
-			return MoreObjects.toStringHelper("ShuttleSvcConn").addValue(System.identityHashCode(this))
+			return MoreObjects.toStringHelper(TAG).addValue(System.identityHashCode(this))
 					.add("comp", mConnectedService.component.flattenToShortString()).add("binder", mConnectedService.binder).toString();
 		}
 
@@ -118,5 +118,5 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 
 	private Dispatcher mDispatcher;
 
-	private static final String TAG = "ShuttleSvcConn";
+	protected static final String TAG = "ShuttleSvcConn";
 }

@@ -57,7 +57,7 @@ public class ServiceShuttle {
 		extras.putBinder(EXTRA_SERVICE_CONNECTION, conn.createDispatcher());
 		final Intent intent = new Intent(ACTION_BIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS).putExtras(extras)
 				.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags);
-		Log.d(TAG, "Connecting to service in profile (via shuttle): " + service);
+		Log.d(TAG, "Connecting to service in profile (via shuttle): " + service + " from " + conn);
 		final Activity activity = Activities.findActivityFrom(context);
 		if (sForwarderComponent == null) {
 			final ActivityInfo forwarder = FluentIterable.from(pm.queryIntentActivities(intent, 0))

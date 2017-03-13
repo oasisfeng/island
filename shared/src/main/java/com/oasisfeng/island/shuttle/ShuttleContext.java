@@ -44,6 +44,7 @@ public class ShuttleContext extends ContextWrapper {
 			@Override public void onServiceDisconnected() {
 				connection.onServiceDisconnected(null);
 			}
+			@Override public String toString() { return TAG + "{" + connection + "}"; }
 		};
 
 		final boolean result = ServiceShuttle.bindServiceViaShuttle(this, service, shuttle_connection, flags);
