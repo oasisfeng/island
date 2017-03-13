@@ -2,6 +2,6 @@
 
     <EditTextPreference android:key="@string/key_launch_shortcut_prefix"
                         android:title="@string/pref_general_launch_shortcut_prefix_title"
-                        android:defaultValue="@string/default_launch_shortcut_prefix" />
+                        android:defaultValue="❄ " />
 
 </PreferenceScreen>
