@@ -42,22 +42,18 @@ import java.util.Collection;
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
 
-	private static final String STATE_KEY_RECYCLER_VIEW = "apps.recycler.layout";
-
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
-
+		mShuttleContext = new ShuttleContext(activity);
 		mViewModel = new AppListViewModel();
 		mViewModel.mProfileController = IslandManager.NULL;
-
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
 
 	@Override public void onStart() {
 		super.onStart();
-		mShuttleContext = new ShuttleContext(getActivity());
 		if (GlobalStatus.hasProfile() && ! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
 			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
 	}
@@ -67,7 +63,6 @@ public class AppListFragment extends Fragment {
 		if (GlobalStatus.hasProfile()) try {
 			mShuttleContext.unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
-		mShuttleContext = null;
 		mViewModel.clearSelection();
 		super.onStop();
 	}
