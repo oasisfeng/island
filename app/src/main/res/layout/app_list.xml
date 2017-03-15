@@ -8,6 +8,7 @@
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
+        <variable name="guide" type="com.oasisfeng.island.guide.UserGuide" />
     </data>
 
     <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
@@ -21,13 +22,15 @@
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
             android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
 
+            <!--suppress AndroidUnknownAttribute: selectedItemPosition is actually a valid attribute handled by AdapterViewBindingAdapter -->
             <Spinner
                 android:id="@+id/filters"
                 android:entries="@{apps.filterPrimaryOptions}"
                 android:selectedItemPosition="@={apps.filterPrimaryChoice}"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:popupTheme="@style/AppThemeOverlay.Dark.Popup"/>
+                android:popupTheme="@style/AppThemeOverlay.Dark.Popup"
+                bind:prompt="@{guide.prompt_filter}"/>
 
         </Toolbar>
 
@@ -57,7 +60,7 @@
             android:lineSpacingMultiplier="1.3"
             android:text="@string/tip_empty_app_list" />
 
-        <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" />
+        <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" bind:guide="@{guide}"/>
 
     </android.support.design.widget.CoordinatorLayout>
 

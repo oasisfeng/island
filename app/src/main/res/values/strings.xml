@@ -51,6 +51,7 @@
     <string name="button_disable_clone">Disable clone</string>
     <string name="button_enable_clone">Enable clone</string>
 
+    <string name="menu_tip">Tip…</string>
     <string name="menu_show_hidden_sys_apps">Show hidden system apps</string>
     <string name="menu_settings">Settings</string>
 
@@ -128,5 +129,14 @@
     <string name="pref_about_header">About</string>
     <string name="pref_about_version_title">Version</string>
     <string name="pref_about_licenses_title">Licenses</string>
+
+    <!-- New User Guide -->
+
+    <string name="prompt_filter_title">Switch app collection</string>
+    <string name="prompt_filter_text">Use the spinner to switch among different collection of apps.\n\nAvailable actions for app may differ.</string>
+    <string name="prompt_freeze_title">Freeze app in Island</string>
+    <string name="prompt_freeze_text">Once frozen, the app in Island will vanish until being explicit unfrozen.\n\nIt could do absolutely nothing in frozen state.</string>
+    <string name="prompt_clone_title">Clone app to Island</string>
+    <string name="prompt_clone_text">To apply the magic, app in mainland needs to be cloned into Island first.\n\nThe clone has its own copy of data, but shares the executable binaries with the one in mainland.</string>
 
 </resources>

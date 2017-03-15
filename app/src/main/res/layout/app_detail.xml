@@ -12,6 +12,7 @@
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="com.oasisfeng.island.mobile.BuildConfig" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
+        <variable name="guide" type="com.oasisfeng.island.guide.UserGuide" />
         <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
     </data>
 
@@ -41,7 +42,8 @@
             android:title="@{apps.selection.info.label}"
             tools:title="Island"
             bind:menu="@{apps.actions_menu}"
-            android:onMenuItemClick="@{apps::onActionClick}" />
+            android:onMenuItemClick="@{apps::onActionClick}"
+            bind:prompt="@{guide.prompt_action}"/>
 
         <TextView
             android:id="@+id/summary"

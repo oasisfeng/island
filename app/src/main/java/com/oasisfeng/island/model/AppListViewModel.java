@@ -77,7 +77,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
-	@SuppressWarnings("unused") public enum Filter {
+	@SuppressWarnings("WeakerAccess") public enum Filter {
 		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user)),
 		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user)),
 		;
@@ -90,6 +90,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 		public class Entry {
 			Entry(final Context context) { mContext = context; }
+			public Filter parent() { return Filter.this; }
 			Predicate<IslandAppInfo> filter() { return mFilter; }
 			@Override public String toString() { return mContext.getString(mLabel); }
 			private final Context mContext;
@@ -467,7 +468,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		@Override public AppListViewModel createFromParcel(final Parcel in) { return new AppListViewModel(in); }
 		@Override public AppListViewModel[] newArray(final int size) { return new AppListViewModel[size]; }
 	};
-
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 

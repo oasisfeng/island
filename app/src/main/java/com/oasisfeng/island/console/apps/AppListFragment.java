@@ -27,6 +27,7 @@ import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.guide.UserGuide;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
@@ -49,6 +50,7 @@ public class AppListFragment extends Fragment {
 		mShuttleContext = new ShuttleContext(activity);
 		mViewModel = new AppListViewModel();
 		mViewModel.mProfileController = IslandManager.NULL;
+		mUserGuide = new UserGuide(activity, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
 
@@ -115,13 +117,14 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
+		final Activity activity = getActivity();
 		final AppListBinding binding = AppListBinding.inflate(inflater, container, false);
 		binding.setApps(mViewModel);
-		binding.setApps(mViewModel);
-		mViewModel.attach(getActivity(), binding.details.toolbar.getMenu(), saved_state);
+		binding.setGuide(mUserGuide);
+		mViewModel.attach(activity, binding.details.toolbar.getMenu(), saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
-		if (! Services.bind(getActivity(), IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
+		if (! Services.bind(activity, IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
 			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
 				mViewModel.setOwnerController(IIslandManager.Stub.asInterface(service));
 			}
@@ -129,13 +132,12 @@ public class AppListFragment extends Fragment {
 			@Override public void onServiceDisconnected(final ComponentName name) {}
 		})) throw new IllegalStateException("Module engine not installed");
 
-		getActivity().setActionBar(binding.appbar);
-		final ActionBar actionbar = getActivity().getActionBar();
+		activity.setActionBar(binding.appbar);
+		final ActionBar actionbar = activity.getActionBar();
 		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
 		binding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
-				final Activity activity = getActivity();
-				if (activity == null) return;
+				if (getActivity() == null) return;
 				mViewModel.setFilterPrimaryChoice(position);
 			}
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
@@ -157,6 +159,8 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
+		final MenuItem.OnMenuItemClickListener tip = mUserGuide.getAvailableTip();
+		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
@@ -182,6 +186,7 @@ public class AppListFragment extends Fragment {
 	public AppListFragment() {}
 
 	private AppListViewModel mViewModel;
+	private UserGuide mUserGuide;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 
