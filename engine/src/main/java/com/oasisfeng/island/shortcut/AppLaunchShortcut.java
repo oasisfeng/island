@@ -1,14 +1,10 @@
 package com.oasisfeng.island.shortcut;
 
 import android.content.ComponentName;
-import android.os.Process;
-import android.os.UserHandle;
 import android.widget.Toast;
 
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
-import com.oasisfeng.island.util.Users;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -21,11 +17,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 
 	@Override protected boolean prepareToLaunchApp(final ComponentName component) {
-		final UserHandle user = Process.myUserHandle();
-		if (Users.isOwner(user) && ! new IslandManager(this).isDeviceOwner()) return false;
-
-		// Ensure de-frozen
-		return new IslandManagerService(this).unfreezeApp(component.getPackageName());
+		try {	// Skip all checks and unfreeze it straightforward, to eliminate as much cost as possible in the most common case. (app is frozen)
+			return new IslandManagerService(this).unfreezeApp(component.getPackageName());
+		} catch (final SecurityException e) { return false; }	// If not profile owner or profile owner.
 	}
 
 	@Override protected void onLaunchFailed() {
