@@ -46,7 +46,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
     androidTestCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support:support-annotations:25.1.1'     // Resolve the dependency conflict
+    androidTestCompile 'com.android.support:support-annotations:25.2.0'     // Resolve the dependency conflict
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile 'com.android.support.test:rules:0.5'
 }
