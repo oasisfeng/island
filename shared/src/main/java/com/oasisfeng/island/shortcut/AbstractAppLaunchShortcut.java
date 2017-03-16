@@ -21,7 +21,7 @@ import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.oasisfeng.island.model.GlobalStatus;
+import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
@@ -72,7 +72,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
 		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut_prefix + activity.loadLabel(pm));
 		@SuppressWarnings("deprecation") final Drawable icon = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES).loadIcon(pm);
-		final Bitmap icon_bitmap = drawableToBitmap(owner ? icon : pm.getUserBadgedIcon(icon, GlobalStatus.profile));
+		final Bitmap icon_bitmap = drawableToBitmap(owner ? icon : pm.getUserBadgedIcon(icon, Users.profile));
 		if (icon_bitmap == null) {
 			final Context pkg_context = context.createPackageContext(pkg, 0);
 			final int icon_res = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;

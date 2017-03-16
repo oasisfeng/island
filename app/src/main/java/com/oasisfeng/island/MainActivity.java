@@ -10,11 +10,11 @@ import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.widget.Toast;
 
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.Modules;
@@ -43,15 +43,15 @@ public class MainActivity extends Activity {
 			}
 			final ProgressDialog progress = ProgressDialog.show(this, null, getString(R.string.dialog_provision_in_progress), true/* indeterminate */, false/* cancelable */);
 			// Bind to the IslandManager, triggering IslandProvisioning.startProfileOwnerProvisioningIfNeeded().
-			IslandManager.useServiceInProfile(this, service -> {
+			if (! IslandManager.useServiceInProfile(this, service -> {
 				getPackageManager().setComponentEnabledSetting(new ComponentName(this, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 				progress.cancel(); finish();		// Binder is returned when the provisioning is done.
-			});
+			})) Toast.makeText(this, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
 			return;
 		}
 
-		GlobalStatus.device_owner = island.isDeviceOwner();
-		final UserHandle profile = GlobalStatus.profile = IslandManager.getManagedProfile(this);
+		final boolean device_owner = island.isDeviceOwner();
+		final UserHandle profile = Users.profile = IslandManager.getManagedProfile(this);
 
 		if (profile != null) {
 			final ComponentName profile_owner = IslandManager.getProfileOwner(this, profile);
@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
 				if (IslandManager.launchApp(this, getPackageName(), profile)) {        // Try starting myself in profile to finish the provisioning.
 					finish();
 					return;
-				} else if (! GlobalStatus.device_owner) {
+				} else if (! device_owner) {
 					showSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
 					return;
 				}
@@ -71,11 +71,11 @@ public class MainActivity extends Activity {
 					finish();
 					return;
 				}
-			} else if (! GlobalStatus.device_owner) {		// Profile was not created by us, show setup wizard if not device admin.
+			} else if (! device_owner) {		// Profile was not created by us, show setup wizard if not device admin.
 				showSetupWizard();
 				return;
 			}
-		} else if (! GlobalStatus.device_owner) showSetupWizard();
+		} else if (! device_owner) showSetupWizard();
 
 		setContentView(R.layout.activity_main);
 		if (savedInstanceState == null) getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();

@@ -13,7 +13,6 @@
         <import type="com.oasisfeng.island.mobile.BuildConfig" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="guide" type="com.oasisfeng.island.guide.UserGuide" />
-        <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
     </data>
 
     <LinearLayout

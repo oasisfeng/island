@@ -10,7 +10,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.pattern.LocalContentProvider;
 
 import java.util.List;
@@ -23,6 +22,10 @@ import static android.content.Context.USER_SERVICE;
  * Created by Oasis on 2016/9/25.
  */
 public class Users extends LocalContentProvider {
+
+	public static @Nullable UserHandle profile;		// Semi-immutable (until profile is created or destroyed)
+
+	public static boolean hasProfile() { return profile != null; }
 
 	private static final UserHandle CURRENT = android.os.Process.myUserHandle();
 	private static final int CURRENT_ID = toId(CURRENT);
@@ -38,10 +41,9 @@ public class Users extends LocalContentProvider {
 	}
 
 	private void refreshUsers() {
-		final UserHandle profile = queryProfile();
+		profile = queryProfile();
 		sProfileId = profile != null ? toId(profile) : 0;
 		Log.i(TAG, "Profile ID: " + profile);
-		GlobalStatus.profile = profile;
 	}
 
 	private @Nullable UserHandle queryProfile() {

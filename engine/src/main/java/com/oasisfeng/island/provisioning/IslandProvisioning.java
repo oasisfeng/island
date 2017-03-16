@@ -21,7 +21,6 @@ import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -74,8 +73,12 @@ public class IslandProvisioning extends IntentService {
 		disableLauncherActivity(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
-		if (! launchMainActivityAsUser(this, GlobalStatus.OWNER))
-			Log.e(TAG, "Failed to launch main activity in owner user.");
+		for (final UserHandle user : ((UserManager) getSystemService(Context.USER_SERVICE)).getUserProfiles())
+			if (Users.isOwner(user)) {			// To get the UserHandle of owner user.
+				if (! launchMainActivityAsUser(this, user))
+					Log.e(TAG, "Failed to launch main activity in owner user.");
+				break;
+			}
 	}
 
 	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
@@ -114,7 +117,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser public static void startProfileOwnerProvisioningIfNeeded(final Context context, final @Nullable SharedPreferences prefs) {
-		if (GlobalStatus.running_in_owner) return;	// Do nothing in owner user
+		if (Users.isOwner()) return;	// Do nothing in owner user
 		final IslandManagerService island = new IslandManagerService(context);
 		if (prefs != null) {
 			final int state = checkRevision(prefs, PREF_KEY_PROVISION_STATE, POST_PROVISION_REV);

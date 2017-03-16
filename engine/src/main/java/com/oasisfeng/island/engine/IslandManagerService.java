@@ -26,7 +26,6 @@ import android.util.Log;
 import com.google.common.base.Supplier;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
@@ -79,7 +78,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public boolean launchApp(final String pkg) {
-		if (! Users.isOwner() || GlobalStatus.device_owner) {
+		if (! Users.isOwner() || new IslandManager(mContext).isDeviceOwner()) {
 			if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
 				if (! mDevicePolicies.setApplicationHidden(pkg, false))
 					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.

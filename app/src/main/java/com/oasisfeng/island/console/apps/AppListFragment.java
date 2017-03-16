@@ -33,10 +33,10 @@ import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
+import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 
@@ -56,13 +56,13 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onStart() {
 		super.onStart();
-		if (GlobalStatus.hasProfile() && ! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
+		if (Users.hasProfile() && ! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
 			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
 	}
 
 	@Override public void onStop() {
 		mViewModel.mProfileController = IslandManager.NULL;
-		if (GlobalStatus.hasProfile()) try {
+		if (Users.hasProfile()) try {
 			mShuttleContext.unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
 		mViewModel.clearSelection();

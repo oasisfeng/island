@@ -7,7 +7,6 @@
     <data>
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
-        <variable name="status" type="com.oasisfeng.island.model.GlobalStatus" />
         <variable name="guide" type="com.oasisfeng.island.guide.UserGuide" />
     </data>
 

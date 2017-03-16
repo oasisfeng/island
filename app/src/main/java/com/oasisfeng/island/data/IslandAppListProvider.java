@@ -21,7 +21,6 @@ import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
@@ -61,16 +60,16 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	public boolean isExclusive(final IslandAppInfo app) {
-		if (GlobalStatus.profile == null) {
+		if (Users.profile == null) {
 			if (! Users.isOwner(app.user)) throw new IllegalArgumentException("Known user: " + app);
 			return true;	// No profile
 		}
-		final IslandAppInfo opposite = Users.isOwner(app.user) ? get(app.packageName, GlobalStatus.profile) : get(app.packageName);
+		final IslandAppInfo opposite = Users.isOwner(app.user) ? get(app.packageName, Users.profile) : get(app.packageName);
 		return opposite == null || ! opposite.isInstalled() || ! opposite.shouldShowAsEnabled();
 	}
 
 	@Override protected IslandAppInfo createEntry(final ApplicationInfo base, final IslandAppInfo last) {
-		return new IslandAppInfo(this, GlobalStatus.current_user, base, last);
+		return new IslandAppInfo(this, Users.current(), base, last);
 	}
 
 	@Override protected void onAppLabelUpdate(final String pkg) {
@@ -79,7 +78,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		final IslandAppInfo entry = mIslandAppMap.get().get(pkg);
 		if (entry == null) return;
 		Log.d(TAG, "Label updated: " + pkg);
-		final IslandAppInfo new_entry = new IslandAppInfo(this, GlobalStatus.profile, entry, null);
+		final IslandAppInfo new_entry = new IslandAppInfo(this, Users.profile, entry, null);
 		mIslandAppMap.get().put(pkg, new_entry);
 
 		notifyUpdate(Collections.singleton(new_entry));
@@ -115,11 +114,11 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 		refresh(apps);
 
-		if (GlobalStatus.hasProfile()) mClonedHiddenSystemApps.get().initializeIfNeeded(context());
+		if (Users.hasProfile()) mClonedHiddenSystemApps.get().initializeIfNeeded(context());
 	}
 
 	private void refresh(final Map<String, IslandAppInfo> apps) {
-		if (GlobalStatus.profile != null) {		// Collect Island-specific apps
+		if (Users.profile != null) {		// Collect Island-specific apps
 			if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {    // Since Android N, we can query ApplicationInfo directly
 				collectIslandApps_Api24(apps);
 			} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), this::onIslandServiceConnected))
@@ -139,9 +138,9 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	private void collectIslandApps_Api24(final Map<String, IslandAppInfo> apps) {
-		super.installedApps().map(app -> Hacks.LauncherApps_getApplicationInfo.invoke(app.packageName, PM_FLAGS_GET_APP_INFO, GlobalStatus.profile).on(mLauncherApps.get()))
+		super.installedApps().map(app -> Hacks.LauncherApps_getApplicationInfo.invoke(app.packageName, PM_FLAGS_GET_APP_INFO, Users.profile).on(mLauncherApps.get()))
 				.filter(info -> info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0)
-				.forEach(info -> apps.put(info.packageName, new IslandAppInfo(this, GlobalStatus.profile, info, null)));
+				.forEach(info -> apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
 	}
 
 	private void onIslandServiceConnected(final IIslandManager island) {
@@ -154,7 +153,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		final List<IslandAppInfo> updated = new ArrayList<>(apps.size());
 		final ConcurrentHashMap<String, IslandAppInfo> app_map = mIslandAppMap.get();
 		for (final ApplicationInfo app : apps) {
-			final IslandAppInfo info = new IslandAppInfo(this, GlobalStatus.profile, app, null);
+			final IslandAppInfo info = new IslandAppInfo(this, Users.profile, app, null);
 			app_map.put(app.packageName, info);
 			updated.add(info);
 		}
@@ -164,7 +163,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	/** Synchronous on Android 6+, asynchronous otherwise
 	 *  @param callback will be invoked with the result, or null for failure (including {@link PackageManager.NameNotFoundException}. */
 	private void queryApplicationInfoInProfile(final String pkg, final Consumer<ApplicationInfo> callback) {
-		final UserHandle profile = GlobalStatus.profile;
+		final UserHandle profile = Users.profile;
 		if (profile == null) {
 			callback.accept(null);
 			return;
@@ -182,7 +181,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
-			final ApplicationInfo info = Hacks.LauncherApps_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO, GlobalStatus.profile).on(mLauncherApps.get());
+			final ApplicationInfo info = Hacks.LauncherApps_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO, Users.profile).on(mLauncherApps.get());
 			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
 		} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), service -> {
 			final ApplicationInfo info = service.getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
@@ -191,7 +190,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	public void refreshPackage(final String pkg, final @Nullable UserHandle user, final boolean add) {
-		if (! Objects.equal(user, GlobalStatus.profile)) return;
+		if (! Objects.equal(user, Users.profile)) return;
 		Log.d(TAG, "Update: " + pkg + (add ? " for pkg add" : " for pkg change"));
 		queryApplicationInfoInProfile(pkg, info -> {
 			if (info == null) return;
@@ -210,7 +209,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	public void setHiddenSysAppCloned(final String pkg) {
-		if (GlobalStatus.hasProfile()) mClonedHiddenSystemApps.get().setCloned(pkg);
+		if (Users.hasProfile()) mClonedHiddenSystemApps.get().setCloned(pkg);
 	}
 
 	private final Supplier<ConcurrentHashMap<String/* package */, IslandAppInfo>> mIslandAppMap = Suppliers.memoize(() -> {
@@ -222,7 +221,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	private final LauncherApps.Callback mCallback = new LauncherApps.Callback() {
 
 		@Override public void onPackageRemoved(final String pkg, final UserHandle user) {
-			if (! user.equals(GlobalStatus.profile)) return;
+			if (! user.equals(Users.profile)) return;
 			final IslandAppInfo app = mIslandAppMap.get().get(pkg);
 			if (app == null) {
 				Log.e(TAG, "Removed package not found in Island: " + pkg);
@@ -265,7 +264,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	private final Supplier<ShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(
-			() -> new ClonedHiddenSystemApps(context(), GlobalStatus.profile, pkg -> refreshPackage(pkg, GlobalStatus.profile, false)));
+			() -> new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 
 	private static final String TAG = "Island.AppListProv";
 }

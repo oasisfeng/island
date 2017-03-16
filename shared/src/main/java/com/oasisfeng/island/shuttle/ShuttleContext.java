@@ -8,8 +8,8 @@ import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
 import java.util.Map;
@@ -29,9 +29,9 @@ public class ShuttleContext extends ContextWrapper {
 	public ShuttleContext(final Context base) { super(base); }
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
-		if (GlobalStatus.profile == null) return false;
+		if (Users.profile == null) return false;
 		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED)
-			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, GlobalStatus.profile).on(getBaseContext())) {
+			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, Users.profile).on(getBaseContext())) {
 				Log.d(TAG, "Connecting to service in profile: " + service);
 				return true;
 			}
@@ -53,7 +53,7 @@ public class ShuttleContext extends ContextWrapper {
 	}
 
 	@Override public void unbindService(final ServiceConnection connection) {
-		if (GlobalStatus.profile == null) return;
+		if (Users.profile == null) return;
 		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, Hacks.Permission.INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) {
 			getBaseContext().unbindService(connection);
 			return;

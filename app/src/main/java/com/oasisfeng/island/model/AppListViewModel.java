@@ -78,8 +78,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("WeakerAccess") public enum Filter {
-		Island		(R.string.filter_island,    GlobalStatus::hasProfile,  app -> Users.isProfile(app.user)),
-		Mainland	(R.string.filter_mainland,  () -> true,                app -> Users.isOwner(app.user)),
+		Island		(R.string.filter_island,    Users::hasProfile,  app -> Users.isProfile(app.user)),
+		Mainland	(R.string.filter_mainland,  () -> true,         app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
 		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
@@ -144,13 +144,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void attach(final Activity activity, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
+		mDeviceOwner = new IslandManager(activity).isDeviceOwner();
 		layout_manager = new LinearLayoutManager(activity);
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 		notifyPropertyChanged(BR.filterPrimaryOptions);
 		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
-				.orElse(Math.min(GlobalStatus.device_owner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
+				.orElse(Math.min(mDeviceOwner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
 		setFilterPrimaryChoice(filter_primary);
 	}
 
@@ -166,11 +167,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final AppViewModel selection = getSelection();
 		if (selection == null) return;
 		final IslandAppInfo app = selection.info();
-		final UserHandle profile = GlobalStatus.profile;
+		final UserHandle profile = Users.profile;
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final boolean exclusive = provider.isExclusive(app);
 
-		final boolean in_owner = Users.isOwner(app.user), is_managed = GlobalStatus.device_owner || ! in_owner;
+		final boolean in_owner = Users.isOwner(app.user), is_managed = mDeviceOwner || ! in_owner;
 		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(in_owner && profile != null && exclusive);
@@ -342,20 +343,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 					.putExtra(Intent.EXTRA_USER, app.user));
 		} catch (final RemoteException ignored) {
 			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			launcher_apps.startAppDetailsActivity(new ComponentName(app.packageName, ""), GlobalStatus.profile, null, null);
+			launcher_apps.startAppDetailsActivity(new ComponentName(app.packageName, ""), Users.profile, null, null);
 			Toast.makeText(mActivity, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
 		}
 	}
 
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */
 	private void refreshAppStateAsSysBugWorkaround(final String pkg) {
-		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, GlobalStatus.profile, false);
+		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, Users.profile, false);
 	}
 
 	private void cloneApp(final IslandAppInfo app) {
 		final int check_result;
 		final String pkg = app.packageName;
-		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, GlobalStatus.profile);
+		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, Users.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
 			launchSettingsAppInfoActivity(app_in_profile);
 			return;
@@ -495,6 +496,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private boolean mFilterIncludeSystemApps;
 	/* Transient fields */
 	public transient IIslandManager mProfileController;
+	private transient boolean mDeviceOwner;
 	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
 	private transient boolean mGreenifyAvailable;
 

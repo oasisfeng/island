@@ -15,7 +15,6 @@ import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
-import com.oasisfeng.island.model.GlobalStatus;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
@@ -98,7 +97,7 @@ public class Shutdown {
 		if (! IslandManager.useServiceInProfile(activity, island -> {
 			try {
 				island.destroyProfile();
-				ClonedHiddenSystemApps.reset(activity, GlobalStatus.profile);
+				ClonedHiddenSystemApps.reset(activity, Users.profile);
 				activity.finish();
 				System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
 			} catch (final RemoteException ignored) {}
