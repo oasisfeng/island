@@ -31,7 +31,7 @@
     <string name="button_instructions_online">Instructions (online)</string>
     <string name="button_account_settings">Account Settings</string>
 
-    <string name="action_clone">Clone to Island</string>
+    <string name="action_clone">Clone</string>
     <string name="action_clone_back">Clone to mainland</string>
     <string name="action_freeze">Freeze</string>
     <string name="action_unfreeze">Unfreeze</string>
@@ -135,7 +135,7 @@
     <string name="prompt_filter_title">Switch app collection</string>
     <string name="prompt_filter_text">Use the spinner to switch among different collection of apps.\n\nAvailable actions for app may differ.</string>
     <string name="prompt_freeze_title">Freeze app in Island</string>
-    <string name="prompt_freeze_text">Once frozen, the app in Island will vanish until being explicit unfrozen.\n\nIt could do absolutely nothing in frozen state.</string>
+    <string name="prompt_freeze_text">Once frozen, the app in Island will vanish until being explicit unfrozen.\n\nApp could do absolutely nothing in frozen state.</string>
     <string name="prompt_clone_title">Clone app to Island</string>
     <string name="prompt_clone_text">To apply the magic, app in mainland needs to be cloned into Island first.\n\nThe clone has its own copy of data, but shares the executable binaries with the one in mainland.</string>
 
