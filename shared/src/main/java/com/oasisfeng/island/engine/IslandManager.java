@@ -9,6 +9,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
@@ -113,9 +114,13 @@ public class IslandManager {
 		}
 	}
 
-	public static boolean useServiceInProfile(final Context context, final Services.ServiceReadyThrows<IIslandManager, RemoteException> procedure) {
+	public static @CheckResult boolean useServiceInProfile(final Context context, final Services.ServiceReadyThrows<IIslandManager, RemoteException> procedure) {
 		return Services.use(context instanceof ShuttleContext || Users.isProfile() ? context : new ShuttleContext(context),
 				IIslandManager.class, IIslandManager.Stub::asInterface, procedure);
+	}
+
+	public static @CheckResult boolean useServiceInOwner(final Context context, final Services.ServiceReadyThrows<IIslandManager, RemoteException> procedure) {
+		return Services.use(context, IIslandManager.class, IIslandManager.Stub::asInterface, procedure);
 	}
 
 	public IslandManager(final Context context) {

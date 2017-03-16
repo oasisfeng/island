@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.RemoteException;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
@@ -31,14 +32,29 @@ public class Shutdown {
 	private static final int MAX_DESTROYING_APPS_LIST = 8;
 
 	public static void requestDeviceOwnerDeactivation(final Activity activity) {
-		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
-				.setMessage(R.string.dialog_deactivate_message)
+		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_deactivate_message)
+				.setPositiveButton(android.R.string.no, null)
 				.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> {
-					new IslandManager(activity).deactivateDeviceOwner();
-					activity.finish();
-					System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
-				})
-				.setPositiveButton(android.R.string.no, null).show();
+					final List<String> frozen_pkgs = IslandAppListProvider.getInstance(activity).installedApps().filter(app -> app.isHidden())
+							.map(app -> app.packageName).collect(Collectors.toList());
+					if (! frozen_pkgs.isEmpty()) {
+						if (IslandManager.useServiceInOwner(activity, island -> {
+							try {
+								for (final String pkg : frozen_pkgs) island.unfreezeApp(pkg);
+							} finally {
+								deactivateNow(activity);
+							}
+						})) return;		// Invoke deactivateNow() in the async procedure after all apps are unfrozen.
+						Log.e(TAG, "Failed to connect to engine in owner user");
+					}
+					deactivateNow(activity);
+				}).show();
+	}
+
+	private static void deactivateNow(final Activity activity) {
+		new IslandManager(activity).deactivateDeviceOwner();
+		activity.finish();
+		System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
 	}
 
 	public static void requestProfileRemoval(final Activity activity) {
@@ -88,4 +104,6 @@ public class Shutdown {
 			} catch (final RemoteException ignored) {}
 		})) showPromptForProfileManualRemoval(activity);
 	}
+
+	private static final String TAG = Shutdown.class.getSimpleName();
 }
