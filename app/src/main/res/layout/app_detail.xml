@@ -43,7 +43,7 @@
             tools:title="Island"
             bind:menu="@{apps.actions_menu}"
             android:onMenuItemClick="@{apps::onActionClick}"
-            bind:prompt="@{guide.prompt_action}"/>
+            android:prompt="@{guide.prompt_action}"/>
 
         <TextView
             android:id="@+id/summary"

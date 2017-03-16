@@ -30,7 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:popupTheme="@style/AppThemeOverlay.Dark.Popup"
-                bind:prompt="@{guide.prompt_filter}"/>
+                android:prompt="@{guide.prompt_filter}"/>
 
         </Toolbar>
 

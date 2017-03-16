@@ -50,7 +50,7 @@ public class AppListFragment extends Fragment {
 		mShuttleContext = new ShuttleContext(activity);
 		mViewModel = new AppListViewModel();
 		mViewModel.mProfileController = IslandManager.NULL;
-		mUserGuide = new UserGuide(activity, mViewModel);
+		mUserGuide = UserGuide.initializeIfNeeded(activity, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
 
@@ -159,7 +159,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
-		final MenuItem.OnMenuItemClickListener tip = mUserGuide.getAvailableTip();
+		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
@@ -186,7 +186,7 @@ public class AppListFragment extends Fragment {
 	public AppListFragment() {}
 
 	private AppListViewModel mViewModel;
-	private UserGuide mUserGuide;
+	private @Nullable UserGuide mUserGuide;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 
