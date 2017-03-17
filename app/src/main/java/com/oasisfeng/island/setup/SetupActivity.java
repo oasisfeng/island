@@ -18,6 +18,7 @@ public class SetupActivity extends Activity {
 //		getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 		SystemBarHelper.hideSystemBars(getWindow());
 		setContentView(R.layout.activity_main);
-		getFragmentManager().beginTransaction().replace(R.id.container, new SetupWizardFragment()).commit();
+		if (savedInstanceState == null)
+			getFragmentManager().beginTransaction().replace(R.id.container, new SetupWizardFragment()).commit();
 	}
 }
