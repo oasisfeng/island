@@ -52,7 +52,7 @@ public class Shutdown {
 
 	private static void deactivateNow(final Activity activity) {
 		new IslandManager(activity).deactivateDeviceOwner();
-		activity.finish();
+		activity.finishAffinity();	// Finish the whole activity stack.
 		System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
 	}
 
@@ -98,7 +98,7 @@ public class Shutdown {
 			try {
 				island.destroyProfile();
 				ClonedHiddenSystemApps.reset(activity, Users.profile);
-				activity.finish();
+				activity.finishAffinity();	// Finish the whole activity stack.
 				System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
 			} catch (final RemoteException ignored) {}
 		})) showPromptForProfileManualRemoval(activity);
