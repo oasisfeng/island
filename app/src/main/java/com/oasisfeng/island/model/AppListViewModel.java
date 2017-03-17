@@ -268,10 +268,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void launchSettingsAppInfoActivity(final IslandAppInfo app) {
 		try {
-			controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
+			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
 			((LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE))
 					.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-		} catch (final RemoteException ignored) {}
+		} catch (final RemoteException | SecurityException ignored) {}
 	}
 
 	private void onShortcutRequested() {
