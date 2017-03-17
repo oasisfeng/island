@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.island" android:sharedUserId="com.oasisfeng.island" android:versionCode="7" android:versionName="2.0 beta 3" >
+          package="com.oasisfeng.island" android:sharedUserId="com.oasisfeng.island" android:versionCode="8" android:versionName="2.0 beta 4" >
 
     <application android:allowBackup="false" android:label="@string/app_name" tools:replace="label" />
 
