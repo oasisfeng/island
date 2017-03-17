@@ -5,10 +5,10 @@
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/pref_general_header" />
 
-    <header
+    <!--<header
         android:fragment="com.oasisfeng.island.settings.SettingsActivity$PrivacyPreferenceFragment"
         android:icon="@drawable/ic_block_black_24dp"
-        android:title="@string/pref_privacy_header" />
+        android:title="@string/pref_privacy_header" />-->
 
     <header
         android:fragment="com.oasisfeng.island.settings.SetupPreferenceFragment"
