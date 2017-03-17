@@ -7,11 +7,11 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Process;
 import android.os.UserHandle;
-import android.support.v4.content.ContextCompat;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
@@ -19,7 +19,6 @@ import com.oasisfeng.island.util.Users;
 import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -79,12 +78,13 @@ public class IslandAppInfo extends AppInfo {
 
 	@Override protected boolean checkLaunchable(final int flags) {
 		if (Users.isOwner(user)) return super.checkLaunchable(flags);
-		if (ContextCompat.checkSelfPermission(context(), INTERACT_ACROSS_USERS) == PERMISSION_GRANTED && ! Hacks.PackageManager_resolveActivityAsUser.isAbsent()) {
-			final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
-			final ResolveInfo resolved = Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager());
-			return resolved != null;
+		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
+		if (Permissions.has(context(), INTERACT_ACROSS_USERS) && ! Hacks.PackageManager_resolveActivityAsUser.isAbsent()) {
+			return Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager()) != null;
+		} else {	// The fallback checking method
+			final ResolveInfo resolved = context().getPackageManager().resolveActivity(intent, flags | PackageManager.GET_RESOLVED_FILTER);
+			return resolved != null && (resolved.filter == null || resolved.filter.hasCategory(Intent.CATEGORY_DEFAULT));
 		}
-		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty();
 	}
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
