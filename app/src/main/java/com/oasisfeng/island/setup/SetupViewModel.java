@@ -168,11 +168,14 @@ public class SetupViewModel implements Parcelable {
 		final Intent intent = buildManagedProfileProvisioningIntent(activity);
 		try {
 			fragment.startActivityForResult(intent, REQUEST_PROVISION_MANAGED_PROFILE);
-			if (SDK_INT < M) activity.finish();		// No activity result on Android 5.x, thus we have to finish the activity now.
-			return null;
+			if (SDK_INT < M) activity.finish();			// No activity result on Android 5.x, thus we have to finish the activity now.
+		} catch (final IllegalStateException e) {	// Fragment not in proper state
+			activity.startActivity(intent);				// Fall-back to starting activity without result observation.
+			activity.finish();
 		} catch (final ActivityNotFoundException e) {
 			return buildErrorVM(R.string.error_reason_missing_managed_provisioning, reason("lack_managed_provisioning"));
 		}
+		return null;
 	}
 
 	private static SetupViewModel buildErrorVM(final @StringRes int message, final Analytics.Event event) {
