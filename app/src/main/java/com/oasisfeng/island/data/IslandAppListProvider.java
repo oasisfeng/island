@@ -11,12 +11,12 @@ import android.os.RemoteException;
 import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
@@ -37,7 +37,6 @@ import java8.util.stream.RefStreams;
 import java8.util.stream.Stream;
 import java8.util.stream.StreamSupport;
 
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -60,11 +59,9 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	public boolean isExclusive(final IslandAppInfo app) {
-		if (Users.profile == null) {
-			if (! Users.isOwner(app.user)) throw new IllegalArgumentException("Known user: " + app);
-			return true;	// No profile
-		}
-		final IslandAppInfo opposite = Users.isOwner(app.user) ? get(app.packageName, Users.profile) : get(app.packageName);
+		final boolean app_in_owner_user = Users.isOwner(app.user);
+		if (app_in_owner_user && Users.profile == null) return true;
+		final IslandAppInfo opposite = app_in_owner_user ? get(app.packageName, Users.profile) : get(app.packageName);
 		return opposite == null || ! opposite.isInstalled() || ! opposite.shouldShowAsEnabled();
 	}
 
@@ -168,8 +165,8 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			callback.accept(null);
 			return;
 		}
-		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && ! Hacks.IPackageManager_getApplicationInfo.isAbsent() && ! Hacks.ActivityThread_getPackageManager.isAbsent()
-				&& ContextCompat.checkSelfPermission(context(), INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) try {
+		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && ! Hacks.IPackageManager_getApplicationInfo.isAbsent()
+				&& ! Hacks.ActivityThread_getPackageManager.isAbsent() && Permissions.has(context(), INTERACT_ACROSS_USERS)) try {
 			final ApplicationInfo info = Hacks.IPackageManager_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO,
 					Users.toId(profile)).on(Hacks.ActivityThread_getPackageManager.invoke().statically());
 			callback.accept(info);
