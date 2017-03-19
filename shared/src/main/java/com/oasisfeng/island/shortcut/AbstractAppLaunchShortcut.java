@@ -1,6 +1,7 @@
 package com.oasisfeng.island.shortcut;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,14 +22,19 @@ import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.oasisfeng.android.ui.IconResizer;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
+
 /**
- * Launch shortcut for apps on Island, from the owner user space
+ * Create launch shortcut for apps in Island or mainland, from the owner user space.
  *
  * TODO: Secure both the installer and launch intent to protect again abuse.
  *
@@ -43,43 +49,54 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 	protected abstract boolean prepareToLaunchApp(final ComponentName component);
 
 	public static boolean createOnLauncher(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) {
-		try {
-			final Intent intent = buildShortcutIntent(context, pkg, owner, shortcut_prefix);
-			if (intent == null) return false;
-			context.sendBroadcast(intent.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT"));
-			context.sendBroadcast(intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT"));
-			return true;
-		} catch (final NameNotFoundException e) {
-			Log.e(TAG, "Package not installed: " + pkg);
-			return false;
-		}
-	}
-
-	/** @return null if the given package has no launch entrance */
-	private static @Nullable Intent buildShortcutIntent(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) throws NameNotFoundException {
 		final PackageManager pm = context.getPackageManager();
 		@SuppressWarnings("deprecation") final List<ResolveInfo> activities = pm.queryIntentActivities(
 				new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), PackageManager.GET_UNINSTALLED_PACKAGES);
-		if (activities.isEmpty()) return null;
-
+		if (activities.isEmpty()) {
+			Analytics.$().event("shortcut_non_launchable").with(ITEM_ID, pkg).send();
+			return false;
+		}
 		final ActivityInfo activity = activities.get(0).activityInfo;
 		final ComponentName component = new ComponentName(activity.packageName, activity.name);
-
 		final Intent launch_intent = new Intent(owner ? ACTION_LAUNCH_APP : ACTION_LAUNCH_CLONE).addCategory(Intent.CATEGORY_LAUNCHER)
 				.setData(Uri.fromParts("target", component.flattenToShortString(), null));
 
 		final Intent intent = new Intent();
 		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
 		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut_prefix + activity.loadLabel(pm));
-		@SuppressWarnings("deprecation") final Drawable icon = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES).loadIcon(pm);
+		intent.putExtra("duplicate", false);		// Special extra to prevent duplicate shortcut being created
+
+		final ActivityInfo activity_info;
+		try {
+			activity_info = pm.getActivityInfo(component, PackageManager.GET_UNINSTALLED_PACKAGES);
+		} catch (final NameNotFoundException e) {
+			Analytics.$().report(e);
+			return false;
+		}
+		// TODO: Load icon in higher density
+//		final Resources res = pm.getResourcesForApplication(activity_info.applicationInfo);
+//		final TypedValue value = new TypedValue();
+//		final int icon_res = activity_info.getIconResource();
+//		res.getValueForDensity(icon_res, higher_density, value, true);
+//		app_icon = res.getDrawableForDensity(icon_res, higher_density, null);
+		final Drawable app_icon = activity_info.loadIcon(pm);
+		final Drawable icon = new IconResizer().createIconThumbnail(app_icon);	// In case the app icon is too large, to avoid TransactionTooLargeException.
 		final Bitmap icon_bitmap = drawableToBitmap(owner ? icon : pm.getUserBadgedIcon(icon, Users.profile));
 		if (icon_bitmap == null) {
-			final Context pkg_context = context.createPackageContext(pkg, 0);
-			final int icon_res = activity.icon != 0 ? activity.icon : activity.applicationInfo.icon;
-			intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(pkg_context, icon_res));
-		} else intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap);
-		intent.putExtra("duplicate", false);		// Special extra to prevent duplicate shortcut being created
-		return intent;
+			Analytics.$().event("shortcut_invalid_app_icon").with(ITEM_ID, pkg).with(ITEM_CATEGORY, app_icon.getClass().getName()).send();
+			return false;
+		}
+
+		// Do not carry the heavy-weight bitmap payload in UNINSTALL_SHORTCUT broadcast, only in INSTALL_SHORTCUT broadcast.
+		final BroadcastReceiver install_task = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent unused) {
+			context.sendBroadcast(intent.setAction(ACTION_INSTALL_SHORTCUT).putExtra(Intent.EXTRA_SHORTCUT_ICON, icon_bitmap));
+		}};
+		try {
+			context.sendOrderedBroadcast(intent.setAction(ACTION_UNINSTALL_SHORTCUT), null, install_task, null, Activity.RESULT_OK, null, null);
+		} catch (final RuntimeException e) {
+			install_task.onReceive(context, null);
+		}
+		return true;
 	}
 
 	/** Runs in managed profile or device owner */
@@ -135,5 +152,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		return bitmap;
 	}
 
+	private static final String ACTION_INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
+	private static final String ACTION_UNINSTALL_SHORTCUT = "com.android.launcher.action.UNINSTALL_SHORTCUT";
 	private static final String TAG = "AppShortcut";
 }
