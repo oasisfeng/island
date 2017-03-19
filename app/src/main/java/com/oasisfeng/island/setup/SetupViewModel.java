@@ -17,9 +17,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
-import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
@@ -51,11 +49,10 @@ public class SetupViewModel implements Parcelable {
 
 	private static final int REQUEST_PROVISION_MANAGED_PROFILE = 1;
 
-	public CharSequence message;
+	public @StringRes int message;
 	int button_back;
 	int button_next;
 	public int button_extra;
-	boolean require_scroll_to_bottom;
 
 //	SetupViewModel(final Context context) {
 //		final UserHandle profile = IslandManager.getManagedProfile(context);
@@ -74,7 +71,7 @@ public class SetupViewModel implements Parcelable {
 		// FIXME: Analytics.$().event("setup_lack_managed_users").send();
 		final boolean has_managed_users = activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
 		if (! has_managed_users)
-			return buildErrorVM(activity, R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
+			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
 
 		// Check for incomplete provisioning.
 		if (SDK_INT >= N && IslandManager.getManagedProfile(activity) == null) {
@@ -85,23 +82,23 @@ public class SetupViewModel implements Parcelable {
 					if (! activity.getPackageName().equals(profile_owner.getPackageName())) {
 						final CharSequence owner_label = readOwnerLabel(activity, profile_owner);
 						final Analytics.Event reason = reason("existent_work_profile").with(Analytics.Param.ITEM_ID, profile_owner.getPackageName());
-						return buildErrorVM(activity, R.string.setup_error_other_work_profile, R.string.button_account_settings,
+						return buildErrorVM(R.string.setup_error_other_work_profile, R.string.button_account_settings,
 								owner_label == null ? reason : reason.with(Analytics.Param.ITEM_NAME, owner_label.toString()));
-					} else return buildErrorVM(activity, R.string.setup_error_provisioning_incomplete, R.string.button_account_settings,
+					} else return buildErrorVM(R.string.setup_error_provisioning_incomplete, R.string.button_account_settings,
 							reason("provisioning_incomplete"));
 				}
 			}
 		}
 
 		if (SDK_INT < M && getMaxSupportedUsers() < 2)
-			return buildErrorVM(activity, R.string.setup_error_multi_user_not_allowed, reason("sys_prop.fw.max_users"));
+			return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("sys_prop.fw.max_users"));
 
 		// TODO Analytics.$().event("profile_owner_existent").with("package", profile_owner.getPackageName()).with("label", owner_label).send();
 
 		final boolean encryption_required = isEncryptionRequired();
 		if (Analytics.$().setProperty("encryption_required", encryption_required)
 				&& ! Analytics.$().setProperty("encrypted_already", isDeviceEncrypted(activity))) {
-			if (button_extra == R.string.button_instructions_online) {        // Next is clicked in this step
+			if (message == R.string.dialog_encryption_required) {        // Next is clicked in this step
 				new AsyncTask<Void, Void, Void>() {
 					@Override protected Void doInBackground(final Void... params) {
 						try {
@@ -113,18 +110,15 @@ public class SetupViewModel implements Parcelable {
 					}
 
 					@Override protected void onPostExecute(final Void ignored) {
-						if (encryption_required && ! isEncryptionRequired())
-							Analytics.$().event("encryption_skipped").send();
+						if (encryption_required && ! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
 						startManagedProvisioning(fragment);
 					}
 				}.execute();
 				return null;
 			}
-			final SetupViewModel next = new SetupViewModel();
-			next.message = activity.getText(R.string.dialog_encryption_required);
-			next.button_extra = R.string.button_instructions_online;
-			next.require_scroll_to_bottom = true;
-			return next;
+			final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, reason("encryption_required"));
+			vm.button_next = 0;		// Enable the "next" button.
+			return vm;
 		}
 
 		return startManagedProvisioning(fragment);
@@ -145,9 +139,8 @@ public class SetupViewModel implements Parcelable {
 				|| (SDK_INT >= M && status == DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
 	}
 
-	public void onExtraButtonClick(final View v) {
-		final Context context = v.getContext();
-		if (button_extra == R.string.button_learn_more_online)
+	public void onExtraButtonClick(final Context context) {
+		if (button_extra == R.string.button_instructions_online)
 			WebContent.view(context, Config.URL_SETUP.get());
 		else if (button_extra == R.string.button_account_settings)
 			Activities.startActivity(context, new Intent(Settings.ACTION_SYNC_SETTINGS));
@@ -178,18 +171,18 @@ public class SetupViewModel implements Parcelable {
 			if (SDK_INT < M) activity.finish();		// No activity result on Android 5.x, thus we have to finish the activity now.
 			return null;
 		} catch (final ActivityNotFoundException e) {
-			return buildErrorVM(activity, R.string.error_reason_missing_managed_provisioning, reason("lack_managed_provisioning"));
+			return buildErrorVM(R.string.error_reason_missing_managed_provisioning, reason("lack_managed_provisioning"));
 		}
 	}
 
-	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message, final Analytics.Event event) {
-		return buildErrorVM(context, message, R.string.button_learn_more_online, event);
+	private static SetupViewModel buildErrorVM(final @StringRes int message, final Analytics.Event event) {
+		return buildErrorVM(message, R.string.button_instructions_online, event);
 	}
 
-	private static SetupViewModel buildErrorVM(final Context context, final @StringRes int message, final @StringRes int button_extra, final Analytics.Event event) {
+	private static SetupViewModel buildErrorVM(final @StringRes int message, final @StringRes int button_extra, final Analytics.Event event) {
 		event.send();
 		final SetupViewModel next = new SetupViewModel();
-		next.message = context.getText(message);
+		next.message = message;
 		next.button_next = -1;
 		next.button_extra = button_extra;
 		return next;
@@ -243,19 +236,17 @@ public class SetupViewModel implements Parcelable {
 	SetupViewModel() {}
 
 	private SetupViewModel(final Parcel in) {
-		message = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+		message = in.readInt();
 		button_back = in.readInt();
 		button_next = in.readInt();
 		button_extra = in.readInt();
-		require_scroll_to_bottom = in.readByte() != 0;
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
-		TextUtils.writeToParcel(message, dest, 0);
+		dest.writeInt(message);
 		dest.writeInt(button_back);
 		dest.writeInt(button_next);
 		dest.writeInt(button_extra);
-		dest.writeByte((byte) (require_scroll_to_bottom ? 1 : 0));
 	}
 
 	@Override public int describeContents() { return 0; }

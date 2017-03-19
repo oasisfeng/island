@@ -39,12 +39,12 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 		binding.setSetup(mViewModel);
 		final View view = binding.getRoot();
 		final SetupWizardLayout layout = (SetupWizardLayout) view.findViewById(R.id.setup_wizard_layout);
+		layout.requireScrollToBottom();
 
 		final NavigationBar nav_bar = layout.getNavigationBar();
 		nav_bar.setNavigationBarListener(this);
 		setButtonText(nav_bar.getBackButton(), mViewModel.button_back);
 		setButtonText(nav_bar.getNextButton(), mViewModel.button_next);
-		if (mViewModel.require_scroll_to_bottom) layout.requireScrollToBottom();
 //		mViewModel.button_back.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable observable, final int i) {
 //			setButtonText(button_back, mViewModel.button_back);
 //		}});
