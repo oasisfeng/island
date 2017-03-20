@@ -78,7 +78,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("WeakerAccess") public enum Filter {
-		Island		(R.string.filter_island,    Users::hasProfile,  app -> Users.isProfile(app.user)),
+		Island		(R.string.filter_island,    Users::hasProfile,  app -> Users.isProfile(app.user) && app.shouldShowAsEnabled()),
 		Mainland	(R.string.filter_mainland,  () -> true,         app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
@@ -122,8 +122,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void updateActiveFilters() {
 		final Predicate<IslandAppInfo> primary_with_shared = Predicates.and(mFilterShared, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		mActiveFilters = mFilterIncludeSystemApps ? Predicates.and(primary_with_shared, IslandAppInfo::shouldShowAsEnabled)
-				: Predicates.and(primary_with_shared, NON_HIDDEN_SYSTEM);
+		mActiveFilters = mFilterIncludeSystemApps ? primary_with_shared : Predicates.and(primary_with_shared, NON_HIDDEN_SYSTEM);
 	}
 
 	private void rebuildAppViewModels() {
