@@ -24,6 +24,7 @@ import static android.content.Context.USER_SERVICE;
 public class Users extends LocalContentProvider {
 
 	public static @Nullable UserHandle profile;		// Semi-immutable (until profile is created or destroyed)
+	public static UserHandle owner;
 
 	public static boolean hasProfile() { return profile != null; }
 
@@ -41,18 +42,15 @@ public class Users extends LocalContentProvider {
 	}
 
 	private void refreshUsers() {
-		profile = queryProfile();
+		profile = null;
+		final List<UserHandle> user_and_profiles = ((UserManager) context().getSystemService(USER_SERVICE)).getUserProfiles();
+		for (final UserHandle user_or_profile : user_and_profiles) {
+			if (! isOwner(user_or_profile)) {
+				if (profile == null) profile = user_or_profile;        // Only one managed profile is supported by Android framework at present.
+			} else owner = user_or_profile;
+		}
 		sProfileId = profile != null ? toId(profile) : 0;
-		Log.i(TAG, "Profile ID: " + profile);
-	}
-
-	private @Nullable UserHandle queryProfile() {
-		final UserManager um = (UserManager) context().getSystemService(USER_SERVICE);
-		final List<UserHandle> user_and_profiles = um.getUserProfiles();
-		for (final UserHandle user_or_profile : user_and_profiles)
-			if (! isOwner(user_or_profile))
-				return user_or_profile;		// Only one managed profile is supported by Android at present.
-		return null;
+		Log.i(TAG, "Profile ID: " + sProfileId);
 	}
 
 	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user

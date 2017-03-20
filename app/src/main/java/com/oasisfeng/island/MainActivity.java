@@ -45,7 +45,12 @@ public class MainActivity extends Activity {
 			// Bind to the IslandManager, triggering IslandProvisioning.startProfileOwnerProvisioningIfNeeded().
 			if (! IslandManager.useServiceInProfile(this, service -> {
 				getPackageManager().setComponentEnabledSetting(new ComponentName(this, MainActivity.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-				progress.cancel(); finish();		// Binder is returned when the provisioning is done.
+				// Re-launch this activity in owner user.
+				final ComponentName activity = new ComponentName(this, MainActivity.class);
+				((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE)).startMainActivity(activity, Users.owner, null, null);
+
+				progress.cancel();
+				finish();
 			})) Toast.makeText(this, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
 			return;
 		}
