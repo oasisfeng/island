@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.UserHandle;
 import android.widget.Toast;
 
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
@@ -55,7 +56,7 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		final boolean device_owner = island.isDeviceOwner();
+		final boolean device_owner = Analytics.$().setProperty("device_owner", island.isDeviceOwner());
 		final UserHandle profile = Users.profile = IslandManager.getManagedProfile(this);
 
 		if (profile != null) {
@@ -71,7 +72,8 @@ public class MainActivity extends Activity {
 			} else if (profile_owner.getPackageName().equals(Modules.MODULE_ENGINE)) {
 				final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
 				final List<LauncherActivityInfo> our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile);
-				if (! our_activities_in_launcher.isEmpty()) {		// Main activity is left enabled, probably due to unfinished provisioning
+				if (! our_activities_in_launcher.isEmpty()) {	// Main activity is left enabled, probably due to pending post-provisioning in manual setup.
+					Analytics.$().setProperty("island_setup", "manual");
 					launcher_apps.startMainActivity(our_activities_in_launcher.get(0).getComponentName(), profile, null, null);
 					finish();
 					return;
