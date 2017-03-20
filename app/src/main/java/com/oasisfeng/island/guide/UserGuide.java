@@ -115,7 +115,7 @@ public class UserGuide {
 			final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 			provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
 				@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
-					if (apps.isEmpty()) return;
+					if (apps.size() != 1) return;		// Batch update is never triggered by user interaction.
 					final IslandAppInfo app = apps.iterator().next();
 					if (app.isHidden())
 						scope.mark(SCOPE_KEY_TIP_FREEZE);			// User just froze an app, no need to show tip for app freezing.

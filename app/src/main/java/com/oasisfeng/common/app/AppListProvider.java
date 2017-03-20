@@ -150,7 +150,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		final T entry = mAppMap.get().get(pkg);
 		if (entry == null) return;
 		Log.d(TAG, "Label updated: " + pkg);
-		final T new_entry = createEntry(entry, null);
+		final T new_entry = createEntry(entry, entry);	// In createEntry(), label is reloaded from the label cache.
 		mAppMap.get().put(pkg, new_entry);
 
 		notifyUpdate(Collections.singleton(new_entry));
