@@ -107,8 +107,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void setFilterPrimaryChoice(final int index) {
 		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
-		mFilterPrimaryChoice = index;
-		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(index) + " of " + mFilterPrimaryOptions);
+		mFilterPrimaryChoice = Math.min(index, mFilterPrimaryOptions.size() - 1);
+		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(mFilterPrimaryChoice));
 		updateActiveFilters();
 		rebuildAppViewModels();
 		notifyPropertyChanged(BR.filterPrimaryChoice);
