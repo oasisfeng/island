@@ -80,6 +80,7 @@ public class AppInfo extends ApplicationInfo {
 			}
 
 			@Override protected void onPostExecute(final Drawable drawable) {
+				if (drawable == null) return;		// Might be null if app is currently being removed.
 				final Drawable icon = (filter != null ? filter.process(drawable) : drawable);
 				mCachedIcon = icon;
 				consumer.accept(icon);
