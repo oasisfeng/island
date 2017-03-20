@@ -35,7 +35,8 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 	}
 
 	void callServiceConnected() {
-		if (mDispatcher != null && mDispatcher.mConnection != null) mDispatcher.mConnection.onServiceConnected(mDispatcher.mConnectedService.binder);
+		if (mDispatcher != null && mDispatcher.mConnection != null && mDispatcher.mConnectedService != null && mDispatcher.mConnectedService.binder != null)
+			mDispatcher.mConnection.onServiceConnected(mDispatcher.mConnectedService.binder);
 	}
 
 	private static class Dispatcher extends IServiceConnection.Stub implements IBinder.DeathRecipient {
