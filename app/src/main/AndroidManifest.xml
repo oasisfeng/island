@@ -4,10 +4,10 @@
     <uses-feature android:name="android.software.device_admin" android:required="true" />
     <uses-feature android:name="android.software.managed_users" android:required="true" />
 
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
-    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" /> <!-- ServiceShuttle -->
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />   <!-- AppLaunchShortcut -->
+    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" /> <!-- AppLaunchShortcut -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- Firebase -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" /> <!-- ServiceShuttle and more -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" /> <!-- Not yet used -->

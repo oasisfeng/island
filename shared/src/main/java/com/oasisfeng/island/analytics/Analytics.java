@@ -64,10 +64,9 @@ public class Analytics extends ContentProvider {
 		reportEventInternal("temp_error", bundle);
 	}
 
-	private synchronized Analytics reportEventInternal(final String event, final Bundle params) {
+	private synchronized void reportEventInternal(final String event, final Bundle params) {
 		Log.d(TAG, params.isEmpty() ? "Event: " + event : "Event: " + event + " " + params);
 		mAnalytics.get().logEvent(event, params);
-		return this;
 	}
 
 	public static Analytics $() {

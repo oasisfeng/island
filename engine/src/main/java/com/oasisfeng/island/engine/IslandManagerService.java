@@ -20,10 +20,10 @@ import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
+import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
@@ -38,7 +38,6 @@ import java8.util.stream.StreamSupport;
 
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 
@@ -182,7 +181,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public String[] queryUsedPackagesDuring(final long begin_time, final long end_time) {
-		if (ContextCompat.checkSelfPermission(mContext, permission.PACKAGE_USAGE_STATS) != PERMISSION_GRANTED) {
+		if (! Permissions.has(mContext, permission.PACKAGE_USAGE_STATS)) {
 			if (SDK_INT < M) return new String[0];
 			if (! mDevicePolicies.setPermissionGrantState(mContext.getPackageName(), permission.PACKAGE_USAGE_STATS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED))
 				return new String[0];
