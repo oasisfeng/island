@@ -46,6 +46,3 @@ dependencies {
     compile 'uk.co.samuelwall:material-tap-target-prompt:1.9.3'
     compile(name: 'setup-wizard-lib-platform-release', ext: 'aar')
 }
-
-// Must be at the bottom of this file
-apply plugin: 'com.google.gms.google-services'

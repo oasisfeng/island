@@ -59,3 +59,6 @@ if (rootProject.ext.assembly) {
         releaseCompile project(path: ':mobile', configuration: 'release')
     }
 }
+
+// Must be at the bottom of this file
+apply plugin: 'com.google.gms.google-services'
