@@ -46,8 +46,10 @@ public class IslandManager {
 	public static final int CLONE_RESULT_NOT_FOUND = -1;
 	public static final int CLONE_RESULT_NO_SYS_MARKET = -2;
 
-	public static final IIslandManager NULL = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class},
-			(proxy, method, args) -> { throw new RemoteException("Not connected yet"); });
+	public static final IIslandManager NULL = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class}, (proxy, method, args) -> {
+		if ("toString".equals(method.getName())) return "NULL";		// To avoid UndeclaredThrowableException.
+		throw new RemoteException("Not connected yet");
+	});
 
 	public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
 		final LauncherApps launcher_apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
