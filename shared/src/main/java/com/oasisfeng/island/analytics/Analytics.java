@@ -1,19 +1,13 @@
 package com.oasisfeng.island.analytics;
 
-import android.content.ContentProvider;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.net.Uri;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
-import android.support.annotation.Nullable;
-import android.util.Log;
+import android.support.annotation.Size;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.firebase.crash.FirebaseCrash;
-import com.oasisfeng.island.shared.BuildConfig;
+import com.oasisfeng.island.util.Users;
+import com.oasisfeng.pattern.GlobalContextProvider;
 
 import org.intellij.lang.annotations.Pattern;
 
@@ -25,71 +19,12 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * Created by Oasis on 2016/5/26.
  */
 @ParametersAreNonnullByDefault
-public class Analytics extends ContentProvider {
-
-	public void setProperty(final String key, final String value) {
-		mAnalytics.get().setUserProperty(key, value);
-	}
-
-	public boolean setProperty(final String key, final boolean value) {
-		setProperty(key, Boolean.toString(value));
-		return value;
-	}
+public abstract class Analytics {
 
 	public interface Event {
 		@CheckResult Event with(Param key, String value);
 		void send();
 	}
-
-	public @CheckResult Event event(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event) {
-		final Bundle bundle = new Bundle();
-		return new Event() {
-
-			@Override public @CheckResult Event with(final Param key, final String value) {
-				bundle.putString(key.key, value);
-				return this;
-			}
-
-			@Override public void send() {
-				reportEventInternal(event, bundle);
-			}
-		};
-	}
-
-	public void report(final Throwable t) {
-		if (BuildConfig.DEBUG) Log.e(TAG, "About to report", t);
-		FirebaseCrash.report(t);
-		// TODO: Verify the reach rate of the following redundant reporting via event.
-		final Bundle bundle = new Bundle(); bundle.putString(FirebaseAnalytics.Param.LOCATION, t.getMessage());
-		reportEventInternal("temp_error", bundle);
-	}
-
-	private synchronized void reportEventInternal(final String event, final Bundle params) {
-		Log.d(TAG, params.isEmpty() ? "Event: " + event : "Event: " + event + " " + params);
-		mAnalytics.get().logEvent(event, params);
-	}
-
-	public static Analytics $() {
-		return sSingleton;
-	}
-
-	@Override public boolean onCreate() {
-		sSingleton = this;
-		return true;
-	}
-
-	@Nullable @Override public Uri insert(final Uri uri, final @Nullable ContentValues values) {
-		return null;	// TODO
-	}
-	@Override public @Nullable Cursor query(final Uri uri, final @Nullable String[] projection, final @Nullable String selection, final @Nullable String[] selectionArgs, final @Nullable String sortOrder) { return null; }
-	@Override public @Nullable String getType(final Uri uri) { return null; }
-	@Override public int delete(final Uri uri, final @Nullable String selection, final @Nullable String[] selectionArgs) { return 0; }
-	@Override public int update(final Uri uri, final @Nullable ContentValues values, final @Nullable String selection, final @Nullable String[] selectionArgs) { return 0; }
-
-	private static Analytics sSingleton;
-	private static final String TAG = "Analytics";
-
-	@SuppressWarnings("ConstantConditions") private final Supplier<FirebaseAnalytics> mAnalytics = Suppliers.memoize(() -> FirebaseAnalytics.getInstance(getContext()));
 
 	public enum Param {
 		ITEM_ID(FirebaseAnalytics.Param.ITEM_ID),
@@ -99,4 +34,26 @@ public class Analytics extends ContentProvider {
 		Param(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String key) { this.key = key; }
 		final String key;
 	}
+
+	public @CheckResult abstract Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
+	public abstract void reportEvent(String event, Bundle params);
+	public abstract void report(Throwable t);
+	public abstract void setProperty(@Size(min = 1, max = 24) String key, @Size(max = 36) String value);
+	public boolean setProperty(final String key, final boolean value) {
+		setProperty(key, Boolean.toString(value));
+		return value;
+	}
+
+	public static Analytics $() {
+		if (sSingleton == null) {
+			final Context context = GlobalContextProvider.get();
+			if (Users.isOwner()) {
+				sSingleton = new AnalyticsImpl(context);
+				AnalyticsProvider.enableIfNeeded(context);		// Ensure cross-user provider enabled if permission granted, BTW
+			} else sSingleton = AnalyticsProvider.getClient(context);
+		}
+		return sSingleton;
+	}
+
+	private static Analytics sSingleton;
 }

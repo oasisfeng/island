@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.oasisfeng.island.shared">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+          package="com.oasisfeng.island.shared">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -9,11 +10,21 @@
         <provider android:authorities="${applicationId}.users"
                   android:name="com.oasisfeng.island.util.Users"
                   android:exported="false"
-                  android:multiprocess="true" />
+                  android:multiprocess="true"/>
 
+        <provider android:authorities="${applicationId}.context"
+                  android:name="com.oasisfeng.pattern.GlobalContextProvider"
+                  android:multiprocess="true"
+                  android:exported="false"
+                  android:initOrder="1000"/>
+
+        <!-- This single user content provider forwards analytics requests from managed profile. (only works with INTERACT_ACROSS_USERS permission granted) -->
         <provider android:authorities="${applicationId}.analytics"
-                  android:name="com.oasisfeng.island.analytics.Analytics"
-                  android:exported="false" />
+                  android:name="com.oasisfeng.island.analytics.AnalyticsProvider"
+                  android:singleUser="true"
+                  android:exported="false"
+                  android:enabled="false"
+                  android:initOrder="100"/>
 
     </application>
 
