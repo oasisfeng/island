@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <application>
+    <application android:name="com.oasisfeng.island.IslandApplication">
 
         <provider android:authorities="${applicationId}.users"
                   android:name="com.oasisfeng.island.util.Users"
@@ -25,6 +25,11 @@
                   android:exported="false"
                   android:enabled="false"
                   android:initOrder="100"/>
+
+        <!-- Disable the default heavy-weight initialization of Firebase -->
+        <provider android:name="com.google.firebase.provider.FirebaseInitProvider"
+                  android:authorities="${applicationId}.firebaseinitprovider"
+                  tools:node="remove" tools:ignore="ExportedContentProvider"/>
 
     </application>
 

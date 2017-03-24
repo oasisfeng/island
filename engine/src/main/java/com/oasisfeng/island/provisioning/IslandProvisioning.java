@@ -15,7 +15,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.google.firebase.provider.FirebaseInitProvider;
 import com.oasisfeng.android.Manifest.permission;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.api.ApiActivity;
@@ -182,9 +181,6 @@ public class IslandProvisioning extends IntentService {
 		policies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
-
-		// Disable Firebase (to improve process initialization performance)
-		context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, FirebaseInitProvider.class), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 	}
 
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {
