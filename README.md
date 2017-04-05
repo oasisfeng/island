@@ -45,7 +45,7 @@ It is highly experimental and not ready for normal users. At present it is only 
 
 The limitations in "God mode":
 
-- Google Play Store is currently not working as expected, apps could not be installed inside.  
+- Google Play Store is currently not fully working as expected, paid apps and apps with IAP could not be installed via Google Play Store.  
 (We are investigating this issue)
 
 - App Backup (Cloud backup for app data by Google Play services) will stop working.  
