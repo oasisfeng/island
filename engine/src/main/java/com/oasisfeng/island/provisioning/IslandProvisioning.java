@@ -1,6 +1,7 @@
 package com.oasisfeng.island.provisioning;
 
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -15,11 +16,14 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.oasisfeng.android.Manifest.permission;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.api.ApiActivity;
 import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
+import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -29,6 +33,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Set;
 
+import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
@@ -66,6 +71,8 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@Override protected void onHandleIntent(@Nullable final Intent intent) {
+		startForeground(NotificationIds.PROVISIONING, mForegroundNotification.get());
+
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).apply();
 		startProfileOwnerPostProvisioning(this, new IslandManagerService(this), new DevicePolicies(this));
@@ -78,6 +85,8 @@ public class IslandProvisioning extends IntentService {
 					Log.e(TAG, "Failed to launch main activity in owner user.");
 				break;
 			}
+
+		stopForeground(true);
 	}
 
 	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
@@ -194,6 +203,11 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	public IslandProvisioning() { super("Provisioning"); }
+
+	private final Supplier<Notification> mForegroundNotification = Suppliers.memoize(() ->
+			new Notification.Builder(this).setSmallIcon(android.R.drawable.stat_notify_sync).setPriority(PRIORITY_HIGH).setUsesChronometer(true)
+					.setContentTitle(getText(R.string.notification_provisioning_title))
+					.setContentText(getText(R.string.notification_provisioning_text)).build());
 
 	private static final String TAG = "Island.Provision";
 }
