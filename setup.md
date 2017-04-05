@@ -38,9 +38,9 @@ If it does not work, you may need to execute `am start-user <user-id>` first and
 - Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`  
 Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
 
-- `am start-user <user id>`
-
 - `pm grant com.oasisfeng.island android.permission.INTERACT_ACROSS_USERS`
+
+- `am start-user <user id>`
 
 - Start Island app
 
@@ -52,11 +52,15 @@ Manual setup for Island in experimental "God mode"
 
 **This "God mode" is not for normal users, and it is still highly experimental. Please do not setup this mode on your daily-use device.**
 
-- Remove all accounts and work profile in Settings - Accounts.
+- Remove all accounts and work profile in system Settings - Accounts.
 
 - Execute in ADB shell: `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`
 
-If you get error message in this step, please try executing `settings put global device_provisioned 0` and then above `dpm ...` command again, followed by `settings put global device_provisioned 1`. (The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.).
+  If you get error message in this step, please try executing following commands in order.  
+  - `settings put global device_provisioned 0`  
+  - `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`  
+  - `settings put global device_provisioned 1`  
+  *(The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.)*
 
 - Start Island app now and it will work in God mode.
 
