@@ -19,6 +19,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony.Carriers;
+import android.provider.UserDictionary;
 import android.util.Log;
 
 import com.oasisfeng.island.engine.IslandManagerService;
@@ -52,7 +53,8 @@ import static android.os.Build.VERSION_CODES.N;
 
 	/** This list serves as a known common package names for quick filtering */
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
-			"android", "com.android.systemui",		// There packages are generally safe to either freeze or not, leave them unfrozen for better compatibility.
+			"android",
+			"com.android.systemui",					// This package is generally safe to either freeze or not, leave them unfrozen for better compatibility.
 			"com.android.packageinstaller",			// Package installer responsible for ACTION_INSTALL_PACKAGE (AOSP)
 			"com.android.settings",					// For various setting intent activities
 			"com.android.keychain",					// MIUI system will crash without this
@@ -102,6 +104,7 @@ import static android.os.Build.VERSION_CODES.N;
 			MediaStore.AUTHORITY,									// Usually com.android.providers.media
 			SDK_INT >= N ? BlockedNumberContract.AUTHORITY : null,	// Usually com.android.providers.blockednumber (required by phone app)
 			"downloads",											// Usually com.android.providers.downloads
+			UserDictionary.AUTHORITY,								// Usually com.android.providers.userdictionary
 			"com.android.providers.downloads.documents",			// Newer authority of com.android.providers.downloads
 			"com.android.externalstorage.documents",				// Usually com.android.externalstorage
 			"logs"													// Samsung-specific voice-mail content provider (content://logs/from_vvm)
