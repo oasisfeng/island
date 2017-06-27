@@ -1,14 +1,15 @@
 apply plugin: 'com.android.application'
-apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    buildToolsVersion '26.0.0'
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
         targetSdkVersion 25
+        versionCode 11
+        versionName "2.0 beta 5"
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
@@ -23,7 +24,28 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+        }
     }
+
+    flavorDimensions "packaging"
+
+    productFlavors {
+        engine {    // Use the same application ID to retain the profile / device ownership between "engine" and "full" build.
+            dimension "packaging"
+        }
+        mobile {
+            applicationIdSuffix ".mobile"
+            dimension "packaging"
+        }
+        full {
+            dimension "packaging"
+        }
+    }
+
+    // Use the release signing certificate (altered to align with normal Android debug keystore) for debug build
+    // to retain the profile / device ownership between "debug" and "release" build.
+    signingConfigs.debug.storeFile file("../island.debug.keystore")
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -33,17 +55,10 @@ android {
     lintOptions {
         check 'NewApi'
         abortOnError true
+        htmlReport false
         xmlReport false
         textReport true
         textOutput "stdout"
-    }
-
-    // Enable lint checking in all build variants.
-    applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            def lintTask = tasks["lint${variant.name.capitalize()}"]
-            output.assemble.dependsOn lintTask
-        }
     }
 
     repositories.flatDir {
@@ -51,14 +66,14 @@ android {
     }
 }
 
-if (rootProject.ext.assembly) {
-    dependencies {
-        debugCompile project(path: ':engine', configuration: 'debug')
-        releaseCompile project(path: ':engine', configuration: 'release')
-        debugCompile project(path: ':mobile', configuration: 'debug')
-        releaseCompile project(path: ':mobile', configuration: 'release')
-    }
-}
+dependencies {
+    // Engine only
+    engineImplementation project(':engine')
+    // Mobile only
+    mobileImplementation project(':mobile')
+    // Full
+    fullImplementation project(':engine')
+    fullImplementation project(':mobile')
 
-// Must be at the bottom of this file
-apply plugin: 'com.google.gms.google-services'
+    implementation 'com.android.support:support-v4:25.3.1'     // To workaround the dependency conflict caused by "com.android.databinding:library"
+}

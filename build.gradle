@@ -5,9 +5,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
-        classpath 'me.tatarka:gradle-retrolambda:3.2.5'
-        classpath 'com.google.gms:google-services:3.0.0'
+        classpath 'com.android.tools.build:gradle:3.0.0-alpha4'
+        classpath 'com.google.gms:google-services:3.1.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -19,14 +18,8 @@ if (file('local.gradle').exists()) apply from: 'local.gradle'
 allprojects {
     repositories {
         jcenter()
+        google()
     }
-}
-
-// If assembly-public is being built, make all component modules as library. Otherwise they are built as application.
-ext.assembly = gradle.startParameter.taskNames.find { it.startsWith(":assembly") } != null;
-if (ext.assembly) {
-    project(':engine') apply plugin:'com.android.library'
-    project(':mobile') apply plugin:'com.android.library'
 }
 
 task clean(type: Delete) {

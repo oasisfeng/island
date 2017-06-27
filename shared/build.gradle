@@ -1,11 +1,8 @@
-apply plugin: 'com.android.library'
-apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.android.feature'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.2'
-
-    publishNonDefault true
+    buildToolsVersion '26.0.0'
 
     defaultConfig {
         minSdkVersion 21
@@ -37,16 +34,21 @@ android {
 }
 
 dependencies {
-    compile project(':deagle')
-    compile 'com.google.guava:guava:20.0'
-    compile 'net.sourceforge.streamsupport:streamsupport:1.5.3'
-    compile 'org.jetbrains:annotations:13.0'
-    compile 'com.google.firebase:firebase-analytics:10.2.0'
-    compile 'com.google.firebase:firebase-crash:10.2.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:1.10.19'
-    androidTestCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support:support-annotations:25.2.0'     // Resolve the dependency conflict
-    androidTestCompile 'com.android.support.test:runner:0.5'
-    androidTestCompile 'com.android.support.test:rules:0.5'
+    api project(':deagle')
+    api 'com.google.guava:guava:20.0'
+    api 'net.sourceforge.streamsupport:streamsupport:1.5.3'
+    api 'com.android.support:support-annotations:25.3.1'
+    implementation 'org.jetbrains:annotations:15.0'
+    implementation 'com.google.firebase:firebase-analytics:11.0.1'
+    implementation 'com.google.firebase:firebase-crash:11.0.1'
+    implementation 'com.oasisfeng.condom:library:1.2.0'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:1.10.19'
+
+    androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation('com.android.support.test:runner:0.5') {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    }
+    androidTestImplementation 'com.android.support.test:rules:0.5'
 }

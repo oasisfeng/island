@@ -1,13 +1,10 @@
-if (project.plugins.hasPlugin("com.android.library")) android { publishNonDefault true }
-else apply plugin: 'com.android.application'
-apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.android.feature'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    buildToolsVersion '26.0.0'
 
     defaultConfig {
-        if (! rootProject.ext.assembly) applicationId "com.oasisfeng.island"    // Share same application ID to ensure smooth device-admin transition between engine module and full app.
         minSdkVersion 21
         targetSdkVersion 25
 
@@ -21,7 +18,7 @@ android {
 
     lintOptions {
         check 'NewApi'
-        abortOnError true
+        abortOnError false
         xmlReport false
         textReport true
         textOutput "stdout"
@@ -29,6 +26,9 @@ android {
 }
 
 dependencies {
-    debugCompile project(path: ':shared', configuration: 'debug')
-    releaseCompile project(path: ':shared', configuration: 'release')
+    implementation project(':shared')
+
+    androidTestImplementation('com.android.support.test:runner:0.5') {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    }
 }

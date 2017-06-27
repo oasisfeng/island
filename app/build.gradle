@@ -1,13 +1,10 @@
-if (project.plugins.hasPlugin("com.android.library")) android { publishNonDefault true }
-else apply plugin: 'com.android.application'
-apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.android.feature'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    buildToolsVersion '26.0.0'
 
     defaultConfig {
-        if (! rootProject.ext.assembly) applicationId "com.oasisfeng.island.mobile"
         minSdkVersion 21
         targetSdkVersion 25
 
@@ -37,12 +34,12 @@ android {
 }
 
 dependencies {
-    debugCompile project(path: ':shared', configuration: 'debug')
-    releaseCompile project(path: ':shared', configuration: 'release')
+    implementation project(':shared')
+    api project(':deagle')
 
-    compile 'com.android.support:design:25.2.0'
-    compile 'com.google.firebase:firebase-config:10.2.0'
-    compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
-    compile 'uk.co.samuelwall:material-tap-target-prompt:1.9.3'
-    compile(name: 'setup-wizard-lib-platform-release', ext: 'aar')
+    implementation 'com.google.firebase:firebase-config:11.0.1'
+    api 'com.android.support:design:25.3.1'
+    api 'eu.chainfire:libsuperuser:1.0.0.201510071325'
+    api 'uk.co.samuelwall:material-tap-target-prompt:1.9.3'
+    api(name: 'setup-wizard-lib-platform-release', ext: 'aar')
 }
