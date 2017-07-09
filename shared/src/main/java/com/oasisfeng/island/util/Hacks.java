@@ -35,6 +35,8 @@ public class Hacks {
 		String INTERACT_ACROSS_USERS = "android.permission.INTERACT_ACROSS_USERS";
 	}
 
+	public static final int PackageManager_MATCH_ANY_USER = 0x00400000;
+
 	public static final Hack.HackedField<ApplicationInfo, Integer> ApplicationInfo_privateFlags;
 	public static final Hack.HackedField<ApplicationInfo, Integer> ApplicationInfo_versionCode;
 	public static final Hack.HackedTargetField<String> PrintManager_PRINT_SPOOLER_PACKAGE_NAME;

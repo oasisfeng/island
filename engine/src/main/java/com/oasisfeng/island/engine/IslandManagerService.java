@@ -16,6 +16,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -28,8 +29,10 @@ import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +43,7 @@ import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.O;
 
 /**
  * The engine of Island
@@ -103,23 +107,22 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 	@Override public int cloneApp(final String pkg, final boolean do_it) {
 		final PackageManager pm = mContext.getPackageManager();
-		try { @SuppressWarnings("deprecation")
-			final ApplicationInfo info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
-			return cloneApp(info, do_it);
-		} catch (final PackageManager.NameNotFoundException ignored) { return IslandManager.CLONE_RESULT_NOT_FOUND; }
-	}
+		final String apk_path;
+		try { @SuppressLint({"WrongConstant", "deprecation"})
+			final ApplicationInfo app_info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES | Hacks.PackageManager_MATCH_ANY_USER);
+			if ((app_info.flags & FLAG_INSTALLED) != 0) {
+				Log.e(TAG, "Already cloned: " + pkg);
+				return IslandManager.CLONE_RESULT_ALREADY_CLONED;
+			}
 
-	private int cloneApp(final ApplicationInfo app_info, final boolean do_it) {
-		final String pkg = app_info.packageName;
-		if ((app_info.flags & FLAG_INSTALLED) != 0) {
-			Log.e(TAG, "Already cloned: " + pkg);
-			return IslandManager.CLONE_RESULT_ALREADY_CLONED;
-		}
-
-		// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
-		if ((app_info.flags & FLAG_SYSTEM) != 0) {
-			if (do_it) enableSystemApp(pkg);
-			return IslandManager.CLONE_RESULT_OK_SYS_APP;
+			// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
+			if ((app_info.flags & FLAG_SYSTEM) != 0) {
+				if (do_it) enableSystemApp(pkg);
+				return IslandManager.CLONE_RESULT_OK_SYS_APP;
+			}
+			apk_path = app_info.sourceDir;
+		} catch (final PackageManager.NameNotFoundException ignored) {
+			return IslandManager.CLONE_RESULT_NOT_FOUND;
 		}
 
 		/* For non-system app, we initiate the manual installation process. */
@@ -130,10 +133,18 @@ public class IslandManagerService extends IIslandManager.Stub {
 		if (ensureInstallNonMarketAppAllowed()) {
 			mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
 			final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
-					.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, mContext.getPackageName());
+					.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, mContext.getPackageName()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			if (SDK_INT >= O) intent.setData(Uri.fromFile(new File(apk_path)));
 			enableSystemAppForActivity(intent);				// Ensure package installer is enabled.
-			if (do_it) mContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));		// Launch package installer
-//			activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
+			if (do_it) {
+				if (SDK_INT >= O) {
+					final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();
+					StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
+					mContext.startActivity(intent);
+					StrictMode.setVmPolicy(vm_policy);
+				} else mContext.startActivity(intent);		// Launch package installer
+			}
+			// TODO: activity.startActivityForResult(intent.putExtra(Intent.EXTRA_RETURN_RESULT, true), REQUEST_CODE_INSTALL);
 			return IslandManager.CLONE_RESULT_OK_INSTALL;
 		}
 
