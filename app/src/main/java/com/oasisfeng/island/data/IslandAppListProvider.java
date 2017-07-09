@@ -11,6 +11,7 @@ import android.os.RemoteException;
 import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.google.common.base.Objects;
@@ -134,8 +135,8 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 	}
 
-	private void collectIslandApps_Api24(final Map<String, IslandAppInfo> apps) {
-		super.installedApps().map(app -> Hacks.LauncherApps_getApplicationInfo.invoke(app.packageName, PM_FLAGS_GET_APP_INFO, Users.profile).on(mLauncherApps.get()))
+	@RequiresApi(N) private void collectIslandApps_Api24(final Map<String, IslandAppInfo> apps) {
+		super.installedApps().map(app -> getApplicationInfo(app.packageName, PM_FLAGS_GET_APP_INFO, Users.profile))
 				.filter(info -> info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0)
 				.forEach(info -> apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
 	}
@@ -165,25 +166,32 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			callback.accept(null);
 			return;
 		}
-		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && ! Hacks.IPackageManager_getApplicationInfo.isAbsent()
-				&& ! Hacks.ActivityThread_getPackageManager.isAbsent() && Permissions.has(context(), INTERACT_ACROSS_USERS)) try {
-			final ApplicationInfo info = Hacks.IPackageManager_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO,
-					Users.toId(profile)).on(Hacks.ActivityThread_getPackageManager.invoke().statically());
+		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && ! Hacks.PackageManager_getApplicationInfoAsUser.isAbsent() && Permissions.has(context(), INTERACT_ACROSS_USERS)) try {
+			final ApplicationInfo info = Hacks.PackageManager_getApplicationInfoAsUser.invoke(pkg, PM_FLAGS_GET_APP_INFO, Users.toId(profile)).on(context().getPackageManager());
 			callback.accept(info);
 			return;
-		} catch (final RemoteException ignored) {		// Package manager died, this should hardly happen.
+		} catch (final PackageManager.NameNotFoundException ignored) {
 			callback.accept(null);
 			return;
 		} catch (final SecurityException ignored) {}	// Fall-through. This should hardly happen as permission is checked.
 
 		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
-			final ApplicationInfo info = Hacks.LauncherApps_getApplicationInfo.invoke(pkg, PM_FLAGS_GET_APP_INFO, Users.profile).on(mLauncherApps.get());
+			final ApplicationInfo info = getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO, Users.profile);
 			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
 		} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), service -> {
 			final ApplicationInfo info = service.getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
 		})) callback.accept(null);
+	}
+
+	@RequiresApi(N) ApplicationInfo getApplicationInfo(final String pkg, final int flags, final UserHandle user) {
+		try {
+			return Hacks.LauncherApps_getApplicationInfo.invoke(pkg, flags, user).on(mLauncherApps.get());
+		} catch (final Exception e) {	// NameNotFoundException will be thrown since Android O instead of retuning null on Android N.
+			if (e instanceof RuntimeException) throw (RuntimeException) e;
+			return null;
+		}
 	}
 
 	public void refreshPackage(final String pkg, final @Nullable UserHandle user, final boolean add) {
