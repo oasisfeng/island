@@ -37,8 +37,8 @@ dependencies {
     implementation project(':shared')
     api project(':deagle')
 
-    implementation 'com.google.firebase:firebase-config:11.0.1'
-    api 'com.android.support:design:25.3.1'
+    implementation 'com.google.firebase:firebase-config:11.0.2'
+    api 'com.android.support:design:25.4.0'
     api 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     api 'uk.co.samuelwall:material-tap-target-prompt:1.9.3'
     api(name: 'setup-wizard-lib-platform-release', ext: 'aar')
