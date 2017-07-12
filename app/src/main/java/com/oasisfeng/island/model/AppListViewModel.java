@@ -57,7 +57,6 @@ import java.util.List;
 import java8.util.Optional;
 import java8.util.function.BooleanSupplier;
 import java8.util.function.Predicate;
-import java8.util.function.Predicates;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
@@ -121,8 +120,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void updateActiveFilters() {
-		final Predicate<IslandAppInfo> primary_with_shared = Predicates.and(mFilterShared, mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		mActiveFilters = mFilterIncludeSystemApps ? primary_with_shared : Predicates.and(primary_with_shared, NON_HIDDEN_SYSTEM);
+		final Predicate<IslandAppInfo> primary_with_shared = mFilterShared.and(mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
+		mActiveFilters = mFilterIncludeSystemApps ? primary_with_shared : primary_with_shared.and(NON_HIDDEN_SYSTEM);
 	}
 
 	private void rebuildAppViewModels() {
@@ -148,7 +147,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
 		notifyPropertyChanged(BR.filterPrimaryOptions);
-		mFilterShared = Predicates.and(IslandAppListProvider.excludeSelf(activity), AppInfo::isInstalled);
+		mFilterShared = IslandAppListProvider.excludeSelf(activity).and(AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(mDeviceOwner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
 		setFilterPrimaryChoice(filter_primary);
