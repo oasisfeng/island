@@ -44,6 +44,10 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		return app;
 	}
 
+	protected T getApp(final String pkg) {
+		return mAppsByPackage.get(pkg);
+	}
+
 	protected AppViewModel getAppAt(final int index) {
 		return mApps.get(index);
 	}

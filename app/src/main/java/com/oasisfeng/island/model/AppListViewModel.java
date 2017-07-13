@@ -186,8 +186,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		for (final IslandAppInfo app : apps)
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
-			} else removeApp(app.packageName);
+			} else removeApp(app.packageName, app.user);
 		updateActions();
+	}
+
+	private void removeApp(final String pkg, final UserHandle user) {
+		final AppViewModel app = getApp(pkg);
+		if (app != null && app.info().user.equals(user)) super.removeApp(pkg);
 	}
 
 	public void onPackagesRemoved(final Collection<IslandAppInfo> apps) {
@@ -371,6 +376,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		switch (check_result) {
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
 			Toast.makeText(mActivity, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
+			return;
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
 			if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
 				try {
