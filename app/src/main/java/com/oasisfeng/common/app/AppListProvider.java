@@ -1,5 +1,6 @@
 package com.oasisfeng.common.app;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import android.content.ContentProviderClient;
@@ -180,11 +181,12 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		if (data == null) return;
 		final String pkg = data.getSchemeSpecificPart();
 		if (pkg == null) return;
-		final boolean is_changed = Intent.ACTION_PACKAGE_CHANGED.equals(intent.getAction());
-		if (is_changed) {		// Skip non-package-level (components) change
+		if (Intent.ACTION_PACKAGE_CHANGED.equals(intent.getAction())) {
 			final String[] changed_components = intent.getStringArrayExtra(Intent.EXTRA_CHANGED_COMPONENT_NAME_LIST);
-			if (changed_components == null || changed_components.length != 1 || ! pkg.equals(changed_components[0])) return;
-		}
+			if (changed_components == null || changed_components.length != 1 || ! pkg.equals(changed_components[0]))
+				return;		// Skip component-level changes, we only care about package-level changes.
+		} else if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction()) && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false))
+			return;			// Skip the package removal broadcast if package is being replaced. ACTION_PACKAGE_ADDED will arrive soon.
 		onPackageEvent(pkg);
 	}};
 
@@ -245,7 +247,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 
 	private static final int CALLBACK_UPDATE = 0;
 	private static final int CALLBACK_REMOVE = -1;
-	@SuppressWarnings("deprecation") protected static final int PM_FLAGS_GET_APP_INFO
-			= PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS;
+	@SuppressLint("InlinedApi") protected static final int PM_FLAGS_GET_APP_INFO
+			= PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS;
 	private static final String TAG = "AppListProvider";
 }
