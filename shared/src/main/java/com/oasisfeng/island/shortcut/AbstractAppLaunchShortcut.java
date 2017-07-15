@@ -1,6 +1,7 @@
 package com.oasisfeng.island.shortcut;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -30,6 +31,7 @@ import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
@@ -65,6 +67,8 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent);
 		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut_prefix + activity.loadLabel(pm));
 		intent.putExtra("duplicate", false);		// Special extra to prevent duplicate shortcut being created
+		final ResolveInfo launcher = pm.resolveActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), MATCH_DEFAULT_ONLY);
+		if (launcher != null) intent.setPackage(launcher.activityInfo.packageName);
 
 		final ActivityInfo activity_info;
 		try {
@@ -73,14 +77,10 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			Analytics.$().report(e);
 			return false;
 		}
-		// TODO: Load icon in higher density
-//		final Resources res = pm.getResourcesForApplication(activity_info.applicationInfo);
-//		final TypedValue value = new TypedValue();
-//		final int icon_res = activity_info.getIconResource();
-//		res.getValueForDensity(icon_res, higher_density, value, true);
-//		app_icon = res.getDrawableForDensity(icon_res, higher_density, null);
+		// TODO: Add new setting option for shortcut icon in higher density
 		final Drawable app_icon = activity_info.loadIcon(pm);
-		final Drawable icon = new IconResizer().createIconThumbnail(app_icon);	// In case the app icon is too large, to avoid TransactionTooLargeException.
+		final int icon_size = ((ActivityManager) context.getSystemService(ACTIVITY_SERVICE)).getLauncherLargeIconSize();
+		final Drawable icon = new IconResizer(icon_size).createIconThumbnail(app_icon);	// In case the app icon is too large, to avoid TransactionTooLargeException.
 		final Bitmap icon_bitmap = drawableToBitmap(owner ? icon : pm.getUserBadgedIcon(icon, Users.profile));
 		if (icon_bitmap == null) {
 			Analytics.$().event("shortcut_invalid_app_icon").with(ITEM_ID, pkg).with(ITEM_CATEGORY, app_icon.getClass().getName()).send();
