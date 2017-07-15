@@ -15,8 +15,11 @@
     <application android:allowBackup="false"
                  android:label="Island - Mobile"
                  android:icon="@mipmap/ic_launcher"
+                 android:roundIcon="@mipmap/ic_launcher_round"
                  android:supportsRtl="true"
                  android:theme="@style/AppTheme.NoActionBar">
+
+        <meta-data android:name="android.max_aspect" android:value="2.1" />
 
         <activity android:name="com.oasisfeng.island.MainActivity">
             <intent-filter>
