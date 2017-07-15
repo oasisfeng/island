@@ -10,19 +10,24 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.preference.TwoStatePreference;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.support.annotation.XmlRes;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
+import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
-import com.oasisfeng.island.shared.BuildConfig;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 
 import java.util.List;
 
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N_MR1;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On handset devices, settings are presented as a single list.
@@ -117,7 +122,28 @@ public class SettingsActivity extends PreferenceActivity {
 
 	/** This fragment shows general preferences only. It is used when the activity is showing a two-pane settings UI. */
 	public static class GeneralPreferenceFragment extends SubPreferenceFragment {
+
 		public GeneralPreferenceFragment() { super(R.xml.pref_general, R.string.key_launch_shortcut_prefix); }
+
+		@Override public void onCreate(final Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+			final TwoStatePreference pref_backup = (TwoStatePreference) findPreference(getString(R.string.key_system_backup));
+			final DevicePolicies policies;
+			if (SDK_INT >= N_MR1 && pref_backup != null && (policies = new DevicePolicies(getActivity())).isDeviceOwner()) {
+				updateSystemBackupSummary(pref_backup, policies);
+				pref_backup.setOnPreferenceChangeListener((p, value) -> {
+					policies.setBackupServiceEnabled(value == Boolean.TRUE);
+					updateSystemBackupSummary(pref_backup, policies);
+					return true;
+				});
+			} else getPreferenceScreen().removePreference(pref_backup);
+		}
+
+		@RequiresApi(N_MR1) private static void updateSystemBackupSummary(final TwoStatePreference pref, final DevicePolicies policies) {
+			final boolean enabled = policies.isBackupServiceEnabled();
+			pref.setSummary(enabled ? R.string.status_enabled : R.string.status_disabled);
+			pref.setChecked(enabled);
+		}
 	}
 
 	public static class PrivacyPreferenceFragment extends SubPreferenceFragment {

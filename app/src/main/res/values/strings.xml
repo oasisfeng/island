@@ -6,6 +6,7 @@
 
     <string name="status_alive">Active</string>
     <string name="status_frozen">Frozen</string>
+    <string name="status_enabled">Enabled</string>
     <string name="status_disabled">Disabled</string>
     <string name="status_appendix_system">System</string>
     <string name="status_appendix_cloned">Cloned</string>
@@ -107,6 +108,7 @@
 
     <string name="pref_general_header">General</string>
     <string name="pref_general_launch_shortcut_prefix_title">Launch shortcut prefix</string>
+    <string name="pref_general_system_backup_title">System-wide Backup</string>
 
     <string name="pref_privacy_header">Privacy Protection</string>
     <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>
