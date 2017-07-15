@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.common.base.Optional;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.util.Hacks;
 
@@ -23,8 +24,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import java8.util.Optional;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -49,7 +48,7 @@ public class AnalyticsProvider extends ContentProvider {
 	}
 
 	static Analytics getClient(final Context context) {
-		return Optional.ofNullable(getClientIfAvailable(context)).orElse(NULL_ANALYTICS);
+		return Optional.fromNullable(getClientIfAvailable(context)).or(NULL_ANALYTICS);
 	}
 
 	static @Nullable Analytics getClientIfAvailable(final Context context) {
@@ -57,13 +56,12 @@ public class AnalyticsProvider extends ContentProvider {
 		try {
 			final ComponentName provider_component = new ComponentName(context, AnalyticsProvider.class);
 			final PackageManager pm = context.getPackageManager();
-			@SuppressWarnings("deprecation")
-			final ProviderInfo provider = pm.getProviderInfo(provider_component, PackageManager.GET_DISABLED_COMPONENTS);
+			@SuppressWarnings("deprecation") final ProviderInfo provider = pm.getProviderInfo(provider_component, PackageManager.GET_DISABLED_COMPONENTS);
 			if (provider == null) throw new IllegalStateException("Provider not declared: " + AnalyticsProvider.class);
 			final ProviderInfo remote_provider = pm.resolveContentProvider(provider.authority, 0);
 			if (remote_provider == null) return null;		// Remote provider is not enabled or just enabled but its process is not yet restarted.
+			return new AnalyticsClient(context, remote_provider);
 		} catch (final PackageManager.NameNotFoundException e) { return null; }
-		return new AnalyticsClient(context);
 	}
 
 	@Nullable @Override public Uri insert(final Uri uri, final @Nullable ContentValues values) {
@@ -98,7 +96,7 @@ public class AnalyticsProvider extends ContentProvider {
 	private static final String CONTENT_URI_SUFFIX_EXCEPTIONS = "/exceptions";
 	private static final String CONTENT_URI_SUFFIX_PROPERTIES = "/properties";
 
-	private static class AnalyticsClient extends Analytics {
+	private static class AnalyticsClient implements Analytics {
 
 		private final Uri CONTENT_URI;
 		private final Uri CONTENT_URI_EXCEPTION;
@@ -148,9 +146,9 @@ public class AnalyticsProvider extends ContentProvider {
 
 		private Context context() { return mContext; }
 
-		private AnalyticsClient(final Context context) {
+		private AnalyticsClient(final Context context, final ProviderInfo provider) {
 			mContext = context;
-			final String prefix = "content://" + context().getPackageName() + ".analytics";
+			final String prefix = "content://" + provider.authority;
 			CONTENT_URI = Uri.parse(prefix);
 			CONTENT_URI_EXCEPTION = Uri.parse(prefix + CONTENT_URI_SUFFIX_EXCEPTIONS);
 			CONTENT_URI_PROPERTIES = Uri.parse(prefix + CONTENT_URI_SUFFIX_PROPERTIES);

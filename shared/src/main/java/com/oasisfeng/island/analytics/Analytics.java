@@ -19,14 +19,14 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * Created by Oasis on 2016/5/26.
  */
 @ParametersAreNonnullByDefault
-public abstract class Analytics {
+public interface Analytics {
 
-	public interface Event {
+	interface Event {
 		@CheckResult Event with(Param key, String value);
 		void send();
 	}
 
-	public enum Param {
+	enum Param {
 		ITEM_ID(FirebaseAnalytics.Param.ITEM_ID),
 		ITEM_NAME(FirebaseAnalytics.Param.ITEM_NAME),
 		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY),
@@ -35,25 +35,30 @@ public abstract class Analytics {
 		final String key;
 	}
 
-	public @CheckResult abstract Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
-	public abstract void reportEvent(String event, Bundle params);
-	public abstract void report(Throwable t);
-	public abstract void setProperty(@Size(min = 1, max = 24) String key, @Size(max = 36) String value);
-	public boolean setProperty(final String key, final boolean value) {
+	@CheckResult Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
+	void reportEvent(String event, Bundle params);
+	void report(Throwable t);
+	void setProperty(@Size(min = 1, max = 24) String key, @Size(max = 36) String value);
+	default boolean setProperty(final String key, final boolean value) {
 		setProperty(key, Boolean.toString(value));
 		return value;
 	}
 
-	public static Analytics $() {
-		if (sSingleton == null) {
-			final Context context = GlobalContextProvider.get();
-			if (Users.isOwner()) {
-				sSingleton = new AnalyticsImpl(context);
-				AnalyticsProvider.enableIfNeeded(context);		// Ensure cross-user provider enabled if permission granted, BTW
-			} else sSingleton = AnalyticsProvider.getClient(context);
-		}
-		return sSingleton;
-	}
+	static Analytics $() { return Provider.getSingleton(); }
 
-	private static Analytics sSingleton;
+	class Provider {
+
+		static Analytics getSingleton() {
+			if (sSingleton == null) {
+				final Context context = GlobalContextProvider.get();
+				if (Users.isOwner()) {
+					sSingleton = new AnalyticsImpl(context);
+					AnalyticsProvider.enableIfNeeded(context);		// Ensure cross-user provider enabled if permission granted, BTW
+				} else sSingleton = AnalyticsProvider.getClient(context);
+			}
+			return sSingleton;
+		}
+
+		private static Analytics sSingleton;
+	}
 }

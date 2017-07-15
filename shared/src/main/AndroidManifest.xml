@@ -5,18 +5,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <application android:name="com.oasisfeng.island.IslandApplication">
+    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <provider android:authorities="${applicationId}.users"
-                  android:name="com.oasisfeng.island.util.Users"
-                  android:exported="false"
-                  android:multiprocess="true"/>
-
-        <provider android:authorities="${applicationId}.context"
-                  android:name="com.oasisfeng.pattern.GlobalContextProvider"
-                  android:multiprocess="true"
-                  android:exported="false"
-                  android:initOrder="1000"/>
+        <meta-data android:name="io.fabric.ApiKey" android:value="2fa85ef2740d3e29a2ed203a3af1db3513507ddb" />
 
         <!-- This single user content provider forwards analytics requests from managed profile. (only works with INTERACT_ACROSS_USERS permission granted) -->
         <provider android:authorities="${applicationId}.analytics"
@@ -25,6 +16,16 @@
                   android:exported="false"
                   android:enabled="false"
                   android:initOrder="100"/>
+
+        <!-- GlobalContextProvider -->
+        <provider android:name="com.oasisfeng.island.InternalContentProviders$_0" android:initOrder="1000"
+                  android:authorities="${applicationId}.internal.0" android:multiprocess="true" android:exported="false" />
+        <!-- Users -->
+        <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
+                  android:authorities="${applicationId}.internal.1" android:multiprocess="true" android:exported="false" />
+        <!-- CrashReport -->
+        <provider android:name="com.oasisfeng.island.InternalContentProviders$_2"
+                  android:authorities="${applicationId}.internal.2" android:multiprocess="true" android:exported="false" />
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"
