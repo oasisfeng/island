@@ -19,6 +19,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
+import java8.util.Optional;
 import java8.util.stream.Collectors;
 
 /**
@@ -57,7 +58,8 @@ public class Shutdown {
 	}
 
 	public static void requestProfileRemoval(final Activity activity) {
-		if (! IslandManager.isProfileOwner(activity)) {
+		final Optional<Boolean> is_profile_owner = IslandManager.isProfileOwner(activity);
+		if (is_profile_owner == null || ! is_profile_owner.orElse(Boolean.FALSE)) {
 			showPromptForProfileManualRemoval(activity);
 			return;
 		}

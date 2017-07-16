@@ -26,6 +26,8 @@ import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import java8.util.Optional;
+
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION_CODES.N;
@@ -71,11 +73,18 @@ public class IslandManager {
 		return mDevicePolicies.getManager().isDeviceOwnerApp(Modules.MODULE_ENGINE);
 	}
 
-	public static boolean isProfileOwner(final Context context) {
+	/** @return whether Island is the profile owner, absent if no profile or profile has no owner, or null for failure. */
+	public static @Nullable Optional<Boolean> isProfileOwner(final Context context) {
 		final UserHandle profile = getManagedProfile(context);
-		if (profile == null) return false;
-		final ComponentName profile_owner = getProfileOwner(context, profile);
-		return profile_owner != null && context.getPackageName().equals(profile_owner.getPackageName());
+		if (profile == null) return Optional.empty();
+		return isProfileOwner(context, profile);
+	}
+
+	/** @return whether Island is the profile owner, absent if no such profile or profile has no owner, or null for failure. */
+	public static @Nullable Optional<Boolean> isProfileOwner(final Context context, final UserHandle profile) {
+		final Optional<ComponentName> profile_owner = getProfileOwner(context, profile);
+		return profile_owner == null ? null : ! profile_owner.isPresent() ? Optional.empty()
+				: Optional.of(Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName()));
 	}
 
 	public boolean isProfileOwnerActive() {
@@ -93,7 +102,7 @@ public class IslandManager {
 	}
 
 	/** @return profile ID, or 0 if none */
-	@RequiresApi(N) public static int getManagedProfileWithDisabled(final Context context) {
+	@RequiresApi(N) public static int getManagedProfileIdIncludingDisabled(final Context context) {
 		final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false).on(context.getSystemService(UserManager.class));
 		final int current_user = Process.myUserHandle().hashCode();
 		for (final int profile : profiles)
@@ -101,16 +110,17 @@ public class IslandManager {
 		return 0;
 	}
 
-	/** @return the profile owner component, null for none or failure */
-	public static @Nullable ComponentName getProfileOwner(final Context context, final UserHandle profile) {
+	/** @return the profile owner component (may not be present), or null for failure */
+	public static @Nullable Optional<ComponentName> getProfileOwner(final Context context, final UserHandle profile) {
 		return getProfileOwner(context, Users.toId(profile));
 	}
 
-	/** @return the profile owner component, null for none or failure */
-	public static @Nullable ComponentName getProfileOwner(final Context context, final int profile) {
+	/** @return the profile owner component (may not be present), or null for failure */
+	public static @Nullable Optional<ComponentName> getProfileOwner(final Context context, final int profile) {
+		if (Hacks.DevicePolicyManager_getProfileOwnerAsUser.isAbsent()) return null;
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		try {
-			return Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(dpm);
+			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(dpm));
 		} catch (final RuntimeException e) {	// IllegalArgumentException("Requested profile owner for invalid userId", re) on API 21~23
 			return null;						//   or RuntimeException by RemoteException.rethrowFromSystemServer() on API 24+
 		}

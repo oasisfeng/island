@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import com.oasisfeng.island.util.DevicePolicies;
 
@@ -28,11 +29,15 @@ import static android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH;
  * Class to set CrossProfileIntentFilters during managed profile creation, and reset them after an
  * ota.
  */
-public class CrossProfileIntentFiltersHelper {
+class CrossProfileIntentFiltersHelper {
 
 	private static final String ACTION_CALL_EMERGENCY = "android.intent.action.CALL_EMERGENCY";
 	private static final String ACTION_CALL_PRIVILEGED = "android.intent.action.CALL_PRIVILEGED";
-	private static class ProvisionLogger { static void logd(final String message) {} }
+	private static final String TAG = CrossProfileIntentFiltersHelper.class.getSimpleName();
+	private static class ProvisionLogger {
+		static void logd(final String message) { Log.d(TAG, message); }
+		static void loge(final Exception e) { Log.e(TAG, "", e); }
+	}
 	private interface PackageManager {
 		int SKIP_CURRENT_PROFILE = 0;
 		void addCrossProfileIntentFilter(IntentFilter filter, int user, int parent_user, int flags);
@@ -66,15 +71,15 @@ public class CrossProfileIntentFiltersHelper {
 		pm.addCrossProfileIntentFilter(mimeTypeTelephony, managedProfileUserId, parentUserId,
 				PackageManager.SKIP_CURRENT_PROFILE);
 
-		IntentFilter callEmergency = new IntentFilter();
-		callEmergency.addAction(ACTION_CALL_EMERGENCY);
-		callEmergency.addAction(ACTION_CALL_PRIVILEGED);
-		callEmergency.addCategory(Intent.CATEGORY_DEFAULT);
-		callEmergency.addCategory(Intent.CATEGORY_BROWSABLE);
-		callEmergency.addDataScheme("tel");
-		callEmergency.addDataScheme("sip");
-		callEmergency.addDataScheme("voicemail");
-		pm.addCrossProfileIntentFilter(callEmergency, managedProfileUserId, parentUserId,
+        IntentFilter callWithDataEmergency = new IntentFilter();
+        callWithDataEmergency.addAction(ACTION_CALL_EMERGENCY);
+        callWithDataEmergency.addAction(ACTION_CALL_PRIVILEGED);
+        callWithDataEmergency.addCategory(Intent.CATEGORY_DEFAULT);
+        callWithDataEmergency.addCategory(Intent.CATEGORY_BROWSABLE);
+        callWithDataEmergency.addDataScheme("tel");
+        callWithDataEmergency.addDataScheme("sip");
+        callWithDataEmergency.addDataScheme("voicemail");
+        pm.addCrossProfileIntentFilter(callWithDataEmergency, managedProfileUserId, parentUserId,
 				PackageManager.SKIP_CURRENT_PROFILE);
 
 		IntentFilter callVoicemail = new IntentFilter();
@@ -99,6 +104,7 @@ public class CrossProfileIntentFiltersHelper {
 		callDial.addDataScheme("sip");
 		pm.addCrossProfileIntentFilter(callDial, managedProfileUserId, parentUserId, 0);
 
+        // Call button intent can be handled by either managed profile or its parent user.
 		IntentFilter callButton = new IntentFilter();
 		callButton.addAction(Intent.ACTION_CALL_BUTTON);
 		callButton.addCategory(Intent.CATEGORY_DEFAULT);
@@ -146,6 +152,7 @@ public class CrossProfileIntentFiltersHelper {
 			send.addDataType("*/*");
 		} catch (IntentFilter.MalformedMimeTypeException e) {
 			//will not happen
+            ProvisionLogger.loge(e);
 		}
 		// This is the only filter set on the opposite direction (from parent to managed profile).
 		pm.addCrossProfileIntentFilter(send, parentUserId, managedProfileUserId, 0);
@@ -158,6 +165,7 @@ public class CrossProfileIntentFiltersHelper {
 			getContent.addDataType("*/*");
 		} catch (IntentFilter.MalformedMimeTypeException e) {
 			//will not happen
+            ProvisionLogger.loge(e);
 		}
 		pm.addCrossProfileIntentFilter(getContent, managedProfileUserId, parentUserId, 0);
 
@@ -169,6 +177,7 @@ public class CrossProfileIntentFiltersHelper {
 			openDocument.addDataType("*/*");
 		} catch (IntentFilter.MalformedMimeTypeException e) {
 			//will not happen
+            ProvisionLogger.loge(e);
 		}
 		pm.addCrossProfileIntentFilter(openDocument, managedProfileUserId, parentUserId, 0);
 
@@ -179,6 +188,7 @@ public class CrossProfileIntentFiltersHelper {
 			pick.addDataType("*/*");
 		} catch (IntentFilter.MalformedMimeTypeException e) {
 			//will not happen
+            ProvisionLogger.loge(e);
 		}
 		pm.addCrossProfileIntentFilter(pick, managedProfileUserId, parentUserId, 0);
 

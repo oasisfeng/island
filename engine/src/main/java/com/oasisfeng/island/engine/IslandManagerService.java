@@ -9,7 +9,6 @@ import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -18,7 +17,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.os.UserManager;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -206,13 +204,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public void provision() {
-		provision(mContext, this, true/* always */);
-	}
-
-	private static void provision(final Context context, final IslandManagerService island, final boolean always) {
-		final SharedPreferences prefs = always ? null : PreferenceManager.getDefaultSharedPreferences(context);
-		IslandProvisioning.enableCriticalSystemAppsIfNeeded(context, island, prefs);
-		IslandProvisioning.startProfileOwnerProvisioningIfNeeded(context, prefs);
+		IslandProvisioning.reprovision(mContext, this);
 	}
 
 	public void enableSystemAppForActivity(final Intent intent) {
@@ -244,11 +236,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 	public static class AidlService extends Service {
 
-		@Nullable @Override public IBinder onBind(final Intent intent) {
-			final IslandManagerService island = mStub.get();
-			if (Users.isProfile()) provision(this, island, false/* always */);
-			return island;
-		}
+		@Nullable @Override public IBinder onBind(final Intent intent) { return mStub.get(); }
 
 		// Postpone the instantiation after service is attached for a valid context.
 		private final Supplier<IslandManagerService> mStub = () -> new IslandManagerService(this);

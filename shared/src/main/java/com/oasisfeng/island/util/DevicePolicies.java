@@ -1,5 +1,6 @@
 package com.oasisfeng.island.util;
 
+import android.annotation.SuppressLint;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -13,6 +14,7 @@ import com.oasisfeng.hack.Hack;
 
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.N_MR1;
 
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
@@ -132,6 +134,16 @@ public class DevicePolicies {
 
 	@RequiresApi(N) public Bundle getUserRestrictions() {
 		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
+	}
+
+	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
+	public boolean isBackupServiceEnabled() {
+		return mDevicePolicyManager.isBackupServiceEnabled(sCachedComponent);
+	}
+
+	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
+	public void setBackupServiceEnabled(final boolean enabled) {
+		mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled);
 	}
 
 	public DevicePolicyManager getManager() { return mDevicePolicyManager; }

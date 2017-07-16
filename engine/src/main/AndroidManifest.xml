@@ -71,7 +71,9 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" />
+        <!-- IslandProvisioning -->
+        <service android:name="com.oasisfeng.island.InternalService$_1" android:directBootAware="true" tools:targetApi="n" />
+
         <service android:name="com.oasisfeng.island.shuttle.ShuttleKeeper" />
 
         <service android:name=".IslandManagerService$AidlService" android:exported="false">
@@ -86,6 +88,14 @@
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ManualProvisioningReceiver -->
+        <receiver android:name="com.oasisfeng.island.InternalBroadcastReceiver$_1" android:directBootAware="true" tools:targetApi="n">
+            <intent-filter android:priority="9999"> <!-- High priority to ensure being executed as early as possible -->
+                <action android:name="android.intent.action.USER_INITIALIZE" />
+                <action android:name="android.app.action.DEVICE_OWNER_CHANGED" />
             </intent-filter>
         </receiver>
 

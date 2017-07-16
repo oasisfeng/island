@@ -8,7 +8,6 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -19,6 +18,7 @@ import android.util.Log;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.hack.Hack.Unchecked;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.shared.BuildConfig;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -47,13 +47,13 @@ public class Hacks {
 	public static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked> DevicePolicyManager_getDeviceOwner;
 	@RequiresApi(N) public static Hack.HackedMethod3<ApplicationInfo, LauncherApps, Exception, Unchecked, Unchecked, String, Integer, UserHandle> LauncherApps_getApplicationInfo;
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle> Context_bindServiceAsUser;
-	public static final Hack.HackedMethod3<ApplicationInfo, PackageManager, NameNotFoundException, Unchecked, Unchecked, String, Integer, Integer> PackageManager_getApplicationInfoAsUser;
 	public static final Hack.HackedMethod3<ResolveInfo, PackageManager, Unchecked, Unchecked, Unchecked, Intent, Integer, Integer> PackageManager_resolveActivityAsUser;
 	@RequiresApi(N) public static Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean> UserManager_getProfileIds;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
 			Log.e("Compatibility", e.getDebugInfo());
+			if (BuildConfig.DEBUG) throw new IllegalStateException("Incompatibility", e);
 			if (Users.isOwner()) Analytics.$().report(e);
 		});
 
@@ -74,8 +74,6 @@ public class Hacks {
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class, UserHandle.class);
 		Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class).fallbackReturning(false)
 				.withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
-		PackageManager_getApplicationInfoAsUser = Hack.into(PackageManager.class).method("getApplicationInfoAsUser").throwing(NameNotFoundException.class)
-				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class/* flags */, int.class/* userId */);
 		PackageManager_resolveActivityAsUser = Hack.into(PackageManager.class).method("resolveActivityAsUser")
 				.returning(ResolveInfo.class).fallbackReturning(null).withParams(Intent.class, int.class, int.class);
 		if (SDK_INT >= N) UserManager_getProfileIds = Hack.into(UserManager.class).method("getProfileIds")

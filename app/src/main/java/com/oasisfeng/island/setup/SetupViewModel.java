@@ -31,6 +31,7 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 
 import eu.chainfire.libsuperuser.Shell;
+import java8.util.Optional;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
@@ -75,10 +76,11 @@ public class SetupViewModel implements Parcelable {
 
 		// Check for incomplete provisioning.
 		if (SDK_INT >= N && IslandManager.getManagedProfile(activity) == null) {
-			final int profile_id = IslandManager.getManagedProfileWithDisabled(activity);
+			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(activity);
 			if (profile_id != 0) {
-				final ComponentName profile_owner = IslandManager.getProfileOwner(activity, profile_id);
-				if (profile_owner != null) {
+				final Optional<ComponentName> profile_owner_result = IslandManager.getProfileOwner(activity, profile_id);
+				if (profile_owner_result != null && profile_owner_result.isPresent()) {
+					final ComponentName profile_owner = profile_owner_result.get();
 					if (! activity.getPackageName().equals(profile_owner.getPackageName())) {
 						final CharSequence owner_label = readOwnerLabel(activity, profile_owner);
 						final Analytics.Event reason = reason("existent_work_profile").with(Analytics.Param.ITEM_ID, profile_owner.getPackageName());
@@ -219,7 +221,7 @@ public class SetupViewModel implements Parcelable {
 		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
 		if (res != 0) {
 			final int sys_max_users = Resources.getSystem().getInteger(res);
-			Analytics.$().setProperty("sys_res." + RES_MAX_USERS, String.valueOf(sys_max_users));
+			Analytics.$().setProperty("sys_res.config_maxUsers", String.valueOf(sys_max_users));
 			return sys_max_users;
 		}
 		return 1;
