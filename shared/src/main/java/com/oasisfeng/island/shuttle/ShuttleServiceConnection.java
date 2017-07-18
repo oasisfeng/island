@@ -119,5 +119,5 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 
 	private Dispatcher mDispatcher;
 
-	protected static final String TAG = "ShuttleSvcConn";
+	private static final String TAG = "ShuttleSvcConn";
 }

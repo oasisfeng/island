@@ -10,7 +10,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
-import com.oasisfeng.pattern.LocalContentProvider;
+import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import static android.content.Context.USER_SERVICE;
  *
  * Created by Oasis on 2016/9/25.
  */
-public class Users extends LocalContentProvider {
+public abstract class Users extends PseudoContentProvider {
 
 	public static @Nullable UserHandle profile;		// Semi-immutable (until profile is created or destroyed)
 	public static UserHandle owner;
