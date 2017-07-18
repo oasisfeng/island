@@ -166,6 +166,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	private boolean ensureInstallNonMarketAppAllowed() {
+		if (SDK_INT >= O) return true;		// INSTALL_NON_MARKET_APPS is no longer supported and not required on Android O.
 		if (Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0) return true;
 		// We cannot directly enable this secure setting on Android 5.0.x.
 		if (SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return false;
