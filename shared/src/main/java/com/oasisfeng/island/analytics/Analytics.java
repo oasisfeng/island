@@ -38,6 +38,18 @@ public interface Analytics {
 	@CheckResult Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
 	void reportEvent(String event, Bundle params);
 	void report(Throwable t);
+
+	interface Trace {
+		void start();
+		void stop();
+		void incrementCounter(String counter_name, long increment_by);
+		default void incrementCounter(final String counter_name) { incrementCounter(counter_name, 1); }
+	}
+
+	static Trace startTrace(final String name) {
+		return PerformanceTrace.startTrace(name);
+	}
+
 	void setProperty(@Size(min = 1, max = 24) String key, @Size(max = 36) String value);
 	default boolean setProperty(final String key, final boolean value) {
 		setProperty(key, Boolean.toString(value));

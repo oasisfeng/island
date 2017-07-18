@@ -99,7 +99,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		final boolean is_manual_setup = Intent.ACTION_USER_INITIALIZE.equals(intent.getAction()) || intent.getAction() == null/* recovery procedure triggered by MainActivity */;
 		Log.d(TAG, "Provisioning profile (" + Users.toId(android.os.Process.myUserHandle()) + (is_manual_setup ? ", manual) " : ")"));
-		final Trace trace = FirebasePerformance.startTrace(is_manual_setup ? "Provision (Manual)" : "Provision (Managed)");
+		final Analytics.Trace trace = Analytics.startTrace(is_manual_setup ? "Provision (Manual)" : "Provision (Managed)");
 
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).apply();
