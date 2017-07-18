@@ -2,6 +2,7 @@ package com.oasisfeng.island.data;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -166,8 +167,8 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			callback.accept(null);
 			return;
 		}
-		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && ! Hacks.PackageManager_getApplicationInfoAsUser.isAbsent() && Permissions.has(context(), INTERACT_ACROSS_USERS)) try {
-			final ApplicationInfo info = Hacks.PackageManager_getApplicationInfoAsUser.invoke(pkg, PM_FLAGS_GET_APP_INFO, Users.toId(profile)).on(context().getPackageManager());
+		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context(), INTERACT_ACROSS_USERS)) try {
+			final ApplicationInfo info = mProfilePackageManager.get().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(info);
 			return;
 		} catch (final PackageManager.NameNotFoundException ignored) {
@@ -254,7 +255,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 
 		@Override public void onPackageChanged(final String pkg, final UserHandle user) {
-			refreshPackage(pkg, user, false);
+			refreshPackage(pkg, user, false);		// TODO: Filter out component-level changes
 		}
 
 		@Override public void onPackagesAvailable(final String[] pkgs, final UserHandle user, final boolean replacing) {
@@ -268,6 +269,11 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private final Supplier<ShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
+	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> new ContextWrapper(context()) {
+		@SuppressWarnings("unused")/* Override the hidden method in ContextWrapper */ public int getUserId() {
+			return Users.toId(Users.profile);
+		}
+	}.getPackageManager());
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(
 			() -> new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 
