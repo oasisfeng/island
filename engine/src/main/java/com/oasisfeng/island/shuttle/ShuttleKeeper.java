@@ -35,7 +35,7 @@ public class ShuttleKeeper extends Service {
 	}
 
 	private void startForeground() {
-		startForeground(NotificationIds.SHUTTLE_KEEPER, mForegroundNotification.get());
+		NotificationIds.ShuttleKeeper.startForeground(this, mForegroundNotification.get());
 	}
 
 	@Override public void onCreate() {
@@ -43,7 +43,7 @@ public class ShuttleKeeper extends Service {
 		mForegroundNotification = Suppliers.memoize(() ->
 				new Notification.Builder(this).setSmallIcon(android.R.drawable.stat_notify_sync_noanim).setPriority(PRIORITY_MIN)
 						.setContentTitle(SDK_INT >= N ? null : getApplicationInfo().loadLabel(getPackageManager()))
-						.setSubText(getString(R.string.notification_standby_text)).build());
+						.setSubText(getString(R.string.notification_standby_text)));
 	}
 
 	@Override public void onDestroy() {
@@ -51,7 +51,7 @@ public class ShuttleKeeper extends Service {
 		Log.d(TAG, "Stop");
 	}
 
-	private Supplier<Notification> mForegroundNotification;
+	private Supplier<Notification.Builder> mForegroundNotification;
 
 	private static final String TAG = "ShuttleKeeper";
 }

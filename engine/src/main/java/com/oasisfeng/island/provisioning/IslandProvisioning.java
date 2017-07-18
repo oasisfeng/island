@@ -121,7 +121,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	@Override public void onCreate() {
 		super.onCreate();
-		startForeground(NotificationIds.PROVISIONING, mForegroundNotification.get());
+		NotificationIds.Provisioning.startForeground(this, mForegroundNotification.get());
 	}
 
 	@Override public void onDestroy() {
