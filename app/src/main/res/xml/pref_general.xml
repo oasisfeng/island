@@ -4,8 +4,4 @@
                         android:title="@string/pref_general_launch_shortcut_prefix_title"
                         android:defaultValue="❄ " />
 
-    <SwitchPreference android:key="@string/key_system_backup"
-                      android:title="@string/pref_general_system_backup_title"
-                      android:persistent="false" />
-
 </PreferenceScreen>
