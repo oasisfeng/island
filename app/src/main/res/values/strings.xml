@@ -117,6 +117,7 @@
     <string name="pref_setup_header">Setup &amp; Shutdown</string>
     <string name="pref_setup_island_title">Island</string>
     <string name="pref_setup_island_summary_managed">Managed</string>
+    <string name="pref_setup_island_summary_unknown">Unknown</string>
     <string name="pref_setup_island_summary_managed_other">Existent Work profile is not managed by Island.\nClick the side icon to remove.</string>
     <string name="pref_setup_island_summary_incomplete">Setup incomplete.\nClick the side icon to rebuild.</string>
     <string name="pref_setup_island_summary_not_setup">Not setup yet.\nIsland can only be setup manually if mainland is managed, since Android 6.0.\nClick the side icon to open online setup guide.</string>
@@ -125,12 +126,17 @@
     <string name="pref_setup_mainland_summary_managed">Managed</string>
     <string name="pref_setup_mainland_summary_not_managed">Normal</string>
     <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
+    <string name="pref_setup_mainland_reprovision_title">Re-provision Mainland</string>
+    <string name="pref_setup_mainland_reprovision_summary">This may help to fix issues in Mainland.\nAll apps and data will be preserved.</string>
     <string name="pref_setup_island_reprovision_title">Re-provision Island</string>
     <string name="pref_setup_island_reprovision_summary">This may help to fix issues in Island.\nAll apps and data will be preserved.</string>
 
     <string name="pref_about_header">About</string>
     <string name="pref_about_version_title">Version</string>
     <string name="pref_about_licenses_title">Licenses</string>
+
+    <string name="notification_channel_ongoing_task">Ongoing task</string>
+    <string name="notification_channel_background_state">Background state</string>
 
     <!-- New User Guide -->
 

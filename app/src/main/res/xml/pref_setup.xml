@@ -4,6 +4,10 @@
     <com.oasisfeng.settings.ActionButtonPreference android:key="@string/key_setup_island" android:title="@string/pref_setup_island_title" />
 
     <PreferenceCategory android:title="@string/pref_setup_category_troubleshooting">
+        <Preference android:key="@string/key_setup_mainland_reprovision"
+                    android:title="@string/pref_setup_mainland_reprovision_title"
+                    android:summary="@string/pref_setup_mainland_reprovision_summary"
+                    android:enabled="false" />
         <Preference android:key="@string/key_setup_island_reprovision"
                     android:title="@string/pref_setup_island_reprovision_title"
                     android:summary="@string/pref_setup_island_reprovision_summary"

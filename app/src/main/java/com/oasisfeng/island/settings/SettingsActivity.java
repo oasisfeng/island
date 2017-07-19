@@ -9,6 +9,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.TwoStatePreference;
 import android.support.annotation.RequiresApi;
@@ -113,6 +114,15 @@ public class SettingsActivity extends PreferenceActivity {
 				startActivity(new Intent(getActivity(), SettingsActivity.class));
 				return true;
 			} else return super.onOptionsItemSelected(item);
+		}
+
+		protected static boolean removeLeafPreference(final PreferenceGroup root, final Preference preference) {
+			if (root.removePreference(preference)) return true;
+			for (int i = 0; i < root.getPreferenceCount(); i ++) {
+				final Preference child = root.getPreference(i);
+				if (child instanceof PreferenceGroup && removeLeafPreference((PreferenceGroup) child, preference)) return true;
+			}
+			return false;
 		}
 
 		private final int mPreferenceXml;

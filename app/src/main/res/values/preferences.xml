@@ -5,6 +5,7 @@
     <string name="key_privacy_notification_for_clone">privacy_notification_clone</string>
     <string name="key_setup_mainland">setup_mainland</string>
     <string name="key_setup_island">setup_island</string>
+    <string name="key_setup_mainland_reprovision">setup_mainland_reprovision</string>
     <string name="key_setup_island_reprovision">setup_island_reprovision</string>
     <string name="key_version">version</string>
 </resources>
