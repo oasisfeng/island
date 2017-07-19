@@ -1,15 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion '26.0.0'
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
-        targetSdkVersion 25
-        versionCode 11
-        versionName "2.0 beta 5"
+        targetSdkVersion 26
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
