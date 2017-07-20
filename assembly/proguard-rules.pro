@@ -16,6 +16,16 @@
 #   public *;
 #}
 
+# Temp rules for Project Condom
+-dontwarn android.content.pm.PackageManager$**
+-dontwarn android.content.pm.IPackageDeleteObserver
+-dontwarn android.content.pm.IPackageDataObserver
+-dontwarn android.content.pm.IPackageStatsObserver
+-dontwarn android.content.pm.KeySet
+
+# For Google Error Prone (depended by Guava)
+-dontwarn com.google.errorprone.annotations.*
+
 # For stream-support library (@IgnoreJava8API is a compile-time annotation)
 -dontwarn build.IgnoreJava8API
 
@@ -35,7 +45,7 @@
 	public static boolean isLoggable(java.lang.String, int);
 	public static int v(...);
 	public static int d(...);
-	public static int i(...);
+#	public static int i(...);
 #	public static int w(...);
 #	public static int e(...);
 }
