@@ -79,7 +79,7 @@ public class AppListFragment extends Fragment {
 	private final ServiceConnection mServiceConnection = new ShuttleServiceConnection() {
 		@Override public void onServiceConnected(final IBinder service) {
 			mViewModel.mProfileController = IIslandManager.Stub.asInterface(service);
-			Log.d(TAG, "Service connected");
+			Log.v(TAG, "Service connected");
 		}
 
 		@Override public void onServiceDisconnected() {

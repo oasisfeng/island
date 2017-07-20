@@ -74,7 +74,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public boolean unfreezeApp(final String pkg) {
-		Log.i(TAG, "Defreeze: " + pkg);
+		Log.i(TAG, "Unfreeze: " + pkg);
 		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
 	}
 

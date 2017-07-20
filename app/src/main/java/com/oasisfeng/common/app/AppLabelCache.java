@@ -34,7 +34,7 @@ class AppLabelCache implements ComponentCallbacks {
 		if (cached_version == version) return cached_label;		// Use cached label only if version is matched.
 
 		// Load label asynchronously
-		Log.d(TAG, (cached_version == -1 ? "Load: " : "Reload: ") + info.packageName);
+		Log.v(TAG, (cached_version == -1 ? "Load: " : "Reload: ") + info.packageName);
 		new AsyncTask<Void, Void, String>() {
 			@Override protected String doInBackground(final Void... params) {
 				final String label = info.loadLabel(mPackageManager).toString();
@@ -62,7 +62,7 @@ class AppLabelCache implements ComponentCallbacks {
 			@Override protected void onPostExecute(final String label) {
 				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
 				if (label == null ? cached_label == null : label.equals(cached_label)) return;	// Unchanged
-				Log.d(TAG, "Loaded: " + info.packageName + " = " + label);
+				Log.v(TAG, "Loaded: " + info.packageName + " = " + label);
 				mCallback.onLabelUpdate(pkg);
 			}
 		}.execute();

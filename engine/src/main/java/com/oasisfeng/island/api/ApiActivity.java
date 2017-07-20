@@ -140,10 +140,10 @@ public class ApiActivity extends Activity {
 	}
 
 	private void onIntent(final Intent intent) {
-		Log.d(TAG, "API request: " + intent.toUri(0));
+		Log.i(TAG, "API request: " + intent.toUri(0));
 		final Integer result = onStartCommand(intent);
 		if (result != null) setResult(result);
-		Log.d(TAG, "API result:" + result);
+		Log.i(TAG, "API result:" + result);
 		finish();
 	}
 

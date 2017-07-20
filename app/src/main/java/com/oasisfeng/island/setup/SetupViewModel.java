@@ -154,7 +154,7 @@ public class SetupViewModel implements Parcelable {
 		// Activity result of managed provisioning is only delivered since Android 6.
 		if (request == REQUEST_PROVISION_MANAGED_PROFILE) {
 			if (result == Activity.RESULT_OK) {
-				Log.i(TAG, "1st stage of provision is done.");
+				Log.i(TAG, "System provision activity is done.");
 				Analytics.$().event("profile_provision_sys_activity_done").send();
 				Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
 				activity.finish();

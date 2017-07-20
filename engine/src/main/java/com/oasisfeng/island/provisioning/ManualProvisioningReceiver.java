@@ -27,11 +27,11 @@ public abstract class ManualProvisioningReceiver extends InternalBroadcastReceiv
 				Log.d(TAG, "Profile is disabled");	// Profile is not enabled yet, that means we are currently in the managed provisioning flow
 				return;									// Nothing needs to be done here, we will receive ACTION_PROFILE_PROVISIONING_COMPLETE soon.
 			}
-			Log.d(TAG, (action != null ? "User initialized: " : "Provisioning resumed: ") + Users.toId(android.os.Process.myUserHandle()));
+			Log.i(TAG, (action != null ? "User initialized: " : "Provisioning resumed: ") + Users.toId(android.os.Process.myUserHandle()));
 			IslandProvisioning.start(context, action);
 			context.getPackageManager().setComponentEnabledSetting(getComponent(context), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 		} else if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(action)){
-			Log.d(TAG, "Device owner changed.");
+			Log.i(TAG, "Device owner changed.");
 			IslandProvisioning.start(context, action);
 		}
 	}

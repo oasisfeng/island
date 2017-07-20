@@ -205,7 +205,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		case TRIM_MEMORY_RUNNING_CRITICAL:
 		case TRIM_MEMORY_UI_HIDDEN:
 		case TRIM_MEMORY_BACKGROUND:
-			Log.i(TAG, "Trim memory for level " + level);
+			Log.d(TAG, "Trim memory for level " + level);
 			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnUiHidden);
 			break;
 		case TRIM_MEMORY_MODERATE:
