@@ -102,6 +102,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- AppUpdateReceiver -->
+        <receiver android:name="com.oasisfeng.island.InternalReceiver$_2" android:exported="false" android:directBootAware="true" tools:targetApi="n">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- ActivityShuttle -->
         <receiver android:name="com.oasisfeng.island.InternalBroadcastReceiver$_1" android:exported="false" />
 
