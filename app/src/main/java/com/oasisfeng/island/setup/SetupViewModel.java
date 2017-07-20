@@ -155,12 +155,12 @@ public class SetupViewModel implements Parcelable {
 		if (request == REQUEST_PROVISION_MANAGED_PROFILE) {
 			if (result == Activity.RESULT_OK) {
 				Log.i(TAG, "1st stage of provision is done.");
-				Analytics.$().event("profile_provision_1st_stage_done").send();
+				Analytics.$().event("profile_provision_sys_activity_done").send();
 				Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
 				activity.finish();
 			} else if (result == Activity.RESULT_CANCELED) {
 				Log.i(TAG, "Provision is cancelled.");
-				Analytics.$().event("profile_provision_cancelled").send();
+				Analytics.$().event("profile_provision_sys_activity_canceled").send();
 			}
 		}
 	}
@@ -170,6 +170,7 @@ public class SetupViewModel implements Parcelable {
 		final Intent intent = buildManagedProfileProvisioningIntent(activity);
 		try {
 			fragment.startActivityForResult(intent, REQUEST_PROVISION_MANAGED_PROFILE);
+			Analytics.$().event("profile_provision_sys_activity_start").send();
 			if (SDK_INT < M) activity.finish();			// No activity result on Android 5.x, thus we have to finish the activity now.
 		} catch (final IllegalStateException e) {	// Fragment not in proper state
 			activity.startActivity(intent);				// Fall-back to starting activity without result observation.

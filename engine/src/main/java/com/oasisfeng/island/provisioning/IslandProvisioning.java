@@ -98,18 +98,20 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 
 		final boolean is_manual_setup = Intent.ACTION_USER_INITIALIZE.equals(intent.getAction()) || intent.getAction() == null/* recovery procedure triggered by MainActivity */;
-		Log.d(TAG, "Provisioning profile (" + Users.toId(android.os.Process.myUserHandle()) + (is_manual_setup ? ", manual) " : ")"));
 		final Analytics.Trace trace = Analytics.startTrace(is_manual_setup ? "Provision (Manual)" : "Provision (Managed)");
+		Analytics.$().setProperty("island_setup", is_manual_setup ? "manual" : "managed");
+		Log.d(TAG, "Provisioning profile (" + Users.toId(android.os.Process.myUserHandle()) + (is_manual_setup ? ", manual) " : ")"));
 
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).apply();
 		if (is_manual_setup) {		// Do the similar job of ManagedProvisioning here.
 			Log.d(TAG, "Manual provisioning");
+			Analytics.$().event("profile_post_provision_manual_start").send();
 			prefs.edit().putInt(PREF_KEY_PROFILE_PROVISION_TYPE, 1).apply();
-			Analytics.$().setProperty("island_setup", "manual");
 			ProfileOwnerManualProvisioning.start(this, policies);	// Mimic the stock managed profile provision
-		}
+		} else Analytics.$().event("profile_post_provision_start").send();
 		startProfileOwnerPostProvisioning(this, policies);
+		Analytics.$().event("profile_post_provision_done").send();
 		disableLauncherActivity(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
@@ -131,7 +133,6 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		// FIXME
 		if (SDK_INT <= N) {
 			final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			if (! apps.isActivityEnabled(activity, user))
@@ -191,8 +192,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
-	@OwnerUser private static void startDeviceOwnerPostProvisioning(final DevicePolicies policies) {
+	@OwnerUser public static void startDeviceOwnerPostProvisioning(final DevicePolicies policies) {
 		if (! policies.isDeviceOwner()) return;
+		Analytics.$().event("device_provision_manual_start").send();
 		if (SDK_INT >= N_MR1) policies.setBackupServiceEnabled(true);
 		if (SDK_INT >= N) policies.clearUserRestriction(UserManager.DISALLOW_ADD_USER);
 	}
