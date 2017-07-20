@@ -86,7 +86,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@ProfileUser public static void onProfileProvisioningComplete(final Context context, final Intent intent) {
 		Log.d(TAG, "onProfileProvisioningComplete");
 		if (Users.isOwner()) return;		// Nothing to do for managed device provisioning.
-		start(context, null);
+		start(context, intent.getAction());
 	}
 
 	@ProfileUser @Override protected void onHandleIntent(@Nullable final Intent intent) {
