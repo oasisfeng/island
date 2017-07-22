@@ -1,5 +1,7 @@
 package com.oasisfeng.island.analytics;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.ComponentName;
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -14,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.common.base.Optional;
+import com.google.firebase.FirebaseApp;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.util.Hacks;
 
@@ -168,7 +171,15 @@ public class AnalyticsProvider extends ContentProvider {
 		@Override public void setProperty(final String key, final String value) {}
 	};
 
-	@Override public boolean onCreate() { return true; }		// As lightweight as possible in initialization.
+	@Override public boolean onCreate() {		// As lightweight as possible in initialization.
+		final Context context = getContext(), app_context;
+		if (context != null && (app_context = context.getApplicationContext()) instanceof Application) {
+			final Application app = (Application) app_context;
+			app.registerActivityLifecycleCallbacks(new LazyInitActivityLifecycleCallbacks(app));
+		}
+		return true;
+	}
+
 	/* The following methods are not implemented. */
 	@Nullable @Override public String getType(final @NonNull Uri uri) { return null; }
 	@Override public int delete(final @NonNull Uri uri, final @Nullable String s, final @Nullable String[] strings) { return 0; }
@@ -176,4 +187,22 @@ public class AnalyticsProvider extends ContentProvider {
 	@Nullable @Override public Cursor query(final @NonNull Uri uri, final @Nullable String[] projection, final @Nullable String selection, final @Nullable String[] selection_args, final @Nullable String sort) { return null; }
 
 	private static final String TAG = "Analytics.Agent";
+
+	private static class LazyInitActivityLifecycleCallbacks implements Application.ActivityLifecycleCallbacks {
+
+		@Override public void onActivityCreated(final Activity activity, final Bundle savedInstanceState) {
+			app.unregisterActivityLifecycleCallbacks(this);
+			FirebaseApp.initializeApp(activity.getApplicationContext());
+		}
+
+		@Override public void onActivityStopped(final Activity activity) {}
+		@Override public void onActivityStarted(final Activity activity) {}
+		@Override public void onActivitySaveInstanceState(final Activity activity, final Bundle outState) {}
+		@Override public void onActivityResumed(final Activity activity) {}
+		@Override public void onActivityPaused(final Activity activity) {}
+		@Override public void onActivityDestroyed(final Activity activity) {}
+		LazyInitActivityLifecycleCallbacks(final Application app) { this.app = app; }
+
+		private final Application app;
+	}
 }

@@ -18,7 +18,7 @@ import io.fabric.sdk.android.Fabric;
  */
 public abstract class CrashReport extends PseudoContentProvider {
 
-	public static CrashlyticsCore $() { return sSingleton.get(); }
+	static CrashlyticsCore $() { return sSingleton.get(); }
 
 	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
 		Fabric.with(GlobalContextProvider.get(), new Crashlytics());
