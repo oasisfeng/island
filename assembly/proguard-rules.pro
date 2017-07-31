@@ -40,6 +40,9 @@
 # For Services
 -keepnames interface ** extends android.os.IInterface
 
+# For Crashlytics (optional, just to speed up release build a little)
+-keep class com.crashlytics.** { *; }
+
 # Remove logging
 -assumenosideeffects class android.util.Log {
 	public static boolean isLoggable(java.lang.String, int);
@@ -58,6 +61,7 @@
 
 # For generics reflection to work
 -keepattributes Signature
+-keepattributes *Annotation*
 
 # More debugging info (line number)
 -renamesourcefileattribute SourceFile
