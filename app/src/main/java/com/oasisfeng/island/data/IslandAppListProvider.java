@@ -2,7 +2,6 @@ package com.oasisfeng.island.data;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -269,11 +268,19 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private final Supplier<ShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
-	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> new ContextWrapper(context()) {
-		@SuppressWarnings("unused")/* Override the hidden method in ContextWrapper */ public int getUserId() {
-			return Users.toId(Users.profile);
+	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> {
+		final ApplicationInfo app_info = context().getApplicationInfo();
+		final int original_uid = app_info.uid;
+		app_info.uid = Users.toId(Users.profile) * 100000 + app_info.uid;	// Simulate an instance of ApplicationInfo from profile user.
+		try {
+			final Context profile_context = Hacks.Context_createApplicationContext.invoke(app_info, 0).on(context());
+			return profile_context.getPackageManager();
+		} catch (PackageManager.NameNotFoundException e) {
+			throw new IllegalStateException(e);	// Should never happen
+		} finally {
+			app_info.uid = original_uid;		// Restore the UID, since this instance of ApplicationInfo is internally shared.
 		}
-	}.getPackageManager());
+	});
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(
 			() -> new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 

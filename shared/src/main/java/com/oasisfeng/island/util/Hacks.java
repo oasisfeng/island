@@ -49,6 +49,7 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle> Context_bindServiceAsUser;
 	public static final Hack.HackedMethod3<ResolveInfo, PackageManager, Unchecked, Unchecked, Unchecked, Intent, Integer, Integer> PackageManager_resolveActivityAsUser;
 	@RequiresApi(N) public static Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean> UserManager_getProfileIds;
+	public static final Hack.HackedMethod2<Context, Context, PackageManager.NameNotFoundException, Unchecked, Unchecked, ApplicationInfo, Integer> Context_createApplicationContext;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
@@ -78,5 +79,7 @@ public class Hacks {
 				.returning(ResolveInfo.class).fallbackReturning(null).withParams(Intent.class, int.class, int.class);
 		if (SDK_INT >= N) UserManager_getProfileIds = Hack.into(UserManager.class).method("getProfileIds")
 				.returning(int[].class).fallbackReturning(null).withParams(int.class, boolean.class);
+		Context_createApplicationContext = Hack.into(Context.class).method("createApplicationContext").returning(Context.class)
+				.throwing(PackageManager.NameNotFoundException.class).withParams(ApplicationInfo.class, int.class);
 	}
 }
