@@ -30,8 +30,6 @@ public class BaseAppViewModel extends BaseObservable {
 		if (mIconLoadingStarted) return;
 		mIconLoadingStarted = true;
 		info.loadUnbadgedIcon(sIconResizer::createIconThumbnail, icon::set);
-		// Only show default icon if not cached. If icon is cached, it is already set synchronously in loadIcon().
-		if (icon.get() == null) icon.set(v.getContext().getPackageManager().getDefaultActivityIcon());
 	}
 
 	public BaseAppViewModel(final AppInfo info) { this.info = info; }
