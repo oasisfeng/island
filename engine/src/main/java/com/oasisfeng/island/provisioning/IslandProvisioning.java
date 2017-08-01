@@ -92,6 +92,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@ProfileUser @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
 		final DevicePolicies policies = new DevicePolicies(this);
+		// Grant INTERACT_ACROSS_USERS permission as early as possible, since we may require it in the following provision procedure.
+		if (SDK_INT >= M) policies.setPermissionGrantState(getPackageName(), INTERACT_ACROSS_USERS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);	// Dev permission is always granted for all users.
+
 		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			startDeviceOwnerPostProvisioning(policies);
 			return;
@@ -213,11 +216,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		// FIXME: Device owner only ----- if (SDK_INT >= N_MR1) policies.setBackupServiceEnabled(true);
 		enableAdditionalForwarding(policies);
 
-		if (SDK_INT >= M) {
-			final DevicePolicies dpm = new DevicePolicies(context);
-			dpm.addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
-			dpm.setPermissionGrantState(context.getPackageName(), INTERACT_ACROSS_USERS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);	// Dev permission is granted for all users.
-		}
+		if (SDK_INT >= M) policies.addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 
 		// Prepare AppLaunchShortcut
 		final IntentFilter launchpad_filter = new IntentFilter(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE);
