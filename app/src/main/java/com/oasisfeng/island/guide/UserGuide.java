@@ -7,7 +7,6 @@ import android.databinding.ObservableField;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ActionMenuView;
@@ -46,17 +45,17 @@ public class UserGuide {
 	}
 
 	private final MenuItem.OnMenuItemClickListener mTipFilter = menu -> {
-		prompt_filter.set(buildPrompt(R.string.prompt_filter_title, R.string.prompt_filter_text).setOnHidePromptListener(onHide(SCOPE_KEY_TIP_FILTER)));
+		prompt_filter.set(buildPrompt(R.string.prompt_filter_title, R.string.prompt_filter_text).setPromptStateChangeListener(onHide(SCOPE_KEY_TIP_FILTER)));
 		return true;
 	};
 	private final MenuItem.OnMenuItemClickListener mTipClone = menu -> {
 		prompt_action.set(buildPrompt(R.string.prompt_clone_title, R.string.prompt_clone_text).setIcon(R.drawable.ic_add_to_photos_24dp)
-				.setOnHidePromptListener(onHide(SCOPE_KEY_TIP_CLONE)));
+				.setPromptStateChangeListener(onHide(SCOPE_KEY_TIP_CLONE)));
 		return true;
 	};
 	private final MenuItem.OnMenuItemClickListener mTipFreeze = menu -> {
 		prompt_action.set(buildPrompt(R.string.prompt_freeze_title, R.string.prompt_freeze_text).setIcon(R.drawable.ic_lock_24dp)
-				.setOnHidePromptListener(onHide(SCOPE_KEY_TIP_FREEZE)));
+				.setPromptStateChangeListener(onHide(SCOPE_KEY_TIP_FREEZE)));
 		return true;
 	};
 
@@ -65,10 +64,12 @@ public class UserGuide {
 				.setCaptureTouchEventOnFocal(true).setCaptureTouchEventOutsidePrompt(true);
 	}
 
-	private MaterialTapTargetPrompt.OnHidePromptListener onHide(final String scope_key) {
-		return new MaterialTapTargetPrompt.OnHidePromptListener() {
-			@Override public void onHidePrompt(final MotionEvent event, final boolean tappedTarget) {}
-			@Override public void onHidePromptComplete() { mAppScope.mark(scope_key); mActivity.invalidateOptionsMenu(); }
+	private MaterialTapTargetPrompt.PromptStateChangeListener onHide(final String scope_key) {
+		return (prompt, state) -> {
+			if (state == MaterialTapTargetPrompt.STATE_FINISHED) {
+				mAppScope.mark(scope_key);
+				mActivity.invalidateOptionsMenu();
+			}
 		};
 	}
 
