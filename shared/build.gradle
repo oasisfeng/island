@@ -37,10 +37,10 @@ dependencies {
     api project(':deagle')
     api project(':stream-backport') //api 'com.annimon:stream:1.1.8'
     api 'com.google.guava:guava:22.0-android'
-    api 'com.android.support:support-annotations:25.4.0'
+    api 'com.android.support:support-annotations:26.0.1'
     implementation 'org.jetbrains:annotations:15.0'
-    implementation 'com.google.firebase:firebase-analytics:11.0.2'
-    api 'com.google.firebase:firebase-perf:11.0.2'
+    implementation 'com.google.firebase:firebase-analytics:11.0.4'
+    api 'com.google.firebase:firebase-perf:11.0.4'
     api('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') { transitive = true }
     implementation 'com.oasisfeng.condom:library:1.2.0'
 
@@ -51,5 +51,5 @@ dependencies {
     androidTestImplementation('com.android.support.test:runner:0.5') {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
-    androidTestImplementation 'com.android.support.test:rules:0.5'
+    androidTestImplementation 'com.android.support.test:rules:1.0.0'
 }
