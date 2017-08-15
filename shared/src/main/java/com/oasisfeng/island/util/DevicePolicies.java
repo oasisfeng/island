@@ -8,9 +8,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.support.annotation.CheckResult;
 import android.support.annotation.RequiresApi;
-
-import com.oasisfeng.hack.Hack;
 
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -25,13 +24,15 @@ public class DevicePolicies {
 
 	public DevicePolicies(final Context context) {
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-		getDeviceAdminComponent(context);
+		cacheDeviceAdminComponent(context);
 	}
 
-	public boolean isProfileOwner() {
+	/** @see DevicePolicyManager#isProfileOwnerApp(String) */
+	public @CheckResult boolean isProfileOwnerApp() {
 		return mDevicePolicyManager.isProfileOwnerApp(sCachedComponent.getPackageName());
 	}
 
+	/** @see DevicePolicyManager#isDeviceOwnerApp(String) */
 	public boolean isDeviceOwner() {
 		return mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
 	}
@@ -76,10 +77,8 @@ public class DevicePolicies {
 	 * @param suspended	If set to true than the packages will be suspended, if set to false the packages will be unsuspended.
 	 * @return an array of package names for which the suspended status is not set as requested in this method.
 	 */
-	public String[] setPackagesSuspended(final String[] pkgs, final boolean suspended) {
-		return Hack.into(DevicePolicyManager.class).method("setPackagesSuspended").returning(String[].class)
-				.fallbackReturning(null).withParams(ComponentName.class, String[].class, boolean.class)
-				.invoke(sCachedComponent, pkgs, suspended).on(mDevicePolicyManager);
+	@RequiresApi(N) public String[] setPackagesSuspended(final String[] pkgs, final boolean suspended) {
+		return mDevicePolicyManager.setPackagesSuspended(sCachedComponent, pkgs, suspended);
 	}
 
 	/**
@@ -87,10 +86,8 @@ public class DevicePolicies {
 	 *
 	 * @param pkg The name of the package to retrieve the suspended status of.
 	 */
-	public boolean isPackageSuspended(final String pkg) throws NameNotFoundException {
-		return Hack.into(DevicePolicyManager.class).method("isPackageSuspended").throwing(NameNotFoundException.class)
-				.returning(boolean.class).fallbackReturning(false).withParams(ComponentName.class, String.class)
-				.invoke(sCachedComponent, pkg).on(mDevicePolicyManager);
+	@RequiresApi(N) public boolean isPackageSuspended(final String pkg) throws NameNotFoundException {
+		return mDevicePolicyManager.isPackageSuspended(sCachedComponent, pkg);
 	}
 
 	/** @see DevicePolicyManager#isAdminActive(ComponentName) */
@@ -128,19 +125,28 @@ public class DevicePolicies {
 		mDevicePolicyManager.removeActiveAdmin(sCachedComponent);
 	}
 
+	/** @see DevicePolicyManager#setPermissionGrantState(ComponentName, String, String, int) */
 	@RequiresApi(M) public boolean setPermissionGrantState(final String pkg, final String permission, final int state) {
 		return mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
 	}
 
+	/** @see DevicePolicyManager#getPermissionGrantState(ComponentName, String, String) */
+	@RequiresApi(M) public int getPermissionGrantState(final String pkg, final String permission) {
+		return mDevicePolicyManager.getPermissionGrantState(sCachedComponent, pkg, permission);
+	}
+
+	/** @see DevicePolicyManager#getUserRestrictions(ComponentName) */
 	@RequiresApi(N) public Bundle getUserRestrictions() {
 		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 	}
 
+	/** @see DevicePolicyManager#isBackupServiceEnabled(ComponentName) */
 	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
 	public boolean isBackupServiceEnabled() {
 		return mDevicePolicyManager.isBackupServiceEnabled(sCachedComponent);
 	}
 
+	/** @see DevicePolicyManager#setBackupServiceEnabled(ComponentName, boolean) */
 	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
 	public void setBackupServiceEnabled(final boolean enabled) {
 		mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled);
@@ -148,9 +154,8 @@ public class DevicePolicies {
 
 	public DevicePolicyManager getManager() { return mDevicePolicyManager; }
 
-	private static ComponentName getDeviceAdminComponent(final Context context) {
-		if (sCachedComponent != null) return sCachedComponent;
-		return sCachedComponent = DeviceAdmins.getComponentName(context);
+	private static void cacheDeviceAdminComponent(final Context context) {
+		if (sCachedComponent == null) sCachedComponent = DeviceAdmins.getComponentName(context);
 	}
 
 	private final DevicePolicyManager mDevicePolicyManager;
