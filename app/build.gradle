@@ -11,6 +11,8 @@ android {
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
+    baseFeature true
+
     dataBinding {
         enabled true
     }
@@ -34,6 +36,8 @@ android {
 }
 
 dependencies {
+    application project(':assembly')
+
     implementation project(':shared')
     api project(':deagle')
 
