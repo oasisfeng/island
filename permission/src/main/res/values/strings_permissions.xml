@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources><!-- String resources from platform/framework-base -->
+
+    <string name="permlab_interactAcrossUsers">interact across users</string>
+    <string name="permdesc_interactAcrossUsers">Allows the app to perform actions
+        across different users on the device.  Malicious apps may use this to violate
+        the protection between users.</string>
+
+    <string name="permlab_setDebugApp">enable app debugging</string>
+    <string name="permdesc_setDebugApp">Allows the app to turn
+        on debugging for another app. Malicious apps may use this
+        to kill other apps.</string>
+
+    <string name="permlab_changeConfiguration">change system display settings</string>
+    <string name="permdesc_changeConfiguration">Allows the app to
+        change the current configuration, such as the locale or overall font
+        size.</string>
+
+    <string name="permlab_dump">retrieve system internal state</string>
+    <string name="permdesc_dump">Allows the app to retrieve
+        internal state of the system. Malicious apps may retrieve
+        a wide variety of private and secure information that they should
+        never normally need.</string>
+
+    <string name="permlab_setProcessLimit">limit number of running processes</string>
+    <string name="permdesc_setProcessLimit">Allows the app
+        to control the maximum number of processes that will run. Never
+        needed for normal apps.</string>
+
+    <string name="permlab_setAlwaysFinish">force background apps to close</string>
+    <string name="permdesc_setAlwaysFinish">Allows the app
+        to control whether activities are always finished as soon as they
+        go to the background. Never needed for normal apps.</string>
+
+    <string name="permlab_batteryStats">read battery statistics</string>
+    <string name="permdesc_batteryStats">Allows an application to read the current low-level
+        battery use data.  May allow the application to find out detailed information about
+        which apps you use.</string>
+
+    <string name="permlab_getAppOpsStats">retrieve app ops statistics</string>
+    <string name="permdesc_getAppOpsStats">Allows the app to retrieve
+        collected application operation statistics. Not for use by normal apps.</string>
+
+    <string name="permlab_setAnimationScale">modify global animation speed</string>
+    <string name="permdesc_setAnimationScale">Allows the app to change
+        the global animation speed (faster or slower animations) at any time.</string>
+
+    <string name="permlab_signalPersistentProcesses">send Linux signals to apps</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_signalPersistentProcesses">Allows the app to request that the
+        supplied signal be sent to all persistent processes.</string>
+
+    <string name="permlab_readLogs">read sensitive log data</string>
+    <string name="permdesc_readLogs">Allows the app to read from the
+        system\'s various log files.  This allows it to discover general
+        information about what you are doing with the device, potentially
+        including personal or private information.</string>
+
+    <string name="permlab_writeSecureSettings">modify secure system settings</string>
+    <string name="permdesc_writeSecureSettings">Allows the app to modify the
+        system\'s secure settings data. Not for use by normal apps.</string>
+
+</resources>

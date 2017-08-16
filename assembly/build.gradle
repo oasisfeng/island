@@ -68,10 +68,12 @@ android {
 dependencies {
     // Engine only
     engineImplementation project(':engine')
+    engineImplementation project(':permission')
     // Mobile only
     mobileImplementation project(':mobile')
     // Full
     fullImplementation project(':engine')
+    fullImplementation project(':permission')
     fullImplementation project(':mobile')
 
     implementation 'com.android.support:support-v4:26.0.1'          // To workaround the dependency conflict caused by "com.android.databinding:library"

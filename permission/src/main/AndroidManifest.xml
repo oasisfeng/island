@@ -1,0 +1,24 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.oasisfeng.island.permission">
+
+    <application>
+
+        <activity android:name=".PermissionRequestActivity"
+                  android:configChanges="orientation|keyboardHidden|screenSize"
+                  android:excludeFromRecents="true"
+                  android:theme="@style/GrantPermissions"
+                  android:enabled="false" > <!-- Should never be enabled without device owner or profile owner permission -->
+            <intent-filter>
+                <action android:name="android.content.pm.action.REQUEST_PERMISSIONS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <provider android:name=".PermissionRequestSetup"
+                  android:authorities="com.oasisfeng.island.permission"
+                  android:enabled="@bool/since_api_23"
+                  android:exported="false" />
+
+    </application>
+
+</manifest>
