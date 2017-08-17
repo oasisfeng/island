@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"वापरकर्त्यांशी परस्परसंवाद साधा"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"डिव्हाइसवरील भिन्न वापरकर्त्यांवर कारवाई करण्यासाठी अॅप ला अनुमती देते. दुर्भावनापूर्ण अॅप्स वापरकर्त्यांमधील संरक्षणाचे उल्लंघन करण्यासाठी हे वापरू शकतात."</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"अॅप डीबगिंग सक्षम करा"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"दुसर्‍या अॅपसाठी डीबग करणे चालू करण्यासाठी अॅप ला अनुमती देते. दुर्भावनापूर्ण अॅप्स दुसरे अॅप्स बंद करण्यासाठी याचा वापर करू शकतात."</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"सिस्टम प्रदर्शन सेटिंग्ज बदला"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"लोकॅल किंवा एकूण फॉन्ट आकार यासारखे, वर्तमान कॉन्फिगरेशन बदलण्यासाठी अॅप ला अनुमती देते."</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"सिस्टम अंतर्गत स्थिती पुनर्प्राप्त करा"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"सिस्टीमची अंतर्गत स्थिती पुनर्प्राप्त करण्यासाठी अॅप ला अनुमती देते. दुर्भावनापूर्ण अॅप्सला कधीही सामान्यतः आवश्यकता नसते अशी खाजगी आणि सुरक्षित माहितीची विस्तृत विविधता पुनर्प्राप्त करू शकतात."</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"चालणार्‍या प्रक्रियांच्या संख्येवर मर्यादा घाला"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"चालणार असलेल्या जास्तीत जास्त प्रक्रिया नियंत्रित करण्यासाठी अॅप ला अनुमती देते. सामान्य अॅप्स साठी कधीही आवश्यक नाही."</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"पार्श्वभूमी अॅप्स बंद करण्याची सक्ती करा"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"अॅप ला क्रियाकलाप पार्श्वभूमीत जाताच ते नेहमी समाप्त होतात किंवा नाही हे नियंत्रित करण्याची अनुमती देते. सामान्य अॅप्ससाठी आवश्यकता नाही."</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"बॅटरी आकडेवारी वाचा"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"वर्तमान निम्न-स्तर बॅटरी वापर डेटा वाचण्यासाठी अनुप्रयोगास अनुमती देते. कोणते अॅप्स वापरावे याविषयीची तपशीलवार माहिती शोधण्यासाठी अनुप्रयोगास अनुमती देऊ शकते."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"अ‍ॅप ops आकडेवारी पुनर्प्राप्त करा"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"अ‍ॅपला संकलित केलेले अनुप्रयोग कार्य आकडेवारी पुनर्प्राप्त करण्‍याची अनुमती देते. सामान्‍य अ‍ॅप्‍सद्वारे वापरासाठी नाही."</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"समग्र अॅनिमेशन गती सुधारित करा"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"कोणत्याही वेळी समग्र अॅनिमेशन गती (जलद किंवा धीमी अॅनिमेशन) बदलण्यासाठी अॅपला अनुमती देते."</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"अॅप्स वर Linux सिग्नल पाठवा"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"सर्व पुनरावर्ती प्रक्रियांवर पुरवठा केलेले सिग्नल पाठविण्यासाठी विनंती करण्यासाठी अॅप ला अनुमती देते."</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"संवेदनशील लॉग डेटा वाचा"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"सिस्टीमच्या विविध लॉग फायलींवरून वाचन करण्यासाठी अॅप ला अनुमती देते. आपण फोनसह काय करत आहात त्याविषयी, संभाव्यतः वैयक्तिक किंवा खाजगी माहिती समाविष्ट करून, सामान्य माहिती शोधण्यासाठी हे त्यास अनुमती देते."</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"सुरक्षित सिस्टम सेटिंग्ज सुधारित करा"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"सिस्टीमचा सुरक्षित सेटिंग्ज डेटा सुधारित करण्यासाठी अॅप ला अनुमती देते. सामान्य अॅप्सद्वारे वापरण्यासाठी नाही."</string>
+</resources>

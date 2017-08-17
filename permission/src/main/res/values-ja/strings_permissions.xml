@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"ユーザー間の交流"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"端末上の各ユーザーに対して操作を実行することをアプリに許可します。この許可を悪意のあるアプリに利用されると、ユーザー間の保護が侵害される恐れがあります。"</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"アプリのデバッグの有効化"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"別のアプリをデバッグモードにすることをアプリに許可します。この許可を悪意のあるアプリに利用されると、他のアプリが強制終了される恐れがあります。"</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"システムの表示設定の変更"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"地域/言語や全体のフォントサイズなど、現在の設定の変更をアプリに許可します。"</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"システムの内部状態の取得"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"システムの内部状態の取得をアプリに許可します。この許可を悪意のあるアプリに利用されると、通常必要ないはずの各種の非公開/機密情報が取得される恐れがあります。"</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"実行中のプロセスの数を制限"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"実行するプロセスの上限数を制御することをアプリに許可します。通常のアプリでは不要です。"</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"バックグラウンドのアプリの強制終了"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"バックグラウンドになりしだい操作を常に終了するかどうかの制御をアプリに許可します。通常のアプリでは不要です。"</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"電池統計情報の読み取り"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"現在の電池消費量の低レベルデータを読み取ることをアプリに許可します。このアプリが、使用しているアプリの詳細情報を確認できるようになります。"</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"アプリの操作状況に関する統計情報の取得"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"アプリの操作状況に関して収集された統計情報の取得をアプリに許可します。通常のアプリでは使用しません。"</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"アニメーションのプリセット速度の変更"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"いつでもアニメーション全般の速度を変更する（速くする、または遅くする）ことをアプリに許可します。"</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"アプリへのLinuxシグナルの送信"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"受信したシグナルをすべての継続プロセスに送信するようリクエストすることをアプリに許可します。"</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"機密ログデータの読み取り"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"システムの各種ログファイルの読み取りをアプリに許可します。許可すると、アプリでは携帯端末の使用に関する全般的な情報を読み取れるようになります。この情報には個人情報や機密情報が含まれる場合があります。"</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"システムのセキュリティ設定の変更"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"システムのセキュリティ設定データの変更をアプリに許可します。通常のアプリでは使用しません。"</string>
+</resources>

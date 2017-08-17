@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"взаимодействие с потребителите"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"Разрешава на приложението да изпълнява действия за различни потребители на устройството. Злонамерените приложения може да използват това, за да нарушат защитата между потребителите."</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"активиране на отстраняването на грешки в приложения"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"Разрешава на приложението да включва отстраняването на грешки за друго приложение. Злонамерените приложения могат да използват това, за да прекратят други приложения."</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"промяна на настройките за екрана на системата"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"Разрешава на приложението да променя текущата конфигурация, като например локала или цялостния размер на шрифта."</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"извличане на вътрешното състояние на системата"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"Разрешава на приложението да извлича вътрешното състояние на системата. Злонамерените приложения могат да извлекат разнообразна частна и защитена информация, която нормално не би трябвало да им е нужна."</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"ограничаване на броя изпълнявани процеси"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"Разрешава на приложението да контролира максималния брой изпълнявани процеси. Нормалните приложения никога не се нуждаят от това."</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"принудително затваряне на приложенията на заден план"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"Разрешава на приложението да контролира дали дейностите винаги се завършват веднага щом минат на заден план. Нормалните приложения никога не се нуждаят от това."</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"четене на статистическите данни за батерията"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"Разрешава на приложението да чете текущите данни за работа при ниско ниво на батерията. Може да му разреши да намери подробна информация за ползваните от вас приложения."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"извличане на статистическите данни за операциите на приложението"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"Разрешава на приложението да извлича събраните статистически данни за операциите си. Не е предназначено за нормални приложения."</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"промяна на глобалната скорост на анимациите"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"Разрешава на приложението да променя глобалната скорост на анимациите (по-бавни или по-бързи) по всяко време."</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"изпращане на сигнали от Linux до приложенията"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"Разрешава на приложението да подаде заявка предоставеният сигнал да се изпрати до всички постоянни процеси."</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"четене на поверителни данни от регистрационните файлове"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"Разрешава на приложението да чете от различните регистрационни файлове на системата. Това му позволява да получи обща информация какво правите с телефона, потенциално включително и лични или поверителни данни."</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"промяна на защитените системни настройки"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"Разрешава на приложението да променя данните на защитените настройки на системата. Не е предназначено за нормални приложения."</string>
+</resources>
