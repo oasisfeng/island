@@ -31,14 +31,15 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 		} else {
 			final Bundle args = getArguments();
 			final SetupViewModel vm = args != null ? args.getParcelable(null) : null;
-			mViewModel = vm != null ? vm : new SetupViewModel();
+			mViewModel = vm != null ? vm : new SetupViewModel();	// Initial view - "Welcome"
+			mViewModel.button_next = R.string.setup_accept;			// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
 		}
 
 		mContainerViewId = container.getId();
 		final SetupWizardBinding binding = SetupWizardBinding.inflate(inflater, container, false);
 		binding.setSetup(mViewModel);
 		final View view = binding.getRoot();
-		final SetupWizardLayout layout = (SetupWizardLayout) view.findViewById(R.id.setup_wizard_layout);
+		final SetupWizardLayout layout = view.findViewById(R.id.setup_wizard_layout);
 		layout.requireScrollToBottom();
 
 		final NavigationBar nav_bar = layout.getNavigationBar();
