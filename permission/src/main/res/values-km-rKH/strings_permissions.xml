@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"អន្តរកម្ម​តាម​​អ្នក​ប្រើ"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"ឲ្យ​កម្មវិធី​អនុវត្ត​សកម្មភាព​ឆ្លង​អ្នកប្រើ​ផ្សេងៗ​​លើ​ឧបករណ៍។ កម្មវិធី​ព្យាបាទ​អាច​ប្រើ​វា ដើម្បី​បំពាន​ការ​ការពារ​រវាង​អ្នក​ប្រើ។"</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"បើក​ការ​កែ​កំហុស​កម្មវិធី"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"ឲ្យ​កម្មវិធី​បើក​ការ​កែ​កំហុស​សម្រាប់​កម្មវិធី​ផ្សេង​ទៀត។ កម្មវិធី​ព្យាបាទ​អាច​ប្រើ​វា ដើម្បី​បញ្ឈប់​កម្មវិធី​ផ្សេង។"</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"ប្ដូរ​ការ​កំណត់​បង្ហាញ​ប្រព័ន្ធ"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"ឲ្យ​កម្មវិធី​ប្ដូរ​ការ​កំណត់​​រចនាសម្ព័ន្ធ​បច្ចុប្បន្ន ដូច​ជា​មូលដ្ឋាន ឬ​ទំហំ​ពុម្ពអក្សរ​ទាំងអស់។"</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"ទៅ​យក​ស្ថានភាព​ខាង​ក្នុង​ប្រព័ន្ធ"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"ឲ្យ​កម្មវិធី​ទៅ​យក​ស្ថានភាព​ខាង​ក្នុង​នៃ​ប្រព័ន្ធ។ កម្មវិធី​ព្យាបាទ​អាច​ទៅ​យក​ព័ត៌មាន​ឯកជន​និង​មាន​សុវត្ថិភាព​ផ្សេងៗ​ដែល​ពួកវា​មិន​គួរ​ត្រូវការ​តាម​ធម្មតា។"</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"កំណត់​ចំនួន​ដំណើរការ​ដែល​កំពុង​ដំណើរការ"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"ឲ្យ​កម្មវិធី​ពិនិត្យ​ចំនួន​ដំណើរការ​អតិបរមា​ដែល​នឹង​ដំណើរការ។ មិន​ចាំបាច់​សម្រាប់​កម្មវិធី​ធម្មតា​ទេ។"</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"បង្ខំ​​ឲ្យ​បិទ​កម្មវិធី​ក្នុង​ផ្ទៃ​ខាង​ក្រោយ"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"ឲ្យ​កម្មវិធី​ពិនិត្យ​ថា​តើ​សកម្មភាព​​ត្រូវ​បាន​បញ្ចប់​ជា​និច្ច​ដរាប​ណា​ពួកគេ​​ទៅ​ក្នុង​ផ្ទៃ​ខាង​ក្រោយ។ មិន​ចាំបាច់​សម្រាប់​កម្មវិធី​ធម្មតា​ទេ។"</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"អាន​ស្ថិតិ​ថ្ម"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"ឲ្យ​កម្មវិធី​អាន​ទិន្នន័យ​ប្រើ​ថ្ម​កម្រិត​ទាប​បច្ចុប្បន្ន។ អាច​ឲ្យ​កម្មវិធី​ស្វែងយល់​ព័ត៌មាន​លម្អិត​អំពី​កម្មវិធី​ដែល​អ្នក​ប្រើ។"</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"ទៅ​យក​ស្ថិតិ​ប្រតិបត្តិការ​កម្មវិធី"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"ឲ្យ​កម្មវិធី​ទៅ​យក​ស្ថិតិ​ប្រតិបត្តិការ​កម្មវិធី​បាន​ប្រមូល។ មិន​សម្រាប់​ប្រើ​ដោយ​កម្មវិធី​ធម្មតា។"</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"កែ​ល្បឿន​ចលនា​សកល"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"ឲ្យ​កម្មវិធី​ប្ដូរ​ល្បឿន​ចលនា​សកល (ចលនា​លឿន​ ឬ​យឺត) នៅ​ពេលណា​មួយ។"</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"ផ្ញើ​សញ្ញា​លីនុច​ទៅ​កម្មវិធី"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"ឲ្យ​កម្មវិធី​ស្នើ​​សញ្ញា​ដែល​បាន​ផ្ដល់​ត្រូវ​ផ្ញើ​ទៅ​ដំណើរការ​ស្ថិតស្ថេរ​​ទាំង​អស់។"</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"អាន​ទិន្នន័យ​កំណត់​ហេតុ​ប្រែប្រួល"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"ឲ្យ​កម្មវិធី​អាន​ពី​ឯកសារ​កំណត់ហេតុ​ប្រព័ន្ធ។ វា​អនុញ្ញាត​ឲ្យ​រក​មើល​ព័ត៌មាន​ទូទៅ​អំពី​អ្វី​ដែល​អ្នក​កំពុង​ធ្វើជា​មួយ​កុំព្យូទ័រ​បន្ទះ សំខាន់​រួមមាន​ព័ត៌មាន​ផ្ទាល់​ខ្លួន​ ឬ​ឯកជន។"</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"កែ​ការ​កំណត់​ប្រព័ន្ធ​សុវត្ថិភាព"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"ឲ្យ​កម្មវិធី​កែ​ទិន្នន័យ​កំណត់​​សុវត្ថិភាព​​របស់​ប្រព័ន្ធ។ មិន​សម្រាប់​ប្រើ​ដោយ​កម្មវិធី​ធម្មតា​ទេ។"</string>
+</resources>

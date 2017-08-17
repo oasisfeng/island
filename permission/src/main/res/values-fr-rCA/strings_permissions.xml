@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"interagir entre les utilisateurs"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"Permet à l\'application d\'effectuer des actions entre les différents utilisateurs de l\'appareil. Les applications malveillantes peuvent utiliser cette autorisation pour passer outre la protection entre les utilisateurs."</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"activer le débogage des applications"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"Permet à l\'application d\'activer le débogage d\'une autre application. Des applications malveillantes peuvent utiliser cette fonctionnalité pour en fermer d\'autres."</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"modifier les paramètres d\'affichage du système"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"Permet à l\'application de modifier la configuration actuelle, par exemple les paramètres régionaux ou la taille de la police."</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"vérifier l\'état interne du système"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"Permet à l\'application de récupérer l\'état interne du système. Des applications malveillantes peuvent utiliser cette fonctionnalité pour récupérer de nombreuses données confidentielles et sécurisées dont elles ne devraient pas avoir besoin normalement."</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"restreindre le nombre de processus en cours d\'exécution"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"Permet à l\'application de définir le nombre maximal de processus devant s\'exécuter. Les applications standards ne doivent jamais avoir recours à cette fonctionnalité."</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"forcer la fermeture des applications en arrière-plan"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"Permet à l\'application de définir si les activités sont toujours terminées lorsqu\'elles passent en arrière-plan. Les applications standards ne doivent jamais avoir recours à cette fonctionnalité."</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"lire les statistiques de la batterie"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"Permet à une application de lire les données de consommation actuelles indiquant le faible niveau de la batterie. Permet éventuellement à l\'application d\'obtenir des informations détaillées sur les applications que vous utilisez."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"récupérer les statistiques de fonctionnement des applications"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"Permet à l\'application de récupérer les statistiques de fonctionnement des applications recueillies. Les applications standards ne doivent pas utiliser cette fonctionnalité."</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"modifier la vitesse des animations"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"Permet à l\'application de modifier à tout moment la vitesse générale des animations pour les ralentir ou les accélérer."</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"envoyer des signaux Linux aux applications"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"Permet à l\'application de demander que le signal fourni soit envoyé à tous les processus persistants."</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"lire les données des journaux à caractère confidentiel"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"Permet à l\'application de lire les différents fichiers journaux du système afin d\'obtenir des informations générales sur la façon dont vous utilisez votre téléphone. Celles-ci peuvent éventuellement inclure des informations d\'ordre personnel ou privé."</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"modifier les paramètres de sécurité du système"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"Permet à l\'application de modifier les paramètres sécurisés du système. Les applications standards ne doivent pas utiliser cette fonctionnalité."</string>
+</resources>

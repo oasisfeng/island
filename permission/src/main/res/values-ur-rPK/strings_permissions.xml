@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"سبھی صارفین کے ساتھ تعامل کریں"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"ایپ کو آلے پر موجود مختلف صارفین کے بیچ کارروائیاں انجام دینے کی اجازت دیتا ہے۔ نقصان دہ ایپس صارفین کے مابین تحفظ کی خلاف ورزی کرنے کیلئے اسے استعمال کرسکتی ہیں۔"</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"ایپ کو ڈیبگ کرنے کو فعال کریں"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"ایپ کو دوسری ایپ کیلئے ڈیبگنگ آن کرنے کی اجازت دیتا ہے۔ نقصان دہ ایپس دوسرے ایپس کو ختم کرنے کیلئے اسے استعمال کرسکتی ہیں۔"</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"سسٹم ڈسپلے کی ترتیبات تبدیل کریں"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"ایپ کو حالیہ ترتیب، جیسے مقامیت یا مجموعی فونٹ سائز تبدیل کرنے کی اجازت دیتا ہے۔"</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"سسٹم کی اندرونی حیثیٹ کی بازیافت کریں"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"ایپ کو سسٹم کی اندرونی حالت کی بازیافت کرنے کی اجازت دیتا ہے۔ نقصان دہ ایپس نجی اور محفوظ معلومات کی وسیع اقسام کی بازیافت کر سکتی ہے جن کی عام طور پر انہیں کبھی بھی استعمال کرنے کی ضرورت نہیں ہونی چاہئے۔"</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"چل رہی کارروائیوں کی تعداد محدود کریں"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"ایپ کوچلائے جانے والی کارروائیوں کی زیادہ سے زیادہ تعداد کو کنٹرول کرنے کی اجازت دیتا ہے۔ عام ایپس کے استعمال کیلئے نہیں ہے۔"</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"پس منظر کی ایپس کو زبردستی بند کریں"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"ایپ کو یہ کنٹرول کرنے کی اجازت دیتا ہے کہ آیا پس منظر میں جاتے ہی سرگرمیاں ہمیشہ مکمل ہو جاتی ہیں۔ عام ایپس کیلئے کبھی بھی اس کی ضرورت نہيں ہوتی ہے۔"</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"بیٹری کے اعداد و شمار پڑھیں"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"کسی ایپلیکیشن کو حالیہ ادنی سطح کی بیٹری کے استعمال کا ڈیٹا پڑھنے کی اجازت دیتا ہے۔ ایپلیکیشن کو آپ کے زیر استعمال ایپس کے بارے میں تفصیلی معلومات پتہ کرنے کی اجازت دے سکتا ہے۔"</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"‏ایپ کے ops اعداد و شمار کی بازيافت کریں"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"ایپ کو ایپلیکیشن کے عمل کے جمع شدہ اعداد و شمار کی بازیافت کرنے کی اجازت دیتا ہے۔ عام ایپس کے ذریعہ استعمال کیلئے نہیں ہے۔"</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"عالمی اینیمیشن کی رفتار میں ترمیم کریں"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"ایپ کو کسی بھی وقت مجموعی اینیمیشن کی رفتار (تیز تر یا سست تر انیمیشنز) کو تبدیل کرنے کی اجازت دیتا ہے۔"</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"‏ایپس پر Linux سگنل بھیجیں"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"ایپ کو فراہم کردہ سگنل کو سبھی مسلسل کارروائیوں پر بھیجے جانے کی درخواست کرنے کی اجازت دیتا ہے۔"</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"حساس لاگ ڈیٹا پڑھیں"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"ایپ کو سسٹم کی مختلف لاگ فائلوں سے پڑھنے کی اجازت دیتا ہے۔ ممکنہ طور پر ذاتی یا نجی معلومات سمیت یہ اسے اس بارے میں عام معلومات دریافت کرنے کی اجازت دیتا ہے کہ آپ فون کے ساتھ کیا کر رہے ہیں۔"</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"محفوظ سسٹم کی ترتیبات میں ترمیم کریں"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"ایپ کو سسٹم کی محفوظ ترتیبات ڈيٹا میں ترمیم کرنے کی اجازت دیتا ہے۔ عام ایپس کے استعمال کیلئے نہیں ہے۔"</string>
+</resources>

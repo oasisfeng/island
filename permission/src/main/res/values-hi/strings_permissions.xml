@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/* //device/apps/common/assets/res/any/strings.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"उपयोगकर्ताओं के बीच सहभागिता करें"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"ऐप्स  को डिवाइस पर भिन्न उपयोगकर्ताओं के बीच कार्य निष्पादित करने देता है. दुर्भावनापूर्ण ऐप्स  उपयोगकर्ताओं के बीच सुरक्षा का उल्लंघन करने के लिए इसका उपयोग कर सकते हैं."</string>
+    <string name="permlab_setDebugApp" msgid="3022107198686584052">"ऐप्स डीबग करना सक्षम करें"</string>
+    <string name="permdesc_setDebugApp" msgid="4474512416299013256">"ऐप्स  को अन्य ऐप्स  के लिए डीबग किया जाना चालू करने देता है. दुर्भावनापूर्ण ऐप्स  इसका उपयोग अन्य ऐप्स  को समाप्त करने के लिए कर सकते हैं."</string>
+    <string name="permlab_changeConfiguration" msgid="4162092185124234480">"सिस्‍टम प्रदर्शन सेटिंग बदलें"</string>
+    <string name="permdesc_changeConfiguration" msgid="4372223873154296076">"ऐप्स  को वर्तमान कॉन्फ़िगरेशन, जैसे स्थान या समग्र अक्षरों का आकार, बदलने देता है."</string>
+    <string name="permlab_dump" msgid="1681799862438954752">"सिस्‍टम की आंतरिक स्‍थिति पुनर्प्राप्त करें"</string>
+    <string name="permdesc_dump" msgid="1778299088692290329">"ऐप्स को सिस्‍टम की आंतरिक स्‍थिति पुनर्प्राप्त करने देता है. दुर्भावनापूर्ण ऐप्स विभिन्‍न प्रकार की निजी और सुरक्षा जानकारी प्राप्त कर सकते हैं जिनकी उन्‍हें सामान्‍यत: आवश्‍यकता नहीं होती."</string>
+    <string name="permlab_setProcessLimit" msgid="2451873664363662666">"चल रही प्रक्रियाओं की संख्‍या सीमित करें"</string>
+    <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"ऐप्स  को चलाई जाने वाली अधिकतम प्रक्रियाओं को नियंत्रित करने देता है. सामान्य ऐप्स  के लिए कभी आवश्यक नहीं होती."</string>
+    <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"पृष्ठभूमि ऐप्स को बलपूर्वक बंद करें"</string>
+    <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"ऐप्स  को यह नियंत्रित करने देता है कि पृष्ठभूमि में जाते ही गतिविधियां पूर्ण हो जाती है या नही. सामान्य ऐप्स  के लिए कभी आवश्यकता नहीं होती."</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"बैटरी के आंकड़े पढ़ें"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"ऐप्स  को वर्तमान निम्न-स्तरीय बैटरी उपयोग डेटा पढ़ने देती है. ऐप्स  को आपके द्वारा उपयोग किए जाने वाले ऐप्स  के बारे में विस्तृत जानकारी ढूंढने दे सकती है."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"ऐप्स  संचालन आंकड़े प्राप्त करें"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"ऐप्स  को संकलित ऐप्स  संचालन आंकड़े प्राप्त करने देता है. सामान्य ऐप्स  के द्वारा उपयोग के लिए नहीं."</string>
+    <string name="permlab_setAnimationScale" msgid="2805103241153907174">"वैश्विक एनिमेशन गति बदलें"</string>
+    <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"ऐप्स को किसी भी समय वैश्विक एनिमेशन गति (तेज़ या धीमे एनिमेशन) बदलने देता है."</string>
+    <string name="permlab_signalPersistentProcesses" msgid="4539002991947376659">"ऐप्स  को Linux सिग्नल भेजें"</string>
+    <string name="permdesc_signalPersistentProcesses" msgid="4896992079182649141">"ऐप्स को यह अनुरोध करने देता है कि दिया गया सिग्नल सभी जारी प्रक्रियाओं को भेजा जाए."</string>
+    <string name="permlab_readLogs" msgid="6615778543198967614">"संवेदनशील लॉग डेटा पढ़ें"</string>
+    <string name="permdesc_readLogs" product="default" msgid="2063438140241560443">"ऐप्स को सिस्‍टम की विभिन्‍न लॉग फ़ाइलें पढ़ने देता है. संभावित रूप से व्यक्तिगत या निजी जानकारी सहित, यह इसे इस बारे में सामान्य जानकारी खोजने देता है कि आप फ़ोन से क्‍या कर रहे हैं."</string>
+    <string name="permlab_writeSecureSettings" msgid="204676251876718288">"सुरक्षित सिस्‍टम सेटिंग बदलें"</string>
+    <string name="permdesc_writeSecureSettings" msgid="8159535613020137391">"ऐप्स  को सिस्टम के सुरक्षित सेटिंग डेटा को संशोधित करने देता है. सामान्‍य ऐप्स द्वारा उपयोग करने के लिए नहीं."</string>
+</resources>
