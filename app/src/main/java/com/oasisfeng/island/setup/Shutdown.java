@@ -15,6 +15,7 @@ import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
@@ -58,7 +59,7 @@ public class Shutdown {
 	}
 
 	public static void requestProfileRemoval(final Activity activity) {
-		final Optional<Boolean> is_profile_owner = IslandManager.isProfileOwner(activity);
+		final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(activity);
 		if (is_profile_owner == null || ! is_profile_owner.orElse(Boolean.FALSE)) {
 			showPromptForProfileManualRemoval(activity);
 			return;

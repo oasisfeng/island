@@ -20,6 +20,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.util.DeviceAdmins;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
@@ -71,7 +72,7 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		final Optional<Boolean> is_profile_owner = IslandManager.isProfileOwner(this, profile);
+		final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(this, profile);
 		if (is_profile_owner == null) { 	// Profile owner cannot be detected, the best bet is to continue to the main UI.
 			startMainUi(savedInstanceState);
 		} else if (! is_profile_owner.isPresent()) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
