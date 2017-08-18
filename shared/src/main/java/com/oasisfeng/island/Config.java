@@ -18,7 +18,8 @@ public enum Config {
 	/* All keys must be consistent with config_defaults.xml */
 	IS_REMOTE("is_remote"),
 	URL_FAQ("url_faq"),
-	URL_SETUP("url_setup");
+	URL_SETUP("url_setup"),
+	PERMISSION_REQUEST_ALLOWED_APPS("permission_allowed_apps");
 
 	public String get() {
 		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();

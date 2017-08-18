@@ -8,4 +8,8 @@
         <key>url_setup</key>
         <value>https://oasisfeng.github.com/island/setup</value>
     </entry>
+    <entry>
+        <key>permission_allowed_apps</key>
+        <value>com.oasisfeng.greenify,com.oasisfeng.nevo</value>
+    </entry>
 </defaultsMap>
