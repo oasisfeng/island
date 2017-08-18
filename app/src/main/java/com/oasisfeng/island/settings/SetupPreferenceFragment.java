@@ -63,10 +63,10 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 		}
 
 		final ActionButtonPreference pref_island = (ActionButtonPreference) findPreference(getString(R.string.key_setup_island));
-		final UserHandle profile = IslandManager.getManagedProfile(activity);
+		final UserHandle profile = DevicePolicies.getManagedProfile(activity);
 		final int disabled_profile;
 		if (profile != null) {
-			final Optional<Boolean> is_profile_owner = IslandManager.isProfileOwner(activity);
+			final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(activity);
 			if (is_profile_owner == null)
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_unknown, R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
 			else if (is_profile_owner.get()) {    // Normal (managed by Island)
@@ -91,7 +91,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed_other,
 					R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
 		} else if (SDK_INT >= N && (disabled_profile = IslandManager.getManagedProfileIdIncludingDisabled(activity)) != 0) {
-			final Optional<ComponentName> profile_owner_result = IslandManager.getProfileOwner(activity, disabled_profile);
+			final Optional<ComponentName> profile_owner_result = DevicePolicies.getProfileOwnerAsUser(activity, disabled_profile);
 			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
 						R.drawable.ic_build_black_24dp, preference -> startSetupActivity());

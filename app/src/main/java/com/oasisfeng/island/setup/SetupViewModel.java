@@ -27,6 +27,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.DeviceAdmins;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 
@@ -75,10 +76,10 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
 
 		// Check for incomplete provisioning.
-		if (SDK_INT >= N && IslandManager.getManagedProfile(activity) == null) {
+		if (SDK_INT >= N && DevicePolicies.getManagedProfile(activity) == null) {
 			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(activity);
 			if (profile_id != 0) {
-				final Optional<ComponentName> profile_owner_result = IslandManager.getProfileOwner(activity, profile_id);
+				final Optional<ComponentName> profile_owner_result = DevicePolicies.getProfileOwnerAsUser(activity, profile_id);
 				if (profile_owner_result != null && profile_owner_result.isPresent()) {
 					final ComponentName profile_owner = profile_owner_result.get();
 					if (! activity.getPackageName().equals(profile_owner.getPackageName())) {
