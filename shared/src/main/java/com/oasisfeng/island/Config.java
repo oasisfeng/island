@@ -15,10 +15,16 @@ import com.oasisfeng.pattern.GlobalContextProvider;
 public enum Config {
 
 	/* All keys must be consistent with config_defaults.xml */
+	IS_REMOTE("is_remote"),
 	URL_FAQ("url_faq"),
 	URL_SETUP("url_setup");
 
-	public String get() { return FirebaseRemoteConfig.getInstance().getString(key); }
+	public String get() {
+		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
+		config.activateFetched();
+		return config.getString(key);
+	}
+
 	Config(final String key) { this.key = key; }
 
 	private final String key;
@@ -29,5 +35,6 @@ public enum Config {
 		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
 		config.setConfigSettings(settings);
 		config.setDefaults(R.xml.config_defaults);
+		config.fetch();
 	}
 }
