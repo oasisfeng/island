@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 
 import com.android.packageinstaller.permission.ui.GrantPermissionsActivity;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.oasisfeng.island.Config;
 import com.oasisfeng.island.permission.mirror.PackageManager;
 
 import java.util.ArrayList;
@@ -23,7 +26,9 @@ import static android.os.Build.VERSION_CODES.M;
 public class PermissionRequestActivity extends GrantPermissionsActivity {
 
 	@Override public void onCreate(final Bundle icicle) {
-		if (! PermissionRequestSetup.setup(this))
+		final String caller;
+		if (! PermissionRequestSetup.setup(this) || (caller = getCallingPackage()) != null	// The case "caller == null" is handled in super.onCreate()
+				&& ! Iterables.contains(Splitter.on(',').split(Config.PERMISSION_REQUEST_ALLOWED_APPS.get()), caller))
 			getIntent().removeExtra(PackageManager.EXTRA_REQUEST_PERMISSIONS_NAMES);    // Make super.onCreate() finish immediately.
 		super.onCreate(icicle);
 	}
