@@ -3,6 +3,7 @@ package com.oasisfeng.island;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigValue;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shared.R;
 import com.oasisfeng.pattern.GlobalContextProvider;
@@ -23,6 +24,13 @@ public enum Config {
 		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
 		config.activateFetched();
 		return config.getString(key);
+	}
+
+	public static boolean isRemote() {
+		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
+		config.activateFetched();
+		final FirebaseRemoteConfigValue value = config.getValue(IS_REMOTE.key);
+		return value.getSource() == FirebaseRemoteConfig.VALUE_SOURCE_REMOTE;
 	}
 
 	Config(final String key) { this.key = key; }

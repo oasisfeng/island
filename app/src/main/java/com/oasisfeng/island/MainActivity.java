@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
 
 		if (Analytics.$().setProperty("device_owner", island.isDeviceOwner())) {	// As device owner, always show main UI.
 			startMainUi(savedInstanceState);
+			new Thread(() -> Analytics.$().setProperty("remote_config_avail", Config.isRemote())).start();	// Track
 			return;
 		}
 
