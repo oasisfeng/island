@@ -6,7 +6,6 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 26
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
@@ -27,7 +26,7 @@ android {
 
 dependencies {
     implementation project(':shared')
-    implementation 'com.google.firebase:firebase-perf:11.0.4'
+    implementation 'com.google.firebase:firebase-perf:11.2.0'
 
     androidTestImplementation('com.android.support.test:runner:0.5') {
         exclude group: 'com.android.support', module: 'support-annotations'
