@@ -13,6 +13,7 @@ import android.databinding.Bindable;
 import android.databinding.Observable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -24,6 +25,7 @@ import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -70,6 +72,7 @@ import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
  */
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
+	private static final long QUERY_TEXT_DELAY = 500;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
 
 	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
@@ -109,22 +112,33 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mFilterPrimaryChoice = Math.min(index, mFilterPrimaryOptions.size() - 1);
 		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(mFilterPrimaryChoice));
 		updateActiveFilters();
-		rebuildAppViewModels();
 		notifyPropertyChanged(BR.filterPrimaryChoice);
 	}
 
 	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
 		mFilterIncludeSystemApps = should_include;
 		updateActiveFilters();
-		rebuildAppViewModels();
+	}
+
+	public void onQueryTextChange(final String text) {
+		mHandler.removeCallbacks(mQueryTextDelayer);
+		mFilterText = text;
+		if (TextUtils.isEmpty(text)) mQueryTextDelayer.run();
+		else mHandler.postDelayed(mQueryTextDelayer, QUERY_TEXT_DELAY);		// A short delay to avoid flickering during typing.
+	}
+	private final Runnable mQueryTextDelayer = this::updateActiveFilters;
+
+	private boolean matchQueryText(final IslandAppInfo app) {
+		final String text_lc = mFilterText.toLowerCase();
+		return app.packageName.toLowerCase().contains(text_lc) || app.getLabel().toLowerCase().contains(text_lc);	// TODO: Support T9 Pinyin
 	}
 
 	private void updateActiveFilters() {
-		final Predicate<IslandAppInfo> primary_with_shared = mFilterShared.and(mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		mActiveFilters = mFilterIncludeSystemApps ? primary_with_shared : primary_with_shared.and(NON_HIDDEN_SYSTEM);
-	}
+		Predicate<IslandAppInfo> filter = mFilterShared.and(mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
+		if (mFilterIncludeSystemApps) filter = filter.and(NON_HIDDEN_SYSTEM);
+		if (! TextUtils.isEmpty(mFilterText)) filter = filter.and(this::matchQueryText);
+		mActiveFilters = filter;
 
-	private void rebuildAppViewModels() {
 		clearSelection();
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final List<AppViewModel> apps = provider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
@@ -491,18 +505,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	/* Attachable fields */
 	private Activity mActivity;
-	private IIslandManager mOwnerController;
 	private Menu mActions;
-	private List<Filter.Entry> mFilterPrimaryOptions;
-	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
+	private IIslandManager mOwnerController;
+	public IIslandManager mProfileController;
 	/* Parcelable fields */
 	private int mFilterPrimaryChoice;
 	private boolean mFilterIncludeSystemApps;
 	/* Transient fields */
-	public transient IIslandManager mProfileController;
-	private transient boolean mDeviceOwner;
-	private transient Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
-	private transient boolean mGreenifyAvailable;
+	private List<Filter.Entry> mFilterPrimaryOptions;
+	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
+	private String mFilterText;
+	private boolean mDeviceOwner;
+	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
+	private boolean mGreenifyAvailable;
+	private final Handler mHandler = new Handler();
 
 	private static final String TAG = "Island.Apps";
 }
