@@ -56,6 +56,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="button_enable_clone">Enable clone</string>
 
     <string name="menu_tip">Tip…</string>
+    <string name="menu_search">Search</string>
     <string name="menu_show_hidden_sys_apps">Show hidden system apps</string>
     <string name="menu_settings">Settings</string>
 

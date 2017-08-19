@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.oasisfeng.android.service.Services;
@@ -161,9 +162,31 @@ public class AppListFragment extends Fragment {
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
+		menu.findItem(R.id.menu_search).setOnActionExpandListener(mOnActionExpandListener);
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
+
+	private final MenuItem.OnActionExpandListener mOnActionExpandListener = new MenuItem.OnActionExpandListener() {
+
+		@Override public boolean onMenuItemActionExpand(final MenuItem item) {
+			final View action_view = item.getActionView();
+			if (action_view instanceof SearchView) ((SearchView) action_view).setOnQueryTextListener(mOnQueryTextListener);
+			return true;
+		}
+
+		@Override public boolean onMenuItemActionCollapse(final MenuItem item) { return true; }
+	};
+
+	private final SearchView.OnQueryTextListener mOnQueryTextListener = new SearchView.OnQueryTextListener() {
+
+		@Override public boolean onQueryTextChange(final String text) {
+			mViewModel.onQueryTextChange(text);
+			return true;
+		}
+
+		@Override public boolean onQueryTextSubmit(final String query) { return true; }
+	};
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
 		final int id = item.getItemId();
