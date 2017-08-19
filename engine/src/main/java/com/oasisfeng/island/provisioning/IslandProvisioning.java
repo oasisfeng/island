@@ -35,6 +35,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Set;
 
+import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
@@ -92,8 +93,11 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@ProfileUser @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
 		final DevicePolicies policies = new DevicePolicies(this);
-		// Grant INTERACT_ACROSS_USERS permission as early as possible, since we may require it in the following provision procedure.
-		if (SDK_INT >= M) policies.setPermissionGrantState(getPackageName(), INTERACT_ACROSS_USERS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);	// Dev permission is always granted for all users.
+		// Grant INTERACT_ACROSS_USERS & WRITE_SECURE_SETTINGS permission early, since they may be required in the following provision procedure.
+		if (SDK_INT >= M) {		// Dev permission is always granted for all users.
+			policies.setPermissionGrantState(getPackageName(), INTERACT_ACROSS_USERS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+			policies.setPermissionGrantState(getPackageName(), WRITE_SECURE_SETTINGS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+		}
 
 		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			startDeviceOwnerPostProvisioning(policies);
