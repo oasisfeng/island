@@ -135,7 +135,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void updateActiveFilters() {
 		Predicate<IslandAppInfo> filter = mFilterShared.and(mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		if (mFilterIncludeSystemApps) filter = filter.and(NON_HIDDEN_SYSTEM);
+		if (! mFilterIncludeSystemApps) filter = filter.and(NON_HIDDEN_SYSTEM);
 		if (! TextUtils.isEmpty(mFilterText)) filter = filter.and(this::matchQueryText);
 		mActiveFilters = filter;
 
