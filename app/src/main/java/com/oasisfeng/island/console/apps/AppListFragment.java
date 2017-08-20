@@ -106,11 +106,9 @@ public class AppListFragment extends Fragment {
 		}
 	};
 
-	private final Observable.OnPropertyChangedCallback onPropertyChangedCallback = new Observable.OnPropertyChangedCallback() {
-		@Override public void onPropertyChanged(final Observable observable, final int var) {
-			if (var == BR.selection) invalidateOptionsMenu();
-		}
-	};
+	private final Observable.OnPropertyChangedCallback onPropertyChangedCallback = new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable observable, final int var) {
+		if (var == BR.selection) invalidateOptionsMenu();
+	}};
 
 	private void invalidateOptionsMenu() {
 		final Activity activity = getActivity();
@@ -162,7 +160,7 @@ public class AppListFragment extends Fragment {
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
-		menu.findItem(R.id.menu_search).setOnActionExpandListener(mOnActionExpandListener);
+		menu.findItem(R.id.menu_search).setVisible(mViewModel.getSelection() == null).setOnActionExpandListener(mOnActionExpandListener);
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
