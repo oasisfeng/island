@@ -114,6 +114,7 @@ public class SetupViewModel implements Parcelable {
 
 					@Override protected void onPostExecute(final Void ignored) {
 						if (encryption_required && ! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
+						if (fragment.getActivity() == null) return;
 						startManagedProvisioning(fragment);
 					}
 				}.execute();
