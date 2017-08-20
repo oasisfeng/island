@@ -21,7 +21,7 @@
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
 
-        <activity android:name="com.oasisfeng.island.MainActivity">
+        <activity android:name="com.oasisfeng.island.MainActivity" android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
