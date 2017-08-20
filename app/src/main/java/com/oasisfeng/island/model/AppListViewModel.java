@@ -235,7 +235,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		} catch (final RemoteException ignored) {}
 	}
 
-	public boolean onActionClick(final MenuItem item) {
+	public boolean onActionClick(final Context context, final MenuItem item) {
 		final AppViewModel selection = getSelection();
 		if (selection == null) return false;
 		final IslandAppInfo app = selection.info();
@@ -244,7 +244,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 		final int id = item.getItemId();
 		if (id == R.id.menu_clone) {
-			cloneApp(app);
+			cloneApp(context, app);
 			clearSelection();
 		} else if (id == R.id.menu_clone_back) {
 			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
@@ -380,7 +380,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, Users.profile, false);
 	}
 
-	private void cloneApp(final IslandAppInfo app) {
+	private void cloneApp(final Context context, final IslandAppInfo app) {
 		final int check_result;
 		final String pkg = app.packageName;
 		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, Users.profile);
@@ -404,8 +404,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
 			if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
 				try {
-					if (mProfileController.unfreezeApp(pkg))
+					if (mProfileController.unfreezeApp(pkg)) {
 						app.stopTreatingHiddenSysAppAsDisabled();
+						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+					}
 				} catch (final RemoteException ignored) {}    	// FIXME: Error message
 			} else Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
@@ -416,32 +418,33 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
 			Analytics.$().event("clone_sys").with(Analytics.Param.ITEM_ID, pkg).send();
-			doCloneApp(pkg);
+			doCloneApp(context, app);
 			break;
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
 			Analytics.$().event("clone_install").with(Analytics.Param.ITEM_ID, pkg).send();
-			showExplanationBeforeCloning("clone-via-install-explained", R.string.dialog_clone_via_install_explanation, pkg);
+			showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
 			break;
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
 			Analytics.$().event("clone_app").with(Analytics.Param.ITEM_ID, pkg).send();
-			showExplanationBeforeCloning("clone-via-google-play-explained", R.string.dialog_clone_via_google_play_explanation, pkg);
+			showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
 			break;
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
 			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			final ActivityInfo market_info = market_intent.resolveActivityInfo(mActivity.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
 			if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
 				Analytics.$().setProperty("sys_market", market_info.packageName);
-			showExplanationBeforeCloning("clone-via-sys-market-explained", R.string.dialog_clone_via_sys_market_explanation, pkg);
+			showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
 			break;
 		}
 	}
 
-	private void doCloneApp(final String pkg) {
+	private void doCloneApp(final Context context, final IslandAppInfo app) {
 		final int result; try {
-			result = mProfileController.cloneApp(pkg, true);
+			result = mProfileController.cloneApp(app.packageName, true);
 		} catch (final RemoteException ignored) { return; }	// FIXME: Error message
 		switch (result) {
-		case IslandManager.CLONE_RESULT_OK_SYS_APP:
+		case IslandManager.CLONE_RESULT_OK_SYS_APP:		// Need visual feedback since the just finished procedure is completely silent.
+			Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
@@ -453,13 +456,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		}
 	}
 
-	private void showExplanationBeforeCloning(final String mark, final @StringRes int explanation, final String pkg) {
+	private void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
 		if (! Scopes.app(mActivity).isMarked(mark)) {
 			Dialogs.buildAlert(mActivity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 				Scopes.app(mActivity).mark(mark);
-				doCloneApp(pkg);
+				doCloneApp(context, app);
 			}).show();
-		} else doCloneApp(pkg);
+		} else doCloneApp(context, app);
 	}
 
 	public final void onItemClick(final AppViewModel clicked) {

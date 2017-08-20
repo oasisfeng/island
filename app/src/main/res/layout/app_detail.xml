@@ -41,7 +41,7 @@
             android:title="@{apps.selection.info.label}"
             tools:title="Island"
             bind:menu="@{apps.actions_menu}"
-            android:onMenuItemClick="@{apps::onActionClick}"
+            android:onMenuItemClick="@{item -> apps.onActionClick(context, item)}"
             android:prompt="@{guide.prompt_action}"/>
 
         <TextView

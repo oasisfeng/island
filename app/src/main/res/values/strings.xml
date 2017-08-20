@@ -95,6 +95,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
 
     <string name="toast_done">Done</string>
     <string name="toast_setup_completed_and_wait">Setup is complete, please wait for the Island to start.</string>
+    <string name="toast_successfully_cloned">%1$s is successfully cloned.</string>
     <string name="toast_already_cloned">Already cloned</string>
     <string name="toast_shortcut_created">Shortcut created on launcher</string>
     <string name="toast_shortcut_failed">Failed to create the shortcut</string>
