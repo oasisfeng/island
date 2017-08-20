@@ -31,7 +31,7 @@ public class DeviceAdmins {
 		try {
 			final List<ResolveInfo> admins = context.getPackageManager().queryBroadcastReceivers(
 					new Intent(DeviceAdminReceiver.ACTION_DEVICE_ADMIN_ENABLED).setPackage(Modules.MODULE_ENGINE), 0);
-			if (admins.size() != 1) throw new IllegalStateException("Engine module is not correctly installed.");
+			if (admins.size() != 1) throw new IllegalStateException("Engine module is not correctly installed: " + admins);
 			return sDeviceAdminComponent = new ComponentName(Modules.MODULE_ENGINE, admins.get(0).activityInfo.name);
 		} catch (final SecurityException e) {
 			Analytics.$().report(e);
