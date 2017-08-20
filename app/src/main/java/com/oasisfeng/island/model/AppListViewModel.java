@@ -72,7 +72,7 @@ import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
  */
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
-	private static final long QUERY_TEXT_DELAY = 500;	// The delay before typed query text is applied
+	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
 
 	private static final Predicate<IslandAppInfo> NON_HIDDEN_SYSTEM = app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable();
@@ -121,6 +121,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public void onQueryTextChange(final String text) {
+		if (TextUtils.equals(text, mFilterText)) return;
+
 		mHandler.removeCallbacks(mQueryTextDelayer);
 		mFilterText = text;
 		if (TextUtils.isEmpty(text)) mQueryTextDelayer.run();
@@ -139,10 +141,18 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		if (! TextUtils.isEmpty(mFilterText)) filter = filter.and(this::matchQueryText);
 		mActiveFilters = filter;
 
+		final AppViewModel selected = getSelection();
 		clearSelection();
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
 		final List<AppViewModel> apps = provider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		replaceApps(apps);
+
+		if (selected != null) for (final AppViewModel app : apps)
+			if (app.info().packageName.equals(selected.info().packageName)) {
+				setSelection(app);
+				break;
+			}
+
 		final IslandAppInfo greenify = provider.get(GreenifyClient.getGreenifyPackage(provider.getContext()));
 		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
