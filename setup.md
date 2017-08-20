@@ -42,7 +42,7 @@ Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminRecei
 
 - `am start-user <user id>`
 
-- Start Island app
+- ~~Start Island app~~ (No longer required since Island v2.2, which will start automatically.)
 
 If all goes well, Island will show the app list.
 
