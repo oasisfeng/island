@@ -198,8 +198,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(in_owner && profile != null && exclusive);
 		mActions.findItem(R.id.menu_clone_back).setVisible(! in_owner && exclusive);
-		mActions.findItem(R.id.menu_remove).setVisible(! exclusive && (! app.isSystem() || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
-		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! app.isSystem());
+		final boolean system = app.isSystem();
+		mActions.findItem(R.id.menu_remove).setVisible(exclusive ? system : (! system || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
+		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
 		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled)
 				.setShowAsActionFlags(mGreenifyAvailable ? SHOW_AS_ACTION_ALWAYS : SHOW_AS_ACTION_NEVER);
