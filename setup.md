@@ -35,14 +35,10 @@ If you get "file not found" error, use "-2" instead of "-1" in above command and
 
 If it does not work, you may need to execute `am start-user <user-id>` first and try again then.
 
-- Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`  
+- Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver` 
 Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
 
-- `pm grant com.oasisfeng.island android.permission.INTERACT_ACROSS_USERS`
-
 - `am start-user <user id>`
-
-- ~~Start Island app~~ (No longer required since Island v2.2, which will start automatically.)
 
 If all goes well, Island will show the app list.
 
