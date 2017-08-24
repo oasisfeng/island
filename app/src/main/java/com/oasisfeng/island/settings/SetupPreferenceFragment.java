@@ -1,6 +1,7 @@
 package com.oasisfeng.island.settings;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -26,11 +27,14 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.settings.ActionButtonPreference;
 
+import java.util.List;
+
 import java8.util.Optional;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.O;
 
 /**
  * Settings - Setup
@@ -95,7 +99,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
 						R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
-		} else if (SDK_INT >= M && isDeviceManaged(activity)) {        // ManagedProvisioning refuses to create managed profile on managed device, since Android 6.0.
+		} else if (SDK_INT >= M && SDK_INT < O && isDeviceManaged(activity)) {	// ManagedProvisioning refuses to create managed profile on managed device (Android 6.x ~ 7.x).
 			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_not_setup,
 					R.drawable.ic_open_in_browser_black_24dp, preference -> showOnlineSetupGuide());
 		} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup,
@@ -126,6 +130,11 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 	}
 
 	private boolean startSetupActivity() {
+		// Finish all tasks of Island first to avoid state inconsistency.
+		final ActivityManager am = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+		final List<ActivityManager.AppTask> tasks = am.getAppTasks();
+		if (tasks != null) for (final ActivityManager.AppTask task : tasks) task.finishAndRemoveTask();
+
 		Activities.startActivity(getActivity(), new Intent(getActivity(), SetupActivity.class));
 		return true;
 	}
