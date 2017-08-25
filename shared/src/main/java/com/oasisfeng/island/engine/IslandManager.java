@@ -15,7 +15,6 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
-import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.lang.reflect.Proxy;
@@ -60,15 +59,6 @@ public class IslandManager {
 		try {
 			mDevicePolicies.removeActiveAdmin();			// Since Android 7.1, clearDeviceOwnerApp() itself does remove active device-admin,
 		} catch (final SecurityException ignored) {}		//   thus SecurityException will be thrown here.
-	}
-
-	public boolean isDeviceOwner() {
-		return mDevicePolicies.getManager().isDeviceOwnerApp(Modules.MODULE_ENGINE);
-	}
-
-	public boolean isProfileOwnerActive() {
-		if (Users.isOwner(Process.myUserHandle())) throw new IllegalStateException("Must not be called in owner user");
-		return mDevicePolicies.isAdminActive();
 	}
 
 	/** @return profile ID, or 0 if none */

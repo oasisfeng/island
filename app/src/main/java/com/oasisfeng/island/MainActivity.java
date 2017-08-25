@@ -36,9 +36,9 @@ public class MainActivity extends Activity {
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		final IslandManager island = new IslandManager(this);
+		final DevicePolicies policies = new DevicePolicies(this);
 		if (Users.isProfile()) {	// Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
-			if (! island.isProfileOwnerActive()) {
+			if (! policies.isAdminActive()) {
 				Analytics.$().event("inactive_device_admin").send();
 				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(this))
@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		if (Analytics.$().setProperty("device_owner", island.isDeviceOwner())) {	// As device owner, always show main UI.
+		if (Analytics.$().setProperty("device_owner", policies.isDeviceOwner())) {	// As device owner, always show main UI.
 			startMainUi(savedInstanceState);
 			new Thread(() -> Analytics.$().setProperty("remote_config_avail", Config.isRemote())).start();	// Track
 			return;

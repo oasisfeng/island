@@ -79,7 +79,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public boolean launchApp(final String pkg) {
-		if (! Users.isOwner() || new IslandManager(mContext).isDeviceOwner()) {
+		if (! Users.isOwner() || new DevicePolicies(mContext).isDeviceOwner()) {
 			if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
 				if (! mDevicePolicies.setApplicationHidden(pkg, false))
 					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.

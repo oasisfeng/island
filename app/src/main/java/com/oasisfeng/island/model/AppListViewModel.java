@@ -50,6 +50,7 @@ import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
@@ -166,7 +167,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void attach(final Activity activity, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
-		mDeviceOwner = new IslandManager(activity).isDeviceOwner();
+		mDeviceOwner = new DevicePolicies(activity).isDeviceOwner();
 		layout_manager = new LinearLayoutManager(activity);
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
