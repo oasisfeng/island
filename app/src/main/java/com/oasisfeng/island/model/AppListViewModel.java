@@ -328,7 +328,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			final int button = ! greenify_installed ? R.string.dialog_button_install : ! greenify_ready ? R.string.dialog_button_upgrade : R.string.dialog_button_continue;
 			new AlertDialog.Builder(mActivity).setTitle(R.string.dialog_greenify_title).setMessage(message).setPositiveButton(button, (d, w) -> {
 				if (! unavailable_or_version_too_low) {
-					Scopes.app(mActivity).mark(mark);
+					Scopes.app(mActivity).markOnly(mark);
 					greenify(app);
 				} else GreenifyClient.openInAppMarket(mActivity);
 			}).show();
@@ -460,7 +460,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
 		if (! Scopes.app(mActivity).isMarked(mark)) {
 			Dialogs.buildAlert(mActivity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-				Scopes.app(mActivity).mark(mark);
+				Scopes.app(mActivity).markOnly(mark);
 				doCloneApp(context, app);
 			}).show();
 		} else doCloneApp(context, app);

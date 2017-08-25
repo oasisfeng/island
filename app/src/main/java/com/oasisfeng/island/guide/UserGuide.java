@@ -67,7 +67,7 @@ public class UserGuide {
 	private MaterialTapTargetPrompt.PromptStateChangeListener onHide(final String scope_key) {
 		return (prompt, state) -> {
 			if (state == MaterialTapTargetPrompt.STATE_FINISHED) {
-				mAppScope.mark(scope_key);
+				mAppScope.markOnly(scope_key);
 				mActivity.invalidateOptionsMenu();
 			}
 		};
@@ -104,7 +104,7 @@ public class UserGuide {
 				final AppListViewModel vm = (AppListViewModel) sender;
 				final Filter filter = vm.getFilterPrimaryOptions().get(vm.getFilterPrimaryChoice()).parent();
 				if (guide.mFilter != null && filter != guide.mFilter) {
-					scope.mark(SCOPE_KEY_TIP_FILTER);				// User just switched filter, no need to show tip for filter switching.
+					scope.markOnly(SCOPE_KEY_TIP_FILTER);				// User just switched filter, no need to show tip for filter switching.
 					activity.invalidateOptionsMenu();
 					if (! UserGuide.anyActionTipPending(scope))
 						vm.removeOnPropertyChangedCallback(this);	// No need to monitor filter or selection any more.
@@ -119,9 +119,9 @@ public class UserGuide {
 					if (apps.size() != 1) return;		// Batch update is never triggered by user interaction.
 					final IslandAppInfo app = apps.iterator().next();
 					if (app.isHidden())
-						scope.mark(SCOPE_KEY_TIP_FREEZE);			// User just froze an app, no need to show tip for app freezing.
+						scope.markOnly(SCOPE_KEY_TIP_FREEZE);		// User just froze an app, no need to show tip for app freezing.
 					else if (Users.isProfile(app.user) && app.getLastInfo() == null)
-						scope.mark(SCOPE_KEY_TIP_CLONE);			// User just cloned an app, no need to show tip for app cloning.
+						scope.markOnly(SCOPE_KEY_TIP_CLONE);		// User just cloned an app, no need to show tip for app cloning.
 					if (scope.isMarked(SCOPE_KEY_TIP_FREEZE) && scope.isMarked(SCOPE_KEY_TIP_CLONE))
 						provider.unregisterObserver(this);			// No more interest for package events.
 				}
