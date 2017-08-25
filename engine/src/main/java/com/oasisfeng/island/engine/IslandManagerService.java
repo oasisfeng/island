@@ -19,6 +19,7 @@ import android.os.StrictMode;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
@@ -41,6 +42,7 @@ import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 
 /**
@@ -84,7 +86,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 				if (! mDevicePolicies.setApplicationHidden(pkg, false))
 					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
 			}
-			try {
+			if (SDK_INT >= N) try {
 				if (mDevicePolicies.isPackageSuspended(pkg))
 					mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
 			} catch (final PackageManager.NameNotFoundException ignored) {
@@ -175,12 +177,12 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
-	@Override public boolean block(final String pkg) {
+	@RequiresApi(N) @Override public boolean block(final String pkg) {
 		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, true);
 		return failed == null || failed.length == 0;
 	}
 
-	@Override public boolean unblock(final String pkg) {
+	@RequiresApi(N) @Override public boolean unblock(final String pkg) {
 		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
 		return failed == null || failed.length == 0;
 	}
