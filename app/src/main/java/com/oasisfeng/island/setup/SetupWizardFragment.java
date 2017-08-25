@@ -21,8 +21,6 @@ import com.oasisfeng.island.mobile.databinding.SetupWizardBinding;
  */
 public class SetupWizardFragment extends Fragment implements NavigationBar.NavigationBarListener {
 
-	// Tag for creating this fragment. This tag can be used to retrieve this fragment.
-	public static final String FRAGMENT_TAG = "SetupManagementFragment";
 	private static final String EXTRA_VIEW_MODEL = "vm";
 
 	@Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
@@ -31,8 +29,10 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 		} else {
 			final Bundle args = getArguments();
 			final SetupViewModel vm = args != null ? args.getParcelable(null) : null;
-			mViewModel = vm != null ? vm : new SetupViewModel();	// Initial view - "Welcome"
-			mViewModel.button_next = R.string.setup_accept;			// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
+			if (vm == null) {
+				mViewModel = new SetupViewModel();    			// Initial view - "Welcome"
+				mViewModel.button_next = R.string.setup_accept;	// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
+			} else mViewModel = vm;
 		}
 
 		mContainerViewId = container.getId();
