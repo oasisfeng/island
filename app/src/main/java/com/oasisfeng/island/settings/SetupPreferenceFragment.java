@@ -99,18 +99,29 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
 						R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
-		} else if (SDK_INT >= M && SDK_INT < O && isDeviceManaged(activity)) {	// ManagedProvisioning refuses to create managed profile on managed device (Android 6.x ~ 7.x).
+		} else if (isManagedProvisioningAllowedForProfile(activity)) {
 			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_not_setup,
 					R.drawable.ic_open_in_browser_black_24dp, preference -> showOnlineSetupGuide());
 		} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup,
 				R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
 	}
 
-	private boolean isDeviceManaged(final Activity activity) {
+	/**
+	 * Android L:		Always allowed
+	 * Android M & N:	Disallowed on managed device.
+	 * Android O+:		Allowed if isProvisioningAllowed()
+	 */
+	private static boolean isManagedProvisioningAllowedForProfile(final Context context) {
+		if (SDK_INT < M) return true;
+		final DevicePolicies policies = new DevicePolicies(context);
+		return ! isDeviceManaged(policies)
+				|| SDK_INT >= O && ! policies.getManager().isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
+	}
+
+	private static boolean isDeviceManaged(final DevicePolicies policies) {
 		if (! Hacks.DevicePolicyManager_getDeviceOwner.isAbsent()) {
-			final DevicePolicyManager dpm = (DevicePolicyManager) activity.getSystemService(Context.DEVICE_POLICY_SERVICE);
-			return Hacks.DevicePolicyManager_getDeviceOwner.invoke().on(dpm) != null;
-		} else if (new IslandManager(getActivity()).isDeviceOwner()) return true;        // Fall-back check, only if we are the device owner.
+			return Hacks.DevicePolicyManager_getDeviceOwner.invoke().on(policies.getManager()) != null;
+		} else if (policies.isDeviceOwner()) return true;        // Fall-back check, only if we are the device owner.
 		return false;
 	}
 
