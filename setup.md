@@ -40,8 +40,9 @@ Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminRecei
 
 - `am start-user <user id>`
 
-If all goes well, Island will show the app list.
+- Android 5.0.x only (not required on Android 5.1+): `settings --user 10 put secure install_non_market_apps 1`
 
+If all goes well, Island will show the app list.
 
 Manual setup for Island in experimental "God mode"
 --------------------------------------------------
