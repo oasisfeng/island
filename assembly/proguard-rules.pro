@@ -16,6 +16,9 @@
 #   public *;
 #}
 
+# For Android Desugar
+-dontwarn com.google.devtools.build.android.desugar.runtime.ThrowableExtension
+
 # Temp rules for Project Condom
 -dontwarn android.content.pm.PackageManager$**
 -dontwarn android.content.pm.IPackageDeleteObserver
