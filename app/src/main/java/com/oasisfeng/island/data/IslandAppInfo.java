@@ -51,7 +51,7 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	public void stopTreatingHiddenSysAppAsDisabled() {
-		((IslandAppListProvider) mProvider).setHiddenSysAppCloned(packageName);
+		if (isSystem()) ((IslandAppListProvider) mProvider).setHiddenSysAppCloned(packageName);
 	}
 
 	public boolean isHidden() {

@@ -13,7 +13,6 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.os.UserManager;
@@ -41,6 +40,7 @@ import java8.util.stream.StreamSupport;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
@@ -137,7 +137,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 			if (SDK_INT >= O) intent.setData(Uri.fromFile(new File(apk_path)));
 			enableSystemAppForActivity(intent);				// Ensure package installer is enabled.
 			if (do_it) {
-				if (SDK_INT >= O) {
+				if (SDK_INT >= O) {		// Workaround to suppress FileUriExposedException.
 					final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();
 					StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
 					mContext.startActivity(intent);
@@ -168,10 +168,9 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	private boolean ensureInstallNonMarketAppAllowed() {
-		if (SDK_INT >= O) return true;		// INSTALL_NON_MARKET_APPS is no longer supported and not required on Android O.
+		if (SDK_INT >= O) return true;				// INSTALL_NON_MARKET_APPS is no longer supported and not required on Android O.
 		if (Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0) return true;
-		// We cannot directly enable this secure setting on Android 5.0.x.
-		if (SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return false;
+		if (SDK_INT < LOLLIPOP_MR1) return false;	// INSTALL_NON_MARKET_APPS is not whitelisted by DPM.setSecureSetting() until Android 5.1.
 
 		mDevicePolicies.setSecureSetting(Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
 		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
