@@ -202,8 +202,11 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final DevicePolicies policies) {
 		if (! policies.isDeviceOwner()) return;
 		Analytics.$().event("device_provision_manual_start").send();
-		if (SDK_INT >= N_MR1) policies.setBackupServiceEnabled(true);
+
 		if (SDK_INT >= N) policies.clearUserRestriction(UserManager.DISALLOW_ADD_USER);
+		if (SDK_INT >= N_MR1) try {
+			policies.setBackupServiceEnabled(true);
+		} catch (final SecurityException e) { Analytics.$().report(e); }	// "SecurityException: There should only be one user, managed by Device Owner"
 	}
 
 	/**
