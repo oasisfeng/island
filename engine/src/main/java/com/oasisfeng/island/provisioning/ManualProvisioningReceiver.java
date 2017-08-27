@@ -41,7 +41,7 @@ public abstract class ManualProvisioningReceiver extends InternalBroadcastReceiv
 			context.getPackageManager().setComponentEnabledSetting(getComponent(context), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 		} else if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(action)){
 			Log.i(TAG, "Device owner changed.");
-			IslandProvisioning.start(context, action);
+			if (new DevicePolicies(context).isDeviceOwner()) IslandProvisioning.start(context, action);
 		}
 	}
 
