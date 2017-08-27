@@ -38,6 +38,7 @@ dependencies {
     api 'com.google.guava:guava:22.0-android'
     api 'com.android.support:support-annotations:26.0.1'
     implementation 'org.jetbrains:annotations:15.0'
+    implementation 'com.google.android.gms:play-services-analytics:11.2.0'
     implementation 'com.google.firebase:firebase-analytics:11.2.0'
     implementation 'com.google.firebase:firebase-config:11.2.0'
     api 'com.google.firebase:firebase-perf:11.2.0'

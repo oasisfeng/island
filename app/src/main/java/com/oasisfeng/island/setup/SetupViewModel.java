@@ -75,9 +75,9 @@ public class SetupViewModel implements Parcelable {
 		if (result != null) return result;
 
 		final boolean encryption_required = isEncryptionRequired();
-		if (Analytics.$().setProperty("encryption_required", encryption_required)
-				&& ! Analytics.$().setProperty("encrypted_already", isDeviceEncrypted(activity))) {
-			if (message == R.string.dialog_encryption_required) {        // Next is clicked in this step
+		if (Analytics.$().setProperty(Analytics.Property.EncryptionRequired, encryption_required)
+				&& ! Analytics.$().setProperty(Analytics.Property.DeviceEncrypted, isDeviceEncrypted(activity))) {
+			if (message == R.string.dialog_encryption_required) {	// "Next" is clicked in the "Encryption Required" step.
 				new AsyncTask<Void, Void, Void>() {
 					@Override protected Void doInBackground(final Void... params) {
 						try {

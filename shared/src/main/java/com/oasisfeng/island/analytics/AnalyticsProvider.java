@@ -18,6 +18,7 @@ import android.util.Log;
 import com.google.common.base.Optional;
 import com.google.firebase.FirebaseApp;
 import com.oasisfeng.android.content.pm.Permissions;
+import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.util.Hacks;
 
 import java.io.ByteArrayInputStream;
@@ -90,8 +91,12 @@ public class AnalyticsProvider extends ContentProvider {
 			}
 			analytics.report(exception);
 		} else if (path.equals(CONTENT_URI_SUFFIX_PROPERTIES)) {
-			for (final String key : values.keySet())
-				analytics.setProperty(key, values.getAsString(key));
+			for (final String key : values.keySet()) try {
+				final int ordinal = Integer.parseInt(key);
+				analytics.setProperty(Analytics.Property.values()[ordinal], values.getAsString(key));
+			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+				if (BuildConfig.DEBUG) throw e;
+			}
 		}
 		return null;
 	}
@@ -109,7 +114,7 @@ public class AnalyticsProvider extends ContentProvider {
 			final ContentValues bundle = new ContentValues();
 			bundle.put(null, event);
 			return new Event() {
-				@Override public Event with(final Param key, final String value) { bundle.put(key.key, value); return this; }
+				@Override public Event with(final Param key, final @Nullable String value) { bundle.put(key.key, value); return this; }
 				@Override public void send() { context().getContentResolver().insert(CONTENT_URI, bundle); }
 			};
 		}
@@ -141,9 +146,9 @@ public class AnalyticsProvider extends ContentProvider {
 			context().getContentResolver().insert(CONTENT_URI_EXCEPTION, bundle);
 		}
 
-		@Override public void setProperty(final String key, final String value) {
+		@Override public void setProperty(final Property property, final String value) {
 			final ContentValues values = new ContentValues(1);
-			values.put(key, value);
+			values.put(String.valueOf(property.ordinal()), value);
 			context().getContentResolver().insert(CONTENT_URI_PROPERTIES, values);
 		}
 
@@ -162,13 +167,13 @@ public class AnalyticsProvider extends ContentProvider {
 
 	private static final Analytics NULL_ANALYTICS = new Analytics() {
 		private final Event NULL_EVENT = new Event() {
-			@Override public Event with(final Param key, final String value) { return this; }
+			@Override public Event with(final Param key, final @Nullable String value) { return this; }
 			@Override public void send() {}
 		};
 		@Override public Event event(final String event) { return NULL_EVENT; }
 		@Override public void reportEvent(final String event, final Bundle params) {}
 		@Override public void report(final Throwable t) {}
-		@Override public void setProperty(final String key, final String value) {}
+		@Override public void setProperty(final Property property, final String value) {}
 	};
 
 	@Override public boolean onCreate() {		// As lightweight as possible in initialization.

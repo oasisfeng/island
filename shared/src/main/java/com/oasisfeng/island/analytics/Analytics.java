@@ -3,6 +3,7 @@ package com.oasisfeng.island.analytics;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
+import android.support.annotation.Nullable;
 import android.support.annotation.Size;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -22,12 +23,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public interface Analytics {
 
 	interface Event {
-		@CheckResult Event with(Param key, String value);
+		@CheckResult Event with(Param key, @Nullable String value);
 		void send();
 	}
 
 	enum Param {
 		ITEM_ID(FirebaseAnalytics.Param.ITEM_ID),
+		/** ITEM_CATEGORY and ITEM_NAME cannot be used together (limitation in Google Analytics implementation) */
 		ITEM_NAME(FirebaseAnalytics.Param.ITEM_NAME),
 		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY),
 		;
@@ -50,9 +52,21 @@ public interface Analytics {
 		return PerformanceTrace.startTrace(name);
 	}
 
-	void setProperty(@Size(min = 1, max = 24) String key, @Size(max = 36) String value);
-	default boolean setProperty(final String key, final boolean value) {
-		setProperty(key, Boolean.toString(value));
+	enum Property {
+		DeviceOwner("device_owner"),
+		IslandSetup("island_setup"),
+		EncryptionRequired("encryption_required"),
+		DeviceEncrypted("device_encrypted"),
+		RemoteConfigAvailable("remote_config_avail"),
+		;
+		Property(final String name) { this.name = name; }
+
+		final String name;
+	}
+
+	void setProperty(Property property, @Size(max = 36) String value);
+	default boolean setProperty(final Property property, final boolean value) {
+		setProperty(property, Boolean.toString(value));
 		return value;
 	}
 

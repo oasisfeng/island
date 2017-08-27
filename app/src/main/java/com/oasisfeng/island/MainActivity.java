@@ -61,9 +61,9 @@ public class MainActivity extends Activity {
 			return;
 		}
 
-		if (Analytics.$().setProperty("device_owner", policies.isDeviceOwner())) {	// As device owner, always show main UI.
+		if (Analytics.$().setProperty(Analytics.Property.DeviceOwner, policies.isDeviceOwner())) {	// As device owner, always show main UI.
 			startMainUi(savedInstanceState);
-			new Thread(() -> Analytics.$().setProperty("remote_config_avail", Config.isRemote())).start();	// Track
+			new Thread(() -> Analytics.$().setProperty(Analytics.Property.RemoteConfigAvailable, Config.isRemote())).start();	// Track
 			return;
 		}
 

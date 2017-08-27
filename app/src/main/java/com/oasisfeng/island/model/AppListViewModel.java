@@ -427,14 +427,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
 			break;
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
-			Analytics.$().event("clone_app").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("clone_via_play").with(Analytics.Param.ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
 			break;
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
 			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			final ActivityInfo market_info = market_intent.resolveActivityInfo(mActivity.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
 			if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
-				Analytics.$().setProperty("sys_market", market_info.packageName);
+				Analytics.$().event("clone_via_market").with(Analytics.Param.ITEM_ID, pkg).with(Analytics.Param.ITEM_CATEGORY, market_info.packageName).send();
 			showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
 			break;
 		}
