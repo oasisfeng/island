@@ -231,6 +231,7 @@ public class SetupViewModel implements Parcelable {
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 		} else //noinspection deprecation
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
+		if (SDK_INT >= O) intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
 		return intent;
 	}
 
