@@ -6,6 +6,7 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.pattern.GlobalContextProvider;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
@@ -26,6 +27,7 @@ public abstract class CrashReport extends PseudoContentProvider {
 	});
 
 	@Override public boolean onCreate() {
+		if (BuildConfig.DEBUG) return false;
 		Thread.setDefaultUncaughtExceptionHandler(new LazyThreadExceptionHandler(context(), Thread.getDefaultUncaughtExceptionHandler()));
 		return false;
 	}

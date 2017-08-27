@@ -206,7 +206,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@Override public void provision() {
-		IslandProvisioning.reprovision(mContext, this);
+		IslandProvisioning.reprovision(mContext);
 	}
 
 	public void enableSystemAppForActivity(final Intent intent) {

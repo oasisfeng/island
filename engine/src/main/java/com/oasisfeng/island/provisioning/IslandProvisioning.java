@@ -178,14 +178,14 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	/** Re-provisioning triggered by user (always == true) or service staring (always == false) */
-	@ProfileUser public static void reprovision(final Context context, final IslandManagerService island) {
+	@ProfileUser public static void reprovision(final Context context) {
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (Users.isOwner()) {
 			startDeviceOwnerPostProvisioning(policies);
 			return;
 		}
 
-//		enableCriticalSystemAppsIfNeeded(context, island, prefs);		TODO: Check for disabled / frozen critical system apps in main UI.
+		// TODO: Check for disabled / frozen critical system apps in main UI.
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
