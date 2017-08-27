@@ -22,12 +22,12 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="setup_profile_owner_unknown_app">unknown app</string>
     <string name="setup_accept">Accept</string>
     <string name="setup_cleanup_hint">If anything goes wrong during the setup procedure, you can always remove all the data created by Island via \"Settings - Account - Remove work profile\".</string>
-    <string name="error_rom_incompatible">Sorry, your device (or ROM) is incompatible with Island.\n\n> %s\n\nPlease refer to the online FAQ for possible solutions.</string>
-    <string name="setup_error_managed_profile_not_supported">Sorry, the required feature \"Managed Profile\" is not supported on this device.</string>
     <string name="setup_error_multi_user_not_allowed">Sorry, the required \"Multi-User\" mechanism is disabled on this device.</string>
+    <string name="setup_error_managed_profile_not_supported">Sorry, the required feature \"Managed Profile\" is not supported on this device.</string>
     <string name="setup_error_provisioning_incomplete">Sorry, the last setup attempt might be unsuccessful, please remove \"Work Profile\" in Account Settings and try again.</string>
-    <string name="setup_error_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed in Account Settings first.</string>
-    <string name="error_reason_missing_managed_provisioning">Sorry, the required \"Android for Work\" feature may not be fully supported on your device.</string>
+    <string name="setup_error_managed_device">Sorry, Island cannot be setup if the device is managed.</string>
+    <string name="setup_error_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed first in system Settings - Accounts.</string>
+    <string name="setup_error_missing_managed_provisioning">Sorry, the required \"Android for Work\" feature may not be fully supported on your device.</string>
 
     <string name="tip_empty_app_list">No apps here.\nPlease switch to other view.</string>
 
@@ -125,7 +125,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="pref_setup_island_summary_unknown">Unknown</string>
     <string name="pref_setup_island_summary_managed_other">Existent Work profile is not managed by Island.\nClick the side icon to remove.</string>
     <string name="pref_setup_island_summary_incomplete">Setup incomplete.\nClick the side icon to rebuild.</string>
-    <string name="pref_setup_island_summary_not_setup">Not setup yet.\nIsland can only be setup manually if mainland is managed, since Android 6.0.\nClick the side icon to open online setup guide.</string>
+    <string name="pref_setup_island_summary_pending_manual_setup">Not setup yet.\nClick the side icon to open online setup guide.</string>
     <string name="pref_setup_island_summary_pending_setup">Not setup yet.\nClick the side icon to setup.</string>
     <string name="pref_setup_mainland_title">Mainland</string>
     <string name="pref_setup_mainland_summary_managed">Managed</string>

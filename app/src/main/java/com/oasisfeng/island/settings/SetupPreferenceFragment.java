@@ -3,7 +3,6 @@ package com.oasisfeng.island.settings;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ProgressDialog;
-import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,9 +20,9 @@ import com.oasisfeng.island.Config;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.SetupActivity;
+import com.oasisfeng.island.setup.SetupViewModel;
 import com.oasisfeng.island.setup.Shutdown;
 import com.oasisfeng.island.util.DevicePolicies;
-import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.settings.ActionButtonPreference;
 
@@ -32,9 +31,7 @@ import java.util.List;
 import java8.util.Optional;
 
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
-import static android.os.Build.VERSION_CODES.O;
 
 /**
  * Settings - Setup
@@ -98,30 +95,11 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
 						R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
-		} else if (isManagedProvisioningAllowedForProfile(activity)) {
-			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_not_setup,
-					R.drawable.ic_open_in_browser_black_24dp, preference -> showOnlineSetupGuide());
-		} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup,
-				R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
-	}
-
-	/**
-	 * Android L:		Always allowed
-	 * Android M & N:	Disallowed on managed device.
-	 * Android O+:		Allowed if isProvisioningAllowed()
-	 */
-	private static boolean isManagedProvisioningAllowedForProfile(final Context context) {
-		if (SDK_INT < M) return true;
-		final DevicePolicies policies = new DevicePolicies(context);
-		return ! isDeviceManaged(policies)
-				|| SDK_INT >= O && ! policies.getManager().isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
-	}
-
-	private static boolean isDeviceManaged(final DevicePolicies policies) {
-		if (! Hacks.DevicePolicyManager_getDeviceOwner.isAbsent()) {
-			return Hacks.DevicePolicyManager_getDeviceOwner.invoke().on(policies.getManager()) != null;
-		} else if (policies.isDeviceOwner()) return true;        // Fall-back check, only if we are the device owner.
-		return false;
+		} else if (SetupViewModel.checkManagedProvisioningPrerequisites(activity) == null) {
+			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup,
+					R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
+		} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_manual_setup,
+				R.drawable.ic_open_in_browser_black_24dp, preference -> showOnlineSetupGuide());
 	}
 
 	private boolean startProfileShutdown() {

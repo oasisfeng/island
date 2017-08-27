@@ -14,7 +14,9 @@ import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.Settings;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.util.Log;
@@ -39,6 +41,8 @@ import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.O;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /**
  * View model for setup fragment
@@ -67,36 +71,8 @@ public class SetupViewModel implements Parcelable {
 
 	SetupViewModel onNavigateNext(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
-		if (SDK_INT >= N && activity.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE))
-			return startManagedProvisioning(fragment);	// DevicePolicyManager.isProvisioningAllow() provides one-stop prerequisites check.
-
-		// FIXME: Analytics.$().event("setup_lack_managed_users").send();
-		final boolean has_managed_users = activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
-		if (! has_managed_users)
-			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
-
-		// Check for incomplete provisioning.
-		if (SDK_INT >= N && DevicePolicies.getManagedProfile(activity) == null) {
-			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(activity);
-			if (profile_id != 0) {
-				final Optional<ComponentName> profile_owner_result = DevicePolicies.getProfileOwnerAsUser(activity, profile_id);
-				if (profile_owner_result != null && profile_owner_result.isPresent()) {
-					final ComponentName profile_owner = profile_owner_result.get();
-					if (! activity.getPackageName().equals(profile_owner.getPackageName())) {
-						final CharSequence owner_label = readOwnerLabel(activity, profile_owner);
-						final Analytics.Event reason = reason("existent_work_profile").with(Analytics.Param.ITEM_ID, profile_owner.getPackageName());
-						return buildErrorVM(R.string.setup_error_other_work_profile, R.string.button_account_settings,
-								owner_label == null ? reason : reason.with(Analytics.Param.ITEM_NAME, owner_label.toString()));
-					} else return buildErrorVM(R.string.setup_error_provisioning_incomplete, R.string.button_account_settings,
-							reason("provisioning_incomplete"));
-				}
-			}
-		}
-
-		if (SDK_INT < M && getMaxSupportedUsers() < 2)
-			return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("sys_prop.fw.max_users"));
-
-		// TODO Analytics.$().event("profile_owner_existent").with("package", profile_owner.getPackageName()).with("label", owner_label).send();
+		final SetupViewModel result = checkManagedProvisioningPrerequisites(activity);
+		if (result != null) return result;
 
 		final boolean encryption_required = isEncryptionRequired();
 		if (Analytics.$().setProperty("encryption_required", encryption_required)
@@ -120,12 +96,67 @@ public class SetupViewModel implements Parcelable {
 				}.execute();
 				return null;
 			}
-			final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, reason("encryption_required"));
+			final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, null);
 			vm.button_next = 0;		// Enable the "next" button.
 			return vm;
 		}
 
-		return startManagedProvisioning(fragment);
+		startManagedProvisioning(fragment);
+		return null;
+	}
+
+	/** @return null if all prerequisites met */
+	public static @CheckResult SetupViewModel checkManagedProvisioningPrerequisites(final Context context) {
+		final PackageManager pm = context.getPackageManager();
+		if (buildManagedProfileProvisioningIntent(context).resolveActivity(pm) == null)
+			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
+
+		boolean disallowed_by_system = false;
+		if (SDK_INT >= N) {
+			if (context.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) {
+				if (SDK_INT >= O) return null;		// ManagedProvisioning will still refuse to setup if device is managed, until Android O.
+				return checkNoDeviceOwner(context);
+			} else disallowed_by_system = true;
+		} else if (SDK_INT == M) {
+			final SetupViewModel result = checkNoDeviceOwner(context);
+			if (result != null) return result;
+		}
+
+		final boolean has_managed_users = pm.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
+		if (! has_managed_users)
+			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
+
+		// Check for incomplete provisioning.
+		if (SDK_INT >= N && DevicePolicies.getManagedProfile(context) == null) {
+			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(context);
+			final Optional<ComponentName> profile_owner_result;
+			if (profile_id != 0 && (profile_owner_result = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) != null && profile_owner_result.isPresent()) {
+				final ComponentName profile_owner = profile_owner_result.get();
+				if (! context.getPackageName().equals(profile_owner.getPackageName())) {
+					final CharSequence owner_label = readOwnerLabel(context, profile_owner);
+					final Analytics.Event reason = reason("existent_work_profile").with(ITEM_ID, profile_owner.getPackageName())
+							.with(Analytics.Param.ITEM_NAME, owner_label != null ? owner_label.toString() : null);
+					return buildErrorVM(R.string.setup_error_other_work_profile, R.string.button_account_settings, reason);
+				} else return buildErrorVM(R.string.setup_error_provisioning_incomplete, R.string.button_account_settings, reason("provisioning_incomplete"));
+			}
+		}
+
+		if (SDK_INT < M) {
+			final Integer sys_prop_max_users = getSysPropMaxUsers();
+			if (sys_prop_max_users == null || sys_prop_max_users == -1) {
+				final Integer res_config_max_users = getResConfigMaxUsers();
+				if (res_config_max_users == null || res_config_max_users < 2)
+					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
+			} else if (sys_prop_max_users < 2) return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("fw.max_users"));
+		}
+
+		if (disallowed_by_system) reason("disallowed").send();		// Disallowed by DPC for unknown reason, just log this but let user have a try.
+		return null;
+	}
+
+	private static SetupViewModel checkNoDeviceOwner(final Context context) {
+		final String device_owner = new DevicePolicies(context).getDeviceOwner();
+		return device_owner == null ? null : buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));
 	}
 
 	private static Analytics.Event reason(final String reason) {
@@ -167,7 +198,7 @@ public class SetupViewModel implements Parcelable {
 		}
 	}
 
-	private static SetupViewModel startManagedProvisioning(final Fragment fragment) {
+	private static void startManagedProvisioning(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
 		final Intent intent = buildManagedProfileProvisioningIntent(activity);
 		try {
@@ -177,18 +208,15 @@ public class SetupViewModel implements Parcelable {
 		} catch (final IllegalStateException e) {	// Fragment not in proper state
 			activity.startActivity(intent);				// Fall-back to starting activity without result observation.
 			activity.finish();
-		} catch (final ActivityNotFoundException e) {
-			return buildErrorVM(R.string.error_reason_missing_managed_provisioning, reason("lack_managed_provisioning"));
-		}
-		return null;
+		} catch (final ActivityNotFoundException ignored) {}	// Should not happen since it was checked beforehand
 	}
 
-	private static SetupViewModel buildErrorVM(final @StringRes int message, final Analytics.Event event) {
+	private static SetupViewModel buildErrorVM(final @StringRes int message, final @Nullable Analytics.Event event) {
 		return buildErrorVM(message, R.string.button_instructions_online, event);
 	}
 
-	private static SetupViewModel buildErrorVM(final @StringRes int message, final @StringRes int button_extra, final Analytics.Event event) {
-		event.send();
+	private static SetupViewModel buildErrorVM(final @StringRes int message, final @StringRes int button_extra, final @Nullable Analytics.Event event) {
+		if (event != null) event.send();
 		final SetupViewModel next = new SetupViewModel();
 		next.message = message;
 		next.button_next = -1;
@@ -213,21 +241,15 @@ public class SetupViewModel implements Parcelable {
 				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 	}
 
-	private static int getMaxSupportedUsers() {
-		final Integer max_users = Hacks.SystemProperties_getInt.invoke("fw.max_users", - 1).statically();
-		if (max_users != null && max_users != -1) {
-			Analytics.$().setProperty("sys_prop.fw.max_users", max_users.toString());
-			return max_users;
-		}
+	private static @Nullable Integer getSysPropMaxUsers() {
+		return Hacks.SystemProperties_getInt.invoke("fw.max_users", - 1).statically();
+	}
 
+	private static @Nullable Integer getResConfigMaxUsers() {
 		final Resources sys_res = Resources.getSystem();
 		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
-		if (res != 0) {
-			final int sys_max_users = Resources.getSystem().getInteger(res);
-			Analytics.$().setProperty("sys_res.config_maxUsers", String.valueOf(sys_max_users));
-			return sys_max_users;
-		}
-		return 1;
+		if (res == 0) return null;
+		return Resources.getSystem().getInteger(res);
 	}
 
 	private static CharSequence readOwnerLabel(final Context context, final ComponentName owner) {

@@ -72,6 +72,14 @@ public class DevicePolicies {
 		return mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
 	}
 
+	/** @return the package name of current device owner, null if none or empty string if unknown. */
+	@OwnerUser public String getDeviceOwner() {
+		if (! Hacks.DevicePolicyManager_getDeviceOwner.isAbsent()) {
+			return Hacks.DevicePolicyManager_getDeviceOwner.invoke().on(getManager());
+		} else if (isDeviceOwner()) return sCachedComponent.getPackageName();        // Fall-back check, only if we are the device owner.
+		else return "";
+	}
+
 	/** @see DevicePolicyManager#addCrossProfileIntentFilter(ComponentName, IntentFilter, int) */
 	public void addCrossProfileIntentFilter(final IntentFilter filter, final int flags) {
 		mDevicePolicyManager.addCrossProfileIntentFilter(sCachedComponent, filter, flags);
