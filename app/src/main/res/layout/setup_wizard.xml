@@ -7,6 +7,8 @@
 
     <data>
         <import type="android.view.View" />
+        <import type="com.oasisfeng.island.util.TextFormat" />
+        <import type="android.text.SpannedString" />
         <variable name="setup" type="com.oasisfeng.island.setup.SetupViewModel" />
     </data>
 
@@ -39,7 +41,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/containerText"
-                android:text="@{setup.message == 0 ? null : context.getText(setup.message)}"/>
+                android:text="@{TextFormat.getText(context, setup.message, setup.message_params)}"/>
 
             <TextView
                 android:layout_width="match_parent"

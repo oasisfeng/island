@@ -8,6 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.AsyncTask;
@@ -56,6 +57,7 @@ public class SetupViewModel implements Parcelable {
 	private static final int REQUEST_PROVISION_MANAGED_PROFILE = 1;
 
 	public @StringRes int message;
+	public @Nullable Object[] message_params;
 	int button_back;
 	int button_next;
 	public int button_extra;
@@ -111,20 +113,21 @@ public class SetupViewModel implements Parcelable {
 		if (buildManagedProfileProvisioningIntent(context).resolveActivity(pm) == null)
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
-		boolean disallowed_by_system = false;
-		if (SDK_INT >= N) {
-			if (context.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) {
-				if (SDK_INT >= O) return null;		// ManagedProvisioning will still refuse to setup if device is managed, until Android O.
-				return checkNoDeviceOwner(context);
-			} else disallowed_by_system = true;
-		} else if (SDK_INT == M) {
-			final SetupViewModel result = checkNoDeviceOwner(context);
-			if (result != null) return result;
-		}
+		// DPM.isProvisioningAllowed() is the one-stop prerequisites checking.
+		if (SDK_INT >= N && context.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
 
 		final boolean has_managed_users = pm.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
 		if (! has_managed_users)
 			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
+
+		if (SDK_INT < M) {		// The max-users limitation is no longer enforced since Android M.
+			final Integer sys_prop_max_users = getSysPropMaxUsers();
+			if (sys_prop_max_users == null || sys_prop_max_users == -1) {
+				final Integer res_config_max_users = getResConfigMaxUsers();
+				if (res_config_max_users == null || res_config_max_users < 2)
+					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
+			} else if (sys_prop_max_users < 2) return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("fw.max_users"));
+		}
 
 		// Check for incomplete provisioning.
 		if (SDK_INT >= N && DevicePolicies.getManagedProfile(context) == null) {
@@ -141,22 +144,24 @@ public class SetupViewModel implements Parcelable {
 			}
 		}
 
-		if (SDK_INT < M) {
-			final Integer sys_prop_max_users = getSysPropMaxUsers();
-			if (sys_prop_max_users == null || sys_prop_max_users == -1) {
-				final Integer res_config_max_users = getResConfigMaxUsers();
-				if (res_config_max_users == null || res_config_max_users < 2)
-					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
-			} else if (sys_prop_max_users < 2) return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("fw.max_users"));
+		if (SDK_INT >= M) {
+			final String device_owner = new DevicePolicies(context).getDeviceOwner();
+			if (device_owner != null) {
+				CharSequence owner_label = null;
+				try { //noinspection deprecation
+					final ApplicationInfo owner_info = pm.getApplicationInfo(device_owner, PackageManager.GET_UNINSTALLED_PACKAGES);
+					owner_label = owner_info.loadLabel(pm);
+				} catch (final PackageManager.NameNotFoundException ignored) {}		// Should never happen.
+
+				final SetupViewModel error = buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));
+				error.message_params = new String[] { owner_label != null ? owner_label.toString() : device_owner };
+				error.button_extra = 0;		// Disable the manual-setup prompt, because device owner cannot be removed by 3rd-party.
+				return error;
+			}
 		}
 
-		if (disallowed_by_system) reason("disallowed").send();		// Disallowed by DPC for unknown reason, just log this but let user have a try.
+		if (SDK_INT >= N) reason("disallowed").send();		// Disallowed by DPC for unknown reason, just log this but let user have a try.
 		return null;
-	}
-
-	private static SetupViewModel checkNoDeviceOwner(final Context context) {
-		final String device_owner = new DevicePolicies(context).getDeviceOwner();
-		return device_owner == null ? null : buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));
 	}
 
 	private static Analytics.Event reason(final String reason) {
