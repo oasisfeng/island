@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.annotation.Size;
+import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.oasisfeng.island.util.Users;
@@ -40,6 +41,10 @@ public interface Analytics {
 	@CheckResult Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
 	void reportEvent(String event, Bundle params);
 	void report(Throwable t);
+	default void logAndReport(final String tag, final String message, Exception e) {
+		Log.e(tag, message, e);
+		report(e);
+	}
 
 	interface Trace {
 		void start();

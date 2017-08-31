@@ -101,5 +101,10 @@ public class MainActivity extends Activity {
 		finish();
 	}
 
+	@Override protected void onResume() {
+		super.onResume();
+		sendBroadcast(new Intent(Events.ACTION_MAIN_UI_RESUME).setPackage(getPackageName()));
+	}
+
 	private static final String TAG = MainActivity.class.getSimpleName();
 }

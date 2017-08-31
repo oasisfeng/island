@@ -18,16 +18,31 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class MethodShuttle {
 
+	public interface GeneralVoidMethod { void invoke(); }
 	public interface GeneralMethod<ReturnType> { ReturnType invoke(); }
+	public interface GeneralVoidMethod1<Param1> { void invoke(Param1 param1); }
 	public interface GeneralMethod1<ReturnType, Param1> { ReturnType invoke(Param1 param1); }
+	public interface GeneralVoidMethod2<Param1, Param2> { void invoke(Param1 param1, Param2 param2); }
 	public interface GeneralMethod2<ReturnType, Param1, Param2> { ReturnType invoke(Param1 param1, Param2 param2); }
+
+	public void runInProfile(final GeneralVoidMethod method) {
+		runInProfile(method.getClass(), null, null);
+	}
 
 	public <Result> void runInProfile(final GeneralMethod<Result> method, final @Nullable Consumer<Result> consumer) {
 		runInProfile(method.getClass(), null, consumer);
 	}
 
+	public <P1> void runInProfile(final GeneralVoidMethod1<P1> method, final P1 param1) {
+		runInProfile(method.getClass(), new Object[] { param1 }, null);
+	}
+
 	public <Result, P1> void runInProfile(final GeneralMethod1<Result, P1> method, final P1 param1, final Consumer<Result> consumer) {
 		runInProfile(method.getClass(), new Object[] { param1 }, consumer);
+	}
+
+	public <P1, P2> void runInProfile(final GeneralVoidMethod2<P1, P2> method, final P1 param1, final P2 param2) {
+		runInProfile(method.getClass(), new Object[] { param1, param2 }, null);
 	}
 
 	public <Result, P1, P2> void runInProfile(final GeneralMethod2<Result, P1, P2> method, final P1 param1, final P2 param2, final Consumer<Result> consumer) {
@@ -63,9 +78,17 @@ public class MethodShuttle {
 						final Class<?> clazz = Class.forName(invocation.clazz);
 						final Constructor<?> constructor = clazz.getDeclaredConstructors()[0];
 						constructor.setAccessible(true);
-						final boolean need_context = constructor.getParameterTypes().length > 0;
-						final Object instance = need_context ? constructor.newInstance(Service.this) : constructor.newInstance();
-						if (instance instanceof GeneralMethod) //noinspection unchecked
+						final Class<?>[] params = constructor.getParameterTypes();
+						if (params.length > 1 || params.length == 1 && params[0] != Context.class)
+							throw new IllegalArgumentException("Only one Context parameter is allowed: " + constructor);
+						final Object instance = params.length == 1 ? constructor.newInstance(Service.this) : constructor.newInstance();
+						if (instance instanceof GeneralVoidMethod)
+							((GeneralVoidMethod) instance).invoke();
+						else if (instance instanceof GeneralVoidMethod1 && invocation.args != null) //noinspection unchecked
+							((GeneralVoidMethod1) instance).invoke(invocation.args[0]);
+						else if (instance instanceof GeneralVoidMethod2 && invocation.args != null) //noinspection unchecked
+							((GeneralVoidMethod2) instance).invoke(invocation.args[0], invocation.args[1]);
+						else if (instance instanceof GeneralMethod) //noinspection unchecked
 							invocation.result = ((GeneralMethod) instance).invoke();
 						else if (instance instanceof GeneralMethod1 && invocation.args != null) //noinspection unchecked
 							invocation.result = ((GeneralMethod1) instance).invoke(invocation.args[0]);

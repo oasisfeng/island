@@ -8,6 +8,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -45,7 +46,8 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle> Context_bindServiceAsUser;
 	public static final Hack.HackedMethod3<ResolveInfo, PackageManager, Unchecked, Unchecked, Unchecked, Intent, Integer, Integer> PackageManager_resolveActivityAsUser;
 	@RequiresApi(N) public static Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean> UserManager_getProfileIds;
-	public static final Hack.HackedMethod2<Context, Context, PackageManager.NameNotFoundException, Unchecked, Unchecked, ApplicationInfo, Integer> Context_createApplicationContext;
+	public static final Hack.HackedMethod2<Context, Context, NameNotFoundException, Unchecked, Unchecked, ApplicationInfo, Integer> Context_createApplicationContext;
+	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle> Context_createPackageContextAsUser;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
@@ -76,6 +78,8 @@ public class Hacks {
 		if (SDK_INT >= N) UserManager_getProfileIds = Hack.into(UserManager.class).method("getProfileIds")
 				.returning(int[].class).fallbackReturning(null).withParams(int.class, boolean.class);
 		Context_createApplicationContext = Hack.into(Context.class).method("createApplicationContext").returning(Context.class)
-				.throwing(PackageManager.NameNotFoundException.class).withParams(ApplicationInfo.class, int.class);
+				.throwing(NameNotFoundException.class).withParams(ApplicationInfo.class, int.class);
+		Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
+				.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(String.class, int.class, UserHandle.class);
 	}
 }

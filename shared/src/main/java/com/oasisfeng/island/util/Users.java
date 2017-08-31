@@ -37,13 +37,14 @@ public abstract class Users extends PseudoContentProvider {
 		final int priority = IntentFilter.SYSTEM_HIGH_PRIORITY - 1;
 		context().registerReceiver(mProfileChangeObserver,
 				IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED, Intent.ACTION_MANAGED_PROFILE_REMOVED).inPriority(priority));
-		refreshUsers();
+		refreshUsers(context());
 		return true;
 	}
 
-	private void refreshUsers() {
+	/** This method should not be called under normal circumstance. */
+	public static void refreshUsers(final Context context) {
 		profile = null;
-		final List<UserHandle> user_and_profiles = ((UserManager) context().getSystemService(USER_SERVICE)).getUserProfiles();
+		final List<UserHandle> user_and_profiles = ((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
 		for (final UserHandle user_or_profile : user_and_profiles) {
 			if (! isOwner(user_or_profile)) {
 				if (profile == null) profile = user_or_profile;        // Only one managed profile is supported by Android framework at present.
@@ -61,9 +62,9 @@ public abstract class Users extends PseudoContentProvider {
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 
-	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context c, final Intent i) {
+	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent i) {
 		Log.i(TAG, "Profile changed");
-		refreshUsers();
+		refreshUsers(context);
 	}};
 
 	private static int sProfileId;		// 0 if no profile

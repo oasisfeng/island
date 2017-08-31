@@ -9,13 +9,10 @@ android {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
         targetSdkVersion 26
-
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
-    dataBinding {
-        enabled true
-    }
+    dataBinding.enabled true
 
     buildTypes {
         release {
@@ -24,6 +21,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
+            ext.enableCrashlytics = false
         }
     }
 
@@ -35,6 +33,10 @@ android {
         }
         mobile {
             applicationIdSuffix ".mobile"
+            dimension "packaging"
+        }
+        fileprovider {
+            applicationIdSuffix ".fileprovider"
             dimension "packaging"
         }
         full {
@@ -71,6 +73,8 @@ dependencies {
     engineImplementation project(':permission')
     // Mobile only
     mobileImplementation project(':mobile')
+    // File Provider only
+    fileproviderImplementation project(':fileprovider')
     // Full
     fullImplementation project(':engine')
     fullImplementation project(':mobile')

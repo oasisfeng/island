@@ -1,5 +1,5 @@
 include 'shared', 'engine', ':mobile', 'permission', 'assembly'
-include ':deagle', ':stream-backport'
+include ':deagle', ':stream-backport', ':fileprovider'
 project(':mobile').projectDir = new File(settingsDir, 'app')
 project(':deagle').projectDir = new File(settingsDir, '../deagle/library')
 project(':stream-backport').projectDir = new File(settingsDir, '../streamsupport/streamsupport')
