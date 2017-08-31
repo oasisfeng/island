@@ -19,7 +19,6 @@ import com.google.common.base.Optional;
 import com.google.firebase.FirebaseApp;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.shared.BuildConfig;
-import com.oasisfeng.island.util.Hacks;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,6 +30,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * Provider to support cross-profile analytics.
@@ -41,7 +41,7 @@ import static android.os.Build.VERSION_CODES.M;
 public class AnalyticsProvider extends ContentProvider {
 
 	static void enableIfNeeded(final Context context) {
-		if (! Permissions.has(context, Hacks.Permission.INTERACT_ACROSS_USERS)) return;
+		if (! Permissions.has(context, INTERACT_ACROSS_USERS)) return;
 		final PackageManager pm = context.getPackageManager();
 		final ComponentName provider_component = new ComponentName(context, AnalyticsProvider.class);
 		try {

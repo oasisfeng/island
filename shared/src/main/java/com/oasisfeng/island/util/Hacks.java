@@ -31,10 +31,6 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class Hacks {
 
-	public interface Permission {
-		String INTERACT_ACROSS_USERS = "android.permission.INTERACT_ACROSS_USERS";
-	}
-
 	public static final int PackageManager_MATCH_ANY_USER = 0x00400000;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer> ApplicationInfo_privateFlags;
