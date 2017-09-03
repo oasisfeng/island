@@ -9,7 +9,6 @@ import android.os.Process;
 import android.util.Log;
 
 import com.oasisfeng.island.shuttle.ContextShuttle;
-import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.Users;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -38,10 +37,9 @@ public class EventReceiver extends BroadcastReceiver {
 		// FIXME: Not enabling shuttle in owner user, as ExternalStorageProviderProxy is not working as expected in manger profile.
 		//setComponentEnabled(context.getPackageManager(), shuttle, all_met);
 
-		final PackageManager pm;
-		if (iau_granted && (pm = ContextShuttle.getPackageManagerAsUser(context, Users.profile)) != null) {
-			setComponentEnabled(pm, shuttle, all_met);							// Shuttle in profile
-		} else new MethodShuttle(context).runInProfile((comp, enabled) -> setComponentEnabled(context.getPackageManager(), comp, enabled), shuttle, all_met);
+		final PackageManager profile_pm;
+		if (iau_granted && (profile_pm = ContextShuttle.getPackageManagerAsUser(context, Users.profile)) != null)
+			setComponentEnabled(profile_pm, shuttle, all_met);		// Shuttle in profile
 	}
 
 	private static void setComponentEnabled(final PackageManager pm, final ComponentName component, final boolean enabled) {
