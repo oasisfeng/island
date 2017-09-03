@@ -18,10 +18,10 @@
                   android:initOrder="100"/>
 
         <!-- GlobalContextProvider -->
-        <provider android:name="com.oasisfeng.island.InternalContentProviders$_0" android:initOrder="1000"
+        <provider android:name="com.oasisfeng.island.InternalContentProviders$_0" android:initOrder="9999"
                   android:authorities="${applicationId}.internal.0" android:multiprocess="true" android:exported="false" />
         <!-- Users -->
-        <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
+        <provider android:name="com.oasisfeng.island.InternalContentProviders$_1" android:initOrder="1000"
                   android:authorities="${applicationId}.internal.1" android:multiprocess="true" android:exported="false" />
         <!-- CrashReport -->
         <provider android:name="com.oasisfeng.island.InternalContentProviders$_2"

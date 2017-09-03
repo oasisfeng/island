@@ -177,7 +177,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		return revision;
 	}
 
-	/** Re-provisioning triggered by user (always == true) or service staring (always == false) */
+	/** Re-provisioning triggered by user */
 	@ProfileUser public static void reprovision(final Context context) {
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (Users.isOwner()) {

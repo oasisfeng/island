@@ -37,6 +37,7 @@ import com.oasisfeng.island.util.Modules;
 import eu.chainfire.libsuperuser.Shell;
 import java8.util.Optional;
 
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
 import static android.os.Build.VERSION.SDK_INT;
@@ -114,7 +115,11 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
 		// DPM.isProvisioningAllowed() is the one-stop prerequisites checking.
-		if (SDK_INT >= N && context.getSystemService(DevicePolicyManager.class).isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
+		if (SDK_INT >= N) {
+			final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+			if (dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_DEVICE)) Analytics.$().event("device_provision_allowed").send();	// Special analytics
+			if (dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
+		}
 
 		final boolean has_managed_users = pm.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
 		if (! has_managed_users)
