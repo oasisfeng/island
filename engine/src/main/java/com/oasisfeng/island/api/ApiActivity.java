@@ -19,11 +19,14 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
 import com.oasisfeng.island.engine.BuildConfig;
 import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.island.util.Hacks;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static android.content.pm.PackageManager.GET_SIGNATURES;
 
 /**
  * API via activity to cross the user border
@@ -109,8 +112,8 @@ public class ApiActivity extends Activity {
 		if (value == null) return false;
 		final int signature_hash = value;
 		if (signature_hash == 0) return true;
-		try { @SuppressWarnings("deprecation") @SuppressLint("PackageManagerGetSignatures")
-			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES | PackageManager.GET_UNINSTALLED_PACKAGES);
+		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
+			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, GET_SIGNATURES | Hacks.PackageManager_MATCH_ANY_USER);
 			for (final Signature signature : pkg_info.signatures)
 				if (signature.hashCode() != signature_hash) return false;
 			sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
