@@ -38,6 +38,8 @@ If it does not work, you may need to execute `am start-user <user-id>` first and
 - Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver` 
 Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
 
+If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please check the system "Settings - Developer options" and enable "USB debugging (Security settings)". (MIUI-specific)
+
 - `am start-user <user id>`
 
 - Android 5.0.x only (not required on Android 5.1+): `settings --user 10 put secure install_non_market_apps 1`
