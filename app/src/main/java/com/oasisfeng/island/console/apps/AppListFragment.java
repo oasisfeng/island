@@ -1,14 +1,23 @@
 package com.oasisfeng.island.console.apps;
 
+import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.admin.DevicePolicyManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.databinding.Observable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
+import android.os.Process;
+import android.provider.DocumentsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,11 +44,22 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
+
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.content.Intent.ACTION_OPEN_DOCUMENT;
+import static android.content.Intent.ACTION_VIEW;
+import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
@@ -193,9 +213,79 @@ public class AppListFragment extends Fragment {
 			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
 			item.setChecked(should_include);    // Toggle the checked state
 		} else if (id == R.id.menu_settings) startActivity(new Intent(getActivity(), SettingsActivity.class));
+		else if (id == R.id.menu_files) requestPermissionAndLaunchFilesExplorerInIsland();
 		else if (id == R.id.menu_test) TempDebug.run(getActivity());
 		else return super.onOptionsItemSelected(item);
 		return true;
+	}
+
+	private void requestPermissionAndLaunchFilesExplorerInIsland() {
+		final Context context = getActivity();
+		if (context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED) {
+			new MethodShuttle(context).runInProfile(() -> launchFilesExplorer(context), result -> {
+				if (result == null || ! result) Toast.makeText(context, R.string.toast_file_explorer_not_found, Toast.LENGTH_LONG).show();
+			});
+			return;
+		}
+
+		if (SDK_INT >= M) {
+			new MethodShuttle(context).runInProfile(() -> new DevicePolicies(context)		// Permission is implicitly granted
+					.setPermissionGrantState(context.getPackageName(), WRITE_EXTERNAL_STORAGE, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED));
+			requestPermissions(new String[] { WRITE_EXTERNAL_STORAGE }, 0);
+		} else onRequestPermissionsResult(0, new String[0], new int[0]);
+	}
+
+	private static final String EXT_STORAGE_AUTHORITY = "com.android.externalstorage.documents";
+	private static final String ACTION_BROWSE_DOC_ROOT = "android.provider.action.BROWSE_DOCUMENT_ROOT";
+	private static final String ACTION_BROWSE = "android.provider.action.BROWSE";
+	private static final String EXTRA_SHOW_ADVANCED = "android.content.extra.SHOW_ADVANCED";	// Disclosed from DocumentsContract
+	private static final String EXTRA_SHOW_FILESIZE = "android.content.extra.SHOW_FILESIZE";
+	private static final String EXTRA_FANCY_FEATURES = "android.content.extra.FANCY";
+
+	private static boolean launchFilesExplorer(final Context context) {
+		final Intent doc_ui_base = new Intent().addFlags(FLAG_ACTIVITY_NEW_TASK).putExtra(EXTRA_SHOW_FILESIZE, true)
+				.putExtra(EXTRA_SHOW_ADVANCED, true).putExtra(EXTRA_FANCY_FEATURES, true);
+
+		// Internal API of AOSP Documents UI app with internal path protocol of ExternalStorageProvider on Android 6+. (also back-ported to 5.x in MIUI)
+		final Uri ext_storage_uri = new Uri.Builder().scheme("content").authority(EXT_STORAGE_AUTHORITY).path("/root/primary").build();
+		final String type = context.getContentResolver().getType(ext_storage_uri);
+		final Intent intent = new Intent(doc_ui_base);
+		if (DocumentsContract.Root.MIME_TYPE_ITEM.equals(type)) {	// Although introduced in Android M, but ACTION_BROWSE is also back-ported by MIUI.
+			try {
+				context.startActivity(intent.setAction(ACTION_BROWSE).setDataAndType(ext_storage_uri, type));
+				return true;
+			} catch (final ActivityNotFoundException ignored) {}
+			try {
+				context.startActivity(intent.setAction(ACTION_BROWSE_DOC_ROOT));
+				return true;
+			} catch (final ActivityNotFoundException ignored) {}
+		} else {	// Probably the internal path protocol (/root/primary) is not matched, try starting the responsible activity explicitly.
+			@SuppressLint("InlinedApi") final String type_root = DocumentsContract.Root.MIME_TYPE_ITEM;		// It's hidden until Android O.
+			ComponentName component = intent.setType(type_root).setAction(ACTION_BROWSE).resolveActivity(context.getPackageManager());
+			if (component == null) component = intent.setAction(ACTION_BROWSE_DOC_ROOT).resolveActivity(context.getPackageManager());
+			if (component != null) try {
+				context.startActivity(new Intent(doc_ui_base).setComponent(component));
+				return true;
+			} catch (final ActivityNotFoundException ignored) {}
+		}
+
+		try {	// General attempt to launch 3rd-party file browser.
+			final Uri uri = Uri.fromFile(Environment.getExternalStorageDirectory());
+			context.startActivity(new Intent(ACTION_VIEW).setDataAndType(uri, "resource/folder"/* required by some */).addFlags(FLAG_ACTIVITY_NEW_TASK));
+			return true;
+		} catch (final ActivityNotFoundException ignored) {}
+
+		try {	// Last resort, barely only a browser for files.
+			context.startActivity(new Intent(doc_ui_base).setAction(ACTION_OPEN_DOCUMENT).putExtra(EXTRA_ALLOW_MULTIPLE, true).setType("*/*"));
+			return true;
+		} catch (final ActivityNotFoundException ignored) {}
+		return false;
+	}
+
+	@Override public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions, @NonNull final int[] grantResults) {
+		if (permissions.length != 0 && grantResults.length != 0 && grantResults[0] == PERMISSION_GRANTED) {
+			requestPermissionAndLaunchFilesExplorerInIsland();
+		} else Toast.makeText(getActivity(), R.string.toast_external_storage_permission_required, Toast.LENGTH_LONG).show();
 	}
 
 	@Override public void onSaveInstanceState(final Bundle out_state) {
