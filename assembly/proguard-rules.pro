@@ -16,6 +16,9 @@
 #   public *;
 #}
 
+# For AOSP internal disclosure
+-keepclassmembers class * extends android.content.ContentResolver { *; }
+
 # Temp rules for Project Condom
 -dontwarn android.content.pm.PackageManager$**
 -dontwarn android.content.pm.IPackageDeleteObserver
