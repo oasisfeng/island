@@ -10,6 +10,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.databinding.Observable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,6 +32,7 @@ import android.widget.AdapterView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
@@ -51,12 +54,16 @@ import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
+import java.util.List;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.Intent.ACTION_OPEN_DOCUMENT;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -178,9 +185,11 @@ public class AppListFragment extends Fragment {
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
+		final Context context = getActivity();
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
 		menu.findItem(R.id.menu_search).setVisible(mViewModel.getSelection() == null).setOnActionExpandListener(mOnActionExpandListener);
+		menu.findItem(R.id.menu_files).setVisible(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null);
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
@@ -222,8 +231,29 @@ public class AppListFragment extends Fragment {
 	private void requestPermissionAndLaunchFilesExplorerInIsland() {
 		final Context context = getActivity();
 		if (context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED) {
-			new MethodShuttle(context).runInProfile(() -> launchFilesExplorer(context), result -> {
-				if (result == null || ! result) Toast.makeText(context, R.string.toast_file_explorer_not_found, Toast.LENGTH_LONG).show();
+			new MethodShuttle(context).runInProfile(() -> {
+				final Intent intent = findFileBrowser(context);
+				if (intent != null) {
+					final ComponentName component = intent.getComponent();	// Intent should be resolved already in findFileBrowser().
+					if (component != null) {        // Unfreeze the target app (the intent is resolved against apps including frozen ones)
+						final DevicePolicies policies = new DevicePolicies(context);
+						try {
+							policies.enableSystemApp(component.getPackageName());
+						} catch (final IllegalArgumentException e) {	// Thrown if it is not system app
+							policies.setApplicationHidden(component.getPackageName(), false);
+						}
+					}
+					try {
+						context.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
+								.putExtra(EXTRA_SHOW_FILESIZE, true).putExtra(EXTRA_SHOW_ADVANCED, true)
+								.putExtra(EXTRA_FANCY_FEATURES, true).putExtra(EXTRA_ALLOW_MULTIPLE, true));
+						return true;
+					} catch (final ActivityNotFoundException ignored) {}
+				}
+				return false;
+			}, result -> {
+				if (result == null || ! result)
+					Toast.makeText(context, R.string.toast_file_shuttle_without_browser, Toast.LENGTH_LONG).show();
 			});
 			return;
 		}
@@ -242,43 +272,38 @@ public class AppListFragment extends Fragment {
 	private static final String EXTRA_SHOW_FILESIZE = "android.content.extra.SHOW_FILESIZE";
 	private static final String EXTRA_FANCY_FEATURES = "android.content.extra.FANCY";
 
-	private static boolean launchFilesExplorer(final Context context) {
-		final Intent doc_ui_base = new Intent().addFlags(FLAG_ACTIVITY_NEW_TASK).putExtra(EXTRA_SHOW_FILESIZE, true)
-				.putExtra(EXTRA_SHOW_ADVANCED, true).putExtra(EXTRA_FANCY_FEATURES, true);
+	private static Intent findFileBrowser(final Context context) {
+		final PackageManager pm = context.getPackageManager();
 
 		// Internal API of AOSP Documents UI app with internal path protocol of ExternalStorageProvider on Android 6+. (also back-ported to 5.x in MIUI)
 		final Uri ext_storage_uri = new Uri.Builder().scheme("content").authority(EXT_STORAGE_AUTHORITY).path("/root/primary").build();
 		final String type = context.getContentResolver().getType(ext_storage_uri);
-		final Intent intent = new Intent(doc_ui_base);
 		if (DocumentsContract.Root.MIME_TYPE_ITEM.equals(type)) {	// Although introduced in Android M, but ACTION_BROWSE is also back-ported by MIUI.
-			try {
-				context.startActivity(intent.setAction(ACTION_BROWSE).setDataAndType(ext_storage_uri, type));
-				return true;
-			} catch (final ActivityNotFoundException ignored) {}
-			try {
-				context.startActivity(intent.setAction(ACTION_BROWSE_DOC_ROOT));
-				return true;
-			} catch (final ActivityNotFoundException ignored) {}
+			final Intent intent = new Intent(ACTION_BROWSE).setDataAndType(ext_storage_uri, type);
+			if (resolveIncludingFrozen(pm, intent) || resolveIncludingFrozen(pm, intent.setAction(ACTION_BROWSE_DOC_ROOT))) return intent;
 		} else {	// Probably the internal path protocol (/root/primary) is not matched, try starting the responsible activity explicitly.
 			@SuppressLint("InlinedApi") final String type_root = DocumentsContract.Root.MIME_TYPE_ITEM;		// It's hidden until Android O.
-			ComponentName component = intent.setType(type_root).setAction(ACTION_BROWSE).resolveActivity(context.getPackageManager());
-			if (component == null) component = intent.setAction(ACTION_BROWSE_DOC_ROOT).resolveActivity(context.getPackageManager());
-			if (component != null) try {
-				context.startActivity(new Intent(doc_ui_base).setComponent(component));
-				return true;
-			} catch (final ActivityNotFoundException ignored) {}
+			final Intent intent = new Intent(ACTION_BROWSE).setType(type_root);
+			if (resolveIncludingFrozen(pm, intent) || resolveIncludingFrozen(pm, intent.setAction(ACTION_BROWSE_DOC_ROOT))) return intent;
 		}
 
-		try {	// General attempt to launch 3rd-party file browser.
-			final Uri uri = Uri.fromFile(Environment.getExternalStorageDirectory());
-			context.startActivity(new Intent(ACTION_VIEW).setDataAndType(uri, "resource/folder"/* required by some */).addFlags(FLAG_ACTIVITY_NEW_TASK));
-			return true;
-		} catch (final ActivityNotFoundException ignored) {}
+		// General attempt to launch 3rd-party file browser.
+		final Uri uri = Uri.fromFile(Environment.getExternalStorageDirectory());
+		final Intent intent = new Intent(ACTION_VIEW).setDataAndType(uri, "resource/folder"/* required by some */);
+		if (resolveIncludingFrozen(pm, intent)) return intent;
 
-		try {	// Last resort, barely only a browser for files.
-			context.startActivity(new Intent(doc_ui_base).setAction(ACTION_OPEN_DOCUMENT).putExtra(EXTRA_ALLOW_MULTIPLE, true).setType("*/*"));
-			return true;
-		} catch (final ActivityNotFoundException ignored) {}
+		// Last resort, barely only a browser for files.
+		final Intent doc_open_intent = new Intent(ACTION_OPEN_DOCUMENT).setType("*/*");
+		if (resolveIncludingFrozen(pm, doc_open_intent)) return doc_open_intent;
+
+		return null;
+	}
+
+	private static boolean resolveIncludingFrozen(final PackageManager pm, final Intent intent) {
+		final List<ResolveInfo> resolves = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY | GET_UNINSTALLED_PACKAGES);
+		for (final ResolveInfo resolve : resolves)
+			if (resolve != null && (resolve.activityInfo.applicationInfo.flags & FLAG_INSTALLED) != 0)	// Only installed (including frozen).
+				return intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name)) != null;
 		return false;
 	}
 

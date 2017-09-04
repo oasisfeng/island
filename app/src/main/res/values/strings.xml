@@ -104,7 +104,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="toast_internal_error">Sorry, an internal error occurred, please restart this app and try again.</string>
     <string name="toast_error_freeze_failure">Failed to freeze</string>
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
-    <string name="toast_file_explorer_not_found">Sorry, no file browser app found on your device.\nStill you can use 3rd-party file explorer inside Island.</string>
+    <string name="toast_file_shuttle_without_browser">Storage shuttle is activated. You can now select files outside Island from apps within.</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>
