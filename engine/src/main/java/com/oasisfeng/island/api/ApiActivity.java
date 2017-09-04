@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import static android.content.pm.PackageManager.GET_SIGNATURES;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 
 /**
  * API via activity to cross the user border
@@ -113,7 +114,7 @@ public class ApiActivity extends Activity {
 		final int signature_hash = value;
 		if (signature_hash == 0) return true;
 		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
-			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, GET_SIGNATURES | Hacks.PackageManager_MATCH_ANY_USER);
+			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, GET_SIGNATURES | GET_UNINSTALLED_PACKAGES | Hacks.PackageManager_MATCH_ANY_USER);
 			for (final Signature signature : pkg_info.signatures)
 				if (signature.hashCode() != signature_hash) return false;
 			sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
