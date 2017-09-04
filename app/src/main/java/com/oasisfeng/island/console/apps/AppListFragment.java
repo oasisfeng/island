@@ -36,6 +36,7 @@ import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
@@ -67,6 +68,8 @@ import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /** The main UI - App list */
 public class AppListFragment extends Fragment {
@@ -233,27 +236,28 @@ public class AppListFragment extends Fragment {
 		if (context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED) {
 			new MethodShuttle(context).runInProfile(() -> {
 				final Intent intent = findFileBrowser(context);
-				if (intent != null) {
-					final ComponentName component = intent.getComponent();	// Intent should be resolved already in findFileBrowser().
-					if (component != null) {        // Unfreeze the target app (the intent is resolved against apps including frozen ones)
-						final DevicePolicies policies = new DevicePolicies(context);
-						try {
-							policies.enableSystemApp(component.getPackageName());
-						} catch (final IllegalArgumentException e) {	// Thrown if it is not system app
-							policies.setApplicationHidden(component.getPackageName(), false);
-						}
-					}
+				if (intent == null) return false;
+				final ComponentName component = intent.getComponent();	// Intent should be resolved already in findFileBrowser().
+				final String pkg = component != null ? component.getPackageName() : null;
+				if (pkg != null) {        // Unfreeze the target app (the intent is resolved against apps including frozen ones)
+					final DevicePolicies policies = new DevicePolicies(context);
 					try {
-						context.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
-								.putExtra(EXTRA_SHOW_FILESIZE, true).putExtra(EXTRA_SHOW_ADVANCED, true)
-								.putExtra(EXTRA_FANCY_FEATURES, true).putExtra(EXTRA_ALLOW_MULTIPLE, true));
-						return true;
-					} catch (final ActivityNotFoundException ignored) {}
+						policies.enableSystemApp(component.getPackageName());
+					} catch (final IllegalArgumentException e) {	// Thrown if it is not system app
+						policies.setApplicationHidden(component.getPackageName(), false);
+					}
 				}
-				return false;
+				try {
+					context.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
+							.putExtra(EXTRA_SHOW_FILESIZE, true).putExtra(EXTRA_SHOW_ADVANCED, true)
+							.putExtra(EXTRA_FANCY_FEATURES, true).putExtra(EXTRA_ALLOW_MULTIPLE, true));
+					Analytics.$().event("launch_file_browser").with(ITEM_CATEGORY, pkg).with(ITEM_ID, intent.toString()).send();
+					return true;
+				} catch (final ActivityNotFoundException e) { return false; }
 			}, result -> {
-				if (result == null || ! result)
-					Toast.makeText(context, R.string.toast_file_shuttle_without_browser, Toast.LENGTH_LONG).show();
+				if (result != null && result) return;
+				Toast.makeText(context, R.string.toast_file_shuttle_without_browser, Toast.LENGTH_LONG).show();
+				Analytics.$().event("no_file_browser").send();
 			});
 			return;
 		}
