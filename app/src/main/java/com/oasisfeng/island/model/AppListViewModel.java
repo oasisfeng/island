@@ -307,7 +307,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info().packageName;
 		Analytics.$().event("action_create_shortcut").with(Analytics.Param.ITEM_ID, pkg).send();
-		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(mActivity).getString(mActivity.getString(R.string.key_launch_shortcut_prefix), "");
+		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(mActivity)
+				.getString(mActivity.getString(R.string.key_launch_shortcut_prefix), mActivity.getString(R.string.default_launch_shortcut_prefix));
 		if (AbstractAppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user), shortcut_prefix)) {
 			Toast.makeText(mActivity, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();
 		} else Toast.makeText(mActivity, R.string.toast_shortcut_failed, Toast.LENGTH_LONG).show();

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_launch_shortcut_prefix" translatable="false">❄\u0020</string><!-- Don't use plain trailing white-space, or it will be trimmed. -->
+</resources>
