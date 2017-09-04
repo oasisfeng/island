@@ -55,7 +55,7 @@ public class MethodShuttle {
 		final Constructor<?> constructor = constructors[0];
 		final Class<?>[] constructor_params = constructor.getParameterTypes();
 		if (constructor_params.length > 0 && constructor_params[0] != Context.class)	// Context is accepted as a special constructor parameter
-			throw new IllegalArgumentException("The method must either have default constructor or have exact one Context parameter");
+			throw new IllegalArgumentException("Constructor must be either default or exact one Context parameter: " + constructor);
 		final MethodInvocation<Result> invocation = new MethodInvocation<>();
 		invocation.clazz = clazz.getName();
 		invocation.args = args;
