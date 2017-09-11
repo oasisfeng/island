@@ -13,6 +13,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 
 import java.util.List;
 
@@ -89,14 +90,30 @@ public class DevicePolicies {
 		mDevicePolicyManager.clearCrossProfileIntentFilters(sCachedComponent);
 	}
 
-	/** @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
-	public void enableSystemApp(final String pkg) {
-		mDevicePolicyManager.enableSystemApp(sCachedComponent, pkg);
+	/** @return true if successfully enabled, false if package not found or not system app.
+	 * @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
+	public boolean enableSystemApp(final String pkg) {
+		try {
+			mDevicePolicyManager.enableSystemApp(sCachedComponent, pkg);
+			return true;
+		} catch (final RuntimeException e) {
+			// May throw NPE if package not found (on Android 5.x, see commit 637baaf0db76f9e1e51eeab077ffb85da0ff9308 in platform_frameworks_base)
+			// 	 or IllegalArgumentException (on Android 6+) if package is not present on this device.
+			if (e instanceof NullPointerException || e instanceof IllegalArgumentException) return false;
+			throw e;
+		}
 	}
 
 	/** @see DevicePolicyManager#enableSystemApp(ComponentName, Intent) */
-	public int enableSystemApp(final Intent intent) {
-		return mDevicePolicyManager.enableSystemApp(sCachedComponent, intent);
+	public boolean enableSystemApp(final Intent intent) {
+		try {
+			return mDevicePolicyManager.enableSystemApp(sCachedComponent, intent) > 0;
+		} catch (final IllegalArgumentException e) {
+			// This exception may be thrown on Android 5.x (but not 6.0+) if non-system apps also match this intent.
+			// System apps should have been enabled before this exception is thrown, so we just ignore it.
+			Log.w(TAG, "System apps may not be enabled for: " + intent);
+			return true;
+		}
 	}
 
 	/** @return Whether the hidden setting of the package was successfully updated, (false if not found)
@@ -209,4 +226,5 @@ public class DevicePolicies {
 	private final DevicePolicyManager mDevicePolicyManager;
 
 	private static ComponentName sCachedComponent;
+	private static final String TAG = DevicePolicies.class.getSimpleName();
 }

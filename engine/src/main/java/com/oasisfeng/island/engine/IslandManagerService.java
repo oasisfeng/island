@@ -209,26 +209,14 @@ public class IslandManagerService extends IIslandManager.Stub {
 		IslandProvisioning.reprovision(mContext);
 	}
 
-	public void enableSystemAppForActivity(final Intent intent) {
-		try {
-			final int result = mDevicePolicies.enableSystemApp(intent);
-			if (result > 0) Log.d(TAG, result + " system apps enabled for: " + intent);
-		} catch (final IllegalArgumentException e) {
-			// This exception may be thrown on Android 5.x (but not 6.0+) if non-system apps also match this intent.
-			// System apps should have been enabled before this exception is thrown, so we just ignore it.
-			Log.w(TAG, "System apps may not be enabled for: " + intent);
-		}
+	private void enableSystemAppForActivity(final Intent intent) {
+		if (mDevicePolicies.enableSystemApp(intent))
+			Log.d(TAG, "System apps enabled for: " + intent);
 	}
 
-	public void enableSystemApp(final String pkg) {
-		try {
-			mDevicePolicies.enableSystemApp(pkg);
-		} catch (final RuntimeException e) {
-			// May throw NPE (on Android 5.x, see commit 637baaf0db76f9e1e51eeab077ffb85da0ff9308 in platform_frameworks_base)
-			// 	 or IllegalArgumentException (on Android 6+) if package is not present on this device.
-			if (e instanceof NullPointerException || (e instanceof IllegalArgumentException && e.getMessage().contains("not present"))) return;
-			Log.e(TAG, "Failed to enable: " + pkg, e);
-		}
+	private void enableSystemApp(final String pkg) {
+		if (! mDevicePolicies.enableSystemApp(pkg))
+			Log.e(TAG, "Failed to enable: " + pkg);
 	}
 
 	private final Context mContext;

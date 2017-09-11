@@ -10,6 +10,7 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
+import android.os.IBinder;
 import android.provider.BlockedNumberContract;
 import android.provider.CalendarContract;
 import android.provider.CallLog;
@@ -20,10 +21,13 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony.Carriers;
 import android.provider.UserDictionary;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.hack.Hack;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.ProfileUser;
 
@@ -37,8 +41,6 @@ import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageManager.GET_PROVIDERS;
-import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 import static android.os.Build.VERSION.SDK_INT;
@@ -49,7 +51,7 @@ import static android.os.Build.VERSION_CODES.N;
  *
  * Created by Oasis on 2016/4/26.
  */
-@ProfileUser class SystemAppsManager {
+@ProfileUser public class SystemAppsManager {
 
 	/** This list serves as a known common package names for quick filtering */
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
@@ -136,29 +138,24 @@ import static android.os.Build.VERSION_CODES.N;
 		} catch (final PackageManager.NameNotFoundException ignored) { return null; }
 	}
 
-	void prepareSystemApps() {
-		disableNonCriticalSystemPackages();
-		enableRequiredSystemApps();
-	}
+//	/** This is generally not necessary on AOSP but will eliminate various problems on custom ROMs */
+//	private void disableNonCriticalSystemPackages() {
+//		final PackageManager pm = mContext.getPackageManager();
+//		final Set<String> critical_sys_pkgs = detectCriticalSystemPackages(pm, mIslandManager, 0);
+//		for (final ApplicationInfo app : pm.getInstalledApplications(0)) {
+//			if ((app.flags & FLAG_SYSTEM) == 0 || critical_sys_pkgs.contains(app.packageName)) continue;
+//			if (! hasSingleUserComponent(pm, app.packageName)) {
+//				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
+//				mIslandManager.freezeApp(app.packageName, "provision");
+//			} else Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
+//		}
+//	}
 
-	/** This is generally not necessary on AOSP but will eliminate various problems on custom ROMs */
-	private void disableNonCriticalSystemPackages() {
-		final PackageManager pm = mContext.getPackageManager();
-		final Set<String> critical_sys_pkgs = detectCriticalSystemPackages(pm, mIslandManager, 0);
-		for (final ApplicationInfo app : pm.getInstalledApplications(0)) {
-			if ((app.flags & FLAG_SYSTEM) == 0 || critical_sys_pkgs.contains(app.packageName)) continue;
-			if (! hasSingleUserComponent(pm, app.packageName)) {
-				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
-				mIslandManager.freezeApp(app.packageName, "provision");
-			} else Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
-		}
-	}
-
-	static Set<String> detectCriticalSystemPackages(final PackageManager pm, final IslandManagerService island, final int flags) {
+	static Set<String> detectCriticalSystemPackages(final PackageManager pm, final DevicePolicies policies, final int flags) {
 		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
 		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
 		for (final Intent intent : sCriticalActivityIntents) {
-			island.enableSystemAppForActivity(intent);
+			policies.enableSystemApp(intent);
 			final List<String> pkgs = StreamSupport.stream(pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY))
 					.filter(info -> (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) != 0)
 					.map(info -> info.activityInfo.packageName)
@@ -192,14 +189,9 @@ import static android.os.Build.VERSION_CODES.N;
 		return critical_sys_pkgs;
 	}
 
-	/** Enable system apps responsible for required intents. (package name unspecified) */
-	private void enableRequiredSystemApps() {
-		mIslandManager.enableSystemAppForActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE));
-	}
-
 	private static boolean hasSingleUserComponent(final PackageManager pm, final String pkg) {
 		try {
-			final PackageInfo info = pm.getPackageInfo(pkg, GET_SERVICES | GET_PROVIDERS);
+			final PackageInfo info = pm.getPackageInfo(pkg, PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
 			if (info.services != null) for (final ServiceInfo service : info.services)
 				if ((service.flags & ServiceInfo.FLAG_SINGLE_USER) != 0) return true;
 			if (info.providers != null) for (final ProviderInfo service : info.providers)
@@ -210,12 +202,10 @@ import static android.os.Build.VERSION_CODES.N;
 		}
 	}
 
-	SystemAppsManager(final Context context, final IslandManagerService island) {
+	SystemAppsManager(final Context context) {
 		mContext = context;
-		mIslandManager = island;
 	}
 
 	private final Context mContext;
-	private final IslandManagerService mIslandManager;
 	private static final String TAG = "Island.SysApps";
 }
