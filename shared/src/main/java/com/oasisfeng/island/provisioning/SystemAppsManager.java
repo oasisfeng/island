@@ -22,9 +22,9 @@ import android.provider.Settings;
 import android.provider.Telephony.Carriers;
 import android.provider.UserDictionary;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -41,6 +41,7 @@ import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
 import static android.os.Build.VERSION.SDK_INT;
@@ -186,7 +187,27 @@ import static android.os.Build.VERSION_CODES.N;
 				critical_sys_pkgs.add(pkg);
 			} else pkg2skip = pkg;		// Skip all other adapters in the same package.
 		}
+
+		if (SDK_INT >= N) critical_sys_pkgs.add(getCurrentWebViewPackageName());
+		try {	// Chrome may not be current WebView provider package, since WebView provider may fallback to old system WebView during provisioning.
+			@SuppressLint("WrongConstant") final ApplicationInfo chrome_info = pm.getApplicationInfo(WellKnownPackages.PACKAGE_GOOGLE_CHROME,
+					GET_UNINSTALLED_PACKAGES | Hacks.PackageManager_MATCH_ANY_USER);
+			if ((chrome_info.flags & FLAG_SYSTEM) != 0) critical_sys_pkgs.add(chrome_info.packageName);
+		} catch (final PackageManager.NameNotFoundException ignored) {}
+
 		return critical_sys_pkgs;
+	}
+
+	@RequiresApi(N) public static @Nullable String getCurrentWebViewPackageName() {
+		try {
+			final IBinder service = Hacks.ServiceManager_getService.invoke("webviewupdate").statically();
+			if (service == null) throw new RuntimeException("Service not found: webviewupdate");
+			final Object webview_service = Hacks.IWebViewUpdateService$Stub_asInterface.invoke(service).statically();
+			return Hacks.IWebViewUpdateService_getCurrentWebViewPackageName.invoke().on(webview_service);
+		} catch (final Exception e) {
+			Analytics.$().logAndReport(TAG, "Error detecting WebView provider.", e);
+			return null;
+		}
 	}
 
 	private static boolean hasSingleUserComponent(final PackageManager pm, final String pkg) {

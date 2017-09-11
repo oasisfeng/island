@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
@@ -21,7 +20,6 @@ import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.InternalService;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.ApiActivity;
-import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
@@ -46,6 +44,7 @@ import static android.content.Intent.CATEGORY_BROWSABLE;
 import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -117,8 +116,21 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			prefs.edit().putInt(PREF_KEY_PROFILE_PROVISION_TYPE, 1).apply();
 			ProfileOwnerManualProvisioning.start(this, policies);	// Mimic the stock managed profile provision
 		} else Analytics.$().event("profile_post_provision_start").send();
-		startProfileOwnerPostProvisioning(this, policies);
+
+		try {
+			startProfileOwnerPostProvisioning(this, policies, prefs);
+		} catch (final Exception e) {
+			Analytics.$().event("profile_post_provision_error").with(Analytics.Param.ITEM_NAME, e.toString()).send();
+			Analytics.$().report(e);
+		}
+
+		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
+			policies.setProfileName(getString(R.string.profile_name));
+			Log.d(TAG, "Enable profile now.");
+			policies.setProfileEnabled();
+		}
 		Analytics.$().event("profile_post_provision_done").send();
+
 		disableLauncherActivity(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
@@ -158,13 +170,13 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 	}
 
-	private static void enableCriticalSystemAppsIfNeeded(final Context context, final IslandManagerService island, final @Nullable SharedPreferences prefs) {
+	private static void enableCriticalSystemAppsIfNeeded(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
 		if (prefs != null && checkRevision(prefs, PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION, UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION) == -1) return;
 		@SuppressWarnings("deprecation") final Set<String> pkgs
-				= SystemAppsManager.detectCriticalSystemPackages(context.getPackageManager(), island, PackageManager.GET_UNINSTALLED_PACKAGES);
+				= SystemAppsManager.detectCriticalSystemPackages(context.getPackageManager(), policies, GET_UNINSTALLED_PACKAGES);
 		for (final String pkg : pkgs) try {
-			island.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
-			island.unfreezeApp(pkg);
+			policies.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
+			policies.setApplicationHidden(pkg, false);
 		} catch (final IllegalArgumentException ignored) {}		// Ignore non-existent packages.
 	}
 
@@ -193,7 +205,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
 
-		startProfileOwnerPostProvisioning(context, policies);
+		startProfileOwnerPostProvisioning(context, policies, null);
 
 		disableLauncherActivity(context);
 	}
@@ -210,20 +222,16 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	/**
-	 * All the preparations after the provisioning procedure of system ManagedProvisioning
+	 * All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning.
 	 *
 	 * <p>{@link #POST_PROVISION_REV} must be increased if anything new is added in this method
 	 */
-	private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
-		Log.d(TAG, "Enable profile now.");
-		policies.setProfileName(context.getString(R.string.profile_name));
-		// Enable the profile here, launcher will show all apps inside.
-		policies.setProfileEnabled();
-
-		// FIXME: Device owner only ----- if (SDK_INT >= N_MR1) policies.setBackupServiceEnabled(true);
-		enableAdditionalForwarding(policies);
+	@ProfileUser private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
+		Log.d(TAG, "Start post-provisioning.");
 
 		if (SDK_INT >= M) policies.addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+
+		enableAdditionalForwarding(policies);
 
 		// Prepare AppLaunchShortcut
 		final IntentFilter launchpad_filter = new IntentFilter(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE);
@@ -239,6 +247,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		policies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+
+		// Prepare critical system apps
+		enableCriticalSystemAppsIfNeeded(context, new DevicePolicies(context), prefs);
 	}
 
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {

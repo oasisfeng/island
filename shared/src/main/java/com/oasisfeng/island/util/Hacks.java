@@ -10,6 +10,8 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.print.PrintManager;
@@ -48,6 +50,9 @@ public class Hacks {
 	@RequiresApi(N) public static Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean> UserManager_getProfileIds;
 	public static final Hack.HackedMethod2<Context, Context, NameNotFoundException, Unchecked, Unchecked, ApplicationInfo, Integer> Context_createApplicationContext;
 	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle> Context_createPackageContextAsUser;
+	public static final Hack.HackedMethodN<IBinder, Void, Unchecked, Unchecked, Unchecked> ServiceManager_getService;
+	public static final Hack.HackedMethod1<?, Void, Unchecked, Unchecked, Unchecked, IBinder> IWebViewUpdateService$Stub_asInterface;
+	@RequiresApi(N) public static Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked> IWebViewUpdateService_getCurrentWebViewPackageName;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
@@ -81,5 +86,12 @@ public class Hacks {
 				.throwing(NameNotFoundException.class).withParams(ApplicationInfo.class, int.class);
 		Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
 				.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(String.class, int.class, UserHandle.class);
+		ServiceManager_getService = Hack.into("android.os.ServiceManager").staticMethod("getService")
+				.returning(IBinder.class).fallbackReturning(null).withParams(String.class);
+		final String IWebViewUpdateService = "android.webkit.IWebViewUpdateService";
+		IWebViewUpdateService$Stub_asInterface = Hack.into(IWebViewUpdateService + "$Stub").staticMethod("asInterface")
+				.returning(Hack.ANY_TYPE).withParam(IBinder.class);
+		if (SDK_INT >= N) IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
+				.returning(String.class).fallbackReturning(null).throwing(RemoteException.class).withoutParams();
 	}
 }
