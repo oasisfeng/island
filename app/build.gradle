@@ -2,7 +2,7 @@ apply plugin: 'com.android.feature'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.0'
+    buildToolsVersion '26.0.1'
 
     defaultConfig {
         minSdkVersion 21
@@ -42,8 +42,10 @@ dependencies {
     implementation project(':shared')
     api project(':deagle')
 
-    api 'com.android.support:design:26.0.1'
-    api 'com.android.support:appcompat-v7:26.0.1'
+    // Any dependency with classes involved in data-binding in feature module must be declared with "api",
+    // since these classes are used in data-binding task of dependent module ("assembly").
+    api 'com.android.support:design:26.0.2'
+    api 'com.android.support:appcompat-v7:26.0.2'
     api 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     api 'uk.co.samuelwall:material-tap-target-prompt:2.0.1'
     api(name: 'setup-wizard-lib-platform-release', ext: 'aar')

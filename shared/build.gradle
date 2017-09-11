@@ -2,7 +2,7 @@ apply plugin: 'com.android.feature'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.0'
+    buildToolsVersion '26.0.1'
 
     defaultConfig {
         minSdkVersion 21
@@ -36,7 +36,7 @@ dependencies {
     api project(':deagle')
     api project(':stream-backport') //api 'com.annimon:stream:1.1.8'
     api 'com.google.guava:guava:22.0-android'
-    api 'com.android.support:support-annotations:26.0.1'
+    api 'com.android.support:support-annotations:26.0.2'
     implementation 'org.jetbrains:annotations:15.0'
     implementation 'com.google.android.gms:play-services-analytics:11.2.0'
     implementation 'com.google.firebase:firebase-analytics:11.2.0'
@@ -50,5 +50,5 @@ dependencies {
 
     androidTestImplementation 'junit:junit:4.12'
     androidTestImplementation('com.android.support.test:runner:0.5') { exclude group: 'com.android.support', module: 'support-annotations' }
-    androidTestImplementation 'com.android.support.test:rules:1.0.0'
+    androidTestImplementation 'com.android.support.test:rules:1.0.1'
 }
