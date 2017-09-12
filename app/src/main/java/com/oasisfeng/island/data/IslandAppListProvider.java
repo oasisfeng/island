@@ -22,6 +22,7 @@ import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
@@ -268,19 +269,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private final Supplier<ShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
-	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> {
-		final ApplicationInfo app_info = context().getApplicationInfo();
-		final int original_uid = app_info.uid;
-		app_info.uid = Users.toId(Users.profile) * 100000 + app_info.uid;	// Simulate an instance of ApplicationInfo from profile user.
-		try {
-			final Context profile_context = Hacks.Context_createApplicationContext.invoke(app_info, 0).on(context());
-			return profile_context.getPackageManager();
-		} catch (PackageManager.NameNotFoundException e) {
-			throw new IllegalStateException(e);	// Should never happen
-		} finally {
-			app_info.uid = original_uid;		// Restore the UID, since this instance of ApplicationInfo is internally shared.
-		}
-	});
+	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> ContextShuttle.getPackageManagerAsUser(context(), Users.profile));
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(
 			() -> new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 
