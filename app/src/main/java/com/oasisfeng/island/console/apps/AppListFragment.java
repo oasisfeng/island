@@ -192,7 +192,8 @@ public class AppListFragment extends Fragment {
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
 		menu.findItem(R.id.menu_search).setVisible(mViewModel.getSelection() == null).setOnActionExpandListener(mOnActionExpandListener);
-		menu.findItem(R.id.menu_files).setVisible(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null);
+		menu.findItem(R.id.menu_files).setVisible(context != null && Users.hasProfile() &&
+				(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null));
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
