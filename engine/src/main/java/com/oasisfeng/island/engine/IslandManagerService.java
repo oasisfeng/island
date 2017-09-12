@@ -109,7 +109,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 		final PackageManager pm = mContext.getPackageManager();
 		final String apk_path;
 		try { @SuppressLint({"WrongConstant", "deprecation"})
-			final ApplicationInfo app_info = pm.getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES | Hacks.PackageManager_MATCH_ANY_USER);
+			final ApplicationInfo app_info = pm.getApplicationInfo(pkg, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 			if ((app_info.flags & FLAG_INSTALLED) != 0) {
 				Log.e(TAG, "Already cloned: " + pkg);
 				return IslandManager.CLONE_RESULT_ALREADY_CLONED;
