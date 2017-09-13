@@ -26,6 +26,7 @@ import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ActivityShuttle;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
@@ -44,7 +45,6 @@ import static android.content.Intent.CATEGORY_BROWSABLE;
 import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -140,6 +140,15 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		trace.stop();
 	}
 
+	public static void performIncrementalProvisoningIfNeeded(final Context context) {
+		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
+		if (state < POST_PROVISION_REV) {
+			startProfileOwnerPostProvisioning(context, new DevicePolicies(context), prefs);
+		} else if (state > POST_PROVISION_REV)
+			prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();	// To avoid persistent inconsistency.
+	}
+
 	@Override public void onCreate() {
 		super.onCreate();
 		NotificationIds.Provisioning.startForeground(this, mForegroundNotification.get());
@@ -170,10 +179,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 	}
 
-	private static void enableCriticalSystemAppsIfNeeded(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
+	@ProfileUser private static void enableCriticalAppsIfNeeded(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
 		if (prefs != null && checkRevision(prefs, PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION, UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION) == -1) return;
-		@SuppressWarnings("deprecation") final Set<String> pkgs
-				= SystemAppsManager.detectCriticalSystemPackages(context.getPackageManager(), policies, GET_UNINSTALLED_PACKAGES);
+		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager(), policies, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 		for (final String pkg : pkgs) try {
 			policies.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
 			policies.setApplicationHidden(pkg, false);
@@ -248,8 +256,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
-		// Prepare critical system apps
-		enableCriticalSystemAppsIfNeeded(context, new DevicePolicies(context), prefs);
+		// Prepare critical apps
+		enableCriticalAppsIfNeeded(context, new DevicePolicies(context), prefs);
 	}
 
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {
