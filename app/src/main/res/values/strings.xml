@@ -155,4 +155,11 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="prompt_clone_title">Clone app to Island</string>
     <string name="prompt_clone_text">To apply the magic, app in mainland needs to be cloned into Island first.\n\nThe clone has its own copy of data, but shares the executable binaries with the one in mainland.</string>
 
+    <!-- Tip cards -->
+
+    <string name="tip_action_ignore">Ignore</string>
+    <string name="tip_critical_package_required">Critical package required</string>
+    <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
+    <string name="dialog_critical_app_warning">This app is critical for the Android system to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
+
 </resources>

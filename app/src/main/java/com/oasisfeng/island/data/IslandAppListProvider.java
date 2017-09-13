@@ -22,8 +22,11 @@ import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.provisioning.CriticalAppsManager;
+import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
@@ -31,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import java8.util.function.Consumer;
@@ -39,6 +43,7 @@ import java8.util.stream.RefStreams;
 import java8.util.stream.Stream;
 import java8.util.stream.StreamSupport;
 
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -210,6 +215,16 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		});
 	}
 
+	/** Freezing or disabling a critical app may cause malfunction to other apps or the whole system. */
+	public boolean isCritical(final String pkg) {
+		return (SDK_INT >= N && pkg.equals(CriticalAppsManager.getCurrentWebViewPackageName()))
+				|| mCriticalSystemPackages.get().contains(pkg);
+	}
+
+	public Stream<IslandAppInfo> getCriticalSystemPackages() {
+		return StreamSupport.stream(mIslandAppMap.get().values()).filter(app -> mCriticalSystemPackages.get().contains(app.packageName));
+	}
+
 	public boolean isHiddenSysAppCloned(final String pkg) {
 		return mClonedHiddenSystemApps.get().isCloned(pkg);
 	}
@@ -217,12 +232,6 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	public void setHiddenSysAppCloned(final String pkg) {
 		if (Users.hasProfile()) mClonedHiddenSystemApps.get().setCloned(pkg);
 	}
-
-	private final Supplier<ConcurrentHashMap<String/* package */, IslandAppInfo>> mIslandAppMap = Suppliers.memoize(() -> {
-		final ConcurrentHashMap<String, IslandAppInfo> apps = new ConcurrentHashMap<>();
-		onStartLoadingIslandApps(apps);
-		return apps;
-	});
 
 	private final LauncherApps.Callback mCallback = new LauncherApps.Callback() {
 
@@ -267,11 +276,19 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 	};
 
+	private final Supplier<ConcurrentHashMap<String/* package */, IslandAppInfo>> mIslandAppMap = Suppliers.memoize(() -> {
+		final ConcurrentHashMap<String, IslandAppInfo> apps = new ConcurrentHashMap<>();
+		onStartLoadingIslandApps(apps);
+		return apps;
+	});
+
 	private final Supplier<ShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
 	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> ContextShuttle.getPackageManagerAsUser(context(), Users.profile));
-	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(
-			() -> new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
+	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(() ->
+			new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
+	private final Supplier<Set<String>> mCriticalSystemPackages = Suppliers.memoize(() ->
+			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager(), new DevicePolicies(context()), GET_UNINSTALLED_PACKAGES));
 
 	private static final String TAG = "Island.AppListProv";
 }

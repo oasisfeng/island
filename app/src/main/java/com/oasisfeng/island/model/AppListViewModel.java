@@ -253,24 +253,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			Analytics.$().event("action_install_outside").with(Analytics.Param.ITEM_ID, pkg).send();
 			clearSelection();
 		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
-			final int next_index = indexOf(selection) + 1;
-			if (next_index >= size()) clearSelection();
-			else {
-				final AppViewModel next = getAppAt(next_index);
-				if (next.state == State.Alive)
-					setSelection(next);
-				else clearSelection();
-			}
 			Analytics.$().event("action_freeze").with(Analytics.Param.ITEM_ID, pkg).send();
 
-			try {
-				final boolean frozen = controller.freezeApp(pkg, "manual");
-				if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
-				else Toast.makeText(mActivity, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
-				refreshAppStateAsSysBugWorkaround(pkg);
-			} catch (final RemoteException ignored) {
-				Toast.makeText(mActivity, "Internal error", Toast.LENGTH_LONG).show();
-			}
+			if (IslandAppListProvider.getInstance(context).isCritical(pkg)) {
+				Dialogs.buildAlert(mActivity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning)
+						.withCancelButton().withOkButton(() -> freezeApp(context, selection)).show();
+			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(Analytics.Param.ITEM_ID, pkg).send();
 			try {
@@ -286,13 +274,29 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			onShortcutRequested();
 		} else if (id == R.id.menu_greenify) {
 			onGreenifyRequested();
-
-//		case R.id.menu_enable:
+//		} else if (id == R.id.menu_enable) {
 //			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 //			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
-//			break;
 		}
 		return true;
+	}
+
+	private void freezeApp(final Context context, final AppViewModel app_vm) {
+		// Select the next app for convenient continuous freezing.
+		final int next_index = indexOf(app_vm) + 1;
+		final AppViewModel next;
+		if (next_index < size() && (next = getAppAt(next_index)).state == State.Alive) setSelection(next);
+		else clearSelection();
+
+		final IslandAppInfo app = app_vm.info();
+		try {
+			final boolean frozen = controller(app).freezeApp(app.packageName, "manual");
+			if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
+			else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
+			refreshAppStateAsSysBugWorkaround(app.packageName);
+		} catch (final RemoteException ignored) {
+			Toast.makeText(context, "Internal error", Toast.LENGTH_LONG).show();
+		}
 	}
 
 	private void launchSettingsAppInfoActivity(final IslandAppInfo app) {
@@ -361,7 +365,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppInfo app = getSelection().info();
 		Analytics.$().event("action_uninstall").with(Analytics.Param.ITEM_ID, app.packageName).with(Analytics.Param.ITEM_CATEGORY, "system").send();
 		if (app.isSystem()) {
-			Dialogs.buildAlert(mActivity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
+			if (app.isCritical()) {
+				Dialogs.buildAlert(mActivity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
+						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
+			} else Dialogs.buildAlert(mActivity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
 		} else try {
 			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.

@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.service.Services;
+import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
 import com.oasisfeng.island.analytics.Analytics;
@@ -51,6 +52,7 @@ import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
+import com.oasisfeng.island.tip.Tip;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
@@ -89,6 +91,11 @@ public class AppListFragment extends Fragment {
 		super.onStart();
 		if (Users.hasProfile() && ! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
 			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
+	}
+
+	@Override public void onResume() {
+		super.onResume();
+		SafeAsyncTask.execute(getActivity(), Tip::next, card -> mBinding.setCard(card));
 	}
 
 	@Override public void onStop() {
@@ -147,10 +154,10 @@ public class AppListFragment extends Fragment {
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
 		final Activity activity = getActivity();
-		final AppListBinding binding = AppListBinding.inflate(inflater, container, false);
-		binding.setApps(mViewModel);
-		binding.setGuide(mUserGuide);
-		mViewModel.attach(activity, binding.details.toolbar.getMenu(), saved_state);
+		mBinding = AppListBinding.inflate(inflater, container, false);
+		mBinding.setApps(mViewModel);
+		mBinding.setGuide(mUserGuide);
+		mViewModel.attach(activity, mBinding.details.toolbar.getMenu(), saved_state);
 		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
 
 		if (! Services.bind(activity, IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
@@ -161,18 +168,18 @@ public class AppListFragment extends Fragment {
 			@Override public void onServiceDisconnected(final ComponentName name) {}
 		})) throw new IllegalStateException("Module engine not installed");
 
-		activity.setActionBar(binding.appbar);
+		activity.setActionBar(mBinding.appbar);
 		final ActionBar actionbar = activity.getActionBar();
 		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
-		binding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
 				if (getActivity() == null) return;
 				mViewModel.setFilterPrimaryChoice(position);
 			}
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
 		});
-		binding.executePendingBindings();		// This ensures all view state being fully restored
-		return binding.getRoot();
+		mBinding.executePendingBindings();		// This ensures all view state being fully restored
+		return mBinding.getRoot();
 	}
 
 	@Override public void onDestroyView() {
@@ -242,11 +249,8 @@ public class AppListFragment extends Fragment {
 				final String pkg = component != null ? component.getPackageName() : null;
 				if (pkg != null) {        // Unfreeze the target app (the intent is resolved against apps including frozen ones)
 					final DevicePolicies policies = new DevicePolicies(context);
-					try {
-						policies.enableSystemApp(component.getPackageName());
-					} catch (final IllegalArgumentException e) {	// Thrown if it is not system app
+					if (! policies.enableSystemApp(component.getPackageName()))
 						policies.setApplicationHidden(component.getPackageName(), false);
-					}
 				}
 				try {
 					context.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
@@ -326,6 +330,7 @@ public class AppListFragment extends Fragment {
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */
 	public AppListFragment() {}
 
+	private AppListBinding mBinding;
 	private AppListViewModel mViewModel;
 	private @Nullable UserGuide mUserGuide;
 	private ShuttleContext mShuttleContext;

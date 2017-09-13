@@ -70,6 +70,11 @@ public class IslandAppInfo extends AppInfo {
 		return null;
 	}
 
+	/** @return whether this package is critical to the system, thus should not be frozen or disabled. */
+	public boolean isCritical() {
+		return ((IslandAppListProvider) mProvider).isCritical(packageName);
+	}
+
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
 	@SuppressWarnings("deprecation") private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(
