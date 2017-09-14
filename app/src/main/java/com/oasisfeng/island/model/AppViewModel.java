@@ -44,10 +44,10 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		if (! info().enabled) status.append(context.getString(R.string.status_disabled));
 		else if (info().isHidden()) status.append(context.getString(R.string.status_frozen));
 		else status.append(context.getString(R.string.status_alive));
-		final boolean is_system = isSystem();
 		final boolean exclusive = IslandAppListProvider.getInstance(context).isExclusive(info());
 		final String appendixes = Joiner.on(", ").skipNulls().join(Arrays.asList(
-				is_system ? context.getString(R.string.status_appendix_system) : null,
+				isSystem() ? context.getString(R.string.status_appendix_system) : null,
+				info().isCritical() ? context.getString(R.string.status_appendix_critical) : null,
 				Users.isOwner(info().user) ? (exclusive ? null : context.getString(R.string.status_appendix_cloned))
 						: (exclusive ? context.getString(R.string.status_appendix_exclusive) : null)
 		));

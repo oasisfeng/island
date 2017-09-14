@@ -8,6 +8,7 @@
     <string name="status_frozen">Frozen</string>
     <string name="status_disabled">Disabled</string>
     <string name="status_appendix_system">System</string>
+    <string name="status_appendix_critical">Critical</string>
     <string name="status_appendix_cloned">Cloned</string>
     <string name="status_appendix_exclusive">Exclusive</string>
 
