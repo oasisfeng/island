@@ -26,7 +26,6 @@ import com.oasisfeng.island.provisioning.CriticalAppsManager;
 import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
-import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
@@ -288,7 +287,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(() ->
 			new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 	private final Supplier<Set<String>> mCriticalSystemPackages = Suppliers.memoize(() ->
-			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager(), new DevicePolicies(context()), GET_UNINSTALLED_PACKAGES));
+			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager(), GET_UNINSTALLED_PACKAGES));
 
 	private static final String TAG = "Island.AppListProv";
 }

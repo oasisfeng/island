@@ -24,8 +24,8 @@ import android.util.Log;
 
 import com.google.common.base.Stopwatch;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
-import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.perf.Performances;
 
@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import hugo.weaving.DebugLog;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
@@ -148,15 +147,15 @@ import static android.os.Build.VERSION_CODES.N;
 //	}
 
 	/** @param flags intersection of {@code PackageManager.ComponentInfoFlags} and {@code PackageManager.ResolveInfoFlags}. */
-	@DebugLog public static Set<String> detectCriticalSystemPackages(final PackageManager pm, final DevicePolicies policies, final int flags) {
+	@OwnerUser @ProfileUser public static Set<String> detectCriticalSystemPackages(final PackageManager pm, final int flags) {
 		final Stopwatch stopwatch = Performances.startUptimeStopwatch();
 
 		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
 
 		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
 		for (final Intent intent : sCriticalActivityIntents) {
-			policies.enableSystemApp(intent);
-			final List<String> pkgs = StreamSupport.stream(pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY))
+			@SuppressLint("WrongConstant") final List<String> pkgs =
+					StreamSupport.stream(pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY | Hacks.MATCH_ANY_USER_AND_UNINSTALLED))
 					.filter(info -> (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) != 0)
 					.map(info -> info.activityInfo.packageName)
 					.collect(Collectors.toList());

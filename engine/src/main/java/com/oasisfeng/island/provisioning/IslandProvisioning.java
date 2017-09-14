@@ -181,7 +181,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	@ProfileUser private static void enableCriticalAppsIfNeeded(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
 		if (prefs != null && checkRevision(prefs, PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION, UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION) == -1) return;
-		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager(), policies, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 		for (final String pkg : pkgs) try {
 			policies.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
 			policies.setApplicationHidden(pkg, false);

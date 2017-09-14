@@ -9,8 +9,8 @@ import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
-import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.ProfileUser;
 
 import java.util.Set;
 
@@ -24,8 +24,8 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class CriticalAppsManager {
 
-	static Set<String> detectCriticalPackages(final PackageManager pm, final DevicePolicies policies, final int flags) {
-		final Set<String> pkgs = SystemAppsManager.detectCriticalSystemPackages(pm, policies, flags);
+	@ProfileUser static Set<String> detectCriticalPackages(final PackageManager pm, final int flags) {
+		final Set<String> pkgs = SystemAppsManager.detectCriticalSystemPackages(pm, flags);
 
 		if (SDK_INT >= N) pkgs.add(getCurrentWebViewPackageName());
 		try { @SuppressLint("WrongConstant") // Chrome may not be current provider, since current provider may fallback to system WebView during provisioning.
