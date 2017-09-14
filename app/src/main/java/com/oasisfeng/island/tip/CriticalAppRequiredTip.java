@@ -19,7 +19,6 @@ import com.oasisfeng.ui.card.CardViewModel;
 
 import java.util.List;
 
-import hugo.weaving.DebugLog;
 import java8.util.stream.Collectors;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -32,7 +31,7 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class CriticalAppRequiredTip extends IgnorableTip {
 
-	@DebugLog @Override protected @Nullable CardViewModel buildCardIfNotIgnored(final Context context) {
+	@Override protected @Nullable CardViewModel buildCardIfNotIgnored(final Context context) {
 		final String webview_pkg;
 		if (SDK_INT >= N && Users.hasProfile() && (webview_pkg = CriticalAppsManager.getCurrentWebViewPackageName()) != null) {
 			final IslandAppInfo app = IslandAppListProvider.getInstance(context).get(webview_pkg, Users.profile);
