@@ -12,6 +12,7 @@ import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.support.annotation.RequiresPermission;
 import android.util.Log;
 
 import com.google.common.base.Objects;
@@ -283,7 +284,8 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private final Supplier<ShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
-	private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() -> ContextShuttle.getPackageManagerAsUser(context(), Users.profile));
+	@RequiresPermission(INTERACT_ACROSS_USERS) private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() ->
+			ContextShuttle.getPackageManagerAsUser(context(), Users.profile));
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(() ->
 			new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 	private final Supplier<Set<String>> mCriticalSystemPackages = Suppliers.memoize(() ->
