@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" /> <!-- Not yet used -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- UninstallHelper.UninstallReceiver -->
 
     <application android:allowBackup="false"
                  android:label="Island - Mobile"
@@ -21,6 +22,7 @@
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
 
+        <!-- windowSoftInputMode="adjustPan" to avoid bottom-sheet hanging in the center of screen when search is finished and IME panel is closed. -->
         <activity android:name="com.oasisfeng.island.MainActivity" android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,7 +36,18 @@
         <provider android:authorities="${applicationId}.apps"
                   android:name="com.oasisfeng.island.data.IslandAppListProvider"
                   android:exported="false"
-                  android:multiprocess="true" />
+                  android:multiprocess="true"/>
+
+        <provider android:authorities="${applicationId}.removal"
+                  android:name="com.oasisfeng.island.UninstallHelper"
+                  android:exported="false"/>
+
+        <receiver android:name="com.oasisfeng.island.UninstallHelper$UninstallReceiver"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
 
         <activity android:name="com.oasisfeng.island.settings.SettingsActivity"
                   android:label="@string/settings_title"

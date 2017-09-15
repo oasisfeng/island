@@ -146,6 +146,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
 
     <string name="notification_channel_ongoing_task">Ongoing task</string>
     <string name="notification_channel_background_state">Background state</string>
+    <string name="notification_channel_important">Important</string>
 
     <!-- New User Guide -->
 
@@ -162,5 +163,8 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="tip_critical_package_required">Critical package required</string>
     <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
     <string name="dialog_critical_app_warning">This app is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
+    <string name="notification_remove_island_after_uninstall_title">Remove Island completely</string>
+    <string name="notification_remove_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
+    <string name="notification_action_restore">Restore</string>
 
 </resources>

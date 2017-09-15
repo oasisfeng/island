@@ -28,10 +28,15 @@ import static android.os.Build.VERSION_CODES.O;
 public enum NotificationIds {
 
 	ShuttleKeeper(Channel.ReadyState),
-	Provisioning(Channel.OngoingTask);
+	Provisioning(Channel.OngoingTask),
+	UninstallHelper(Channel.Important);
 
 	public void post(final Context context, final Notification.Builder notification) {
 		NotificationManagerCompat.from(context).notify(id(), buildChannel(context, notification).build());
+	}
+
+	public void cancel(final Context context) {
+		NotificationManagerCompat.from(context).cancel(id());
 	}
 
 	public void startForeground(final Service service, final Notification.Builder notification) {
@@ -52,7 +57,8 @@ public enum NotificationIds {
 	@SuppressLint("InlinedApi") enum Channel {
 
 		ReadyState	("ReadyState",	R.string.notification_channel_background_state,	NotificationManager.IMPORTANCE_MIN, channel -> channel.setShowBadge(false)),
-		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,		NotificationManager.IMPORTANCE_HIGH, channel -> channel.setShowBadge(false));
+		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,		NotificationManager.IMPORTANCE_HIGH, channel -> channel.setShowBadge(false)),
+		Important	("Important",	R.string.notification_channel_important,		NotificationManager.IMPORTANCE_HIGH, channel -> channel.setShowBadge(true));
 
 		Channel(final String name, final @StringRes int title, final int importance, final @Nullable Consumer<NotificationChannel> tweaks) {
 			this.name = name; this.title = title; this.importance = importance; this.tweaks = tweaks;
