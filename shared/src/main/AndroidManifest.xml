@@ -32,6 +32,14 @@
                   android:authorities="${applicationId}.firebaseinitprovider"
                   tools:node="remove" tools:ignore="ExportedContentProvider"/>
 
+        <!-- Google Analytics (required for devices without GMS) -->
+        <receiver android:name="com.google.android.gms.analytics.AnalyticsReceiver" android:exported="false" android:process=":analytics">
+            <intent-filter>
+                <action android:name="com.google.android.gms.analytics.ANALYTICS_DISPATCH" />
+            </intent-filter>
+        </receiver>
+        <service android:name="com.google.android.gms.analytics.AnalyticsService" android:exported="false" android:process=":analytics"/>
+
         <service android:name="com.oasisfeng.island.firebase.LazyFirebaseInstanceIdService" android:exported="true" tools:ignore="ExportedService">
             <intent-filter> <!-- Override the original FirebaseInstanceIdService -->
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
