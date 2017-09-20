@@ -51,6 +51,17 @@
 
         </activity>
 
+        <receiver android:name="com.oasisfeng.island.api.ApiReceiver">
+
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.FREEZE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="package" />
+                <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
+            </intent-filter>
+
+        </receiver>
+
         <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity"
                   android:exported="false"
                   android:hardwareAccelerated="false"
