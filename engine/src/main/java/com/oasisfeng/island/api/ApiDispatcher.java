@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java8.util.function.Predicate;
+
 import static android.content.pm.PackageManager.GET_SIGNATURES;
 
 /**
@@ -59,32 +61,38 @@ class ApiDispatcher {
 	static String dispatch(final Context context, final Intent intent) {
 		switch (intent.getAction()) {
 		case Api.latest.ACTION_FREEZE:
-			final Uri uri = intent.getData(); final String ssp;
-			if (uri == null || (ssp = uri.getSchemeSpecificPart()) == null) return "Invalid intent data: " + uri;
-			final String scheme = uri.getScheme();
-			final FluentIterable<String> pkgs;
-			final boolean single;
-			if (single = "package".equals(scheme)) pkgs = FluentIterable.from(Collections.singleton(ssp));
-			else if ("packages".equals(scheme)) pkgs = FluentIterable.from(Splitter.on(',').split(ssp));
-			else return "Unsupported intent data scheme: " + uri;	// Should never happen
-
 			final IslandManagerService island = new IslandManagerService(context);
-			try {
-				final List<String> failed_pkgs = pkgs.filter(pkg -> ! island.freezeApp(pkg, "api")).toList();
-				if (failed_pkgs.isEmpty()) return null;
-				if (single) return "Failed to freeze: " + ssp;
-				return "Failed to freeze: " + failed_pkgs;
-			} catch (final SecurityException e) {
-				return "Internal exception: " + e;		// Island might be have been deactivated or not set up yet.
-			}
+			return processPackageUri(intent.getData(), pkg -> island.freezeApp(pkg, "api"));
+		case Api.latest.ACTION_UNFREEZE:
+			return processPackageUri(intent.getData(), new IslandManagerService(context)::unfreezeApp);
 		default: return "Unsupported action: " + intent.getAction();
+		}
+	}
+
+	private static String processPackageUri(final Uri uri, final Predicate<String> dealer) {
+		final String ssp;
+		if (uri == null || (ssp = uri.getSchemeSpecificPart()) == null) return "Invalid intent data: " + uri;
+		final String scheme = uri.getScheme();
+		final FluentIterable<String> pkgs;
+		final boolean single;
+		if (single = "package".equals(scheme)) pkgs = FluentIterable.from(Collections.singleton(ssp));
+		else if ("packages".equals(scheme)) pkgs = FluentIterable.from(Splitter.on(',').split(ssp));
+		else return "Unsupported intent data scheme: " + uri;	// Should never happen
+
+		try {
+			final List<String> failed_pkgs = pkgs.filter(t -> ! dealer.test(t)).toList();
+			if (failed_pkgs.isEmpty()) return null;
+			if (single) return "Failed to freeze: " + ssp;
+			return "Failed to freeze: " + failed_pkgs;
+		} catch (final SecurityException e) {
+			return "Internal exception: " + e;		// Island might be have been deactivated or not set up yet.
 		}
 	}
 
 	private static final Map<String/* pkg */, Integer/* signature hash */> sVerifiedCallers = new HashMap<>(1);
 	static {
 		sVerifiedCallers.put("com.oasisfeng.greenify", -373128424);
-		if (BuildConfig.DEBUG) sVerifiedCallers.put("com.oasisfeng.greenify.debug", 0/* Any signature */);
+		if (BuildConfig.DEBUG) sVerifiedCallers.put("com.oasisfeng.island", 253992159);
 	}
 
 	private static final String TAG = "API";

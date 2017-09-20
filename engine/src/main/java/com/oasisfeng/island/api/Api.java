@@ -12,12 +12,17 @@ import java.lang.annotation.RetentionPolicy;
  * <li>Freeze specified app(s)</li>
  * {@link latest#ACTION_FREEZE} with app package name in data of "package" or "packages" (comma-separated) scheme.
  * <p>Result: {@link Activity#RESULT_OK} for success, {@link Activity#RESULT_CANCELED} for failure or {@link latest#RESULT_UNVERIFIED_IDENTITY}.
+ *
+ * <li>Unfreeze specified app(s)</li>
+ * {@link latest#ACTION_UNFREEZE} with app package name in data of "package" or "packages" (comma-separated) scheme.
+ * <p>Result: {@link Activity#RESULT_OK} for success, {@link Activity#RESULT_CANCELED} for failure or {@link latest#RESULT_UNVERIFIED_IDENTITY}.
  * </ol>
  *
  * <p>API revisions:
  *
  * <ul>
  * <li>v1.0 released in Island v2.0.
+ * <li>v1.1 planned for Island v2.4.1.
  * </ul>
  *
  * Created by Oasis on 2017/9/19.
@@ -28,6 +33,7 @@ public class Api {
 
 	public interface v1 {
 		@Since(.0) String ACTION_FREEZE = "com.oasisfeng.island.action.FREEZE";		// data: "package:<package>" or "packages:<package1>,<package2>..."
+		@Since(.1) String ACTION_UNFREEZE = "com.oasisfeng.island.action.UNFREEZE";	// data: same as above
 
 		@Since(.0) String EXTRA_CALLER_ID = "caller";	// PendingIntent whose creator package is considered the caller of API
 

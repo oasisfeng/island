@@ -44,6 +44,7 @@
 
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
+                <action android:name="com.oasisfeng.island.action.UNFREEZE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
@@ -55,6 +56,7 @@
 
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
+                <action android:name="com.oasisfeng.island.action.UNFREEZE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
