@@ -43,11 +43,6 @@
                   android:theme="@style/android:Theme.Translucent.NoTitleBar" >
 
             <intent-filter>
-                <action android:name="com.oasisfeng.island.action.GET_APP_LIST" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <intent-filter> <!-- Intent-filter with negative priority will match in profile first -->
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />

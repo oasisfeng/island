@@ -19,7 +19,7 @@ import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.InternalService;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.api.ApiActivity;
+import com.oasisfeng.island.api.Api;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
@@ -252,9 +252,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
-		policies.addCrossProfileIntentFilter(new IntentFilter(ApiActivity.ACTION_GET_APP_LIST), FLAG_MANAGED_CAN_ACCESS_PARENT);
-		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
-		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ApiActivity.ACTION_FREEZE).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Api.latest.ACTION_FREEZE).withDataSchemes("package", "packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Api.latest.ACTION_UNFREEZE).withDataSchemes("package", "packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare critical apps
 		enableCriticalAppsIfNeeded(context, new DevicePolicies(context), prefs);
