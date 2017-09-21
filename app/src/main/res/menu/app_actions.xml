@@ -8,6 +8,7 @@
 
     <item android:id="@+id/menu_shortcut"   android:title="@string/action_shortcut" android:showAsAction="never" />
     <item android:id="@+id/menu_clone_back" android:title="@string/action_clone_back" android:showAsAction="never" />
+    <item android:id="@+id/menu_permission" android:title="@string/action_manage_permissions" android:showAsAction="never" />
     <item android:id="@+id/menu_app_info"   android:title="@string/action_app_info" android:showAsAction="never" />
     <item android:id="@+id/menu_remove"     android:title="@string/action_remove" android:showAsAction="never" />
     <item android:id="@+id/menu_uninstall"  android:title="@string/action_uninstall" android:showAsAction="never" />

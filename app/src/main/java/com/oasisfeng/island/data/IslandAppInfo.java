@@ -6,21 +6,22 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
+import android.support.annotation.RequiresApi;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.island.permission.DevPermissions;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
-
-import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Island-specific {@link AppInfo}
@@ -77,8 +78,8 @@ public class IslandAppInfo extends AppInfo {
 
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
-	@SuppressWarnings("deprecation") private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(
-			() -> checkLaunchable(PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, TimeUnit.SECONDS);
+	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() ->
+			checkLaunchable(PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags) {
 		if (Users.isOwner(user)) return super.checkLaunchable(flags);
@@ -87,6 +88,9 @@ public class IslandAppInfo extends AppInfo {
 			return Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager()) != null;
 		} else return context().getPackageManager().resolveActivity(intent, flags | PackageManager.GET_RESOLVED_FILTER) != null;	// The fallback checking method
 	}
+
+	@RequiresApi(M) public boolean hasManageableDevPermissions() { return mHasDevPermissions.get(); }
+	private final Supplier<Boolean> mHasDevPermissions = Suppliers.memoize(() -> DevPermissions.hasManageableDevPermissions(context(), packageName));
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 

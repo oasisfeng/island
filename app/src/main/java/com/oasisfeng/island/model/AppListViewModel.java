@@ -8,7 +8,9 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.databinding.Bindable;
 import android.databinding.Observable;
 import android.net.Uri;
@@ -21,6 +23,7 @@ import android.os.UserHandle;
 import android.preference.PreferenceManager;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.widget.LinearLayoutManager;
@@ -47,15 +50,20 @@ import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
+import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.AppViewModel.State;
+import com.oasisfeng.island.permission.DevPermissions;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import java8.util.Optional;
 import java8.util.function.BooleanSupplier;
@@ -63,6 +71,10 @@ import java8.util.function.Predicate;
 import java8.util.stream.Collectors;
 import java8.util.stream.StreamSupport;
 
+import static android.content.pm.PackageManager.GET_PERMISSIONS;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
 import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
 
@@ -176,6 +188,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
 				.orElse(Math.min(mDeviceOwner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
 		setFilterPrimaryChoice(filter_primary);
+		mIsDeviceOwner = new DevicePolicies(activity).isDeviceOwner();
 	}
 
 	public void setOwnerController(final IIslandManager controller) {
@@ -205,6 +218,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
 		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled)
 				.setShowAsActionFlags(mGreenifyAvailable ? SHOW_AS_ACTION_ALWAYS : SHOW_AS_ACTION_NEVER);
+
+		mActions.findItem(R.id.menu_permission).setVisible(BuildConfig.DEBUG && SDK_INT >= M && (mIsDeviceOwner || Users.isProfile(app.user))
+				&& app.hasManageableDevPermissions());		// TODO: Roll out
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -266,6 +282,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 				refreshAppStateAsSysBugWorkaround(pkg);
 				clearSelection();
 			} catch (final RemoteException ignored) {}
+		} else if (id == R.id.menu_permission) {
+			if (SDK_INT >= M) manageDevPermissions(context, app);
 		} else if (id == R.id.menu_app_info) {
 			launchSettingsAppInfoActivity(app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
@@ -297,6 +315,42 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		} catch (final RemoteException ignored) {
 			Toast.makeText(context, "Internal error", Toast.LENGTH_LONG).show();
 		}
+	}
+
+	@RequiresApi(M) private static void manageDevPermissions(final Context context, final IslandAppInfo app) {
+		final String pkg = app.packageName;
+		final PackageInfo info;
+		try {
+			info = context.getPackageManager().getPackageInfo(pkg, GET_PERMISSIONS | GET_UNINSTALLED_PACKAGES);
+		} catch (final NameNotFoundException e) { return; }
+		if (info.requestedPermissions == null) return;		// Should never happen
+		final Set<String> all_dev_permissions = DevPermissions.getAllDevPermissions(context);
+
+		final List<String> req_dev_perms = new ArrayList<>(), req_dev_perm_labels = new ArrayList<>();
+		final List<Boolean> granted = new ArrayList<>();
+		final String prefix = "android.permission.";
+		for (int i = 0; i < info.requestedPermissions.length; i++) {
+			final String permission = info.requestedPermissions[i];
+			if (! all_dev_permissions.contains(permission)) continue;
+			req_dev_perms.add(permission);
+			req_dev_perm_labels.add(permission.startsWith(prefix) ? permission.substring(prefix.length()) : permission);
+			granted.add((info.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0);
+		}
+		final boolean[] array_granted = new boolean[granted.size()];
+		for (int i = 0; i < granted.size(); i++) array_granted[i] = granted.get(i);
+
+		new AlertDialog.Builder(context).setMultiChoiceItems(req_dev_perm_labels.toArray(new String[req_dev_perm_labels.size()]), array_granted, (dialog, which, checked) -> {
+			final String permission = req_dev_perms.get(which);
+			if (! new DevicePolicies(context).isDeviceOwner()) {
+				MethodShuttle.runInProfile(context, () -> setDevPermissionGrantState(context, pkg, permission, checked));
+			} else setDevPermissionGrantState(context, pkg, permission, checked);
+		}).setTitle(R.string.action_manage_permissions).show();
+
+	}
+
+	@RequiresApi(M) private static void setDevPermissionGrantState(final Context context, final String pkg, final String permission, final boolean granted) {
+		if (! DevPermissions.setDevPermissionGrantState(context, pkg, permission, granted))
+			Toast.makeText(context, R.string.toast_failed_to_manage_permission, Toast.LENGTH_LONG).show();
 	}
 
 	private void launchSettingsAppInfoActivity(final IslandAppInfo app) {
@@ -396,11 +450,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, Users.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
 			launchSettingsAppInfoActivity(app_in_profile);
-			return;
-		}
-
-		if (pkg.equals(GreenifyClient.getGreenifyPackage(mActivity))) {
-			Dialogs.buildAlert(mActivity, 0, R.string.dialog_never_clone_greenify).withOkButton(null).show();
 			return;
 		}
 
@@ -540,6 +589,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private String mFilterText;
 	private boolean mDeviceOwner;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
+	private boolean mIsDeviceOwner;
 	private boolean mGreenifyAvailable;
 	private final Handler mHandler = new Handler();
 

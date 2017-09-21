@@ -42,6 +42,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="action_unfreeze">Unfreeze</string>
     <string name="action_shortcut">Create launch shortcut</string>
     <string name="action_greenify">Auto-freeze with Greenify</string>
+    <string name="action_manage_permissions">Manage permissions</string>
     <string name="action_app_info">App info</string>
     <string name="action_remove">Remove</string>
     <string name="action_uninstall">Uninstall</string>
@@ -83,7 +84,6 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_add_shortcut">Add a shortcut to de-freeze and launch %1$s?</string>
     <string name="dialog_provision_in_progress">Preparing Island…</string>
-    <string name="dialog_never_clone_greenify">Greenify is not supported to run in Island.\n\nIf you want Greenify to freeze app automatically, please use the \"Auto-freeze with Greenify\" action on selected app.</string>
 
     <string name="dialog_button_continue">Continue</string>
     <string name="dialog_button_skip_with_root">Skip (root)</string>
@@ -106,6 +106,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="toast_error_freeze_failure">Failed to freeze</string>
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
     <string name="toast_file_shuttle_without_browser">Storage shuttle is activated. You can now select files outside Island from apps within.</string>
+    <string name="toast_failed_to_manage_permission">Sorry, there\'s an internal error managing this permission.</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>
@@ -148,6 +149,10 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="notification_channel_background_state">Background state</string>
     <string name="notification_channel_important">Important</string>
 
+    <string name="notification_remove_island_after_uninstall_title">Remove Island completely</string>
+    <string name="notification_remove_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
+    <string name="notification_action_restore">Restore</string>
+
     <!-- New User Guide -->
 
     <string name="prompt_filter_title">Switch app collection</string>
@@ -163,8 +168,5 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="tip_critical_package_required">Critical package required</string>
     <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
     <string name="dialog_critical_app_warning">This app is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
-    <string name="notification_remove_island_after_uninstall_title">Remove Island completely</string>
-    <string name="notification_remove_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
-    <string name="notification_action_restore">Restore</string>
 
 </resources>
