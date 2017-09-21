@@ -242,7 +242,7 @@ public class AppListFragment extends Fragment {
 	private void requestPermissionAndLaunchFilesExplorerInIsland() {
 		final Context context = getActivity();
 		if (context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED) {
-			new MethodShuttle(context).runInProfile(() -> {
+			MethodShuttle.runInProfile(context, () -> {
 				final Intent intent = findFileBrowser(context);
 				if (intent == null) return false;
 				final ComponentName component = intent.getComponent();	// Intent should be resolved already in findFileBrowser().
@@ -268,7 +268,7 @@ public class AppListFragment extends Fragment {
 		}
 
 		if (SDK_INT >= M) {
-			new MethodShuttle(context).runInProfile(() -> new DevicePolicies(context)		// Permission is implicitly granted
+			MethodShuttle.runInProfile(context, () -> new DevicePolicies(context)		// Permission is implicitly granted
 					.setPermissionGrantState(context.getPackageName(), WRITE_EXTERNAL_STORAGE, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED));
 			requestPermissions(new String[] { WRITE_EXTERNAL_STORAGE }, 0);
 		} else onRequestPermissionsResult(0, new String[0], new int[0]);

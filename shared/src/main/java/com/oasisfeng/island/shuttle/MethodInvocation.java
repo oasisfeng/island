@@ -2,7 +2,6 @@ package com.oasisfeng.island.shuttle;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
 
 /**
  * The detail of method invocation to be shuttled.
@@ -12,7 +11,7 @@ import android.support.annotation.Nullable;
 class MethodInvocation<Result> implements Parcelable {
 
 	String clazz;
-	@Nullable Object[] args;
+	Object[] args;
 	Result result;
 
 	MethodInvocation() {}
