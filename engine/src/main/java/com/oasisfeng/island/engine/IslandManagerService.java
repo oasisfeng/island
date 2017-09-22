@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.os.UserManager;
-import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -40,7 +39,6 @@ import java8.util.stream.StreamSupport;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
@@ -130,8 +128,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 		// Blindly clear these restrictions
 		mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_APPS);
 
-		if (ensureInstallNonMarketAppAllowed()) {
-			mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+		if (IslandProvisioning.ensureInstallNonMarketAppAllowed(mContext, mDevicePolicies)) {
 			final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
 					.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, mContext.getPackageName()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			if (SDK_INT >= O) intent.setData(Uri.fromFile(new File(apk_path)));
@@ -165,15 +162,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 			if (do_it) mContext.startActivity(market_intent);
 			return IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET;
 		}
-	}
-
-	private boolean ensureInstallNonMarketAppAllowed() {
-		if (SDK_INT >= O) return true;				// INSTALL_NON_MARKET_APPS is no longer supported and not required on Android O.
-		if (Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0) return true;
-		if (SDK_INT < LOLLIPOP_MR1) return false;	// INSTALL_NON_MARKET_APPS is not whitelisted by DPM.setSecureSetting() until Android 5.1.
-
-		mDevicePolicies.setSecureSetting(Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
-		return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
 	@RequiresApi(N) @Override public boolean block(final String pkg) {

@@ -3,6 +3,7 @@ package com.oasisfeng.island.provisioning;
 import android.app.Notification;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -11,12 +12,14 @@ import android.content.pm.LauncherApps;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.IntentFilters;
+import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.InternalService;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
@@ -46,6 +49,7 @@ import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
@@ -70,7 +74,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	/** Provision type: 0 (default) - Managed provisioning, 1 - Manual provisioning */
 	private static final String PREF_KEY_PROFILE_PROVISION_TYPE = "profile.provision.type";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
-	private static final int POST_PROVISION_REV = 8;
+	private static final int POST_PROVISION_REV = 9;
 
 	private static final String PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION = "sys.apps.rev";
 	/** The revision for critical system packages list. Increase this const value if the list of critical system packages are changed after upgrade. */
@@ -238,6 +242,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		Log.d(TAG, "Start post-provisioning.");
 
 		if (SDK_INT >= M) policies.addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		ensureInstallNonMarketAppAllowed(context, policies);
 
 		enableAdditionalForwarding(policies);
 
@@ -257,6 +262,19 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		// Prepare critical apps
 		enableCriticalAppsIfNeeded(context, new DevicePolicies(context), prefs);
+	}
+
+	public static boolean ensureInstallNonMarketAppAllowed(final Context context, final DevicePolicies policies) {
+		policies.clearUserRestriction(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+
+		final ContentResolver resolver = context.getContentResolver();
+		@SuppressWarnings("deprecation") final String INSTALL_NON_MARKET_APPS = Settings.Secure.INSTALL_NON_MARKET_APPS;
+		if (Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0) return true;
+		if (SDK_INT < LOLLIPOP_MR1) {		// INSTALL_NON_MARKET_APPS is not whitelisted by DPM.setSecureSetting() until Android 5.1.
+			if (! Permissions.has(context, WRITE_SECURE_SETTINGS)) return false;
+			Settings.Secure.putInt(resolver, INSTALL_NON_MARKET_APPS, 1);
+		} else policies.setSecureSetting(INSTALL_NON_MARKET_APPS, "1");
+		return Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {
