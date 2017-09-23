@@ -11,12 +11,8 @@ android {
 
     baseFeature true
 
-    // Mimic the same set of product flavors as module "assembly" for "dependencies - application" to work.
     flavorDimensions "packaging"
-    productFlavors {
-        mobile.dimension "packaging"
-        full.dimension "packaging"
-    }
+    productFlavors { full.dimension "packaging" }
 
     dataBinding.enabled true
 
@@ -37,8 +33,6 @@ android {
 }
 
 dependencies {
-    application project(':assembly')
-
     implementation project(':shared')
     api project(':deagle')
 

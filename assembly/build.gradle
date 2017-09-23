@@ -30,14 +30,17 @@ android {
     productFlavors {
         engine {    // Use the same application ID to retain the profile / device ownership between "engine" and "full" build.
             dimension "packaging"
+            matchingFallbacks = ['full']
         }
         mobile {
             applicationIdSuffix ".mobile"
             dimension "packaging"
+            matchingFallbacks = ['full']
         }
         fileprovider {
             applicationIdSuffix ".fileprovider"
             dimension "packaging"
+            matchingFallbacks = ['full']
         }
         full {
             dimension "packaging"
