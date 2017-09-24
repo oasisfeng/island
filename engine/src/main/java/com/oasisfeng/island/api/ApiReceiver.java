@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
+
 /**
  * Broadcast API invocation handler. Result will be delivered as broadcast result in ordered broadcast.
  *
@@ -15,13 +17,13 @@ public class ApiReceiver extends BroadcastReceiver {
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		Log.i(TAG, "API request: " + intent.toUri(0));
-		if ((intent.getFlags() & Intent.FLAG_RECEIVER_FOREGROUND) == 0)
-			Log.w(TAG, "Add flag Intent.FLAG_RECEIVER_FOREGROUND to API intent for faster invocation.");
+		if (intent.getComponent() != null) Log.w(TAG, "Never use explicit component name in API intent, use Intent.setPackage() instead.");
+		if ((intent.getFlags() & FLAG_RECEIVER_FOREGROUND) == 0) Log.w(TAG, "Add Intent.FLAG_RECEIVER_FOREGROUND to API intent for less delay.");
 
 		String result = ApiDispatcher.verifyCaller(context, intent, null);
 		if (result != null) {
-			setResult(Api.latest.RESULT_UNVERIFIED_IDENTITY, null, null);
-			Log.w(TAG, "Unverified client: " + result);
+			setResult(Api.latest.RESULT_UNVERIFIED_IDENTITY, result, null);
+			Log.w(TAG, "Caller verification failure: " + result);
 			return;
 		}
 		result = ApiDispatcher.dispatch(context, intent);
