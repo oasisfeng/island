@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.net.Uri;
+import android.os.Process;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -39,6 +40,8 @@ class ApiDispatcher {
 		if (caller == null) {
 			final PendingIntent id = intent.getParcelableExtra(Api.latest.EXTRA_CALLER_ID);
 			if (id == null) return "Missing required extra (PendingIntent): " + Api.latest.EXTRA_CALLER_ID;
+			final int uid = id.getCreatorUid();
+			if (uid == Process.myUid()) return null;	// From same UID.
 			pkg = id.getCreatorPackage();
 			if (pkg == null) return "No creator information in PendingIntent: " + id;
 		} else pkg = caller;
@@ -92,7 +95,6 @@ class ApiDispatcher {
 	private static final Map<String/* pkg */, Integer/* signature hash */> sVerifiedCallers = new HashMap<>(1);
 	static {
 		sVerifiedCallers.put("com.oasisfeng.greenify", -373128424);
-		if (BuildConfig.DEBUG) sVerifiedCallers.put("com.oasisfeng.island", 253992159);
 	}
 
 	private static final String TAG = "API";
