@@ -29,16 +29,13 @@
 # For Google Error Prone (depended by Guava)
 -dontwarn com.google.errorprone.annotations.*
 
-# For stream-support library (@IgnoreJava8API is a compile-time annotation)
--dontwarn build.IgnoreJava8API
+# For android-restrostream library
+-dontwarn java9.util.stream.**
 
 # For Guava library
 -dontwarn javax.annotation.**
 -dontwarn sun.misc.Unsafe
 -dontwarn com.google.common.**
-
-# For retrolambda
--dontwarn java.lang.invoke.*
 
 # For Services
 -keepnames interface ** extends android.os.IInterface

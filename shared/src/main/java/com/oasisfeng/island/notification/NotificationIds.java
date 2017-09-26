@@ -15,7 +15,7 @@ import android.support.v4.app.NotificationManagerCompat;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shared.R;
 
-import java8.util.function.Consumer;
+import java9.util.function.Consumer;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;

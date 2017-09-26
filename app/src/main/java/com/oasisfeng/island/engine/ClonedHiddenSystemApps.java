@@ -12,7 +12,7 @@ import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.util.OwnerUser;
 
-import java8.util.function.Consumer;
+import java9.util.function.Consumer;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;

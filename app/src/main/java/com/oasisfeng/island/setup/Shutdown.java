@@ -20,8 +20,8 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
-import java8.util.Optional;
-import java8.util.stream.Collectors;
+import java9.util.Optional;
+import java9.util.stream.Collectors;
 
 /**
  * The procedure of managed profile shutdown or device owner deactivation.

@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import java8.util.function.Predicate;
+import java9.util.function.Predicate;
 
 import static android.content.pm.PackageManager.GET_SIGNATURES;
 

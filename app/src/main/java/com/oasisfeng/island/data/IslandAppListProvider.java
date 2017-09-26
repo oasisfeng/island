@@ -37,11 +37,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import java8.util.function.Consumer;
-import java8.util.function.Predicate;
-import java8.util.stream.RefStreams;
-import java8.util.stream.Stream;
-import java8.util.stream.StreamSupport;
+import java9.util.function.Consumer;
+import java9.util.function.Predicate;
+import java9.util.stream.Stream;
+import java9.util.stream.StreamSupport;
 
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
@@ -89,7 +88,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	@Override public Stream<IslandAppInfo> installedApps() {
-		return RefStreams.concat(super.installedApps(), installedAppsInIsland());
+		return Stream.concat(super.installedApps(), installedAppsInIsland());
 	}
 
 	private Stream<IslandAppInfo> installedAppsInIsland() {

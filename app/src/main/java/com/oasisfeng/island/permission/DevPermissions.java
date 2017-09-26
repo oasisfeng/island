@@ -11,8 +11,8 @@ import com.oasisfeng.island.util.DevicePolicies;
 import java.util.Collections;
 import java.util.Set;
 
-import java8.util.stream.Collectors;
-import java8.util.stream.StreamSupport;
+import java9.util.stream.Collectors;
+import java9.util.stream.StreamSupport;
 
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;

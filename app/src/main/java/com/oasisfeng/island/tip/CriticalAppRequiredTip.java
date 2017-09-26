@@ -19,7 +19,7 @@ import com.oasisfeng.ui.card.CardViewModel;
 
 import java.util.List;
 
-import java8.util.stream.Collectors;
+import java9.util.stream.Collectors;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;

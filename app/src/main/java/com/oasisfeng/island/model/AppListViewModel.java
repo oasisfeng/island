@@ -65,11 +65,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import java8.util.Optional;
-import java8.util.function.BooleanSupplier;
-import java8.util.function.Predicate;
-import java8.util.stream.Collectors;
-import java8.util.stream.StreamSupport;
+import java9.util.Optional;
+import java9.util.function.BooleanSupplier;
+import java9.util.function.Predicate;
+import java9.util.stream.Collectors;
+import java9.util.stream.StreamSupport;
 
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
