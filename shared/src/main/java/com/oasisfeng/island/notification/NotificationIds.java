@@ -29,7 +29,8 @@ public enum NotificationIds {
 
 	ShuttleKeeper(Channel.ReadyState),
 	Provisioning(Channel.OngoingTask),
-	UninstallHelper(Channel.Important);
+	UninstallHelper(Channel.Important),
+	Debug(Channel.Important);
 
 	public void post(final Context context, final Notification.Builder notification) {
 		NotificationManagerCompat.from(context).notify(id(), buildChannel(context, notification).build());

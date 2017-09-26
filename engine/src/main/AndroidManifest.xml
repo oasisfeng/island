@@ -64,7 +64,8 @@
 
         </receiver>
 
-        <activity android:name="com.oasisfeng.island.shuttle.ServiceShuttleActivity"
+        <!-- ServiceShuttleActivity (non-exported) -->
+        <activity android:name="com.oasisfeng.island.InternalActivity$_1"
                   android:exported="false"
                   android:hardwareAccelerated="false"
                   android:excludeFromRecents="true"
@@ -117,8 +118,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- ActivityShuttle -->
-        <receiver android:name="com.oasisfeng.island.InternalBroadcastReceiver$_1" android:exported="false" />
+        <!-- ShortcutShuttle -->
+        <receiver android:name="com.oasisfeng.island.InternalReceiver$_3" tools:ignore="ExportedReceiver"> <!-- Exported without permission requirement, for wider compatibility -->
+            <intent-filter>
+                <action android:name="com.android.launcher.action.INSTALL_SHORTCUT"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 

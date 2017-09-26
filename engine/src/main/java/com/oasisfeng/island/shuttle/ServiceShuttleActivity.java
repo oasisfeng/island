@@ -58,7 +58,7 @@ public class ServiceShuttleActivity extends Activity {
 		}
 	}
 
-	private static final String TAG = "Shuttle.Landing";
+	private static final String TAG = ServiceShuttleActivity.class.getSimpleName();
 
 	/** Delegate ServiceConnection running in target user, delivering callbacks back to the caller in originating user. */
 	private static class DelegateServiceConnection extends IUnbinder.Stub implements ServiceConnection, IBinder.DeathRecipient {

@@ -1,12 +1,13 @@
 package com.oasisfeng.island.provisioning;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Process;
 import android.util.Log;
 
-import com.oasisfeng.island.InternalBroadcastReceiver;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
@@ -21,7 +22,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  *
  * Created by Oasis on 2017/4/8.
  */
-public abstract class ManualProvisioningReceiver extends InternalBroadcastReceiver {
+public abstract class ManualProvisioningReceiver extends BroadcastReceiver {
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		final String action = intent.getAction();
@@ -38,7 +39,8 @@ public abstract class ManualProvisioningReceiver extends InternalBroadcastReceiv
 			}
 			Log.i(TAG, (action != null ? "User initialized: " : "Provisioning resumed: ") + Users.toId(android.os.Process.myUserHandle()));
 			IslandProvisioning.start(context, action);
-			context.getPackageManager().setComponentEnabledSetting(getComponent(context), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+
+			context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, getClass()), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);	// Disable self
 		} else if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(action)){
 			Log.i(TAG, "Device owner changed.");
 			if (new DevicePolicies(context).isDeviceOwner()) IslandProvisioning.start(context, action);

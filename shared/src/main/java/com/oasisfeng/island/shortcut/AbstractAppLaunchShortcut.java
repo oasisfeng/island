@@ -2,11 +2,11 @@ package com.oasisfeng.island.shortcut;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
@@ -17,15 +17,14 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Process;
 import android.os.UserHandle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.Users;
 
+import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -51,7 +50,8 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 	public static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
 	private static final String ACTION_LAUNCH_APP = "com.oasisfeng.island.action.LAUNCH_APP";
 
-	protected abstract boolean prepareToLaunchApp(final ComponentName component);
+	protected abstract boolean validateIncomingIntent(final Intent target, final Intent outer);
+	protected abstract boolean prepareToLaunchApp(final String pkg);
 
 	/** @return true if launcher supports shortcut pinning, false for failure, or null if legacy shortcut installation broadcast is sent, */
 	public static @Nullable Boolean createOnLauncher(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) {
@@ -109,18 +109,40 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		final Uri uri = intent.getData();
 		if (uri == null) return false;
 
-		final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
-		if (! prepareToLaunchApp(component)) return false;
+		if (uri.getEncodedFragment() != null) {		// Shortcut intent
+			final Intent target_intent;
+			final String intent_uri = uri.buildUpon().scheme("intent").build().toString();
+			try {
+				target_intent = Intent.parseUri(intent_uri, Intent.URI_INTENT_SCHEME);
+			} catch (final URISyntaxException e) {
+				Analytics.$().event("invalid_shortcut_uri").with(Analytics.Param.ITEM_ID, intent_uri).send();
+				return false;
+			}
+			if (! validateIncomingIntent(target_intent, intent)) return false;
+			final String pkg = target_intent.getComponent() != null ? target_intent.getComponent().getPackageName() : target_intent.getPackage();
+			if (pkg != null) prepareToLaunchApp(pkg);
+			try {
+				startActivity(target_intent);
+			} catch (final ActivityNotFoundException e) {
+				return false;
+			}
+			return true;
+		} else {
+			final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
+			if (! prepareToLaunchApp(component.getPackageName())) return false;
 
-		final UserHandle user = Process.myUserHandle();
-		final LauncherApps launcher = (LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE);
-		try {
-			launcher.startMainActivity(component, user, intent.getSourceBounds(), null);
-		} catch (final NullPointerException e) {	// A known bug in LauncherAppsService when activity is not found
-			Log.w(TAG, "Not found in Island: " + component);
-			return false;
+			final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(component);
+			try {
+				startActivity(launch_intent);
+			} catch (final ActivityNotFoundException e) {
+				try {
+					startActivity(launch_intent.setComponent(null).setPackage(component.getPackageName()));
+				} catch (final ActivityNotFoundException ex) {
+					return false;
+				}
+			}
+			return true;
 		}
-		return launcher.isActivityEnabled(component, user);
 	}
 
 	@Override protected void onCreate(final @Nullable Bundle savedInstanceState) {
