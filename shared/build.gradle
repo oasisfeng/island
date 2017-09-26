@@ -45,12 +45,12 @@ dependencies {
     api project(':deagle')
     api project(':stream-backport') //api 'com.annimon:stream:1.1.8'
     api 'com.google.guava:guava:22.0-android'
-    api 'com.android.support:support-annotations:26.0.2'
+    api 'com.android.support:support-annotations:26.1.0'
     implementation 'org.jetbrains:annotations:15.0'
-    implementation 'com.google.android.gms:play-services-analytics:11.2.0'
-    implementation 'com.google.firebase:firebase-analytics:11.2.0'
-    implementation 'com.google.firebase:firebase-config:11.2.0'
-    api 'com.google.firebase:firebase-perf:11.2.0'
+    implementation 'com.google.android.gms:play-services-analytics:11.2.2'
+    implementation 'com.google.firebase:firebase-analytics:11.2.2'
+    implementation 'com.google.firebase:firebase-config:11.2.2'
+    api 'com.google.firebase:firebase-perf:11.2.2'
     api('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') { transitive = true }
     implementation 'com.oasisfeng.condom:library:1.2.0'
 
