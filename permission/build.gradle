@@ -1,0 +1,23 @@
+apply plugin: 'com.android.feature'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+
+    defaultConfig {
+        minSdkVersion 21
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions "packaging"
+    productFlavors { full.dimension "packaging" }
+}
+
+dependencies {
+    implementation project(':shared')
+    implementation 'com.android.support:support-annotations:26.1.0'
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+}
