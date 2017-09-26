@@ -17,23 +17,26 @@ public class ApiReceiver extends BroadcastReceiver {
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		Log.i(TAG, "API request: " + intent.toUri(0));
-		if (intent.getComponent() != null) Log.w(TAG, "Never use explicit component name in API intent, use Intent.setPackage() instead.");
 		if ((intent.getFlags() & FLAG_RECEIVER_FOREGROUND) == 0) Log.w(TAG, "Add Intent.FLAG_RECEIVER_FOREGROUND to API intent for less delay.");
 
 		String result = ApiDispatcher.verifyCaller(context, intent, null);
 		if (result != null) {
-			setResult(Api.latest.RESULT_UNVERIFIED_IDENTITY, result, null);
+			setResultIfOrdered(Api.latest.RESULT_UNVERIFIED_IDENTITY, result);
 			Log.w(TAG, "Caller verification failure: " + result);
 			return;
 		}
 		result = ApiDispatcher.dispatch(context, intent);
 		if (result == null) {
-			setResult(Activity.RESULT_OK, null, null);
+			setResultIfOrdered(Activity.RESULT_OK, null);
 			Log.i(TAG, "API result: Success");
 		} else {
-			setResult(Activity.RESULT_CANCELED, result, null);
+			setResultIfOrdered(Activity.RESULT_CANCELED, result);
 			Log.i(TAG, "API result: " + result);
 		}
+	}
+
+	private void setResultIfOrdered(final int result, final String message) {
+		if (isOrderedBroadcast()) setResult(result, message, null);
 	}
 
 	private static final String TAG = "API.Receiver";

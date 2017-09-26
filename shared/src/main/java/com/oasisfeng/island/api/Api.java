@@ -1,9 +1,13 @@
 package com.oasisfeng.island.api;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.support.annotation.RestrictTo;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+
+import static android.support.annotation.RestrictTo.Scope.LIBRARY;
 
 /**
  * The API protocol
@@ -31,9 +35,13 @@ public class Api {
 
 	public interface latest extends v1 {}
 
-	public interface v1 {
-		@Since(.0) String ACTION_FREEZE = "com.oasisfeng.island.action.FREEZE";		// data: "package:<package>" or "packages:<package1>,<package2>..."
-		@Since(.1) String ACTION_UNFREEZE = "com.oasisfeng.island.action.UNFREEZE";	// data: same as above
+	interface v1 {
+		@Since(.0) String ACTION_FREEZE		= "com.oasisfeng.island.action.FREEZE";		// data: "package:<package>" or "packages:<package1>,<package2>..."
+		@Since(.1) String ACTION_UNFREEZE	= "com.oasisfeng.island.action.UNFREEZE";	// data: same as above
+
+		/** Data: Activity intent to launch, in "intent:" scheme. {@link Intent#EXTRA_USER} is supported for shuttle. */
+		@RestrictTo(LIBRARY)	// Internal API
+		@Since(.1) String ACTION_LAUNCH		= "com.oasisfeng.island.action.LAUNCH";
 
 		@Since(.0) String EXTRA_CALLER_ID = "caller";	// PendingIntent whose creator package is considered the caller of API
 
