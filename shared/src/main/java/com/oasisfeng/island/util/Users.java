@@ -62,11 +62,20 @@ public abstract class Users extends PseudoContentProvider {
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 
+	public static boolean isSameApp(final int uid1, final int uid2) {
+		return getAppId(uid1) == getAppId(uid2);
+	}
+
+	private static int getAppId(final int uid) {
+		return uid % PER_USER_RANGE;
+	}
+
 	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent i) {
 		Log.i(TAG, "Profile changed");
 		refreshUsers(context);
 	}};
 
+	private static final int PER_USER_RANGE = 100000;
 	private static int sProfileId;		// 0 if no profile
 	private static final String TAG = "Users";
 }
