@@ -51,7 +51,8 @@ class ApiDispatcher {
 			if (pkg == null) return "No creator information in PendingIntent: " + id;
 		} else pkg = caller;
 		// This log should generally be placed in the caller site, leave it here just to avoid this for internal API caller (with component always).
-		if (intent.getComponent() != null) Log.w(TAG, "Never use explicit component name in API intent, use Intent.setPackage() instead.");
+		if (intent.getPackage() == null && intent.getComponent() != null)
+			Log.w(TAG, "Never use implicit intent or explicit intent with component name for API request, use Intent.setPackage() instead.");
 		Log.v(TAG, "API caller: " + pkg);
 
 		final Integer value = sVerifiedCallers.get(pkg);
