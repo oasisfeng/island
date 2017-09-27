@@ -6,12 +6,8 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-
-    flavorDimensions "packaging"
-    productFlavors { full.dimension "packaging" }
 }
 
 dependencies {

@@ -6,7 +6,6 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
@@ -37,9 +36,6 @@ android {
 dependencies {
     application project(':assembly')
     feature project(':engine')
-    feature project(':mobile')
-    feature project(':fileprovider')
-    feature project(':permission')
 
     api project(':deagle')
     api 'net.sourceforge.streamsupport:android-retrostreams:1.5.6'
