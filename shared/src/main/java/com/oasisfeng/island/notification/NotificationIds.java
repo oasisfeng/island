@@ -36,6 +36,10 @@ public enum NotificationIds {
 		NotificationManagerCompat.from(context).notify(id(), buildChannel(context, notification).build());
 	}
 
+	public void post(final Context context, final String tag, final Notification.Builder notification) {
+		NotificationManagerCompat.from(context).notify(tag, id(), buildChannel(context, notification).build());
+	}
+
 	public void cancel(final Context context) {
 		NotificationManagerCompat.from(context).cancel(id());
 	}

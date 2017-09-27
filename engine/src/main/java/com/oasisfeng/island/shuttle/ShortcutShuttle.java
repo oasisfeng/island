@@ -64,15 +64,19 @@ public class ShortcutShuttle extends BroadcastReceiver {
 			return;
 		}
 
-		if (BuildConfig.DEBUG) NotificationIds.Debug.post(context, new Notification.Builder(context).setSmallIcon(android.R.drawable.ic_menu_add)
-				.setContentTitle("Shortcut: " + shortcut_name).setContentText(target_intent.toString().substring(7))
-				.setStyle(new Notification.BigTextStyle().bigText(target_intent.toUri(0))));
+		if (BuildConfig.DEBUG && ! intent.hasExtra(EXTRA_TOKEN)) {
+			final Intent _intent = new Intent(target_intent); _intent.removeExtra(AppLaunchShortcut.EXTRA_SIGNATURE);
+			NotificationIds.Debug.post(context, shortcut_name, new Notification.Builder(context).setSmallIcon(android.R.drawable.ic_menu_add)
+					.setContentTitle("Shortcut: " + shortcut_name).setContentText(_intent.toString().substring(7))
+					.setStyle(new Notification.BigTextStyle().bigText(_intent.toUri(0))));
+		}
 
-		// Verify the token to ensure that sender is indeed myself in profile.
-		final PendingIntent token = intent.getParcelableExtra(EXTRA_TOKEN);
-		if (token == null) return;		// Stop recursion
 		final UserHandle profile = Users.profile;
 		if (profile == null) return;
+
+		// Verify the token to ensure that sender is indeed myself in profile, ignoring regular shortcut installation requests in owner user (including the one forwarded by us).
+		final PendingIntent token = intent.getParcelableExtra(EXTRA_TOKEN);
+		if (token == null) return;
 		if (! profile.equals(token.getCreatorUserHandle()) || ! context.getPackageName().equals(token.getCreatorPackage())) {
 			Log.w(TAG, "Invalid token: UID=" + token.getCreatorUid());
 			return;
