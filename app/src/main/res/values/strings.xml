@@ -40,14 +40,13 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="action_clone_back">Clone to mainland</string>
     <string name="action_freeze">Freeze</string>
     <string name="action_unfreeze">Unfreeze</string>
-    <string name="action_shortcut">Create launch shortcut</string>
+    <string name="action_shortcut">Create Unfreeze &amp; Launch shortcut</string>
     <string name="action_greenify">Auto-freeze with Greenify</string>
     <string name="action_manage_permissions">Manage permissions</string>
     <string name="action_app_info">App info</string>
     <string name="action_remove">Remove</string>
     <string name="action_uninstall">Uninstall</string>
 
-    <string name="button_create_shortcut">Create launch shortcut</string>
     <string name="button_greenify">Auto-freeze with Greenify</string>
     <string name="button_block">Block</string>
     <string name="button_unblock">Unblock</string>

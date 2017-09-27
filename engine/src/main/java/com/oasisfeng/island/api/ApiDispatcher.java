@@ -17,17 +17,18 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.FluentIterable;
 import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import java9.util.function.Predicate;
+import java9.util.stream.Collectors;
+import java9.util.stream.Stream;
+import java9.util.stream.StreamSupport;
 
 import static android.content.pm.PackageManager.GET_SIGNATURES;
 
@@ -111,14 +112,14 @@ class ApiDispatcher {
 		final String ssp;
 		if (uri == null || (ssp = uri.getSchemeSpecificPart()) == null) return "Invalid data in Intent: " + intent;
 		final String scheme = uri.getScheme();
-		final FluentIterable<String> pkgs;
+		final Stream<String> pkgs;
 		final boolean single;
-		if (single = "package".equals(scheme)) pkgs = FluentIterable.from(Collections.singleton(ssp));
-		else if ("packages".equals(scheme)) pkgs = FluentIterable.from(Splitter.on(',').split(ssp));
+		if (single = "package".equals(scheme)) pkgs = Stream.of(ssp);
+		else if ("packages".equals(scheme)) pkgs = StreamSupport.stream(Splitter.on(',').omitEmptyStrings().trimResults().splitToList(ssp));
 		else return "Unsupported intent data scheme: " + intent;	// Should never happen
 
 		try {
-			final List<String> failed_pkgs = pkgs.filter(t -> ! dealer.test(t)).toList();
+			final List<String> failed_pkgs = pkgs.filter(t -> ! dealer.test(t)).collect(Collectors.toList());
 			if (failed_pkgs.isEmpty()) return null;
 			if (single) return "Failed: " + ssp;
 			return "Failed: " + failed_pkgs;
