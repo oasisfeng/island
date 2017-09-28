@@ -64,6 +64,7 @@ import static android.os.Build.VERSION_CODES.N;
 			"com.android.providers.calendar",		// The storage of calendar, for calendar data access.
 			"com.android.providers.downloads",		// For DownloadManager to work
 			"com.android.providers.media",			// For media access
+			"com.android.providers.userdictionary",	// For IMEs and Settings, the latter of which will crash without this.
 			"com.android.externalstorage",			// Documents provider - Internal storage
 			"com.android.defconatiner",				// For APK file from DownloadManager to install
 			"com.android.vpndialogs",				// Required by VPN service app (e.g. ShadowSocks)
