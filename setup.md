@@ -63,6 +63,8 @@ Manual setup for Island in experimental "God mode"
   - `settings put global device_provisioned 1`  
   *(The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.)*
 
+  Some ROM variants (e.g. MIUI) enforce extra security policy which may block the above command, if you got permission-related error message, please check the development (or security) settings to enable USB-debugging related security options, then retry the "`dpm ...`" command again.
+
 - Start Island app now and it will work in God mode.
 
 God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Just setup God mode first and then follow the steps to setup normal mode, as mentioned above.
