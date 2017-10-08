@@ -1,11 +1,7 @@
 package com.oasisfeng.island.engine;
 
-import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.app.Service;
-import android.app.admin.DevicePolicyManager;
-import android.app.usage.UsageStats;
-import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -21,7 +17,6 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
-import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
@@ -31,7 +26,6 @@ import com.oasisfeng.island.util.Users;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 import java9.util.stream.Collectors;
 import java9.util.stream.StreamSupport;
@@ -39,7 +33,6 @@ import java9.util.stream.StreamSupport;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 
@@ -177,20 +170,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 	@Override public void destroyProfile() {
 		mDevicePolicies.clearCrossProfileIntentFilters();
 		mDevicePolicies.getManager().wipeData(0);
-	}
-
-	@Override public String[] queryUsedPackagesDuring(final long begin_time, final long end_time) {
-		if (! Permissions.has(mContext, permission.PACKAGE_USAGE_STATS)) {
-			if (SDK_INT < M) return new String[0];
-			if (! mDevicePolicies.setPermissionGrantState(mContext.getPackageName(), permission.PACKAGE_USAGE_STATS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED))
-				return new String[0];
-		}
-		@SuppressLint("InlinedApi") final UsageStatsManager usm = (UsageStatsManager) mContext.getSystemService(Context.USAGE_STATS_SERVICE); /* hidden but accessible on API 21 */
-		final Map<String, UsageStats> stats = usm.queryAndAggregateUsageStats(begin_time, end_time);
-		if (stats == null) return new String[0];
-		final List<String> used_pkgs = StreamSupport.stream(stats.values()).filter(usage -> usage.getLastTimeUsed() != 0)
-				.map(UsageStats::getPackageName).collect(Collectors.toList());
-		return used_pkgs.toArray(new String[used_pkgs.size()]);
 	}
 
 	@Override public void provision() {
