@@ -13,6 +13,7 @@ class MethodInvocation<Result> implements Parcelable {
 	String clazz;
 	Object[] args;
 	Result result;
+	Throwable throwable;
 
 	MethodInvocation() {}
 
@@ -23,20 +24,23 @@ class MethodInvocation<Result> implements Parcelable {
 
 	void readFromParcel(final Parcel parcel) { //noinspection unchecked
 		result = (Result) parcel.readValue(getClass().getClassLoader());
+		throwable = (Throwable) parcel.readSerializable();
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
 		if ((flags & PARCELABLE_WRITE_RETURN_VALUE) == 0) {
 			dest.writeString(clazz);
 			dest.writeArray(args);
-		} else dest.writeValue(result);
+		} else {
+			dest.writeValue(result);
+			dest.writeSerializable(throwable);
+		}
 	}
 
 	@Override public int describeContents() { return 0; }
 
 	static final Creator<MethodInvocation> CREATOR = new Creator<MethodInvocation>() {
 		@Override public MethodInvocation createFromParcel(final Parcel in) { return new MethodInvocation(in); }
-
 		@Override public MethodInvocation[] newArray(final int size) { return new MethodInvocation[size]; }
 	};
 }
