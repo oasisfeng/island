@@ -45,11 +45,9 @@ It is highly experimental and not ready for normal users. At present it is only 
 
 The limitations in "God mode":
 
-- Google Play Store is currently not fully working as expected, paid apps and apps with IAP could not be installed via Google Play Store.  
-(We are investigating this issue)
+- If any corporation Google account is logged-in on the device, Google Play Store will operate in "Work Mode" which may block the installation of paid apps.
 
-- App Backup (Cloud backup for app data by Google Play services) will stop working.  
-(We are working on a solution for Android 7.1+)
+- On Android version prior to 7.1, app backup (e.g. Cloud backup for app data with Google Drive) will stop working. (Android 7.1+ is not affected)
 
 God mode could only be [setup manually](/setup.md).
 
