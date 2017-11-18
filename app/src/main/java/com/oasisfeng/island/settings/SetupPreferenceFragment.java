@@ -95,7 +95,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
 						R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
-		} else if (SetupViewModel.checkManagedProvisioningPrerequisites(activity) == null) {
+		} else if (SetupViewModel.checkManagedProvisioningPrerequisites(activity, true) == null) {
 			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup,
 					R.drawable.ic_build_black_24dp, preference -> startSetupActivity());
 		} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_manual_setup,

@@ -2,16 +2,21 @@ package com.oasisfeng.island.setup;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.databinding.ObservableInt;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -21,11 +26,13 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.island.Config;
+import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
@@ -37,9 +44,9 @@ import com.oasisfeng.island.util.Modules;
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 
-import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -60,7 +67,7 @@ public class SetupViewModel implements Parcelable {
 	public @StringRes int message;
 	public @Nullable Object[] message_params;
 	int button_back;
-	int button_next;
+	ObservableInt button_next = new ObservableInt();		// 0 (enabled), -1 (disabled) or custom string resource
 	public int button_extra;
 
 //	SetupViewModel(final Context context) {
@@ -74,7 +81,7 @@ public class SetupViewModel implements Parcelable {
 
 	SetupViewModel onNavigateNext(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
-		final SetupViewModel result = checkManagedProvisioningPrerequisites(activity);
+		final SetupViewModel result = checkManagedProvisioningPrerequisites(activity, mIncompleteSetupAcked);
 		if (result != null) return result;
 
 		final boolean encryption_required = isEncryptionRequired();
@@ -100,7 +107,7 @@ public class SetupViewModel implements Parcelable {
 				return null;
 			}
 			final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, null);
-			vm.button_next = 0;		// Enable the "next" button.
+			vm.button_next.set(0);		// Enable the "next" button.
 			return vm;
 		}
 
@@ -109,16 +116,34 @@ public class SetupViewModel implements Parcelable {
 	}
 
 	/** @return null if all prerequisites met */
-	public static @CheckResult SetupViewModel checkManagedProvisioningPrerequisites(final Context context) {
+	public static @CheckResult SetupViewModel checkManagedProvisioningPrerequisites(final Context context, final boolean ignore_incomplete_setup) {
 		final PackageManager pm = context.getPackageManager();
 		if (buildManagedProfileProvisioningIntent(context).resolveActivity(pm) == null)
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
+		// Check for incomplete provisioning, before DPM.isProvisioningAllowed() check which returns true in this case.
+		if (SDK_INT >= N && DevicePolicies.getManagedProfile(context) == null) {
+			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(context);
+			final Optional<ComponentName> profile_owner_result;
+			if (profile_id != 0 && (profile_owner_result = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) != null && profile_owner_result.isPresent()) {
+				final ComponentName profile_owner = profile_owner_result.get();
+				if (! context.getPackageName().equals(profile_owner.getPackageName())) {
+					final CharSequence owner_label = readOwnerLabel(context, profile_owner);
+					final Analytics.Event reason = reason("existent_work_profile").with(ITEM_ID, profile_owner.getPackageName())
+							.with(Analytics.Param.ITEM_NAME, owner_label != null ? owner_label.toString() : null);
+					return buildErrorVM(R.string.setup_error_other_work_profile, R.string.button_account_settings, reason);
+				} else if (! ignore_incomplete_setup) {
+					return buildErrorVM(R.string.setup_error_provisioning_incomplete, R.string.button_have_checked, reason("provisioning_incomplete"));
+				}
+			}
+		}
+
 		// DPM.isProvisioningAllowed() is the one-stop prerequisites checking.
 		if (SDK_INT >= N) {
 			final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
-			if (dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_DEVICE)) Analytics.$().event("device_provision_allowed").send();	// Special analytics
-			if (dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
+			if (dpm != null && dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE))
+				Analytics.$().event("device_provision_allowed").send();	// Special analytics
+			if (dpm != null && dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
 		}
 
 		final boolean has_managed_users = pm.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
@@ -132,21 +157,6 @@ public class SetupViewModel implements Parcelable {
 				if (res_config_max_users == null || res_config_max_users < 2)
 					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
 			} else if (sys_prop_max_users < 2) return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("fw.max_users"));
-		}
-
-		// Check for incomplete provisioning.
-		if (SDK_INT >= N && DevicePolicies.getManagedProfile(context) == null) {
-			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(context);
-			final Optional<ComponentName> profile_owner_result;
-			if (profile_id != 0 && (profile_owner_result = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) != null && profile_owner_result.isPresent()) {
-				final ComponentName profile_owner = profile_owner_result.get();
-				if (! context.getPackageName().equals(profile_owner.getPackageName())) {
-					final CharSequence owner_label = readOwnerLabel(context, profile_owner);
-					final Analytics.Event reason = reason("existent_work_profile").with(ITEM_ID, profile_owner.getPackageName())
-							.with(Analytics.Param.ITEM_NAME, owner_label != null ? owner_label.toString() : null);
-					return buildErrorVM(R.string.setup_error_other_work_profile, R.string.button_account_settings, reason);
-				} else return buildErrorVM(R.string.setup_error_provisioning_incomplete, R.string.button_account_settings, reason("provisioning_incomplete"));
-			}
 		}
 
 		if (SDK_INT >= M) {
@@ -179,32 +189,51 @@ public class SetupViewModel implements Parcelable {
 
 	private static boolean isDeviceEncrypted(final Context context) {
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+		if (dpm == null) return false;
 		final int status = dpm.getStorageEncryptionStatus();
 		return status == ENCRYPTION_STATUS_ACTIVE // TODO: || (SDK_INT >= N && StorageManager.isEncrypted())
 				|| (SDK_INT >= M && status == DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
 	}
 
-	public void onExtraButtonClick(final Context context) {
-		if (button_extra == R.string.button_instructions_online)
+	public void onExtraButtonClick(final View view) {
+		final Context context = view.getContext();
+		if (button_extra == R.string.button_instructions_online) {
 			WebContent.view(context, Config.URL_SETUP.get());
-		else if (button_extra == R.string.button_account_settings)
+		} else if (button_extra == R.string.button_account_settings) {
 			Activities.startActivity(context, new Intent(Settings.ACTION_SYNC_SETTINGS));
-		else throw new IllegalStateException();
-		if (context instanceof Activity) ((Activity) context).finish();
+			if (context instanceof Activity) ((Activity) context).finish();
+		} else if (button_extra == R.string.button_have_checked) {
+			button_next.set(0);
+			mIncompleteSetupAcked = true;
+			view.setVisibility(View.GONE);
+		} else throw new IllegalStateException();
 	}
 
 	static void onActivityResult(final Activity activity, final int request, final int result) {
 		// Activity result of managed provisioning is only delivered since Android 6.
-		if (request == REQUEST_PROVISION_MANAGED_PROFILE) {
-			if (result == Activity.RESULT_OK) {
-				Log.i(TAG, "System provision activity is done.");
-				Analytics.$().event("profile_provision_sys_activity_done").send();
+		if (request != REQUEST_PROVISION_MANAGED_PROFILE) return;
+		if (result == Activity.RESULT_CANCELED) {
+			Log.i(TAG, "Provision is cancelled.");
+			Analytics.$().event("profile_provision_sys_activity_canceled").send();
+			return;
+		}
+		if (result == Activity.RESULT_OK) {
+			Log.i(TAG, "System provision activity is done.");
+			Analytics.$().event("profile_provision_sys_activity_done").send();
+			if (SDK_INT < M) {
 				Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
 				activity.finish();
-			} else if (result == Activity.RESULT_CANCELED) {
-				Log.i(TAG, "Provision is cancelled.");
-				Analytics.$().event("profile_provision_sys_activity_canceled").send();
+				return;
 			}
+			final ProgressDialog progress = new ProgressDialog(activity);
+			progress.setMessage("Preparing Island");
+			progress.show();
+			activity.registerReceiver(new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+				activity.unregisterReceiver(this);
+				progress.dismiss();
+				activity.finish();
+				new Handler().postDelayed(() -> context.startActivity(new Intent(context, MainActivity.class).addFlags(FLAG_ACTIVITY_NEW_TASK)), 300);
+			}}, new IntentFilter(DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED));
 		}
 	}
 
@@ -229,7 +258,7 @@ public class SetupViewModel implements Parcelable {
 		if (event != null) event.send();
 		final SetupViewModel next = new SetupViewModel();
 		next.message = message;
-		next.button_next = -1;
+		next.button_next.set(-1);
 		next.button_extra = button_extra;
 		return next;
 	}
@@ -279,14 +308,14 @@ public class SetupViewModel implements Parcelable {
 	private SetupViewModel(final Parcel in) {
 		message = in.readInt();
 		button_back = in.readInt();
-		button_next = in.readInt();
+		button_next.set(in.readInt());
 		button_extra = in.readInt();
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
 		dest.writeInt(message);
 		dest.writeInt(button_back);
-		dest.writeInt(button_next);
+		dest.writeInt(button_next.get());
 		dest.writeInt(button_extra);
 	}
 
@@ -296,6 +325,8 @@ public class SetupViewModel implements Parcelable {
 		@Override public SetupViewModel createFromParcel(final Parcel in) { return new SetupViewModel(in); }
 		@Override public SetupViewModel[] newArray(final int size) { return new SetupViewModel[size]; }
 	};
+
+	private boolean mIncompleteSetupAcked;
 
 	private static final String TAG = "Island.Setup";
 }

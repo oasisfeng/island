@@ -2,6 +2,7 @@ package com.oasisfeng.island.setup;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.databinding.Observable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,8 +31,8 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 			final Bundle args = getArguments();
 			final SetupViewModel vm = args != null ? args.getParcelable(null) : null;
 			if (vm == null) {
-				mViewModel = new SetupViewModel();    			// Initial view - "Welcome"
-				mViewModel.button_next = R.string.setup_accept;	// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
+				mViewModel = new SetupViewModel();		// Initial view - "Welcome"
+				mViewModel.button_next.set(R.string.setup_accept);	// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
 			} else mViewModel = vm;
 		}
 
@@ -45,21 +46,20 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 		final NavigationBar nav_bar = layout.getNavigationBar();
 		nav_bar.setNavigationBarListener(this);
 		setButtonText(nav_bar.getBackButton(), mViewModel.button_back);
-		setButtonText(nav_bar.getNextButton(), mViewModel.button_next);
+		setButtonText(nav_bar.getNextButton(), mViewModel.button_next.get());
 //		mViewModel.button_back.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable observable, final int i) {
 //			setButtonText(button_back, mViewModel.button_back);
 //		}});
-//		mViewModel.button_next.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable observable, final int i) {
-//			setButtonText(button_next, mViewModel.button_next);
-//		}});
+		mViewModel.button_next.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable observable, final int i) {
+			setButtonText(nav_bar.getNextButton(), mViewModel.button_next.get());
+		}});
 
 		return view;
 	}
 
 	private static void setButtonText(final Button button, final int text) {
-		if (text == 0) return;
 		button.setEnabled(text != -1);
-		if (text != -1) button.setText(text);
+		if (text > 0) button.setText(text);
 	}
 
 	@Override public void onSaveInstanceState(final Bundle out) {

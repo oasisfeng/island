@@ -49,15 +49,16 @@
                 android:paddingTop="16sp"
                 style="@style/containerText"
                 android:text="@string/dialog_manual_setup"
-                bind:shown="@{setup.button_extra != 0}"/>
+                bind:shown="@{setup.button_extra == com.oasisfeng.island.mobile.R.string.button_instructions_online}"/>
 
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="16sp"
                 style="@style/AppTheme.BorderlessActionButton"
                 bind:shown="@{setup.button_extra != 0}"
                 bind:text="@{setup.button_extra}"
-                android:onClick="@{v -> setup.onExtraButtonClick(context)}"/>
+                android:onClick="@{v -> setup.onExtraButtonClick(v)}"/>
         </LinearLayout>
 
     </com.android.setupwizardlib.SetupWizardLayout>
