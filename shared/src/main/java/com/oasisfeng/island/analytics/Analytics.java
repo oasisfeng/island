@@ -70,9 +70,9 @@ public interface Analytics {
 	}
 
 	void setProperty(Property property, @Size(max = 36) String value);
-	default boolean setProperty(final Property property, final boolean value) {
+	default Analytics setProperty(final Property property, final boolean value) {
 		setProperty(property, Boolean.toString(value));
-		return value;
+		return this;
 	}
 
 	static Analytics $() { return Provider.getSingleton(); }

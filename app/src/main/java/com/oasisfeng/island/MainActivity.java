@@ -15,7 +15,9 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.util.Log;
 
+import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.analytics.Analytics.Property;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
@@ -36,41 +38,18 @@ public class MainActivity extends Activity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		final DevicePolicies policies = new DevicePolicies(this);
 		if (Users.isProfile()) {	// Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
-			if (! policies.isAdminActive()) {
-				Analytics.$().event("inactive_device_admin").send();
-				startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-						.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(this))
-						.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
-			} else {
-				final PackageManager pm = getPackageManager();
-				final List<ResolveInfo> resolve = pm.queryBroadcastReceivers(new Intent(Intent.ACTION_USER_INITIALIZE).setPackage(Modules.MODULE_ENGINE), 0);
-				if (! resolve.isEmpty()) {
-					Log.w(TAG, "Manual provisioning is pending, resume it now.");
-					Analytics.$().event("profile_post_provision_pending").send();
-					final ActivityInfo receiver = resolve.get(0).activityInfo;
-					sendBroadcast(new Intent().setComponent(new ComponentName(receiver.packageName, receiver.name)));
-				} else {    // Receiver disabled but launcher entrance is left enabled. The best bet is just disabling the launcher entrance. No provisioning attempt any more.
-					Log.w(TAG, "Manual provisioning is finished, but launcher activity is still left enabled. Disable it now.");
-					Analytics.$().event("profile_post_provision_activity_leftover").send();
-					pm.setComponentEnabledSetting(new ComponentName(this, getClass()), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-				}
-			}
+			onCreateInProfile();
 			finish();
 			return;
 		}
-
-		if (Analytics.$().setProperty(Analytics.Property.DeviceOwner, policies.isDeviceOwner())) {	// As device owner, always show main UI.
-			startMainUi(savedInstanceState);
-			new Thread(() -> Analytics.$().setProperty(Analytics.Property.RemoteConfigAvailable, Config.isRemote())).start();	// Track
+		if (mIsDeviceOwner = new DevicePolicies(this).isDeviceOwner()) {
+			startMainUi(savedInstanceState);	// As device owner, always show main UI.
 			return;
 		}
-
 		final UserHandle profile = Users.profile;
-		if (profile == null) {				// Nothing setup yet
-			showSetupWizard();
+		if (profile == null) {					// Nothing setup yet
+			startSetupWizard();
 			return;
 		}
 
@@ -78,28 +57,69 @@ public class MainActivity extends Activity {
 		if (is_profile_owner == null) { 	// Profile owner cannot be detected, the best bet is to continue to the main UI.
 			startMainUi(savedInstanceState);
 		} else if (! is_profile_owner.isPresent()) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
-			if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting myself in profile to finish the provisioning.
-			else showSetupWizard();			// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
-		} else if (is_profile_owner.get()) {
+			if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
+			else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
+		} else if (! is_profile_owner.get()) {			// Profile is not owned by us, show setup wizard.
+			startSetupWizard();
+		} else {
 			final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			final List<LauncherActivityInfo> our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile);
-			if (! our_activities_in_launcher.isEmpty()) {	// Main activity is left enabled, probably due to pending post-provisioning in manual setup.
-				Analytics.$().event("profile_provision_leftover").send();	// Some domestic ROMs may block implicit broadcast, causing ACTION_USER_INITIALIZE being dropped.
+			final List<LauncherActivityInfo> our_activities_in_launcher;
+			if (launcher_apps != null && ! (our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile)).isEmpty()) {
+				// Main activity is left enabled, probably due to pending post-provisioning in manual setup. Some domestic ROMs may block implicit broadcast, causing ACTION_USER_INITIALIZE being dropped.
+				Analytics.$().event("profile_provision_leftover").send();
 				Log.w(TAG, "Setup in Island is not complete, continue it now.");
 				launcher_apps.startMainActivity(our_activities_in_launcher.get(0).getComponentName(), profile, null, null);
 				finish();
-			} else startMainUi(savedInstanceState);
-		} else showSetupWizard();			// Profile is not owned by us, show setup wizard.
+				return;
+			}
+			startMainUi(savedInstanceState);
+		}
+	}
+
+	private void onCreateInProfile() {
+		final DevicePolicies policies = new DevicePolicies(this);
+		if (! policies.isAdminActive()) {
+			Analytics.$().event("inactive_device_admin").send();
+			startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(this))
+					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_reactivate_message)));
+			return;
+		}
+		final PackageManager pm = getPackageManager();
+		final List<ResolveInfo> resolve = pm.queryBroadcastReceivers(new Intent(Intent.ACTION_USER_INITIALIZE).setPackage(Modules.MODULE_ENGINE), 0);
+		if (! resolve.isEmpty()) {
+			Log.w(TAG, "Manual provisioning is pending, resume it now.");
+			Analytics.$().event("profile_post_provision_pending").send();
+			final ActivityInfo receiver = resolve.get(0).activityInfo;
+			sendBroadcast(new Intent().setComponent(new ComponentName(receiver.packageName, receiver.name)));
+		} else {    // Receiver disabled but launcher entrance is left enabled. The best bet is just disabling the launcher entrance. No provisioning attempt any more.
+			Log.w(TAG, "Manual provisioning is finished, but launcher activity is still left enabled. Disable it now.");
+			Analytics.$().event("profile_post_provision_activity_leftover").send();
+			pm.setComponentEnabledSetting(new ComponentName(this, getClass()), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+		}
 	}
 
 	private void startMainUi(final Bundle savedInstanceState) {
 		setContentView(R.layout.activity_main);
-		if (savedInstanceState == null) getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
+		if (savedInstanceState != null) return;
+		getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
+		if (Scopes.boot(this).mark("overall_analytics"))
+			new Thread(this::performOverallAnalyticsIfNeeded).start();
 	}
 
-	private void showSetupWizard() {
+	private void startSetupWizard() {
 		startActivity(new Intent(this, SetupActivity.class));
+		performOverallAnalyticsIfNeeded();
 		finish();
+	}
+
+	private void performOverallAnalyticsIfNeeded() {
+		if (! Scopes.boot(this).mark("overall_analytics")) return;
+		new Thread(() -> {
+			final Analytics analytics = Analytics.$();
+			analytics.setProperty(Property.DeviceOwner, mIsDeviceOwner);
+			analytics.setProperty(Property.RemoteConfigAvailable, Config.isRemote());
+		}).start();
 	}
 
 	@Override protected void onResume() {
@@ -115,6 +135,7 @@ public class MainActivity extends Activity {
 	}
 	private int mNumResumeEventSentRecently;
 	private long mLastUptimeResumeEventSent;
+	private boolean mIsDeviceOwner;
 
 	private static final String TAG = MainActivity.class.getSimpleName();
 }
