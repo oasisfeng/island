@@ -3,12 +3,9 @@ package com.oasisfeng.island.provisioning;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
-import android.content.pm.ResolveInfo;
-import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
 import android.provider.BlockedNumberContract;
 import android.provider.CalendarContract;
@@ -134,19 +131,6 @@ import static android.os.Build.VERSION_CODES.N;
 		} catch (final PackageManager.NameNotFoundException ignored) { return null; }
 	}
 
-//	/** This is generally not necessary on AOSP but will eliminate various problems on custom ROMs */
-//	private void disableNonCriticalSystemPackages() {
-//		final PackageManager pm = mContext.getPackageManager();
-//		final Set<String> critical_sys_pkgs = detectCriticalSystemPackages(pm, mIslandManager, 0);
-//		for (final ApplicationInfo app : pm.getInstalledApplications(0)) {
-//			if ((app.flags & FLAG_SYSTEM) == 0 || critical_sys_pkgs.contains(app.packageName)) continue;
-//			if (! hasSingleUserComponent(pm, app.packageName)) {
-//				Log.i(TAG, "Disable non-critical system app: " + app.packageName);
-//				mIslandManager.freezeApp(app.packageName, "provision");
-//			} else Log.i(TAG, "Not disabling system app capable for multi-user: " + app.packageName);
-//		}
-//	}
-
 	/** @param flags intersection of {@code PackageManager.ComponentInfoFlags} and {@code PackageManager.ResolveInfoFlags}. */
 	@OwnerUser @ProfileUser public static Set<String> detectCriticalSystemPackages(final PackageManager pm, final int flags) {
 		final Stopwatch stopwatch = Performances.startUptimeStopwatch();
@@ -175,37 +159,7 @@ import static android.os.Build.VERSION_CODES.N;
 		}
 		Performances.check(stopwatch, 1, "CriticalProviders");
 
-		// Detect non-launchable system components with sync adapter (never use ContentResolver.getSyncAdapterTypes() which only returns unfrozen adapters)
-		final List<ResolveInfo> adapters = pm.queryIntentServices(new Intent("android.content.SyncAdapter"), flags);
-		final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
-		String last_pkg = null;
-		for (final ResolveInfo resolved : adapters) {
-			final ServiceInfo adapter = resolved.serviceInfo;
-			if ((adapter.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue;		// Only system apps
-			final String pkg = adapter.packageName;
-			if (pkg.equals(last_pkg)) continue;
-			if (pm.resolveActivity(launch_intent.setPackage(pkg), flags) == null) {
-				Log.i(TAG, "Critical package for sync-adapter: " + pkg);		// Only if not launchable package.
-				critical_sys_pkgs.add(pkg);
-			}
-			last_pkg = pkg;		// Skip all other adapters in the same package.
-		}
-		Performances.check(stopwatch, 1, "CriticalSyncAdapters");
-
 		return critical_sys_pkgs;
-	}
-
-	private static boolean hasSingleUserComponent(final PackageManager pm, final String pkg) {
-		try {
-			final PackageInfo info = pm.getPackageInfo(pkg, PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
-			if (info.services != null) for (final ServiceInfo service : info.services)
-				if ((service.flags & ServiceInfo.FLAG_SINGLE_USER) != 0) return true;
-			if (info.providers != null) for (final ProviderInfo service : info.providers)
-				if ((service.flags & ProviderInfo.FLAG_SINGLE_USER) != 0) return true;
-			return false;
-		} catch (final PackageManager.NameNotFoundException e) {
-			return false;
-		}
 	}
 
 	SystemAppsManager(final Context context) {
