@@ -19,6 +19,7 @@ public enum Config {
 	IS_REMOTE("is_remote"),
 	URL_FAQ("url_faq"),
 	URL_SETUP("url_setup"),
+	URL_SETUP_TROUBLESHOOTING("url_setup_trouble"),
 	PERMISSION_REQUEST_ALLOWED_APPS("permission_allowed_apps");
 
 	public String get() {

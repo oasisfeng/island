@@ -1,22 +1,18 @@
 package com.oasisfeng.island.setup;
 
+import android.accounts.Account;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.databinding.ObservableInt;
-import android.os.AsyncTask;
-import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -31,10 +27,11 @@ import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.island.Config;
-import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -46,7 +43,6 @@ import java9.util.Optional;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
@@ -85,30 +81,30 @@ public class SetupViewModel implements Parcelable {
 		if (result != null) return result;
 
 		final boolean encryption_required = isEncryptionRequired();
-		if (Analytics.$().setProperty(Analytics.Property.EncryptionRequired, encryption_required)
-				&& ! Analytics.$().setProperty(Analytics.Property.DeviceEncrypted, isDeviceEncrypted(activity))) {
-			if (message == R.string.dialog_encryption_required) {	// "Next" is clicked in the "Encryption Required" step.
-				new AsyncTask<Void, Void, Void>() {
-					@Override protected Void doInBackground(final Void... params) {
-						try {
+		Analytics.$().setProperty(Analytics.Property.EncryptionRequired, encryption_required);
+		if (encryption_required) {
+			final boolean device_encrypted = isDeviceEncrypted(activity);
+			Analytics.$().setProperty(Analytics.Property.DeviceEncrypted, device_encrypted);
+			if (! device_encrypted) {
+				if (message == R.string.dialog_encryption_required) {	// "Next" is clicked in the "Encryption Required" step.
+					SafeAsyncTask.execute(activity, _a -> {
+						try {		// Worker thread
 							Shell.SU.run("setprop persist.sys.no_req_encrypt 1");
 						} catch (final Exception e) {
 							Log.e(TAG, "Error running root command", e);
 						}
 						return null;
-					}
-
-					@Override protected void onPostExecute(final Void ignored) {
-						if (encryption_required && ! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
+					}, _r -> {		// Main thread
+						if (! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
 						if (fragment.getActivity() == null) return;
 						startManagedProvisioning(fragment);
-					}
-				}.execute();
-				return null;
+					});
+					return null;
+				}
+				final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, null);
+				vm.button_next.set(0);		// Enable the "next" button.
+				return vm;
 			}
-			final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, null);
-			vm.button_next.set(0);		// Enable the "next" button.
-			return vm;
 		}
 
 		startManagedProvisioning(fragment);
@@ -206,35 +202,26 @@ public class SetupViewModel implements Parcelable {
 			button_next.set(0);
 			mIncompleteSetupAcked = true;
 			view.setVisibility(View.GONE);
+		} else if (button_extra == R.string.button_setup_troubleshooting) {
+			WebContent.view(context, Config.URL_SETUP_TROUBLESHOOTING.get());
 		} else throw new IllegalStateException();
 	}
 
-	static void onActivityResult(final Activity activity, final int request, final int result) {
+	static SetupViewModel onActivityResult(final Activity activity, final int request, final int result) {
 		// Activity result of managed provisioning is only delivered since Android 6.
-		if (request != REQUEST_PROVISION_MANAGED_PROFILE) return;
+		if (request != REQUEST_PROVISION_MANAGED_PROFILE) return null;
 		if (result == Activity.RESULT_CANCELED) {
 			Log.i(TAG, "Provision is cancelled.");
 			Analytics.$().event("profile_provision_sys_activity_canceled").send();
-			return;
+			return buildErrorVM(R.string.setup_solution_for_cancelled_provision, R.string.button_setup_troubleshooting, reason("provisioning_cancelled"));
 		}
 		if (result == Activity.RESULT_OK) {
 			Log.i(TAG, "System provision activity is done.");
 			Analytics.$().event("profile_provision_sys_activity_done").send();
-			if (SDK_INT < M) {
-				Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
-				activity.finish();
-				return;
-			}
-			final ProgressDialog progress = new ProgressDialog(activity);
-			progress.setMessage("Preparing Island");
-			progress.show();
-			activity.registerReceiver(new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
-				activity.unregisterReceiver(this);
-				progress.dismiss();
-				activity.finish();
-				new Handler().postDelayed(() -> context.startActivity(new Intent(context, MainActivity.class).addFlags(FLAG_ACTIVITY_NEW_TASK)), 300);
-			}}, new IntentFilter(DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED));
+			Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
+			activity.finish();
 		}
+		return null;
 	}
 
 	private static void startManagedProvisioning(final Fragment fragment) {
@@ -270,6 +257,8 @@ public class SetupViewModel implements Parcelable {
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 		} else //noinspection deprecation
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
+		if (BuildConfig.DEBUG && SDK_INT >= M)
+			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE, new Account("default_account", "miui_yellowpage"));
 		if (SDK_INT >= O) intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
 		return intent;
 	}

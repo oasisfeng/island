@@ -29,6 +29,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="setup_error_managed_device">Sorry, Island cannot be setup due to device currently being managed by <b>%1$s</b>.</string>
     <string name="setup_error_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed first in system Settings - Accounts.</string>
     <string name="setup_error_missing_managed_provisioning">Sorry, the required \"Android for Work\" feature may not be fully supported on your device.</string>
+    <string name="setup_solution_for_cancelled_provision">Trouble setting-up?\n\nIf you got error message during the setup procedure of Island, please follow the suggested solutions provided below.</string>
 
     <string name="tip_empty_app_list">No apps here.\nPlease switch to other view.</string>
 
@@ -36,6 +37,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="button_instructions_online">Instructions (online)</string>
     <string name="button_account_settings">Account Settings</string>
     <string name="button_have_checked">I\'ve checked</string>
+    <string name="button_setup_troubleshooting">Troubleshooting Guide (online)</string>
 
     <string name="action_clone">Clone</string>
     <string name="action_clone_back">Clone to mainland</string>

@@ -2,11 +2,15 @@
 <defaultsMap>
     <entry>
         <key>url_faq</key>
-        <value>https://oasisfeng.github.com/island/faq</value>
+        <value>https://oasisfeng.github.io/island/faq.html</value>
     </entry>
     <entry>
         <key>url_setup</key>
-        <value>https://oasisfeng.github.com/island/setup</value>
+        <value>https://oasisfeng.github.io/island/setup.html</value>
+    </entry>
+    <entry>
+        <key>url_setup_trouble</key>
+        <value>https://oasisfeng.github.io/island/faq.html</value>
     </entry>
     <entry>
         <key>permission_allowed_apps</key>

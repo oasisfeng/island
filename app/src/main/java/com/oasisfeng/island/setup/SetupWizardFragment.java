@@ -74,16 +74,21 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 
 	@Override public void onNavigateNext() {
 		final SetupViewModel next_vm = mViewModel.onNavigateNext(this);
+		showNextFragmentIfNeeded(next_vm);
+	}
+
+	@Override public void onActivityResult(final int request, final int result, final Intent data) {
+		final SetupViewModel next_vm = SetupViewModel.onActivityResult(getActivity(), request, result);
+		showNextFragmentIfNeeded(next_vm);
+	}
+
+	private void showNextFragmentIfNeeded(final SetupViewModel next_vm) {
 		if (next_vm == null) return;
 		final SetupWizardFragment next_fragment = new SetupWizardFragment();
 		next_fragment.setArguments(Bundles.build(b -> b.putParcelable(null, next_vm)));
 		getFragmentManager().beginTransaction()
 				.setCustomAnimations(R.animator.slide_next_in, R.animator.slide_next_out, R.animator.slide_back_in, R.animator.slide_back_out)
 				.addToBackStack(null).replace(mContainerViewId, next_fragment).commit();
-	}
-
-	@Override public void onActivityResult(final int request, final int result, final Intent data) {
-		SetupViewModel.onActivityResult(getActivity(), request, result);
 	}
 
 	private int mContainerViewId;
