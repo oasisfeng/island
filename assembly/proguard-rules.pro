@@ -19,13 +19,6 @@
 # For AOSP internal disclosure
 -keepclassmembers class * extends android.content.ContentResolver { *; }
 
-# Temp rules for Project Condom
--dontwarn android.content.pm.PackageManager$**
--dontwarn android.content.pm.IPackageDeleteObserver
--dontwarn android.content.pm.IPackageDataObserver
--dontwarn android.content.pm.IPackageStatsObserver
--dontwarn android.content.pm.KeySet
-
 # For Google Error Prone (depended by Guava)
 -dontwarn com.google.errorprone.annotations.*
 

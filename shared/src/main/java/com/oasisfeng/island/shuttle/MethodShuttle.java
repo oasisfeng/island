@@ -36,7 +36,13 @@ public class MethodShuttle {
 		return shuttle(context, lambda);
 	}
 
-	/** @param lambda should be a lambda function without return value.
+	/** @param lambda should be a lambda function with return value of type <code>R</code>.
+	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried. */
+	public static <R> ListenableFuture<R> runInProfile(final Context context, final GeneralMethod<R> lambda) {
+		return shuttle(context, lambda);
+	}
+
+	/** @param lambda should be a lambda function with return value of type <code>R</code>.
 	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried.
 	 * @deprecated */
 	public static <R> void runInProfile(final Context context, final GeneralMethod<R> lambda, final @Nullable Consumer<R> consumer) {

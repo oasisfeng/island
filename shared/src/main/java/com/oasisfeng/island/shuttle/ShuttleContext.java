@@ -9,6 +9,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
@@ -31,7 +32,7 @@ public class ShuttleContext extends ContextWrapper {
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
 		if (Users.profile == null) return false;
-		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, INTERACT_ACROSS_USERS) == PERMISSION_GRANTED)
+		if (! ALWAYS_USE_SHUTTLE && Permissions.ensure(this, INTERACT_ACROSS_USERS))
 			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, Users.profile).on(getBaseContext())) {
 				Log.d(TAG, "Connecting to service in profile: " + service);
 				return true;

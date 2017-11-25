@@ -2,7 +2,6 @@ apply plugin: 'com.android.feature'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.1'
 
     defaultConfig {
         minSdkVersion 21
@@ -47,7 +46,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-config:11.2.2'
     api 'com.google.firebase:firebase-perf:11.2.2'
     api('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') { transitive = true }
-    implementation 'com.oasisfeng.condom:library:1.2.0'
+    implementation 'com.oasisfeng.condom:library:2.0.0'
 
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.8.9'

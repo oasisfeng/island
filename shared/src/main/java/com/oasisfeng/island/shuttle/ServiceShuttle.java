@@ -11,6 +11,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.common.collect.FluentIterable;
@@ -61,7 +62,8 @@ public class ServiceShuttle {
 		final Activity activity = Activities.findActivityFrom(context);
 		if (sForwarderComponent == null) {
 			final ActivityInfo forwarder = FluentIterable.from(pm.queryIntentActivities(intent, 0))
-					.firstMatch(r -> "android".equals(r.activityInfo.packageName)).transform(r -> r.activityInfo).orNull();
+					.firstMatch((@NonNull ResolveInfo r) -> "android".equals(r.activityInfo.packageName))
+					.transform((@NonNull ResolveInfo r) -> r.activityInfo).orNull();
 			if (forwarder == null) return false;
 			sForwarderComponent = new ComponentName(forwarder.packageName, forwarder.name);
 		}

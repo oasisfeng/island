@@ -70,7 +70,9 @@ class ApiDispatcher {
 
 	/** @return null for success, or error message for debugging purpose (NOT part of the API protocol). */
 	static String dispatch(final Context context, final Intent intent) {
-		switch (intent.getAction()) {
+		final String action = intent.getAction();
+		if (action == null) return "No action";
+		switch (action) {
 		case Api.latest.ACTION_FREEZE:
 			final IslandManagerService island = new IslandManagerService(context);
 			return processPackageUri(intent, pkg -> island.freezeApp(pkg, "api"));
@@ -78,7 +80,7 @@ class ApiDispatcher {
 			return processPackageUri(intent, new IslandManagerService(context)::unfreezeApp);
 		case Api.latest.ACTION_LAUNCH:
 			return launchActivity(context, intent);
-		default: return "Unsupported action: " + intent.getAction();
+		default: return "Unsupported action: " + action;
 		}
 	}
 
