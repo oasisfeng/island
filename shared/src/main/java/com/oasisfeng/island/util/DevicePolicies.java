@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
-import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.support.annotation.Nullable;
@@ -51,9 +50,8 @@ public class DevicePolicies {
 		final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
 		if (um == null) return null;
 		final List<UserHandle> profiles = um.getUserProfiles();
-		final UserHandle current_user = Process.myUserHandle();
 		for (final UserHandle profile : profiles)
-			if (! profile.equals(current_user)) return profile;   	// Only one managed profile is supported by Android at present.
+			if (! profile.equals(Users.owner)) return profile;   	// Only one managed profile is supported by Android at present.
 		return null;
 	}
 
