@@ -27,11 +27,14 @@ public class CriticalAppsManager {
 	@ProfileUser static Set<String> detectCriticalPackages(final PackageManager pm, final int flags) {
 		final Set<String> pkgs = SystemAppsManager.detectCriticalSystemPackages(pm, flags);
 
-		if (SDK_INT >= N) pkgs.add(getCurrentWebViewPackageName());
-		try { @SuppressLint("WrongConstant") // Chrome may not be current provider, since current provider may fallback to system WebView during provisioning.
+		if (SDK_INT >= N) {		// Chrome web-view is supported on Android 7+.
+			final String webview_pkg = getCurrentWebViewPackageName();
+			if (webview_pkg != null) pkgs.add(webview_pkg);
+			try { @SuppressLint("WrongConstant") // Chrome may not be current provider, since current provider may fallback to system WebView during provisioning.
 			final ApplicationInfo chrome_info = pm.getApplicationInfo(WellKnownPackages.PACKAGE_GOOGLE_CHROME, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
-			pkgs.add(chrome_info.packageName);
-		} catch (final PackageManager.NameNotFoundException ignored) {}
+				pkgs.add(chrome_info.packageName);
+			} catch (final PackageManager.NameNotFoundException ignored) {}
+		}
 		return pkgs;
 	}
 
