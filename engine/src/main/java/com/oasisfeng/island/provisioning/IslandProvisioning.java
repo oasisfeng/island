@@ -14,6 +14,7 @@ import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.google.common.base.Supplier;
@@ -26,7 +27,6 @@ import com.oasisfeng.island.api.Api;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
-import com.oasisfeng.island.shuttle.ActivityShuttle;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
@@ -41,7 +41,6 @@ import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
-import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.ACTION_SEND;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_BROWSABLE;
@@ -76,10 +75,6 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 9;
 
-	private static final String PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION = "sys.apps.rev";
-	/** The revision for critical system packages list. Increase this const value if the list of critical system packages are changed after upgrade. */
-	private static final int UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION = 1;
-
 	public static void start(final Context context, final @Nullable String action) {
 		final Intent intent = new Intent(action).setComponent(getComponent(context, IslandProvisioning.class));
 		if (SDK_INT >= O) context.startForegroundService(intent);
@@ -93,7 +88,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		start(context, intent.getAction());
 	}
 
-	@ProfileUser @Override protected void onHandleIntent(@Nullable final Intent intent) {
+	@ProfileUser @WorkerThread @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
 		final DevicePolicies policies = new DevicePolicies(this);
 		// Grant INTERACT_ACROSS_USERS & WRITE_SECURE_SETTINGS permission early, since they may be required in the following provision procedure.
@@ -103,7 +98,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 
 		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
-			startDeviceOwnerPostProvisioning(policies);
+			Analytics.$().event("device_provision_manual_start").send();
+			startDeviceOwnerPostProvisioning(this, policies);
 			return;
 		}
 
@@ -121,12 +117,16 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			ProfileOwnerManualProvisioning.start(this, policies);	// Mimic the stock managed profile provision
 		} else Analytics.$().event("profile_post_provision_start").send();
 
+		Log.d(TAG, "Start post-provisioning.");
 		try {
-			startProfileOwnerPostProvisioning(this, policies, prefs);
+			startProfileOwnerPostProvisioning(this, policies);
 		} catch (final Exception e) {
 			Analytics.$().event("profile_post_provision_error").with(Analytics.Param.ITEM_NAME, e.toString()).send();
 			Analytics.$().report(e);
 		}
+
+		// Prepare critical apps
+		enableCriticalAppsIfNeeded(this, policies);
 
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
 			policies.setProfileName(getString(R.string.profile_name));
@@ -144,13 +144,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		trace.stop();
 	}
 
-	public static void performIncrementalProvisoningIfNeeded(final Context context) {
-		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		final int state = prefs.getInt(PREF_KEY_PROVISION_STATE, 0);
-		if (state < POST_PROVISION_REV) {
-			startProfileOwnerPostProvisioning(context, new DevicePolicies(context), prefs);
-		} else if (state > POST_PROVISION_REV)
-			prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();	// To avoid persistent inconsistency.
+	@WorkerThread public static void performIncrementalProfileOwnerProvisioningIfNeeded(final Context context) {
+		startProfileOwnerPostProvisioning(context, new DevicePolicies(context));
 	}
 
 	@Override public void onCreate() {
@@ -164,14 +159,13 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
+		if (SDK_INT > N) return false;
+		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		if (apps == null) return false;
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		if (SDK_INT <= N) {
-			final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			if (! apps.isActivityEnabled(activity, user))
-				return false;    // Since Android O, activities in owner user in invisible to managed profile.
-			apps.startMainActivity(activity, user, null, null);
-		} else
-			ActivityShuttle.startActivityAsUser(context, new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setComponent(activity), Users.owner);
+		if (! apps.isActivityEnabled(activity, user))
+			return false;    // Since Android O, activities in owner user in invisible to managed profile.
+		apps.startMainActivity(activity, user, null, null);
 		return true;
 	}
 
@@ -183,8 +177,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 	}
 
-	@ProfileUser private static void enableCriticalAppsIfNeeded(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
-		if (prefs != null && checkRevision(prefs, PREF_KEY_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION, UP_TO_DATE_CRITICAL_SYSTEM_PACKAGE_LIST_REVISION) == -1) return;
+	@ProfileUser private static void enableCriticalAppsIfNeeded(final Context context, final DevicePolicies policies) {
 		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 		for (final String pkg : pkgs) try {
 			policies.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
@@ -192,24 +185,15 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		} catch (final IllegalArgumentException ignored) {}		// Ignore non-existent packages.
 	}
 
-	/** @return -1 if up to date, or current revision otherwise */
-	private static int checkRevision(final SharedPreferences prefs, final String pref_key, final int up_to_date_revision) {
-		final int revision = prefs.getInt(pref_key, 0);
-		if (revision == up_to_date_revision) return -1;
-		if (revision > up_to_date_revision) Log.e(TAG, "Revision of " + pref_key + ": " + revision + " beyond " + up_to_date_revision);
-		prefs.edit().putInt(pref_key, up_to_date_revision).apply();
-		return revision;
-	}
-
 	/** Re-provisioning triggered by user */
-	@ProfileUser public static void reprovision(final Context context) {
+	@ProfileUser @WorkerThread public static void reprovision(final Context context) {
+		Log.d(TAG, "Start re-provisioning.");
+
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (Users.isOwner()) {
-			startDeviceOwnerPostProvisioning(policies);
+			startDeviceOwnerPostProvisioning(context, policies);
 			return;
 		}
-
-		// TODO: Check for disabled / frozen critical system apps in main UI.
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
@@ -217,31 +201,27 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
 
-		startProfileOwnerPostProvisioning(context, policies, null);
+		startProfileOwnerPostProvisioning(context, policies);
 
 		disableLauncherActivity(context);
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
-	@OwnerUser public static void startDeviceOwnerPostProvisioning(final DevicePolicies policies) {
+	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (! policies.isDeviceOwner()) return;
-		Analytics.$().event("device_provision_manual_start").send();
 
-		if (SDK_INT >= N) policies.clearUserRestriction(UserManager.DISALLOW_ADD_USER);
-		if (SDK_INT >= N_MR1) try {
-			policies.setBackupServiceEnabled(true);
-		} catch (final SecurityException e) { Analytics.$().report(e); }	// "SecurityException: There should only be one user, managed by Device Owner"
+		if (SDK_INT >= N) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_USER);
+		try {
+			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
+				policies.setBackupServiceEnabled(true);
+		} catch (final SecurityException | IllegalStateException e) {	// "SecurityException: There should only be one user, managed by Device Owner" if more than 1 user exists. (only on N_MR1)
+			Analytics.$().report(e);
+		}
 	}
 
-	/**
-	 * All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning.
-	 *
-	 * <p>{@link #POST_PROVISION_REV} must be increased if anything new is added in this method
-	 */
-	@ProfileUser private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies, final @Nullable SharedPreferences prefs) {
-		Log.d(TAG, "Start post-provisioning.");
-
-		if (SDK_INT >= M) policies.addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning. */
+	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
+		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		ensureInstallNonMarketAppAllowed(context, policies);
 
 		enableAdditionalForwarding(policies);
@@ -259,13 +239,10 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		// Prepare API
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Api.latest.ACTION_FREEZE).withDataSchemes("package", "packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Api.latest.ACTION_UNFREEZE).withDataSchemes("package", "packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);
-
-		// Prepare critical apps
-		enableCriticalAppsIfNeeded(context, new DevicePolicies(context), prefs);
 	}
 
 	public static boolean ensureInstallNonMarketAppAllowed(final Context context, final DevicePolicies policies) {
-		policies.clearUserRestriction(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
 
 		final ContentResolver resolver = context.getContentResolver();
 		@SuppressWarnings("deprecation") final String INSTALL_NON_MARKET_APPS = Settings.Secure.INSTALL_NON_MARKET_APPS;

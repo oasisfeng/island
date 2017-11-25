@@ -17,6 +17,6 @@ public abstract class AppUpdateReceiver extends BroadcastReceiver {
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		// Currently, just blindly start the device owner provisioning, since it is idempotent, at least at present.
-		if (Users.isOwner()) IslandProvisioning.startDeviceOwnerPostProvisioning(new DevicePolicies(context));
+		if (Users.isOwner()) IslandProvisioning.startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
 	}
 }

@@ -119,7 +119,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 		/* For non-system app, we initiate the manual installation process. */
 
 		// Blindly clear these restrictions
-		mDevicePolicies.clearUserRestriction(UserManager.DISALLOW_INSTALL_APPS);
+		mDevicePolicies.clearUserRestrictionsIfNeeded(mContext, UserManager.DISALLOW_INSTALL_APPS);
 
 		if (IslandProvisioning.ensureInstallNonMarketAppAllowed(mContext, mDevicePolicies)) {
 			final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))

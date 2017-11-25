@@ -21,6 +21,7 @@ import java9.util.Optional;
 
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
@@ -32,8 +33,8 @@ import static android.os.Build.VERSION_CODES.N_MR1;
  */
 public class DevicePolicies {
 
-	/** @return whether Island is the profile owner, absent if no profile or profile has no owner, or null for failure. */
-	public static @Nullable Optional<Boolean> isProfileOwner(final Context context) {
+	/** @return whether Island is the profile owner, absent if no enabled profile or profile has no owner, or null for failure. */
+	public static @Nullable Optional<Boolean> isProfileOwner(final Context context) {	// TODO: Rename to isEnabledProfileOwner()
 		final UserHandle profile = getManagedProfile(context);
 		if (profile == null) return Optional.empty();
 		return isProfileOwner(context, profile);
@@ -48,6 +49,7 @@ public class DevicePolicies {
 
 	public static @Nullable UserHandle getManagedProfile(final Context context) {
 		final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
+		if (um == null) return null;
 		final List<UserHandle> profiles = um.getUserProfiles();
 		final UserHandle current_user = Process.myUserHandle();
 		for (final UserHandle profile : profiles)
@@ -165,9 +167,42 @@ public class DevicePolicies {
 		mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
 	}
 
+	public void addUserRestrictionIfNeeded(final Context context, final String key) {
+		if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
+		if (SDK_INT >= N) {
+			if (! mDevicePolicyManager.getUserRestrictions(sCachedComponent).containsKey(key))
+				mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
+		} else {
+			final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
+			if (um == null || ! um.hasUserRestriction(key))
+				mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
+		}
+	}
+
 	/** @see DevicePolicyManager#clearUserRestriction(ComponentName, String) */
 	public void clearUserRestriction(final String key) {
 		mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
+	}
+
+	public void clearUserRestrictionsIfNeeded(final Context context, final String... keys) {
+		Bundle restrictions = null;
+		for (final String key : keys) {
+			if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
+			if (SDK_INT >= N) {
+				if (restrictions == null) restrictions = mDevicePolicyManager.getUserRestrictions(sCachedComponent);
+				if (restrictions.containsKey(key))
+					mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
+			} else {
+				final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
+				if (um == null || um.hasUserRestriction(key))
+					mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
+			}
+		}
+	}
+
+	/** @see DevicePolicyManager#getUserRestrictions(ComponentName) */
+	@RequiresApi(N) public Bundle getUserRestrictions() {
+		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 	}
 
 	/** @see DevicePolicyManager#setProfileName(ComponentName, String) */
@@ -193,11 +228,6 @@ public class DevicePolicies {
 	/** @see DevicePolicyManager#getPermissionGrantState(ComponentName, String, String) */
 	@RequiresApi(M) public int getPermissionGrantState(final String pkg, final String permission) {
 		return mDevicePolicyManager.getPermissionGrantState(sCachedComponent, pkg, permission);
-	}
-
-	/** @see DevicePolicyManager#getUserRestrictions(ComponentName) */
-	@RequiresApi(N) public Bundle getUserRestrictions() {
-		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 	}
 
 	/** @see DevicePolicyManager#isBackupServiceEnabled(ComponentName) */

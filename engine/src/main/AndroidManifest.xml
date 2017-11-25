@@ -111,6 +111,9 @@
             </intent-filter>
         </receiver>
 
+        <!-- AutoIncrementalProvision, authority must be consistent with code in MainActivity. -->
+        <provider android:authorities="${applicationId}.internal.E0" android:name="com.oasisfeng.island.InternalProvider$_0" android:exported="false"/>
+
         <!-- AppUpdateReceiver -->
         <receiver android:name="com.oasisfeng.island.InternalReceiver$_2" android:exported="false" android:directBootAware="true" tools:targetApi="n">
             <intent-filter>
