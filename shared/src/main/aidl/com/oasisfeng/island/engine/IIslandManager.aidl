@@ -14,7 +14,5 @@ interface IIslandManager {
 	boolean launchApp(String pkg);
 	boolean block(String pkg);
 	boolean unblock(String pkg);
-	/** Destroy the current profile. */
-	void destroyProfile();
 	void provision();
 }

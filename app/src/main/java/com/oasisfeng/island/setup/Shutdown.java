@@ -2,23 +2,28 @@ package com.oasisfeng.island.setup;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
-import android.os.RemoteException;
+import android.os.DeadObjectException;
 import android.provider.Settings;
 import android.util.Log;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import java9.util.Optional;
 import java9.util.stream.Collectors;
@@ -97,14 +102,24 @@ public class Shutdown {
 	}
 
 	private static void destroyProfile(final Activity activity) {
-		if (! IslandManager.useServiceInProfile(activity, island -> {
+		@SuppressWarnings("UnnecessaryLocalVariable") final Context context = activity;		// MethodShuttle accepts only Context, but not Activity.
+		final ListenableFuture<Void> future = MethodShuttle.runInProfile(activity, () -> {
+			final DevicePolicies policies = new DevicePolicies(context);
+			policies.clearCrossProfileIntentFilters();
+			policies.getManager().wipeData(0);
+		});
+		future.addListener(() -> {
 			try {
-				island.destroyProfile();
-				ClonedHiddenSystemApps.reset(activity, Users.profile);
-				activity.finishAffinity();	// Finish the whole activity stack.
-				System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
-			} catch (final RemoteException ignored) {}
-		})) showPromptForProfileManualRemoval(activity);
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				if (! (e instanceof ExecutionException && e.getCause() instanceof DeadObjectException))	// DeadObjectException is normal, as wipeData() also terminated the calling process.
+					showPromptForProfileManualRemoval(activity);
+				return;
+			}
+			ClonedHiddenSystemApps.reset(activity, Users.profile);
+			activity.finishAffinity();	// Finish the whole activity stack.
+			System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
+		}, MoreExecutors.directExecutor());
 	}
 
 	private static final String TAG = Shutdown.class.getSimpleName();

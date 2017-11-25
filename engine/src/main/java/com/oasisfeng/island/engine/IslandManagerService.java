@@ -167,11 +167,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return failed == null || failed.length == 0;
 	}
 
-	@Override public void destroyProfile() {
-		mDevicePolicies.clearCrossProfileIntentFilters();
-		mDevicePolicies.getManager().wipeData(0);
-	}
-
 	@Override public void provision() {
 		IslandProvisioning.reprovision(mContext);
 	}
