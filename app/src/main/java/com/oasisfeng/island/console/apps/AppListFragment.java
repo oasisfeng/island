@@ -32,6 +32,8 @@ import android.widget.AdapterView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.android.util.SafeAsyncTask;
@@ -58,6 +60,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.Intent.ACTION_OPEN_DOCUMENT;
@@ -242,7 +245,7 @@ public class AppListFragment extends Fragment {
 	private void requestPermissionAndLaunchFilesExplorerInIsland() {
 		final Context context = getActivity();
 		if (context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED) {
-			MethodShuttle.runInProfile(context, () -> {
+			final ListenableFuture<Boolean> future = MethodShuttle.runInProfile(context, () -> {
 				final Intent intent = findFileBrowser(context);
 				if (intent == null) return false;
 				final ComponentName component = intent.getComponent();	// Intent should be resolved already in findFileBrowser().
@@ -259,11 +262,18 @@ public class AppListFragment extends Fragment {
 					Analytics.$().event("launch_file_browser").with(ITEM_CATEGORY, pkg).with(ITEM_ID, intent.toString()).send();
 					return true;
 				} catch (final ActivityNotFoundException e) { return false; }
-			}, result -> {
-				if (result != null && result) return;
-				Toast.makeText(context, R.string.toast_file_shuttle_without_browser, Toast.LENGTH_LONG).show();
-				Analytics.$().event("no_file_browser").send();
 			});
+			final Context app_context = getActivity().getApplicationContext();
+			future.addListener(() -> {
+				try {
+					final Boolean result = future.get();
+					if (result != null && result) return;
+					Analytics.$().event("no_file_browser").send();
+				} catch (final ExecutionException e) {
+					Analytics.$().report(e.getCause());
+				} catch (final InterruptedException ignored) {}
+				Toast.makeText(app_context, R.string.toast_file_shuttle_without_browser, Toast.LENGTH_LONG).show();
+			}, MoreExecutors.directExecutor());
 			return;
 		}
 
@@ -311,8 +321,10 @@ public class AppListFragment extends Fragment {
 	private static boolean resolveIncludingFrozen(final PackageManager pm, final Intent intent) {
 		final List<ResolveInfo> resolves = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY | GET_UNINSTALLED_PACKAGES);
 		for (final ResolveInfo resolve : resolves)
-			if (resolve != null && (resolve.activityInfo.applicationInfo.flags & FLAG_INSTALLED) != 0)	// Only installed (including frozen).
-				return intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name)) != null;
+			if (resolve != null && (resolve.activityInfo.applicationInfo.flags & FLAG_INSTALLED) != 0) {    // Only installed (including frozen).
+				intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));
+				return true;
+			}
 		return false;
 	}
 

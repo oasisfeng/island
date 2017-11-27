@@ -16,8 +16,10 @@
 #   public *;
 #}
 
-# For AOSP internal disclosure
+# For AOSP internal disclosure in module "fileprovider"
 -keepclassmembers class * extends android.content.ContentResolver { *; }
+-dontwarn android.content.ContentResolver
+-dontwarn android.content.IContentProvider
 
 # For Google Error Prone (depended by Guava)
 -dontwarn com.google.errorprone.annotations.*
