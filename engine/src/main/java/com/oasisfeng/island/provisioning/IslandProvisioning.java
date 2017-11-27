@@ -35,6 +35,7 @@ import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
@@ -74,6 +75,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	private static final String PREF_KEY_PROFILE_PROVISION_TYPE = "profile.provision.type";
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 9;
+	private static final String AFFILIATION_ID = "com.oasisfeng.island";
 
 	public static void start(final Context context, final @Nullable String action) {
 		final Intent intent = new Intent(action).setComponent(getComponent(context, IslandProvisioning.class));
@@ -159,7 +161,6 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
-		if (SDK_INT > N) return false;
 		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		if (apps == null) return false;
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
@@ -210,6 +211,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (! policies.isDeviceOwner()) return;
 
+		if (SDK_INT >= O) policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
 		if (SDK_INT >= N) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_USER);
 		try {
 			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
@@ -221,6 +223,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning. */
 	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
+		if (SDK_INT >= O) policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
 		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		ensureInstallNonMarketAppAllowed(context, policies);
 

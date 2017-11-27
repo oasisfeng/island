@@ -15,6 +15,7 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.util.List;
+import java.util.Set;
 
 import java9.util.Optional;
 
@@ -24,6 +25,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
+import static android.os.Build.VERSION_CODES.O;
 
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
@@ -238,6 +240,10 @@ public class DevicePolicies {
 	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
 	public void setBackupServiceEnabled(final boolean enabled) {
 		mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled);
+	}
+
+	@RequiresApi(O) public void setAffiliationIds(final Set<String> ids) {
+		mDevicePolicyManager.setAffiliationIds(sCachedComponent, ids);
 	}
 
 	public DevicePolicyManager getManager() { return mDevicePolicyManager; }
