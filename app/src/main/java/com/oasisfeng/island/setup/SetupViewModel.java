@@ -218,7 +218,7 @@ public class SetupViewModel implements Parcelable {
 		if (result == Activity.RESULT_OK) {
 			Log.i(TAG, "System provision activity is done.");
 			Analytics.$().event("profile_provision_sys_activity_done").send();
-			Toast.makeText(activity, R.string.toast_setup_completed_and_wait, Toast.LENGTH_LONG).show();
+			Toast.makeText(activity, R.string.toast_setup_in_progress, Toast.LENGTH_LONG).show();
 			activity.finish();
 		}
 		return null;

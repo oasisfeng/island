@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
@@ -16,6 +18,7 @@ import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -140,8 +143,13 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		disableLauncherActivity(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
-		if (! launchMainActivityAsUser(this, Users.owner))
-			Log.e(TAG, "Failed to launch main activity in owner user.");
+		if (! launchMainActivityAsUser(this, Users.owner)) {
+			if (SDK_INT < O) {
+				Analytics.$().event("error_launch_main_ui").send();
+				Log.e(TAG, "Failed to launch main activity in owner user.");
+			}
+			new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(this, R.string.toast_setup_complete, Toast.LENGTH_LONG).show());
+		}
 
 		trace.stop();
 	}

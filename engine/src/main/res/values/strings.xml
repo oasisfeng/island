@@ -3,7 +3,9 @@
     <string name="profile_name">Island</string>
 
     <string name="notification_standby_text">Standby</string>
-    <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
     <string name="notification_provisioning_title">Provisioning Island…</string>
     <string name="notification_provisioning_text">It may take several minutes.</string>
+
+    <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
+    <string name="toast_setup_complete">Setup is complete, please launch Island.</string>
 </resources>
