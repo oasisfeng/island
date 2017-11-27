@@ -71,29 +71,27 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
 	}
 
-	@Override public boolean launchApp(final String pkg) {
+	@Override public String launchApp(final String pkg) {
 		if (! Users.isOwner() || new DevicePolicies(mContext).isDeviceOwner()) {
 			if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
 				if (! mDevicePolicies.setApplicationHidden(pkg, false))
-					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return false;	// Not installed in profile, just give up.
+					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return "not_installed";	// Not installed in profile, just give up.
 			}
 			if (SDK_INT >= N) try {
 				if (mDevicePolicies.isPackageSuspended(pkg))
 					mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
-			} catch (final PackageManager.NameNotFoundException ignored) {
-				return false;
-			}
+			} catch (final PackageManager.NameNotFoundException ignored) { return "not_found"; }
 		}
 
 		final Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
-		if (intent == null) return false;
+		if (intent == null) return "no_launcher_activity";
 		intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 		try {
 			mContext.startActivity(intent);
 		} catch (final ActivityNotFoundException e) {
-			return false;
+			return "launcher_activity_not_found";
 		}
-		return true;
+		return null;
 	}
 
 	@Override public int cloneApp(final String pkg, final boolean do_it) {

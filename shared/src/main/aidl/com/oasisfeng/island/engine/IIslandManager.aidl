@@ -11,7 +11,7 @@ interface IIslandManager {
 	boolean freezeApp(String pkg, String reason);
 	/** @return whether the package is unfrozen, or false if not found */
 	boolean unfreezeApp(String pkg);
-	boolean launchApp(String pkg);
+	String launchApp(String pkg);
 	boolean block(String pkg);
 	boolean unblock(String pkg);
 	void provision();

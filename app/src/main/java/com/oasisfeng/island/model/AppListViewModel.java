@@ -77,6 +77,8 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
 import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /**
  * View model for apps
@@ -247,10 +249,18 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_launch").with(Analytics.Param.ITEM_ID, app.packageName).send();
+		Analytics.$().event("action_launch").with(ITEM_ID, app.packageName).send();
+		if (! app.isHidden() && IslandManager.launchApp(v.getContext(), app.packageName, app.user)) return;	// Not frozen, launch the app directly.
+		String failure;
 		try {
-			controller(app).launchApp(app.packageName);
-		} catch (final RemoteException ignored) {}
+			failure = controller(app).launchApp(app.packageName);
+		} catch (final RemoteException e) {
+			failure = e.toString();
+		}
+		if (failure != null) {
+			Analytics.$().event("app_launch_error").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, failure).send();
+			Toast.makeText(v.getContext(), R.string.toast_failed_to_launch_app, Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	public boolean onActionClick(final Context context, final MenuItem item) {
@@ -266,17 +276,17 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			clearSelection();
 		} else if (id == R.id.menu_clone_back) {
 			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-			Analytics.$().event("action_install_outside").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("action_install_outside").with(ITEM_ID, pkg).send();
 			clearSelection();
 		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
-			Analytics.$().event("action_freeze").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("action_freeze").with(ITEM_ID, pkg).send();
 
 			if (IslandAppListProvider.getInstance(context).isCritical(pkg)) {
 				Dialogs.buildAlert(mActivity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning)
 						.withCancelButton().withOkButton(() -> freezeApp(context, selection)).show();
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
-			Analytics.$().event("action_unfreeze").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
 			try {
 				controller.unfreezeApp(pkg);
 				refreshAppStateAsSysBugWorkaround(pkg);
@@ -364,7 +374,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onShortcutRequested() {
 		if (getSelection() == null) return;
 		final String pkg = getSelection().info().packageName;
-		Analytics.$().event("action_create_shortcut").with(Analytics.Param.ITEM_ID, pkg).send();
+		Analytics.$().event("action_create_shortcut").with(ITEM_ID, pkg).send();
 		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(mActivity).getString(mActivity.getString(R.string.key_launch_shortcut_prefix), mActivity.getString(R.string.default_launch_shortcut_prefix));
 		final Boolean result = AbstractAppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user), shortcut_prefix);
 		if (result == null) Toast.makeText(mActivity, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();	// No toast if result == true, since the shortcut pinning is pending user confirmation.
@@ -374,7 +384,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onGreenifyRequested() {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_greenify").with(Analytics.Param.ITEM_ID, app.packageName).send();
+		Analytics.$().event("action_greenify").with(ITEM_ID, app.packageName).send();
 
 		final String mark = "greenify-explained";
 		final Boolean greenify_ready = GreenifyClient.checkGreenifyVersion(mActivity);
@@ -416,7 +426,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private void onRemovalRequested() {
 		if (getSelection() == null) return;
 		final IslandAppInfo app = getSelection().info();
-		Analytics.$().event("action_uninstall").with(Analytics.Param.ITEM_ID, app.packageName).with(Analytics.Param.ITEM_CATEGORY, "system").send();
+		Analytics.$().event("action_uninstall").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, "system").send();
 		if (app.isSystem()) {
 			if (app.isCritical()) {
 				Dialogs.buildAlert(mActivity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
@@ -428,7 +438,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			if (app.isSystem()) {
 				final LauncherApps launcher = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 				launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-				Analytics.$().event("action_disable_sys_app").with(Analytics.Param.ITEM_ID, app.packageName).send();
+				Analytics.$().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send();
 			} else Activities.startActivity(mActivity, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", app.packageName, null))
 					.putExtra(Intent.EXTRA_USER, app.user));
 		} catch (final RemoteException ignored) {
@@ -475,22 +485,22 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 					.setPositiveButton(android.R.string.cancel, null).show();
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
-			Analytics.$().event("clone_sys").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
 			doCloneApp(context, app);
 			break;
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
-			Analytics.$().event("clone_install").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
 			break;
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
-			Analytics.$().event("clone_via_play").with(Analytics.Param.ITEM_ID, pkg).send();
+			Analytics.$().event("clone_via_play").with(ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
 			break;
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
 			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			final ActivityInfo market_info = market_intent.resolveActivityInfo(mActivity.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
 			if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
-				Analytics.$().event("clone_via_market").with(Analytics.Param.ITEM_ID, pkg).with(Analytics.Param.ITEM_CATEGORY, market_info.packageName).send();
+				Analytics.$().event("clone_via_market").with(ITEM_ID, pkg).with(ITEM_CATEGORY, market_info.packageName).send();
 			showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
 			break;
 		}

@@ -47,6 +47,7 @@ public class IslandManager {
 
 	public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
 		final LauncherApps launcher_apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		if (launcher_apps == null) return false;
 		final List<LauncherActivityInfo> activities = launcher_apps.getActivityList(pkg, profile);
 		if (activities == null || activities.isEmpty()) return false;
 		launcher_apps.startMainActivity(activities.get(0).getComponentName(), profile, null, null);
