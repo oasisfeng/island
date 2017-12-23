@@ -20,6 +20,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.analytics.Analytics.Property;
 import com.oasisfeng.island.console.apps.AppListFragment;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.util.DeviceAdmins;
@@ -103,8 +104,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		if (savedInstanceState != null) return;
 		getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
-		if (Scopes.boot(this).mark("overall_analytics"))
-			new Thread(this::performOverallAnalyticsIfNeeded).start();
+		performOverallAnalyticsIfNeeded();
 	}
 
 	private void startSetupWizard() {
@@ -114,7 +114,7 @@ public class MainActivity extends Activity {
 	}
 
 	private void performOverallAnalyticsIfNeeded() {
-		if (! Scopes.boot(this).mark("overall_analytics")) return;
+		if (! BuildConfig.DEBUG && ! Scopes.boot(this).mark("overall_analytics")) return;
 		new Thread(() -> {
 			final Analytics analytics = Analytics.$();
 			analytics.setProperty(Property.DeviceOwner, mIsDeviceOwner);
