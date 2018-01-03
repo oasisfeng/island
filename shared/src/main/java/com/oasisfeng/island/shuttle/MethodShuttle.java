@@ -67,20 +67,23 @@ public class MethodShuttle {
 		final Class<?>[] constructor_params = constructor.getParameterTypes();
 
 		final Field[] fields = clazz.getDeclaredFields();
-		if (fields.length != constructor_params.length)
-			throw new IllegalArgumentException("Parameter types mismatch: " + constructor + " / " + Arrays.deepToString(fields));
-
-		final Object[] args = new Object[fields.length];
-		for (int i = 0; i < fields.length; i++) try {
-			final Field field = fields[i];
-			if (field.getType() != constructor_params[i])
+		final Object[] args;
+		if (constructor_params.length > 0) {
+			if (fields.length != constructor_params.length)
 				throw new IllegalArgumentException("Parameter types mismatch: " + constructor + " / " + Arrays.deepToString(fields));
-			field.setAccessible(true);
-			final Object arg = field.get(lambda);
-			if (field.getType() != Context.class) args[i] = arg;		// Context argument is intentionally left blank.
-		} catch (final Exception e) {
-			throw new IllegalArgumentException("Error enumerating lambda parameters.", e);
-		}
+
+			args = new Object[fields.length];
+			for (int i = 0; i < fields.length; i++) try {
+				final Field field = fields[i];
+				if (field.getType() != constructor_params[i])
+					throw new IllegalArgumentException("Parameter types mismatch: " + constructor + " / " + Arrays.deepToString(fields));
+				field.setAccessible(true);
+				final Object arg = field.get(lambda);
+				if (field.getType() != Context.class) args[i] = arg;		// Context argument is intentionally left blank.
+			} catch (final Exception e) {
+				throw new IllegalArgumentException("Error enumerating lambda parameters.", e);
+			}
+		} else args = new Object[0];
 
 		final MethodInvocation<Result> invocation = new MethodInvocation<>();
 		invocation.clazz = clazz.getName();
@@ -90,7 +93,9 @@ public class MethodShuttle {
 			try {
 				shuttle.invoke(invocation);
 			} catch (final Exception e) {
+				Log.w(TAG, "Error executing " + invocation.clazz, e);
 				future.setException(e);
+				return;
 			}
 			if (invocation.throwable != null) future.setException(invocation.throwable);
 			else future.set(invocation.result);
@@ -122,9 +127,12 @@ public class MethodShuttle {
 					} catch (Throwable t) {
 						if (t instanceof InvocationTargetException) t = ((InvocationTargetException) t).getTargetException();
 						invocation.throwable = t;
+						Log.w(TAG, "Error executing " + invocation.clazz, t);
 					}
 				}
 			};
 		}
 	}
+
+	private static final String TAG = "Shuttle";
 }
