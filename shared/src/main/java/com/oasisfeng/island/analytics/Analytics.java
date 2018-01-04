@@ -1,6 +1,5 @@
 package com.oasisfeng.island.analytics;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
@@ -8,7 +7,6 @@ import android.support.annotation.Size;
 import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.oasisfeng.pattern.GlobalContextProvider;
 
 import org.intellij.lang.annotations.Pattern;
 
@@ -75,18 +73,5 @@ public interface Analytics {
 		return this;
 	}
 
-	static Analytics $() { return Provider.getSingleton(); }
-
-	class Provider {
-
-		static Analytics getSingleton() {
-			if (sSingleton == null) {
-				final Context context = GlobalContextProvider.get();
-				sSingleton = new AnalyticsImpl(context);
-			}
-			return sSingleton;
-		}
-
-		private static Analytics sSingleton;
-	}
+	static Analytics $() { return AnalyticsImpl.$(); }
 }

@@ -6,8 +6,8 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.island.IslandApplication;
 import com.oasisfeng.island.shared.BuildConfig;
-import com.oasisfeng.pattern.GlobalContextProvider;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import io.fabric.sdk.android.Fabric;
@@ -22,7 +22,7 @@ public abstract class CrashReport extends PseudoContentProvider {
 	static CrashlyticsCore $() { return sSingleton.get(); }
 
 	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
-		Fabric.with(GlobalContextProvider.get(), new Crashlytics());
+		Fabric.with(IslandApplication.$(), new Crashlytics());
 		return CrashlyticsCore.getInstance();
 	});
 

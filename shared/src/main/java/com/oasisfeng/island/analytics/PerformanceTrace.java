@@ -3,7 +3,7 @@ package com.oasisfeng.island.analytics;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.perf.FirebasePerformance;
 import com.google.firebase.perf.metrics.Trace;
-import com.oasisfeng.pattern.GlobalContextProvider;
+import com.oasisfeng.island.IslandApplication;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -38,6 +38,6 @@ class PerformanceTrace implements Analytics.Trace {
 	private final Trace mTrace;
 
 	static {
-		FirebaseApp.initializeApp(GlobalContextProvider.get());		// Ensure Firebase is lazily initialized first.
+		FirebaseApp.initializeApp(IslandApplication.$());		// Ensure Firebase is lazily initialized first.
 	}
 }

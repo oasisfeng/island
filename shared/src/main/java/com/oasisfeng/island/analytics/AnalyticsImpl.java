@@ -11,6 +11,7 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.oasisfeng.island.IslandApplication;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shared.R;
 
@@ -60,7 +61,7 @@ class AnalyticsImpl implements Analytics {
 		mFirebaseAnalytics.setUserProperty(property.name, value);
 	}
 
-	AnalyticsImpl(final Context context) {
+	private AnalyticsImpl(final Context context) {
 		final GoogleAnalytics google_analytics = GoogleAnalytics.getInstance(context);
 		if (BuildConfig.DEBUG) google_analytics.setDryRun(true);
 		mGoogleAnalytics = google_analytics.newTracker(R.xml.analytics_tracker);
@@ -68,10 +69,16 @@ class AnalyticsImpl implements Analytics {
 
 		FirebaseApp.initializeApp(context);
 		mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
+		// TODO: De-dup the user identity between Mainland and Island.
+	}
+
+	static Analytics $() {
+		return sSingleton;
 	}
 
 	private final Tracker mGoogleAnalytics;
 	private final FirebaseAnalytics mFirebaseAnalytics;
+	private static final AnalyticsImpl sSingleton = new AnalyticsImpl(IslandApplication.$());
 
 	private static final String TAG = "Analytics";
 }
