@@ -8,7 +8,6 @@ import android.support.annotation.Size;
 import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.oasisfeng.island.util.Users;
 import com.oasisfeng.pattern.GlobalContextProvider;
 
 import org.intellij.lang.annotations.Pattern;
@@ -24,7 +23,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public interface Analytics {
 
 	interface Event {
-		@CheckResult Event with(Param key, @Nullable String value);
+		default @CheckResult Event with(final Param key, final @Nullable String value) { return withRaw(key.key, value); }
+		@CheckResult Event withRaw(String key, @Nullable String value);
 		void send();
 	}
 
@@ -41,7 +41,7 @@ public interface Analytics {
 	@CheckResult Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
 	void reportEvent(String event, Bundle params);
 	void report(Throwable t);
-	default void logAndReport(final String tag, final String message, Exception e) {
+	default void logAndReport(final String tag, final String message, final Exception e) {
 		Log.e(tag, message, e);
 		report(e);
 	}
@@ -82,10 +82,7 @@ public interface Analytics {
 		static Analytics getSingleton() {
 			if (sSingleton == null) {
 				final Context context = GlobalContextProvider.get();
-				if (Users.isOwner()) {
-					sSingleton = new AnalyticsImpl(context);
-					AnalyticsProvider.enableIfNeeded(context);		// Ensure cross-user provider enabled if permission granted, BTW
-				} else sSingleton = AnalyticsProvider.getClient(context);
+				sSingleton = new AnalyticsImpl(context);
 			}
 			return sSingleton;
 		}

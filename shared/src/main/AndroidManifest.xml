@@ -6,17 +6,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" /> <!-- AbstractAppLaunchShortcut -->
 
-    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
+    <application android:name="com.oasisfeng.island.IslandApplication" tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
         <meta-data android:name="io.fabric.ApiKey" android:value="2fa85ef2740d3e29a2ed203a3af1db3513507ddb" />
-
-        <!-- This single user content provider forwards analytics requests from managed profile. (only works with INTERACT_ACROSS_USERS permission granted) -->
-        <provider android:authorities="${applicationId}.analytics"
-                  android:name="com.oasisfeng.island.analytics.AnalyticsProvider"
-                  android:singleUser="true"
-                  android:exported="false"
-                  android:enabled="false"
-                  android:initOrder="100"/>
 
         <!-- GlobalContextProvider -->
         <provider android:name="com.oasisfeng.island.InternalContentProviders$_0" android:initOrder="9999"

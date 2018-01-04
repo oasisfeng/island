@@ -1,3 +1,3 @@
-include 'shared', 'engine', ':mobile', 'permission', 'fileprovider', 'assembly', ':deagle'
+include 'shared', 'engine', ':mobile', 'fileprovider', 'assembly', ':deagle'
 project(':mobile').projectDir = new File(settingsDir, 'app')
 project(':deagle').projectDir = new File(settingsDir, '../deagle/library')

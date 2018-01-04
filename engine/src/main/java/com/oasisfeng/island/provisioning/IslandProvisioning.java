@@ -16,6 +16,7 @@ import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.widget.Toast;
@@ -23,7 +24,6 @@ import android.widget.Toast;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.IntentFilters;
-import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.InternalService;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
@@ -35,6 +35,7 @@ import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.OwnerUser;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
@@ -96,11 +97,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@ProfileUser @WorkerThread @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
 		final DevicePolicies policies = new DevicePolicies(this);
-		// Grant INTERACT_ACROSS_USERS & WRITE_SECURE_SETTINGS permission early, since they may be required in the following provision procedure.
-		if (SDK_INT >= M) {		// Dev permission is always granted for all users.
-			policies.setPermissionGrantState(getPackageName(), INTERACT_ACROSS_USERS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
-			policies.setPermissionGrantState(getPackageName(), WRITE_SECURE_SETTINGS, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
-		}
+		// Grant essential permissions early, since they may be required in the following provision procedure.
+		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(this, policies);
 
 		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
@@ -152,6 +150,10 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 
 		trace.stop();
+	}
+
+	@RequiresApi(M) private static boolean grantEssentialDebugPermissionsIfPossible(final Context context, final DevicePolicies policies) {
+		return Permissions.ensure(context, INTERACT_ACROSS_USERS) && Permissions.ensure(context, WRITE_SECURE_SETTINGS);
 	}
 
 	@WorkerThread public static void performIncrementalProfileOwnerProvisioningIfNeeded(final Context context) {
@@ -232,7 +234,10 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning. */
 	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (SDK_INT >= O) policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
-		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		if (SDK_INT >= M) {
+			grantEssentialDebugPermissionsIfPossible(context, policies);
+			policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		}
 		ensureInstallNonMarketAppAllowed(context, policies);
 
 		enableAdditionalForwarding(policies);

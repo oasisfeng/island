@@ -6,14 +6,12 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
-import android.support.annotation.RequiresApi;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.common.app.AppInfo;
-import com.oasisfeng.island.permission.DevPermissions;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
@@ -84,13 +82,12 @@ public class IslandAppInfo extends AppInfo {
 	@Override protected boolean checkLaunchable(final int flags) {
 		if (Users.isOwner(user)) return super.checkLaunchable(flags);
 		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
-		if (Permissions.has(context(), INTERACT_ACROSS_USERS) && ! Hacks.PackageManager_resolveActivityAsUser.isAbsent()) {
-			return Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager()) != null;
-		} else return context().getPackageManager().resolveActivity(intent, flags | PackageManager.GET_RESOLVED_FILTER) != null;	// The fallback checking method
+		if (! Permissions.has(context(), INTERACT_ACROSS_USERS) || Hacks.PackageManager_resolveActivityAsUser.isAbsent()) {
+			final LauncherApps launcher_apps = (LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE);
+			if (launcher_apps != null) return ! launcher_apps.getActivityList(packageName, user).isEmpty();
+			else return context().getPackageManager().resolveActivity(intent, flags) != null;
+		} else return Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager()) != null;
 	}
-
-	@RequiresApi(M) public boolean hasManageableDevPermissions() { return mHasDevPermissions.get(); }
-	private final Supplier<Boolean> mHasDevPermissions = Suppliers.memoize(() -> DevPermissions.hasManageableDevPermissions(context(), packageName));
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 
