@@ -16,6 +16,7 @@
 
 package com.oasisfeng.island.provisioning.task;
 
+import android.annotation.SuppressLint;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
@@ -34,6 +35,7 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.PackageManagerWrapper;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -400,7 +402,7 @@ public class DeleteNonRequiredAppsTask {
     private static class IPackageDeleteObserver { static class Stub { public void packageDeleted(String packageName, int returnCode) {} } }
     private static class PackageManager extends PackageManagerWrapper {
 
-        static final int MATCH_UNINSTALLED_PACKAGES = android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+        static final int MATCH_UNINSTALLED_PACKAGES = Hacks.MATCH_ANY_USER_AND_UNINSTALLED;
         static final int MATCH_DISABLED_COMPONENTS = android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
         static final int MATCH_DIRECT_BOOT_AWARE = SDK_INT >= N ? android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE : 0;
         static final int MATCH_DIRECT_BOOT_UNAWARE = SDK_INT >= N ? android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE : 0;
@@ -474,8 +476,9 @@ public class DeleteNonRequiredAppsTask {
     }
 
     private static String getManagedProvisioningPackageName(final Context context) throws NameNotFoundException {
-        final List<ResolveInfo> candidates = context.getPackageManager().queryIntentActivities(new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE),
-                PackageManager.GET_DISABLED_COMPONENTS | PackageManager.GET_UNINSTALLED_PACKAGES | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0));
+        @SuppressLint("WrongConstant") final List<ResolveInfo> candidates = context.getPackageManager().queryIntentActivities(
+                new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE), PackageManager.GET_DISABLED_COMPONENTS
+                        | Hacks.MATCH_ANY_USER_AND_UNINSTALLED | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0));
         for (final ResolveInfo candidate : candidates)
             if ((candidate.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
                 return candidate.activityInfo.applicationInfo.packageName;

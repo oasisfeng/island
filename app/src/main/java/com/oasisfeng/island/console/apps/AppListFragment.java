@@ -56,6 +56,7 @@ import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.tip.Tip;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
@@ -68,7 +69,6 @@ import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
@@ -319,7 +319,8 @@ public class AppListFragment extends Fragment {
 	}
 
 	private static boolean resolveIncludingFrozen(final PackageManager pm, final Intent intent) {
-		final List<ResolveInfo> resolves = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY | GET_UNINSTALLED_PACKAGES);
+		@SuppressLint("WrongConstant")
+		final List<ResolveInfo> resolves = pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 		for (final ResolveInfo resolve : resolves)
 			if (resolve != null && (resolve.activityInfo.applicationInfo.flags & FLAG_INSTALLED) != 0) {    // Only installed (including frozen).
 				intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));

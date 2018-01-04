@@ -1,5 +1,6 @@
 package com.oasisfeng.island.shuttle;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -23,6 +24,7 @@ import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.shortcut.ShortcutIcons;
 import com.oasisfeng.island.util.Cryptography;
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.io.IOException;
@@ -92,8 +94,8 @@ public class ShortcutShuttle extends BroadcastReceiver {
 			}
 			final PackageManager pm = context.getPackageManager();
 			final Resources pkg_res;
-			try {
-				final ApplicationInfo app_info = pm.getApplicationInfo(icon_res.packageName, PackageManager.GET_UNINSTALLED_PACKAGES);
+			try { @SuppressLint("WrongConstant")
+				final ApplicationInfo app_info = pm.getApplicationInfo(icon_res.packageName, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 				pkg_res = pm.getResourcesForApplication(app_info);
 			} catch (final PackageManager.NameNotFoundException e) {
 				Log.w(TAG, "Package of icon resource not found: " + icon_res.packageName);

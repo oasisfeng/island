@@ -79,7 +79,7 @@ public class IslandAppInfo extends AppInfo {
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
 	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() ->
-			checkLaunchable(PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, SECONDS);
+			checkLaunchable(Hacks.MATCH_ANY_USER_AND_UNINSTALLED | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags) {
 		if (Users.isOwner(user)) return super.checkLaunchable(flags);

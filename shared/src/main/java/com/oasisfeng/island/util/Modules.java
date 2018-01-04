@@ -1,5 +1,6 @@
 package com.oasisfeng.island.util;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +12,6 @@ import com.google.common.base.Preconditions;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 /**
@@ -33,7 +33,8 @@ public class Modules {
 	}
 
 	private static ComponentName resolveActivity(final Context context, final Intent intent) {
-		final ResolveInfo resolved = context.getPackageManager().resolveActivity(intent,MATCH_DEFAULT_ONLY | GET_DISABLED_COMPONENTS | GET_UNINSTALLED_PACKAGES);
+		@SuppressLint("WrongConstant") final ResolveInfo resolved = context.getPackageManager().resolveActivity(intent,
+				MATCH_DEFAULT_ONLY | GET_DISABLED_COMPONENTS | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 		return resolved == null ? null : new ComponentName(resolved.activityInfo.packageName, resolved.activityInfo.name);
 	}
 }

@@ -42,7 +42,6 @@ import java9.util.function.Predicate;
 import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -288,7 +287,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(() ->
 			new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 	private final Supplier<Set<String>> mCriticalSystemPackages = Suppliers.memoize(() ->
-			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager(), GET_UNINSTALLED_PACKAGES));
+			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED));
 
 	private static final String TAG = "Island.AppListProv";
 }
