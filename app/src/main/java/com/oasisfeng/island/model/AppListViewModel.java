@@ -37,8 +37,6 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
-import com.oasisfeng.android.util.Supplier;
-import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
@@ -141,22 +139,21 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void updateActiveFilters() {
 		Predicate<IslandAppInfo> filter = mFilterShared.and(mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
-		if (! mFilterIncludeHiddenSystemApps) {
-			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			if (launcher_apps != null) {
-				final Supplier<Set<String>> mainland_launchable = Suppliers.memoize(() -> getLaunchableApps(launcher_apps, Users.owner));
-				final Supplier<Set<String>> island_launchable = Suppliers.memoize(() -> getLaunchableApps(launcher_apps, Users.profile));
-				filter = filter.and(app -> ! app.isSystem() || Users.isOwner(app.user) && mainland_launchable.get().contains(app.packageName)
-						|| Users.isProfile(app.user) && island_launchable.get().contains(app.packageName));
-			} else filter = filter.and(app -> (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || app.isLaunchable());
-		}
+		if (! mFilterIncludeHiddenSystemApps) filter = filter.and(app -> ! app.isSystem() || app.isLaunchable());
 		if (! TextUtils.isEmpty(mFilterText)) filter = filter.and(this::matchQueryText);
 		mActiveFilters = filter;
 
 		final AppViewModel selected = getSelection();
 		clearSelection();
+
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
-		final List<AppViewModel> apps = provider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+		IslandAppInfo.startBatchLauncherActivityCheck(provider.getContext());	// Performance optimization
+		final List<AppViewModel> apps;
+		try {
+			apps = provider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+		} finally {
+			IslandAppInfo.endBatchLauncherActivityCheck();
+		}
 		replaceApps(apps);
 
 		if (selected != null) for (final AppViewModel app : apps)
