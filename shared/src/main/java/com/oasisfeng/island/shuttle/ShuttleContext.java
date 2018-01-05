@@ -5,7 +5,6 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.oasisfeng.island.util.Hacks;
@@ -16,7 +15,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
@@ -56,7 +54,7 @@ public class ShuttleContext extends ContextWrapper {
 
 	@Override public void unbindService(final ServiceConnection connection) {
 		if (Users.profile == null) return;
-		if (! ALWAYS_USE_SHUTTLE && ActivityCompat.checkSelfPermission(this, INTERACT_ACROSS_USERS) == PERMISSION_GRANTED) {
+		if (! ALWAYS_USE_SHUTTLE && Permissions.has(this, INTERACT_ACROSS_USERS)) {
 			getBaseContext().unbindService(connection);
 			return;
 		}

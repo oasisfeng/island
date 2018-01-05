@@ -9,6 +9,7 @@ import android.os.Process;
 import android.support.annotation.StringDef;
 
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.shared.BuildConfig;
 
 import java9.util.Optional;
 
@@ -26,9 +27,12 @@ import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
  */
 public class Permissions {
 
+	private static final boolean TEST_NO_DEV_PERMISSIONS = BuildConfig.DEBUG && false;
+
 	@TargetApi(M) @StringDef({ INTERACT_ACROSS_USERS, WRITE_SECURE_SETTINGS, PACKAGE_USAGE_STATS }) @interface DevPermission {}
 
-	public static boolean has(final Context context, final String permission) {
+	public static boolean has(final Context context, final String permission) { //noinspection SimplifiableIfStatement
+		if (TEST_NO_DEV_PERMISSIONS && (INTERACT_ACROSS_USERS.equals(permission) || WRITE_SECURE_SETTINGS.equals(permission))) return false;
 		return context.checkPermission(permission, Process.myPid(), Process.myUid()) == PackageManager.PERMISSION_GRANTED;
 	}
 

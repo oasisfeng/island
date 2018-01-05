@@ -18,7 +18,6 @@ import android.util.Log;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IIslandManager;
@@ -28,6 +27,7 @@ import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;

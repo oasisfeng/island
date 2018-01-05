@@ -5,21 +5,23 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Process;
 import android.util.Log;
 
 import com.oasisfeng.island.shuttle.ContextShuttle;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
- * Enabled the providers if permission INTERACT_ACROSS_USERS is granted.
+ * Respond to events:
+ *
+ * MY_PACKAGE_REPLACED
+ * MAIN_UI_RESUMED
  *
  * Created by Oasis on 2017/8/31.
  */
@@ -30,8 +32,8 @@ public class EventReceiver extends BroadcastReceiver {
 		if (! Users.hasProfile()) return;
 		final ComponentName shuttle = new ComponentName(context, ShuttleProvider.class);
 
-		final boolean iau_granted = context.checkPermission(INTERACT_ACROSS_USERS, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED;
-		final boolean all_met = iau_granted && context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED
+		final boolean iau_granted = Permissions.has(context, INTERACT_ACROSS_USERS);
+		final boolean all_met = iau_granted && Permissions.has(context, WRITE_EXTERNAL_STORAGE)
 				&& ExternalStorageProviderProxy.findTargetProvider(context) != null;
 
 		// FIXME: Not enabling shuttle in owner user, as ExternalStorageProviderProxy is not working as expected in manger profile.

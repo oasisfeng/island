@@ -17,7 +17,6 @@ import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.graphics.drawable.IconCompat;
 import android.util.Log;
 
-import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shared.BuildConfig;
@@ -25,6 +24,7 @@ import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.shortcut.ShortcutIcons;
 import com.oasisfeng.island.util.Cryptography;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import java.io.IOException;

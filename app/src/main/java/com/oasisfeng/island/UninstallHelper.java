@@ -19,13 +19,13 @@ import android.os.UserHandle;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
-import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
@@ -53,7 +53,7 @@ public class UninstallHelper extends PseudoContentProvider {
 		if (Users.isOwner()) return false;		// Do nothing in owner user.
 		Loopers.addIdleTask(new Handler(), () -> {
 			final LauncherApps launcher = (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			launcher.registerCallback(new LauncherApps.Callback() {
+			if (launcher != null) launcher.registerCallback(new LauncherApps.Callback() {
 				@Override public void onPackageRemoved(final String pkg, final UserHandle user) {		// NOT WORKING since Android O.
 					if (context().getPackageName().equals(pkg) && Users.isOwner(user)) onIslandRemovedInOwnerUser(context());
 				}
@@ -123,7 +123,6 @@ public class UninstallHelper extends PseudoContentProvider {
 					}
 			}
 		}
-
 	}
 
 	private static final String TAG = "Uninstall";
