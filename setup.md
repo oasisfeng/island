@@ -48,10 +48,8 @@ If you get error message `java.lang.SecurityException: Neither user 2000 nor cur
 
 If all goes well, Island will show the app list.
 
-Manual setup for Island in experimental "God mode"
+Manual setup for Island in "God mode"
 --------------------------------------------------
-
-**This "God mode" is not for normal users, and it is still highly experimental. Please do not setup this mode on your daily-use device.**
 
 - Remove all accounts and work profile in system Settings - Accounts.
 
@@ -65,6 +63,8 @@ Manual setup for Island in experimental "God mode"
 
   Some ROM variants (e.g. MIUI) enforce extra security policy which may block the above command, if you got permission-related error message, please check the development (or security) settings to enable USB-debugging related security options, then retry the "`dpm ...`" command again.
 
+  Some ROM variants (e.g. MIUI) may not reveal or allow user to remove internal accounts on the device. You can run "dumpsys account" in ADB shell to list all active accounts. We are working on possible solutions.
+
 - Start Island app now and it will work in God mode.
 
-God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Just setup God mode first and then follow the steps to setup normal mode, as mentioned above.
+God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Starting from Android 8, you can setup Island in God mode directly from Island settings - Setup, click the wrench icon on the side of Island. Prior to Android 8, you can also follow the manual steps to setup normal mode, as mentioned above.
