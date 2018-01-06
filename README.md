@@ -36,12 +36,10 @@ If you are prompted to encrypt your device first during the setup and you don't 
 Please refer to [Manual setup](/setup.md) for prerequisites and detailed steps.
 
 
-Experimental God mode
+God mode
 ---------------------
 
-In normal mode, Island only takes care of apps inside the Island space. The "God mode" is an experimental mode, in which Island takes control of **ALL** apps, both inside and outside Island space. For example, you can freeze any app without cloning it first.
-
-It is highly experimental and not ready for normal users. At present it is only recommended for advanced users who is well understanding what is going on the device and how to deal with unforeseeable troubles.
+In normal mode, Island only takes care of apps inside the Island space. The "God mode" is an advanced mode, in which Island takes control of **ALL** apps, both inside and outside Island space. For example, you can freeze any app without cloning it first. At present it is only recommended for advanced users.
 
 The limitations in "God mode":
 
@@ -49,7 +47,7 @@ The limitations in "God mode":
 
 - On Android version prior to 7.1, app backup (e.g. Cloud backup for app data with Google Drive) will stop working. (Android 7.1+ is not affected)
 
-God mode could only be [setup manually](/setup.md).
+God mode could only be [setup manually](/setup.md) at present.
 
 
 Discussion and feedback
