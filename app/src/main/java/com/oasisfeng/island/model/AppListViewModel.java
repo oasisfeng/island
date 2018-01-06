@@ -187,7 +187,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		notifyPropertyChanged(BR.filterPrimaryOptions);
 		mFilterShared = IslandAppListProvider.excludeSelf(activity).and(AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
-				.orElse(Math.min(mDeviceOwner ? Filter.Mainland.ordinal() : Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
+				.orElse(Math.min(Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
 		setFilterPrimaryChoice(filter_primary);
 	}
 
