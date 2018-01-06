@@ -9,9 +9,9 @@ import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.oasisfeng.island.IslandApplication;
+import com.oasisfeng.island.firebase.FirebaseWrapper;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shared.R;
 
@@ -67,7 +67,7 @@ class AnalyticsImpl implements Analytics {
 		mGoogleAnalytics = google_analytics.newTracker(R.xml.analytics_tracker);
 		mGoogleAnalytics.enableAdvertisingIdCollection(true);
 
-		FirebaseApp.initializeApp(context);
+		FirebaseWrapper.init(context);
 		mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
 		// TODO: De-dup the user identity between Mainland and Island.
 	}

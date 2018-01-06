@@ -1,11 +1,9 @@
 package com.oasisfeng.island;
 
-import android.util.Log;
-
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigValue;
+import com.oasisfeng.island.firebase.FirebaseWrapper;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shared.R;
 
@@ -41,7 +39,7 @@ public enum Config {
 	private final String key;
 
 	static {
-		FirebaseApp.initializeApp(IslandApplication.$());
+		FirebaseWrapper.init(IslandApplication.$());
 		final FirebaseRemoteConfigSettings settings = new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG).build();
 		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
 		config.setConfigSettings(settings);
