@@ -1,7 +1,7 @@
 apply plugin: 'com.android.feature'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
 
     defaultConfig {
         minSdkVersion 21
@@ -39,12 +39,12 @@ dependencies {
     api project(':deagle')
     api 'net.sourceforge.streamsupport:android-retrostreams:1.5.6'
     api 'com.google.guava:guava:22.0-android'
-    api 'com.android.support:support-annotations:26.1.0'
+    api 'com.android.support:support-annotations:27.0.2'
     implementation 'org.jetbrains:annotations:15.0'
-    implementation 'com.google.android.gms:play-services-analytics:11.2.2'
-    implementation 'com.google.firebase:firebase-analytics:11.2.2'
-    implementation 'com.google.firebase:firebase-config:11.2.2'
-    api 'com.google.firebase:firebase-perf:11.2.2'
+    implementation 'com.google.android.gms:play-services-analytics:11.8.0'
+    implementation 'com.google.firebase:firebase-analytics:11.8.0'
+    implementation 'com.google.firebase:firebase-config:11.8.0'
+    api 'com.google.firebase:firebase-perf:11.8.0'
     api('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') { transitive = true }
     implementation 'com.oasisfeng.condom:library:2.0.0'
 
