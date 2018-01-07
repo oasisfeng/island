@@ -5,7 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
@@ -14,12 +14,14 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.google.common.collect.FluentIterable;
 import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.island.analytics.Analytics;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import java9.util.stream.StreamSupport;
 
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -51,23 +53,26 @@ public class ServiceShuttle {
 		}
 
 		final PackageManager pm = context.getPackageManager();
-		@SuppressWarnings("deprecation") final ResolveInfo resolve = pm.resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
-		if (resolve == null) return false;		// Unresolvable even in disabled services
+		final ResolveInfo resolve = pm.resolveService(service, PackageManager.GET_DISABLED_COMPONENTS);
+		if (resolve == null) return false;		// Fail early by resolving the service intent before launching ServiceShuttleActivity.
 
 		final Bundle extras = new Bundle();
 		extras.putBinder(EXTRA_SERVICE_CONNECTION, conn.createDispatcher());
 		final Intent intent = new Intent(ACTION_BIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS).putExtras(extras)
 				.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags);
 		Log.d(TAG, "Connecting to service in profile (via shuttle): " + service + " from " + conn);
-		final Activity activity = Activities.findActivityFrom(context);
 		if (sForwarderComponent == null) {
-			final ActivityInfo forwarder = FluentIterable.from(pm.queryIntentActivities(intent, 0))
-					.firstMatch((@NonNull ResolveInfo r) -> "android".equals(r.activityInfo.packageName))
-					.transform((@NonNull ResolveInfo r) -> r.activityInfo).orNull();
-			if (forwarder == null) return false;
-			sForwarderComponent = new ComponentName(forwarder.packageName, forwarder.name);
+			sForwarderComponent = StreamSupport.stream(pm.queryIntentActivities(intent, 0))
+					.filter((@NonNull ResolveInfo r) -> (r.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
+					.map((@NonNull ResolveInfo r) -> new ComponentName(r.activityInfo.packageName, r.activityInfo.name)).findFirst().orElse(null);
+			if (sForwarderComponent == null) {
+				Analytics.$().event("shuttle_service_forwarder_unavailable").send();
+				return false;
+			}
 		}
+
 		intent.setComponent(sForwarderComponent);
+		final Activity activity = Activities.findActivityFrom(context);
 		try {
 			if (activity != null) {
 				activity.overridePendingTransition(0, 0);
@@ -75,6 +80,7 @@ public class ServiceShuttle {
 			} else context.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK));
 			return true;
 		} catch (final ActivityNotFoundException e) {
+			Analytics.$().event("shuttle_service_forwarder_not_found").send();
 			return false;		// ServiceShuttle not ready in managed profile
 		}
 	}

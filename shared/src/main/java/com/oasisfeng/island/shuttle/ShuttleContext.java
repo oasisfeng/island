@@ -37,17 +37,19 @@ public class ShuttleContext extends ContextWrapper {
 			}
 
 		final ShuttleServiceConnection existent = mConnections.get(connection);
-		final ShuttleServiceConnection shuttle_connection = existent != null ? existent : new ShuttleServiceConnection() {
-			@Override public void onServiceConnected(final IBinder service) {
-				connection.onServiceConnected(null, service);
-			}
-			@Override public void onServiceDisconnected() {
-				connection.onServiceDisconnected(null);
-			}
-			@Override public String toString() { return TAG + "{" + connection + "}"; }
-		};
+		final ShuttleServiceConnection shuttle_connection = existent != null ? existent : connection instanceof ShuttleServiceConnection
+				? (ShuttleServiceConnection) connection : new ShuttleServiceConnection() {
+					@Override public void onServiceConnected(final IBinder service) {
+						connection.onServiceConnected(null, service);
+					}
+					@Override public void onServiceDisconnected() {
+						connection.onServiceDisconnected(null);
+					}
+					@Override public void onServiceFailed() { Log.w(TAG, "Service failed: " + service); }
+					@Override public String toString() { return TAG + "{" + connection + "}"; }
+				};
 
-		final boolean result = ServiceShuttle.bindServiceViaShuttle(this, service, shuttle_connection, flags);
+		final boolean result = ServiceShuttle.bindServiceViaShuttle(getBaseContext(), service, shuttle_connection, flags);
 		if (result && existent == null) mConnections.put(connection, shuttle_connection);
 		return result;
 	}

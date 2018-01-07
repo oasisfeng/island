@@ -67,7 +67,7 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 			}
 
 			if (Thread.currentThread() != Looper.getMainLooper().getThread())
-				new Handler(Looper.getMainLooper()).post(() -> mConnection.onServiceConnected(service));
+				new Handler(Looper.getMainLooper()).post(() -> { if (mConnection != null) mConnection.onServiceConnected(service); });
 			else mConnection.onServiceConnected(service);
 		}
 
@@ -77,6 +77,13 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 			if (Thread.currentThread() != Looper.getMainLooper().getThread())
 				new Handler(Looper.getMainLooper()).post(mConnection::onServiceDisconnected);
 			else mConnection.onServiceDisconnected();
+		}
+
+		@Override public void onServiceFailed() {
+			if (mConnection == null) return;	// Already closed
+			if (Thread.currentThread() != Looper.getMainLooper().getThread())
+				new Handler(Looper.getMainLooper()).post(mConnection::onServiceFailed);
+			else mConnection.onServiceFailed();
 		}
 
 		@Override public void binderDied() {
@@ -112,6 +119,7 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 
 	public abstract void onServiceConnected(final IBinder service);
 	public abstract void onServiceDisconnected();
+	public abstract void onServiceFailed();
 
 	// Pass-through for non-shuttled service
 	@Override public final void onServiceConnected(final ComponentName name, final IBinder service) { onServiceConnected(service); }

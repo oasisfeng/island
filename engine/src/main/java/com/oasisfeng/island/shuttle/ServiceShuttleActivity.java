@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ResolveInfo;
-import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -37,24 +36,20 @@ public class ServiceShuttleActivity extends Activity {
 	}
 
 	@ProfileUser private void handleIntent(final Intent intent) {
-		setResult(RESULT_CANCELED);
-		final IBinder remote_connection = intent.getExtras().getBinder(ServiceShuttle.EXTRA_SERVICE_CONNECTION);
+		final Bundle extras = intent.getExtras();
+		if (extras == null) return;
+		final IServiceConnection remote_connection = IServiceConnection.Stub.asInterface(extras.getBinder(ServiceShuttle.EXTRA_SERVICE_CONNECTION));
 		if (remote_connection == null) return;
 
 		if (ServiceShuttle.ACTION_BIND_SERVICE.equals(intent.getAction())) {
 			final Intent service_intent = intent.getParcelableExtra(ServiceShuttle.EXTRA_INTENT);
 			if (service_intent == null) return;
-			final ResolveInfo resolve = getPackageManager().resolveService(service_intent, 0);
-			if (resolve == null) return;
-			final ServiceInfo service = resolve.serviceInfo;
-			service_intent.setComponent(new ComponentName(service.packageName, service.name));
 			final Context binding_context = getApplicationContext();	// Application context for longer lifespan
-			try {
-				final DelegateServiceConnection connection = new DelegateServiceConnection(binding_context, service_intent, remote_connection);
-				Log.d(TAG, "Bind " + remote_connection + " to " + intent);
-				@SuppressWarnings("WrongConstant") final boolean result = binding_context.bindService(service_intent, connection, intent.getIntExtra(ServiceShuttle.EXTRA_FLAGS, 0));
-				if (result) setResult(RESULT_OK);
-			} catch (final RemoteException ignored) {}
+			final DelegateServiceConnection connection = new DelegateServiceConnection(binding_context, service_intent, remote_connection);
+			Log.d(TAG, "Bind " + remote_connection + " to " + intent);
+			final int flags = intent.getIntExtra(ServiceShuttle.EXTRA_FLAGS, 0);
+			@SuppressWarnings("WrongConstant") final boolean result = binding_context.bindService(service_intent, connection, flags);
+			if (! result) try { remote_connection.onServiceFailed(); } catch (final RemoteException ignored) {}
 		}
 	}
 
@@ -63,10 +58,10 @@ public class ServiceShuttleActivity extends Activity {
 	/** Delegate ServiceConnection running in target user, delivering callbacks back to the caller in originating user. */
 	private static class DelegateServiceConnection extends IUnbinder.Stub implements ServiceConnection, IBinder.DeathRecipient {
 
-		DelegateServiceConnection(final Context context, final Intent intent, final IBinder delegate) throws RemoteException {
+		DelegateServiceConnection(final Context context, final Intent intent, final IServiceConnection delegate) {
 			this.context = context;
 			this.intent = intent.cloneFilter();
-			this.delegate = IServiceConnection.Stub.asInterface(delegate);
+			this.delegate = delegate;
 		}
 
 		@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
@@ -115,6 +110,7 @@ public class ServiceShuttleActivity extends Activity {
 			if (DUMMY_RECEIVER.peekService(context, intent) != null) return;	// Fast check for common cases
 
 			final ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+			if (am == null) return;
 			final List<ActivityManager.RunningServiceInfo> services = am.getRunningServices(Integer.MAX_VALUE);
 			String pkg = intent.getPackage();
 			if (pkg == null) {

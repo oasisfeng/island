@@ -57,6 +57,7 @@ import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.tip.Tip;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
@@ -64,6 +65,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Intent.ACTION_OPEN_DOCUMENT;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
@@ -92,8 +94,9 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onStart() {
 		super.onStart();
-		if (Users.hasProfile() && ! Services.bind(mShuttleContext, IIslandManager.class, mServiceConnection))
-			Toast.makeText(getActivity(), "Error opening Island", Toast.LENGTH_LONG).show();
+		if (Users.hasProfile())
+			if (! mShuttleContext.bindService(new Intent(IIslandManager.class.getName()).setPackage(Modules.MODULE_ENGINE), mServiceConnection, BIND_AUTO_CREATE))
+				Toast.makeText(getActivity(), "Error connecting to Island", Toast.LENGTH_LONG).show();
 	}
 
 	@Override public void onResume() {
@@ -117,7 +120,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	// Use ShuttleServiceConnection to connect to remote service in profile via ServiceShuttle (see also MainActivity.bindService)
-	private final ServiceConnection mServiceConnection = new ShuttleServiceConnection() {
+	private final ShuttleServiceConnection mServiceConnection = new ShuttleServiceConnection() {
 		@Override public void onServiceConnected(final IBinder service) {
 			mViewModel.mProfileController = IIslandManager.Stub.asInterface(service);
 			Log.v(TAG, "Service connected");
@@ -125,6 +128,12 @@ public class AppListFragment extends Fragment {
 
 		@Override public void onServiceDisconnected() {
 			mViewModel.mProfileController = IslandManager.NULL;
+		}
+
+		@Override public void onServiceFailed() {
+			Analytics.$().event("").send();
+			final Activity activity = getActivity();
+			if (activity != null) Toast.makeText(activity, "Error starting engine", Toast.LENGTH_LONG).show();
 		}
 	};
 
