@@ -39,7 +39,7 @@ public enum Config {
 	private final String key;
 
 	static {
-		FirebaseWrapper.init(IslandApplication.$());
+		FirebaseWrapper.init();
 		final FirebaseRemoteConfigSettings settings = new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG).build();
 		final FirebaseRemoteConfig config = FirebaseRemoteConfig.getInstance();
 		config.setConfigSettings(settings);

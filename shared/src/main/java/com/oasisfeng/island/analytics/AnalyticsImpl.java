@@ -67,8 +67,7 @@ class AnalyticsImpl implements Analytics {
 		mGoogleAnalytics = google_analytics.newTracker(R.xml.analytics_tracker);
 		mGoogleAnalytics.enableAdvertisingIdCollection(true);
 
-		FirebaseWrapper.init(context);
-		mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
+		mFirebaseAnalytics = FirebaseAnalytics.getInstance(FirebaseWrapper.init());
 		// TODO: De-dup the user identity between Mainland and Island.
 	}
 

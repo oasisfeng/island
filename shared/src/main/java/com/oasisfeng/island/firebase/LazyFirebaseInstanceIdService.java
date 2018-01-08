@@ -1,5 +1,7 @@
 package com.oasisfeng.island.firebase;
 
+import android.content.Context;
+
 import com.google.firebase.iid.FirebaseInstanceIdService;
 
 /**
@@ -9,8 +11,7 @@ import com.google.firebase.iid.FirebaseInstanceIdService;
  */
 public class LazyFirebaseInstanceIdService extends FirebaseInstanceIdService {
 
-	@Override public void onCreate() {
-		super.onCreate();
-		FirebaseWrapper.init(this);
+	@Override protected void attachBaseContext(final Context base) {
+		super.attachBaseContext(FirebaseWrapper.init());
 	}
 }
