@@ -12,11 +12,7 @@
 
         <!-- Users -->
         <provider android:name="com.oasisfeng.island.InternalContentProviders$_1" android:initOrder="1000"
-                  android:authorities="${applicationId}.internal.1" android:multiprocess="true" android:exported="false" />
-
-        <!-- CrashReport -->
-        <provider android:name="com.oasisfeng.island.InternalContentProviders$_2"
-                  android:authorities="${applicationId}.internal.2" android:multiprocess="true" android:exported="false" />
+                  android:authorities="${applicationId}.internal.1" android:exported="false" />
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"

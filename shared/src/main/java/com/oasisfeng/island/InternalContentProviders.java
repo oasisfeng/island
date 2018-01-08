@@ -8,5 +8,4 @@ package com.oasisfeng.island;
 public class InternalContentProviders {
 
 	public static class _1 extends com.oasisfeng.island.util.Users {}
-	public static class _2 extends com.oasisfeng.island.analytics.CrashReport {}
 }

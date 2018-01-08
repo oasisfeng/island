@@ -2,6 +2,8 @@ package com.oasisfeng.island;
 
 import android.app.Application;
 
+import com.oasisfeng.island.analytics.CrashReport;
+
 /**
  * For singleton instance purpose only.
  *
@@ -13,6 +15,7 @@ public class IslandApplication extends Application {
 		super.onCreate();
 		if (sInstance != null) throw new IllegalStateException("Already initialized");
 		sInstance = this;
+		CrashReport.init();
 	}
 
 	public static Application $() {
