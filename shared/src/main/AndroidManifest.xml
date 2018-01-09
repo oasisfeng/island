@@ -20,18 +20,23 @@
                   tools:node="remove" tools:ignore="ExportedContentProvider"/>
 
         <!-- Google Analytics (required for devices without GMS) -->
-        <receiver android:name="com.google.android.gms.analytics.AnalyticsReceiver" android:exported="false" android:process=":analytics">
+        <receiver android:name="com.google.android.gms.analytics.AnalyticsReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.analytics.ANALYTICS_DISPATCH" />
             </intent-filter>
         </receiver>
-        <service android:name="com.google.android.gms.analytics.AnalyticsService" android:exported="false" android:process=":analytics"/>
+        <service android:name="com.google.android.gms.analytics.AnalyticsService" android:exported="false" />
 
+        <!-- Override the original FirebaseInstanceIdService with explicit initialization due for lazy initialization of Firebase -->
+        <service tools:node="remove" android:name="com.google.firebase.iid.FirebaseInstanceIdService" />
         <service android:name="com.oasisfeng.island.firebase.LazyFirebaseInstanceIdService" android:exported="true" tools:ignore="ExportedService">
-            <intent-filter> <!-- Override the original FirebaseInstanceIdService -->
+            <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- Disable automatic initialization of Firebase Performance -->
+        <provider tools:node="remove" android:name="com.google.firebase.perf.provider.FirebasePerfProvider" android:authorities="com.oasisfeng.island.firebaseperfprovider" />
 
     </application>
 
