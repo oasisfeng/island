@@ -259,6 +259,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	public static boolean ensureInstallNonMarketAppAllowed(final Context context, final DevicePolicies policies) {
 		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+		if (SDK_INT >= O) return true;		// INSTALL_NON_MARKET_APPS is no longer supported since Android O.
 
 		final ContentResolver resolver = context.getContentResolver();
 		@SuppressWarnings("deprecation") final String INSTALL_NON_MARKET_APPS = Settings.Secure.INSTALL_NON_MARKET_APPS;
