@@ -115,7 +115,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			try {
 				target_intent = Intent.parseUri(intent_uri, Intent.URI_INTENT_SCHEME);
 			} catch (final URISyntaxException e) {
-				Analytics.$().event("invalid_shortcut_uri").with(Analytics.Param.ITEM_ID, intent_uri).send();
+				Analytics.$().event("invalid_shortcut_uri").with(Analytics.Param.LOCATION, intent_uri).send();
 				return false;
 			}
 			if (! validateIncomingIntent(target_intent, intent)) return false;

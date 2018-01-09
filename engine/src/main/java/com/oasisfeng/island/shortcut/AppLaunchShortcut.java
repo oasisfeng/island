@@ -15,8 +15,6 @@ import java.security.GeneralSecurityException;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import static android.content.Intent.CATEGORY_LAUNCHER;
-import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
-import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /**
  * Implementation of {@link AbstractAppLaunchShortcut}
@@ -40,7 +38,7 @@ public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 			return Cryptography.verify(target_uri, signature);
 		} catch (final GeneralSecurityException e) {
 			if (signature != null)		// Lacking of signature is usually caused by signing exception, so we just skip the verification.
-				Analytics.$().event("intent_verify_error").with(ITEM_ID, target_uri).with(ITEM_CATEGORY, e.getClass().getCanonicalName()).send();
+				Analytics.$().logAndReport(TAG, "Error verifying intent: " + target_uri, e);
 			return true;	// Always bypass the validation in case of cryptography exception.
 		}
 	}
@@ -54,4 +52,6 @@ public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 	@Override protected void onLaunchFailed() {
 		Toast.makeText(this, R.string.toast_shortcut_invalid, Toast.LENGTH_LONG).show();
 	}
+
+	private static final String TAG = "AppLaunchShortcut";
 }

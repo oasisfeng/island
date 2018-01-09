@@ -315,8 +315,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
 			else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
 			refreshAppStateAsSysBugWorkaround(app.packageName);
-		} catch (final RemoteException ignored) {
-			Toast.makeText(context, "Internal error", Toast.LENGTH_LONG).show();
+		} catch (final RemoteException e) {
+			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 

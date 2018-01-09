@@ -123,6 +123,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		if (Users.profile != null) {		// Collect Island-specific apps
 			if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {    // Since Android N, we can query ApplicationInfo directly
 				collectIslandApps_Api24(apps);
+				Log.d(TAG, "All apps loaded.");
 			} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), this::onIslandServiceConnected))
 				Log.w(TAG, "Failed to connect to Island");
 
@@ -146,6 +147,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	private void onIslandServiceConnected(final IIslandManager island) {
+		Log.v(TAG, "Connected to profile.");
 		final List<ApplicationInfo> apps; try {
 			apps = island.queryApps(PM_FLAGS_GET_APP_INFO, ApplicationInfo.FLAG_INSTALLED);
 		} catch (final RemoteException e) {
@@ -159,6 +161,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			app_map.put(app.packageName, info);
 			updated.add(info);
 		}
+		Log.d(TAG, "All apps loaded.");
 		notifyUpdate(updated);
 	}
 

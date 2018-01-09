@@ -131,7 +131,7 @@ public class AppListFragment extends Fragment {
 		}
 
 		@Override public void onServiceFailed() {
-			Analytics.$().event("").send();
+			Analytics.$().event("error_connecting_engine").send();
 			final Activity activity = getActivity();
 			if (activity != null) Toast.makeText(activity, "Error starting engine", Toast.LENGTH_LONG).show();
 		}

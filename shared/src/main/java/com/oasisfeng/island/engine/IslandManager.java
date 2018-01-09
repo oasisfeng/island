@@ -40,9 +40,11 @@ public class IslandManager {
 	public static final int CLONE_RESULT_NOT_FOUND = -1;
 	public static final int CLONE_RESULT_NO_SYS_MARKET = -2;
 
+	static class NotConnectedException extends RemoteException { @Override public String getMessage() { return "Engine not connected"; }}
+
 	public static final IIslandManager NULL = (IIslandManager) Proxy.newProxyInstance(IIslandManager.class.getClassLoader(), new Class[] {IIslandManager.class}, (proxy, method, args) -> {
 		if ("toString".equals(method.getName())) return "NULL";		// To avoid UndeclaredThrowableException.
-		throw new RemoteException("Not connected yet");
+		throw new NotConnectedException();
 	});
 
 	public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {

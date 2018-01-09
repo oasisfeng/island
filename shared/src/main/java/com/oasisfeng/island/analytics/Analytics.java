@@ -31,6 +31,7 @@ public interface Analytics {
 		/** ITEM_CATEGORY and ITEM_NAME cannot be used together (limitation in Google Analytics implementation) */
 		ITEM_NAME(FirebaseAnalytics.Param.ITEM_NAME),
 		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY),
+		LOCATION(FirebaseAnalytics.Param.LOCATION),
 		;
 		Param(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String key) { this.key = key; }
 		final String key;

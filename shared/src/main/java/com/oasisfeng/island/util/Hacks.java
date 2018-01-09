@@ -75,7 +75,7 @@ public class Hacks {
 				.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withParam(int.class);
 		DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
 				.returning(String.class).fallbackReturning(null).withoutParams();
-		if (SDK_INT >= N) LauncherApps_getApplicationInfo = Hack.into(LauncherApps.class).method("getApplicationInfo").throwing()
+		if (SDK_INT >= N) LauncherApps_getApplicationInfo = Hack.into(LauncherApps.class).method("getApplicationInfo").throwing()	// NameNotFoundException added since Android O.
 				.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class, UserHandle.class);
 		Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class).fallbackReturning(false)
 				.withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
