@@ -11,15 +11,14 @@ import com.oasisfeng.island.analytics.CrashReport;
  */
 public class IslandApplication extends Application {
 
-	@Override public void onCreate() {
-		super.onCreate();
+	public static Application $() {
+		return sInstance;
+	}
+
+	public IslandApplication() {
 		if (sInstance != null) throw new IllegalStateException("Already initialized");
 		sInstance = this;
 		CrashReport.init();
-	}
-
-	public static Application $() {
-		return sInstance;
 	}
 
 	private static IslandApplication sInstance;
