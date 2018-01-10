@@ -25,7 +25,9 @@ public abstract class CrashReport {
 
 	public static void init() {
 		if (BuildConfig.DEBUG) return;
-		Thread.setDefaultUncaughtExceptionHandler(new LazyThreadExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()));
+		final Thread.UncaughtExceptionHandler current_exception_handler = Thread.getDefaultUncaughtExceptionHandler();
+		if (! (current_exception_handler instanceof LazyThreadExceptionHandler))
+			Thread.setDefaultUncaughtExceptionHandler(new LazyThreadExceptionHandler(current_exception_handler));
 	}
 
 	private static class LazyThreadExceptionHandler implements Thread.UncaughtExceptionHandler {
