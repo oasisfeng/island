@@ -66,7 +66,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 		final UserHandle profile = DevicePolicies.getManagedProfile(activity);
 		final int disabled_profile;
 		if (profile != null) {
-			final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(activity);
+			final Optional<Boolean> is_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
 			if (is_profile_owner == null)
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_unknown, R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
 			else if (is_profile_owner.get()) {    // Normal (managed by Island)

@@ -35,7 +35,7 @@ import static android.os.Build.VERSION_CODES.O;
 public class DevicePolicies {
 
 	/** @return whether Island is the profile owner, absent if no enabled profile or profile has no owner, or null for failure. */
-	public static @Nullable Optional<Boolean> isProfileOwner(final Context context) {	// TODO: Rename to isEnabledProfileOwner()
+	public static @Nullable Optional<Boolean> isOwnerOfEnabledProfile(final Context context) {
 		final UserHandle profile = getManagedProfile(context);
 		if (profile == null) return Optional.empty();
 		return isProfileOwner(context, profile);

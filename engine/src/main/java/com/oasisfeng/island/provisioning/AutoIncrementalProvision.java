@@ -22,7 +22,7 @@ public abstract class AutoIncrementalProvision extends PseudoContentProvider {
 		if (Users.isOwner()) {
 			IslandProvisioning.startDeviceOwnerPostProvisioning(context(), policies);		// isDeviceOwner() is checked inside.
 		} else if (Users.isProfile()) {
-			final Optional<Boolean> result = DevicePolicies.isProfileOwner(context());
+			final Optional<Boolean> result = DevicePolicies.isOwnerOfEnabledProfile(context());
 			if (result == null || ! result.isPresent() || ! result.get()) return false;		// Including the case that profile is not enabled yet. (during the broadcast ACTION_PROFILE_PROVISIONING_COMPLETE)
 			final Thread thread = new Thread(this::start);
 			thread.setPriority(Thread.MIN_PRIORITY);

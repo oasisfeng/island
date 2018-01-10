@@ -64,7 +64,7 @@ public class Shutdown {
 	}
 
 	public static void requestProfileRemoval(final Activity activity) {
-		final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(activity);
+		final Optional<Boolean> is_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
 		if (is_profile_owner == null || ! is_profile_owner.orElse(Boolean.FALSE)) {
 			showPromptForProfileManualRemoval(activity);
 			return;

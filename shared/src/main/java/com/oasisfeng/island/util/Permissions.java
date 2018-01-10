@@ -44,7 +44,7 @@ public class Permissions {
 
 		if (Users.isOwner() && ! new DevicePolicies(context).isDeviceOwner()) return false;
 		if (Users.isProfile()) {
-			final Optional<Boolean> is_owner = DevicePolicies.isProfileOwner(context);
+			final Optional<Boolean> is_owner = DevicePolicies.isOwnerOfEnabledProfile(context);
 			if (is_owner == null || ! is_owner.orElse(false)) return false;
 		}
 		final boolean result = new DevicePolicies(context).setPermissionGrantState(context.getPackageName(), permission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
