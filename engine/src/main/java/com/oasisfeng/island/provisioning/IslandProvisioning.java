@@ -157,7 +157,11 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	@WorkerThread public static void performIncrementalProfileOwnerProvisioningIfNeeded(final Context context) {
-		startProfileOwnerPostProvisioning(context, new DevicePolicies(context));
+		try {
+			startProfileOwnerPostProvisioning(context, new DevicePolicies(context));
+		} catch (final RuntimeException e) {
+			Analytics.$().logAndReport(TAG, "Error provisioning profile", e);
+		}
 	}
 
 	@Override public void onCreate() {
