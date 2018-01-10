@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Placeholders to be overridden by dependent module -->
+    <string name="notification_channel_ongoing_task"> </string>
+    <string name="notification_channel_background_state"> </string>
+    <string name="notification_channel_important"> </string>
+</resources>
