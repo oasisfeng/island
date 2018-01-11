@@ -85,6 +85,9 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_add_shortcut">Add a shortcut to de-freeze and launch %1$s?</string>
     <string name="dialog_provision_in_progress">Preparing Island…</string>
+    <string name="dialog_critical_app_warning">This app is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
+    <string name="dialog_mainland_device_admin">Device Admin privilege is required to activate God mode.</string>
+    <string name="dialog_mainland_setup_done">God mode is now enabled. It will be activated after device reboot.</string>
 
     <string name="dialog_button_continue">Continue</string>
     <string name="dialog_button_skip_with_root">Skip (root)</string>
@@ -93,6 +96,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="dialog_button_upgrade">Upgrade</string>
     <string name="dialog_button_destroy">Destroy</string>
     <string name="dialog_button_deactivate">Deactivate</string>
+    <string name="dialog_button_reboot">Reboot</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
 
@@ -108,6 +112,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
     <string name="toast_file_shuttle_without_browser">Storage shuttle is activated. You can now select files outside Island from apps within.</string>
     <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
+    <string name="toast_setup_god_mode_non_root">No root, opening online guide now.</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>
@@ -136,6 +141,8 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="pref_setup_mainland_title">Mainland</string>
     <string name="pref_setup_mainland_summary_managed">Managed</string>
     <string name="pref_setup_mainland_summary_not_managed">Normal</string>
+    <string name="pref_setup_mainland_activate_title">Activate God mode</string>
+    <string name="pref_setup_mainland_activate_text">"God mode" allows Island to control apps in mainland, in the same way it controls apps in Island, plus some additional device-wide capabilities.\n\nIf your device is rooted, God mode can be activated in one click. (system partition untouched)\n\nFor non-root device, God mode could only be activated manually. Please follow the online guide for instructions.</string>
     <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
     <string name="pref_setup_mainland_reprovision_title">Re-provision Mainland</string>
     <string name="pref_setup_mainland_reprovision_summary">This may help to fix issues in Mainland.\nAll apps and data will be preserved.</string>
@@ -168,6 +175,5 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="tip_action_ignore">Ignore</string>
     <string name="tip_critical_package_required">Critical package required</string>
     <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
-    <string name="dialog_critical_app_warning">This app is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
 
 </resources>

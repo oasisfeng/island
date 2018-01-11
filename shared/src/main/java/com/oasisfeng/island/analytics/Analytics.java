@@ -32,6 +32,7 @@ public interface Analytics {
 		ITEM_NAME(FirebaseAnalytics.Param.ITEM_NAME),
 		ITEM_CATEGORY(FirebaseAnalytics.Param.ITEM_CATEGORY),
 		LOCATION(FirebaseAnalytics.Param.LOCATION),
+		CONTENT(FirebaseAnalytics.Param.CONTENT),
 		;
 		Param(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String key) { this.key = key; }
 		final String key;

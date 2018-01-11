@@ -10,6 +10,7 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.UserHandle;
@@ -22,6 +23,8 @@ import com.oasisfeng.hack.Hack;
 import com.oasisfeng.hack.Hack.Unchecked;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
+
+import java.io.File;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -54,6 +57,7 @@ public class Hacks {
 	public static final Hack.HackedMethodN<IBinder, Void, Unchecked, Unchecked, Unchecked> ServiceManager_getService;
 	public static final Hack.HackedMethod1<?, Void, Unchecked, Unchecked, Unchecked, IBinder> IWebViewUpdateService$Stub_asInterface;
 	@RequiresApi(N) public static Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked> IWebViewUpdateService_getCurrentWebViewPackageName;
+	public static final Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked> Environment_getSystemSecureDirectory;
 
 	static {
 		Hack.setAssertionFailureHandler(e -> {
@@ -94,5 +98,7 @@ public class Hacks {
 				.returning(Hack.ANY_TYPE).withParam(IBinder.class);
 		if (SDK_INT >= N) IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 				.returning(String.class).fallbackReturning(null).throwing(RemoteException.class).withoutParams();
+		Environment_getSystemSecureDirectory = (SDK_INT < N ? Hack.into(Environment.class).staticMethod("getSystemSecureDirectory")
+				: Hack.into(Environment.class).staticMethod("getDataSystemDirectory")).returning(File.class).withoutParams();
 	}
 }
