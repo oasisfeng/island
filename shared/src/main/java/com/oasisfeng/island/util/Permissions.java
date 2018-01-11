@@ -42,7 +42,7 @@ public class Permissions {
 		final String sp = Build.VERSION.SECURITY_PATCH;
 		if (sp.contains("2018") || sp.contains("2017-11") || sp.contains("2017-12")) return false;	// No longer works after 2017.11 security patch. (CVE-2017-0830)
 
-		if (Users.isOwner() && ! new DevicePolicies(context).isDeviceOwner()) return false;
+		if (Users.isOwner() && ! new DevicePolicies(context).isActiveDeviceOwner()) return false;
 		if (Users.isProfile()) {
 			final Optional<Boolean> is_owner = DevicePolicies.isOwnerOfEnabledProfile(context);
 			if (is_owner == null || ! is_owner.orElse(false)) return false;

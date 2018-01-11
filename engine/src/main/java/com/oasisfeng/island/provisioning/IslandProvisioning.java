@@ -223,7 +223,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
-		if (! policies.isDeviceOwner()) return;
+		if (! policies.isActiveDeviceOwner()) return;
 
 		if (SDK_INT >= O) policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
 		if (SDK_INT >= N) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_USER);

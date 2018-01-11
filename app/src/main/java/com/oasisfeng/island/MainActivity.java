@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
 			finish();
 			return;
 		}
-		if (mIsDeviceOwner = new DevicePolicies(this).isDeviceOwner()) {
+		if (mIsDeviceOwner = new DevicePolicies(this).isActiveDeviceOwner()) {
 			startMainUi(savedInstanceState);	// As device owner, always show main UI.
 			return;
 		}

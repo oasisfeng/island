@@ -70,6 +70,10 @@ public class DevicePolicies {
 
 	/* Shortcuts for APIs in DevicePolicyManager */
 
+	public boolean isActiveDeviceOwner() {
+		return mDevicePolicyManager.isAdminActive(sCachedComponent) && isDeviceOwner();
+	}
+
 	/** @see DevicePolicyManager#isDeviceOwnerApp(String) */
 	public boolean isDeviceOwner() {
 		return mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
@@ -79,7 +83,7 @@ public class DevicePolicies {
 	@OwnerUser public String getDeviceOwner() {
 		if (! Hacks.DevicePolicyManager_getDeviceOwner.isAbsent()) {
 			return Hacks.DevicePolicyManager_getDeviceOwner.invoke().on(getManager());
-		} else if (isDeviceOwner()) return sCachedComponent.getPackageName();        // Fall-back check, only if we are the device owner.
+		} else if (isActiveDeviceOwner()) return sCachedComponent.getPackageName();        // Fall-back check, only if we are the device owner.
 		else return "";
 	}
 

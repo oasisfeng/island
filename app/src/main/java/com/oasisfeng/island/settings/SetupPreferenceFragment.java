@@ -56,7 +56,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 
 		final ActionButtonPreference pref_setup_mainland = (ActionButtonPreference) findPreference(getString(R.string.key_setup_mainland));
 		final Preference pref_mainland_reprovisioning = findPreference(getString(R.string.key_setup_mainland_reprovision));
-		if (new DevicePolicies(activity).isDeviceOwner()) {
+		if (new DevicePolicies(activity).isActiveDeviceOwner()) {
 			pref_setup_mainland.setSummaryAndActionButton(R.string.pref_setup_mainland_summary_managed, R.drawable.ic_cancel_black_24dp, p -> startDeviceOwnerDeactivation());
 
 			pref_mainland_reprovisioning.setEnabled(true);

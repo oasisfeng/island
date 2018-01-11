@@ -180,7 +180,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public void attach(final Activity activity, final Menu actions, final Bundle saved_state) {
 		mActivity = activity;
-		mDeviceOwner = new DevicePolicies(activity).isDeviceOwner();
+		mDeviceOwner = new DevicePolicies(activity).isActiveDeviceOwner();
 		layout_manager = new LinearLayoutManager(activity);
 		mActions = actions;
 		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
