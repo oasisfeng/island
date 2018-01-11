@@ -30,13 +30,16 @@ class AnalyticsImpl implements Analytics {
 	@Override public @CheckResult Event event(final @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event) {
 		final Bundle bundle = new Bundle();
 		return new Event() {
-			@Override public @CheckResult Event withRaw(final String key, final @Nullable String value) { bundle.putString(key, value); return this; }
+			@Override public @CheckResult Event withRaw(final String key, final @Nullable String value) {
+				if (value != null) bundle.putString(key, value);
+				return this;
+			}
 			@Override public void send() { reportEvent(event, bundle); }
 		};
 	}
 
 	@Override public void report(final Throwable t) {
-		CrashReport.$().logException(t);
+		if (! BuildConfig.DEBUG) CrashReport.$().logException(t);
 	}
 
 	@Override public void reportEvent(final String event, final Bundle params) {

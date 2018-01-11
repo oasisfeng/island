@@ -42,6 +42,7 @@ import java9.util.Optional;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
+import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 
 /**
  * Settings - Setup
@@ -134,17 +135,22 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 				.replace("<", "\\<").replace(">", "\\>");
 
 		final String file = new File(Hacks.Environment_getSystemSecureDirectory.invoke().statically(), "device_owner.xml").getAbsolutePath();
-		final String command = "echo " + content + " > " + file + " && chmod 600 " + file + " && chown system:system " + file;
+		final String command = "echo " + content + " > " + file + " && chmod 600 " + file + " && chown system:system " + file + " && echo DONE";
 
 		SafeAsyncTask.execute(activity, a -> Shell.SU.run(command), output -> {
 			final Activity activity_now = getActivity();
 			if (activity_now == null) return;
-			if (output == null) {
+			if (output == null || output.isEmpty()) {
 				Toast.makeText(activity_now, R.string.toast_setup_god_mode_non_root, Toast.LENGTH_LONG).show();
 				WebContent.view(activity_now, Uri.parse(Config.URL_SETUP.get()));
 				return;
 			}
-			Analytics.$().event("activate_device_owner_root").with(Analytics.Param.CONTENT, Joiner.on('\n').join(output)).send();
+			if (! "DONE".equals(output.get(output.size() - 1))) {
+				Analytics.$().event("error_activating_device_owner_root").with(CONTENT, Joiner.on('\n').join(output)).send();
+				Toast.makeText(activity_now, R.string.toast_setup_god_mode_root_failed, Toast.LENGTH_LONG).show();
+				return;
+			}
+			Analytics.$().event("activate_device_owner_root").with(CONTENT, output.size() == 1/* DONE */? null : Joiner.on('\n').join(output)).send();
 			startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(activity_now))
 					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.dialog_mainland_device_admin)), REQUEST_ADD_DEVICE_ADMIN);
@@ -172,8 +178,10 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 	private boolean startSetupActivity() {
 		// Finish all tasks of Island first to avoid state inconsistency.
 		final ActivityManager am = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
-		final List<ActivityManager.AppTask> tasks = am.getAppTasks();
-		if (tasks != null) for (final ActivityManager.AppTask task : tasks) task.finishAndRemoveTask();
+		if (am != null) {
+			final List<ActivityManager.AppTask> tasks = am.getAppTasks();
+			if (tasks != null) for (final ActivityManager.AppTask task : tasks) task.finishAndRemoveTask();
+		}
 
 		Activities.startActivity(getActivity(), new Intent(getActivity(), SetupActivity.class));
 		return true;
