@@ -112,11 +112,10 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		Log.d(TAG, "Provisioning profile (" + Users.toId(android.os.Process.myUserHandle()) + (is_manual_setup ? ", manual) " : ")"));
 
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).apply();
+		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).putInt(PREF_KEY_PROFILE_PROVISION_TYPE, is_manual_setup ? 1 : 0).apply();
 		if (is_manual_setup) {		// Do the similar job of ManagedProvisioning here.
 			Log.d(TAG, "Manual provisioning");
 			Analytics.$().event("profile_post_provision_manual_start").send();
-			prefs.edit().putInt(PREF_KEY_PROFILE_PROVISION_TYPE, 1).apply();
 			ProfileOwnerManualProvisioning.start(this, policies);	// Mimic the stock managed profile provision
 		} else Analytics.$().event("profile_post_provision_start").send();
 
@@ -214,7 +213,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		// This is also required for manual provision via ADB shell.
 		policies.clearCrossProfileIntentFilters();
 
-		ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
+		final int provision_type = PreferenceManager.getDefaultSharedPreferences(context).getInt(PREF_KEY_PROFILE_PROVISION_TYPE, 0);
+		if (provision_type == 1) ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
 
 		startProfileOwnerPostProvisioning(context, policies);
 
