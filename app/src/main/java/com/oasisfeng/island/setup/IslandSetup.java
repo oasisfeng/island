@@ -2,40 +2,100 @@ package com.oasisfeng.island.setup;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.DeadObjectException;
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.oasisfeng.android.ui.Dialogs;
+import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shuttle.MethodShuttle;
+import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 import java9.util.stream.Collectors;
 
+import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
+
 /**
- * The procedure of managed profile shutdown or device owner deactivation.
+ * Implementation of Island / Mainland setup & shutdown.
  *
  * Created by Oasis on 2017/3/8.
  */
-public class Shutdown {
+public class IslandSetup {
 
 	private static final int MAX_DESTROYING_APPS_LIST = 8;
+
+	public static void requestDeviceOwnerActivation(final Fragment fragment, final int request_code) {
+		Dialogs.buildAlert(fragment.getActivity(), R.string.pref_setup_mainland_activate_title, R.string.pref_setup_mainland_activate_text)
+				.setPositiveButton(R.string.dialog_button_continue, (d, w) -> activateDeviceOwnerOrShowSetupGuide(fragment, request_code)).show();
+	}
+
+	private static void activateDeviceOwnerOrShowSetupGuide(final Fragment fragment, final int request_code) {
+		final Activity activity = fragment.getActivity();
+		if (activity == null) return;
+		String content = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?><device-owner package=\"" + Modules.MODULE_ENGINE + "\" />";
+		final Optional<Boolean> is_profile_owner;
+		if (Users.profile != null && (is_profile_owner = DevicePolicies.isProfileOwner(activity, Users.profile)) != null && is_profile_owner.orElse(false))
+			content += "<profile-owner package=\"" + Modules.MODULE_ENGINE + "\" name=\"Island\" userId=\"" + Users.toId(Users.profile)
+					+ "\" component=\"" + DeviceAdmins.getComponentName(activity).flattenToString() + "\" />";
+		content = content.replace("\"", "\\\"").replace("'", "\\'")
+				.replace("<", "\\<").replace(">", "\\>");
+
+		final String file = new File(Hacks.Environment_getSystemSecureDirectory.invoke().statically(), "device_owner.xml").getAbsolutePath();
+		final String command = "echo " + content + " > " + file + " && chmod 600 " + file + " && chown system:system " + file + " && echo DONE";
+
+		SafeAsyncTask.execute(activity, a -> Shell.SU.run(command), output -> {
+			if (activity.isDestroyed() || activity.isFinishing()) return;
+			if (output == null || output.isEmpty()) {
+				Toast.makeText(activity, R.string.toast_setup_god_mode_non_root, Toast.LENGTH_LONG).show();
+				WebContent.view(activity, Uri.parse(Config.URL_SETUP.get()));
+				return;
+			}
+			if (! "DONE".equals(output.get(output.size() - 1))) {
+				Analytics.$().event("error_activating_device_owner_root").with(CONTENT, Joiner.on('\n').join(output)).send();
+				Toast.makeText(activity, R.string.toast_setup_god_mode_root_failed, Toast.LENGTH_LONG).show();
+				return;
+			}
+			Analytics.$().event("activate_device_owner_root").with(CONTENT, output.size() == 1/* DONE */? null : Joiner.on('\n').join(output)).send();
+			fragment.startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(activity))
+					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, activity.getString(R.string.dialog_mainland_device_admin)), request_code);
+			// Procedure is followed in onAddAdminResult().
+		});
+	}
+
+	public static void onAddAdminResult(final Activity activity) {
+		if (! new DevicePolicies(activity).isAdminActive()) return;
+		Dialogs.buildAlert(activity, 0, R.string.dialog_mainland_setup_done).withCancelButton()
+				.setPositiveButton(R.string.dialog_button_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
+	}
 
 	public static void requestDeviceOwnerDeactivation(final Activity activity) {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_deactivate_message)
@@ -48,16 +108,16 @@ public class Shutdown {
 							try {
 								for (final String pkg : frozen_pkgs) island.unfreezeApp(pkg);
 							} finally {
-								deactivateNow(activity);
+								deactivateDeviceOwner(activity);
 							}
 						})) return;		// Invoke deactivateNow() in the async procedure after all apps are unfrozen.
 						Log.e(TAG, "Failed to connect to engine in owner user");
 					}
-					deactivateNow(activity);
+					deactivateDeviceOwner(activity);
 				}).show();
 	}
 
-	private static void deactivateNow(final Activity activity) {
+	private static void deactivateDeviceOwner(final Activity activity) {
 		new IslandManager(activity).deactivateDeviceOwner();
 		activity.finishAffinity();	// Finish the whole activity stack.
 		System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
@@ -122,5 +182,5 @@ public class Shutdown {
 		}, MoreExecutors.directExecutor());
 	}
 
-	private static final String TAG = Shutdown.class.getSimpleName();
+	private static final String TAG = IslandSetup.class.getSimpleName();
 }
