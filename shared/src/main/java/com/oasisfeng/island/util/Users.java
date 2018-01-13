@@ -44,20 +44,22 @@ public abstract class Users extends PseudoContentProvider {
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
 		profile = null;
-		final List<UserHandle> user_and_profiles = ((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
+		final UserManager um = ((UserManager) context.getSystemService(USER_SERVICE));
+		if (um == null) return;
+		final List<UserHandle> user_and_profiles = um.getUserProfiles();
 		for (final UserHandle user_or_profile : user_and_profiles) {
 			if (! isOwner(user_or_profile)) {
 				if (profile == null) profile = user_or_profile;        // Only one managed profile is supported by Android framework at present.
 			} else owner = user_or_profile;
 		}
-		sProfileId = profile != null ? toId(profile) : 0;
+		sProfileId = profile != null ? toId(profile) : -1;
 		Log.i(TAG, "Profile ID: " + sProfileId);
 	}
 
 	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user
 	public static boolean isOwner(final UserHandle user) { return toId(user) == 0; }
 
-	public static boolean isProfile() { return CURRENT_ID != 0 && sProfileId == CURRENT_ID; }
+	public static boolean isProfile() { return CURRENT_ID == sProfileId; }
 	public static boolean isProfile(final UserHandle user) { return toId(user) == sProfileId; }
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
@@ -76,6 +78,6 @@ public abstract class Users extends PseudoContentProvider {
 	}};
 
 	private static final int PER_USER_RANGE = 100000;
-	private static int sProfileId;		// 0 if no profile
+	private static int sProfileId = -1;		// -1 if no profile
 	private static final String TAG = "Users";
 }
