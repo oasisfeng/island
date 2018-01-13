@@ -29,7 +29,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="setup_error_managed_device">Sorry, Island cannot be setup due to device currently being managed by <b>%1$s</b>.</string>
     <string name="setup_error_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed first in system Settings - Accounts.</string>
     <string name="setup_error_missing_managed_provisioning">Sorry, the required \"Android for Work\" feature may not be fully supported on your device.</string>
-    <string name="setup_solution_for_cancelled_provision">Trouble setting-up?\n\nIf you got error message during the setup procedure of Island, please follow the suggested solutions provided below.</string>
+    <string name="setup_solution_for_cancelled_provision">Trouble setting-up Island?\n\nIf you got error message during the setup procedure of Island, please continue to open the online troubleshooting guide with suggested solutions.\n\nIf all the solutions do not work and your device is rooted, you can alternatively setup Island with root.</string>
 
     <string name="tip_empty_app_list">No apps here.\nPlease switch to other view.</string>
 
@@ -37,7 +37,8 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="button_instructions_online">Instructions (online)</string>
     <string name="button_account_settings">Account Settings</string>
     <string name="button_have_checked">I\'ve checked</string>
-    <string name="button_setup_troubleshooting">Troubleshooting Guide (online)</string>
+    <string name="button_setup_troubleshooting">Troubleshooting (web)</string>
+    <string name="button_setup_island_with_root">Setup Island with root</string>
 
     <string name="action_clone">Clone</string>
     <string name="action_clone_back">Clone to mainland</string>
@@ -88,6 +89,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="dialog_critical_app_warning">This app is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
     <string name="dialog_mainland_device_admin">Device Admin privilege is required to activate God mode.</string>
     <string name="dialog_mainland_setup_done">God mode is now enabled. It will be activated after device reboot.</string>
+    <string name="dialog_island_setup_failed">Sorry, something went wrong in Island setup. (stage %1$d)</string>
 
     <string name="dialog_button_continue">Continue</string>
     <string name="dialog_button_skip_with_root">Skip (root)</string>
@@ -112,7 +114,8 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
     <string name="toast_file_shuttle_without_browser">Storage shuttle is activated. You can now select files outside Island from apps within.</string>
     <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
-    <string name="toast_setup_god_mode_non_root">No root, opening online guide now.</string>
+    <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>
+    <string name="toast_setup_mainland_root_failed">Error activating God mode with root.</string>
 
     <!-- General words -->
     <string name="exit">Exit</string>
@@ -136,7 +139,6 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="pref_setup_island_summary_unknown">Unknown</string>
     <string name="pref_setup_island_summary_managed_other">Existent Work profile is not managed by Island.\nClick the side icon to remove.</string>
     <string name="pref_setup_island_summary_incomplete">Setup incomplete.\nClick the side icon to rebuild.</string>
-    <string name="pref_setup_island_summary_pending_manual_setup">Not setup yet.\nClick the side icon to open online setup guide.</string>
     <string name="pref_setup_island_summary_pending_setup">Not setup yet.\nClick the side icon to setup.</string>
     <string name="pref_setup_mainland_title">Mainland</string>
     <string name="pref_setup_mainland_summary_managed">Managed</string>
@@ -175,6 +177,5 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="tip_action_ignore">Ignore</string>
     <string name="tip_critical_package_required">Critical package required</string>
     <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
-    <string name="toast_setup_god_mode_root_failed">Error activating God mode with root.</string>
 
 </resources>

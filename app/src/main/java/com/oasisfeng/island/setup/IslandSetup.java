@@ -3,16 +3,24 @@ package com.oasisfeng.island.setup;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.DeadObjectException;
+import android.os.Process;
 import android.provider.Settings;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -25,6 +33,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DeviceAdmins;
@@ -34,6 +43,7 @@ import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -41,6 +51,8 @@ import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 import java9.util.stream.Collectors;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 
 /**
@@ -51,6 +63,82 @@ import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 public class IslandSetup {
 
 	private static final int MAX_DESTROYING_APPS_LIST = 8;
+
+	static final String RES_MAX_USERS = "config_multiuserMaximumUsers";
+	private static final String PACKAGE_VERIFIER_INCLUDE_ADB = "verifier_verify_adb_installs";
+
+
+	public static void requestProfileOwnerSetupWithRoot(final Activity activity) {
+		final ProgressDialog progress = ProgressDialog.show(activity, null, "Setup Island...", true);
+		// Phase 1: Create profile		TODO: Skip profile creation or remove existent profile first, if profile is already present (probably left by unsuccessful setup)
+		final List<String> commands = Arrays.asList("setprop fw.max_users 10",
+				"pm create-user --profileOf " + Users.toId(Process.myUserHandle()) + " --managed Island", "echo END");
+		SafeAsyncTask.execute(activity, a -> Shell.SU.run(commands), result -> {
+			Users.refreshUsers(activity);
+			if (! Users.hasProfile()) {		// Profile creation failed
+				if (result == null || result.isEmpty()) return;		// Just root failure
+				Analytics.$().event("setup_island_root_failed").withRaw("commands", Joiner.on("\n").join(commands))
+						.withRaw("fw_max_users", String.valueOf(getSysPropMaxUsers()))
+						.withRaw("config_multiuserMaximumUsers", String.valueOf(getResConfigMaxUsers()))
+						.with(CONTENT, Joiner.on("\n").skipNulls().join(result)).send();
+				dismissProgressAndShowError(activity, progress, 1);
+				return;
+			}
+
+			installIslandInProfileWithRoot(activity, progress);
+		});
+	}
+
+	// Phase 2: Install Island app inside
+	private static void installIslandInProfileWithRoot(final Activity activity, final ProgressDialog progress) {
+		// Disable package verifier before installation, to avoid hanging too long.
+		final StringBuilder commands = new StringBuilder();
+		final String adb_verify_value_before = Settings.Global.getString(activity.getContentResolver(), PACKAGE_VERIFIER_INCLUDE_ADB);
+		if (adb_verify_value_before == null || Integer.parseInt(adb_verify_value_before) != 0)
+			commands.append("settings put global ").append(PACKAGE_VERIFIER_INCLUDE_ADB).append(" 0 ; ");
+
+		final ApplicationInfo info; try {
+			info = activity.getPackageManager().getApplicationInfo(Modules.MODULE_ENGINE, 0);
+		} catch (final NameNotFoundException e) { return; }	// Should never happen.
+		final int profile_id = Users.toId(Users.profile);
+		commands.append("pm install -r --user ").append(profile_id).append(' ');
+		if (BuildConfig.DEBUG) commands.append("-t ");
+		commands.append(info.sourceDir).append(" && ");
+
+		if (adb_verify_value_before == null) commands.append("settings delete global ").append(PACKAGE_VERIFIER_INCLUDE_ADB).append(" ; ");
+		else commands.append("settings put global ").append(PACKAGE_VERIFIER_INCLUDE_ADB).append(' ').append(adb_verify_value_before).append(" ; ");
+
+		// All following commands must be executed all together with the above one, since this app process will be killed upon "pm install".
+		final String flat_admin_component = DeviceAdmins.getComponentName(activity).flattenToString();
+		commands.append(SDK_INT >= M ? "dpm set-profile-owner --user " + profile_id + " " + flat_admin_component
+				: "dpm set-profile-owner " + flat_admin_component + " " + profile_id);
+		commands.append(" && am start-user ").append(profile_id);
+
+		SafeAsyncTask.execute(activity, a -> Shell.SU.run(commands.toString()), result -> {
+			final LauncherApps launcher_apps = (LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+			if (Preconditions.checkNotNull(launcher_apps).getActivityList(activity.getPackageName(), Users.profile).isEmpty()) {
+				Analytics.$().event("setup_island_root_failed").withRaw("command", commands.toString())
+						.with(CONTENT, Joiner.on("\n").skipNulls().join(result)).send();
+				dismissProgressAndShowError(activity, progress, 2);
+			}
+		});
+	}
+
+	private static void dismissProgressAndShowError(final Activity activity, final ProgressDialog progress, final int stage) {
+		progress.dismiss();
+		Dialogs.buildAlert(activity, null, activity.getString(R.string.dialog_island_setup_failed, stage)).withOkButton(null).show();
+	}
+
+	static @Nullable Integer getSysPropMaxUsers() {
+		return Hacks.SystemProperties_getInt.invoke("fw.max_users", - 1).statically();
+	}
+
+	static @Nullable Integer getResConfigMaxUsers() {
+		final Resources sys_res = Resources.getSystem();
+		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
+		if (res == 0) return null;
+		return Resources.getSystem().getInteger(res);
+	}
 
 	public static void requestDeviceOwnerActivation(final Fragment fragment, final int request_code) {
 		Dialogs.buildAlert(fragment.getActivity(), R.string.pref_setup_mainland_activate_title, R.string.pref_setup_mainland_activate_text)
@@ -74,16 +162,16 @@ public class IslandSetup {
 		SafeAsyncTask.execute(activity, a -> Shell.SU.run(command), output -> {
 			if (activity.isDestroyed() || activity.isFinishing()) return;
 			if (output == null || output.isEmpty()) {
-				Toast.makeText(activity, R.string.toast_setup_god_mode_non_root, Toast.LENGTH_LONG).show();
+				Toast.makeText(activity, R.string.toast_setup_mainland_non_root, Toast.LENGTH_LONG).show();
 				WebContent.view(activity, Uri.parse(Config.URL_SETUP.get()));
 				return;
 			}
 			if (! "DONE".equals(output.get(output.size() - 1))) {
-				Analytics.$().event("error_activating_device_owner_root").with(CONTENT, Joiner.on('\n').join(output)).send();
-				Toast.makeText(activity, R.string.toast_setup_god_mode_root_failed, Toast.LENGTH_LONG).show();
+				Analytics.$().event("setup_mainland_root").with(CONTENT, Joiner.on("\n").skipNulls().join(output)).send();
+				Toast.makeText(activity, R.string.toast_setup_mainland_root_failed, Toast.LENGTH_LONG).show();
 				return;
 			}
-			Analytics.$().event("activate_device_owner_root").with(CONTENT, output.size() == 1/* DONE */? null : Joiner.on('\n').join(output)).send();
+			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : Joiner.on("\n").skipNulls().join(output)).send();
 			fragment.startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(activity))
 					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, activity.getString(R.string.dialog_mainland_device_admin)), request_code);
@@ -141,7 +229,7 @@ public class IslandSetup {
 						destroyProfile(activity);
 						return;
 					}
-					final String names = Joiner.on('\n').skipNulls().join(Iterables.limit(exclusive_clones, MAX_DESTROYING_APPS_LIST));
+					final String names = Joiner.on("\n").skipNulls().join(Iterables.limit(exclusive_clones, MAX_DESTROYING_APPS_LIST));
 					final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
 					new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 							.setMessage(activity.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))

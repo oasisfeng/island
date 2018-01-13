@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
@@ -28,6 +29,7 @@ import com.oasisfeng.settings.ActionButtonPreference;
 
 import java.util.List;
 
+import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -106,14 +108,21 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
 						R.drawable.ic_build_black_24dp, preference -> startSetupActivityCleanly());
-		} else if (SetupViewModel.checkManagedProvisioningPrerequisites(activity, true) == null) {
-			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup,
-					R.drawable.ic_build_black_24dp, preference -> startSetupActivityCleanly());
-		} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_manual_setup,
-				R.drawable.ic_open_in_browser_black_24dp, preference -> {
-					WebContent.view(getActivity(), Uri.parse(Config.URL_SETUP.get()));
-					return true;
+		} else {
+			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup, R.drawable.ic_build_black_24dp, preference -> {
+				if (SetupViewModel.checkManagedProvisioningPrerequisites(activity, true) == null)
+					return startSetupActivityCleanly();		// Prefer ManagedProvision, which could also fallback to root routine.
+
+				SafeAsyncTask.execute(activity, a -> Shell.SU.available(), su_available -> {
+					final Activity activity_now = getActivity();
+					if (activity_now == null) return;
+
+					if (su_available) IslandSetup.requestProfileOwnerSetupWithRoot(activity_now);
+					else WebContent.view(getActivity(), Uri.parse(Config.URL_SETUP.get()));
 				});
+				return true;
+			});
+		}
 	}
 
 	@Override public void onActivityResult(final int request, final int result, final Intent data) {

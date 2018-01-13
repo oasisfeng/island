@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.databinding.ObservableInt;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -57,15 +56,13 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
  */
 public class SetupViewModel implements Parcelable {
 
-	private static final String RES_MAX_USERS = "config_multiuserMaximumUsers";
-
 	private static final int REQUEST_PROVISION_MANAGED_PROFILE = 1;
 
 	public @StringRes int message;
 	public @Nullable Object[] message_params;
 	int button_back;
 	ObservableInt button_next = new ObservableInt();		// 0 (enabled), -1 (disabled) or custom string resource
-	public int button_extra;
+	public int action_extra;
 
 //	SetupViewModel(final Context context) {
 //		final UserHandle profile = IslandManager.getManagedProfile(context);
@@ -76,8 +73,12 @@ public class SetupViewModel implements Parcelable {
 //		} else { has_other_owner = false; owner_name = null; }
 //	}
 
-	SetupViewModel onNavigateNext(final Fragment fragment) {
+	@Nullable SetupViewModel onNavigateNext(final Fragment fragment) {
 		final Activity activity = fragment.getActivity();
+		if (button_next.get() == R.string.button_setup_troubleshooting) {
+			WebContent.view(activity, Config.URL_SETUP_TROUBLESHOOTING.get());
+			return null;
+		}
 		final SetupViewModel result = checkManagedProvisioningPrerequisites(activity, mIncompleteSetupAcked);
 		if (result != null) return result;
 
@@ -112,7 +113,7 @@ public class SetupViewModel implements Parcelable {
 		return null;
 	}
 
-	/** @return null if all prerequisites met */
+	/** @return null if all prerequisites met TODO: Move this method to IslandSetup */
 	public static @CheckResult SetupViewModel checkManagedProvisioningPrerequisites(final Context context, final boolean ignore_incomplete_setup) {
 		final PackageManager pm = context.getPackageManager();
 		if (buildManagedProfileProvisioningIntent(context).resolveActivity(pm) == null)
@@ -128,9 +129,9 @@ public class SetupViewModel implements Parcelable {
 					final CharSequence owner_label = readOwnerLabel(context, profile_owner);
 					final Analytics.Event reason = reason("existent_work_profile").with(ITEM_ID, profile_owner.getPackageName())
 							.with(Analytics.Param.ITEM_NAME, owner_label != null ? owner_label.toString() : null);
-					return buildErrorVM(R.string.setup_error_other_work_profile, R.string.button_account_settings, reason);
+					return buildErrorVM(R.string.setup_error_other_work_profile, reason).withExtraAction(R.string.button_account_settings);
 				} else if (! ignore_incomplete_setup) {
-					return buildErrorVM(R.string.setup_error_provisioning_incomplete, R.string.button_have_checked, reason("provisioning_incomplete"));
+					return buildErrorVM(R.string.setup_error_provisioning_incomplete, reason("provisioning_incomplete")).withExtraAction(R.string.button_have_checked);
 				}
 			}
 		}
@@ -148,11 +149,11 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
 
 		if (SDK_INT < M) {		// The max-users limitation is no longer enforced since Android M.
-			final Integer sys_prop_max_users = getSysPropMaxUsers();
+			final Integer sys_prop_max_users = IslandSetup.getSysPropMaxUsers();
 			if (sys_prop_max_users == null || sys_prop_max_users == -1) {
-				final Integer res_config_max_users = getResConfigMaxUsers();
+				final Integer res_config_max_users = IslandSetup.getResConfigMaxUsers();
 				if (res_config_max_users == null || res_config_max_users < 2)
-					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
+					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(IslandSetup.RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
 			} else if (sys_prop_max_users < 2) return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("fw.max_users"));
 		}
 
@@ -167,7 +168,7 @@ public class SetupViewModel implements Parcelable {
 
 				final SetupViewModel error = buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));
 				error.message_params = new String[] { owner_label != null ? owner_label.toString() : device_owner };
-				error.button_extra = 0;		// Disable the manual-setup prompt, because device owner cannot be removed by 3rd-party.
+				error.action_extra = 0;		// Disable the manual-setup prompt, because device owner cannot be removed by 3rd-party.
 				return error;
 			}
 		}
@@ -194,17 +195,17 @@ public class SetupViewModel implements Parcelable {
 
 	public void onExtraButtonClick(final View view) {
 		final Context context = view.getContext();
-		if (button_extra == R.string.button_instructions_online) {
+		if (action_extra == R.string.button_instructions_online) {
 			WebContent.view(context, Config.URL_SETUP.get());
-		} else if (button_extra == R.string.button_account_settings) {
+		} else if (action_extra == R.string.button_account_settings) {
 			Activities.startActivity(context, new Intent(Settings.ACTION_SYNC_SETTINGS));
 			if (context instanceof Activity) ((Activity) context).finish();
-		} else if (button_extra == R.string.button_have_checked) {
+		} else if (action_extra == R.string.button_have_checked) {
 			button_next.set(0);
 			mIncompleteSetupAcked = true;
 			view.setVisibility(View.GONE);
-		} else if (button_extra == R.string.button_setup_troubleshooting) {
-			WebContent.view(context, Config.URL_SETUP_TROUBLESHOOTING.get());
+		} else if (action_extra == R.string.button_setup_island_with_root) {
+			IslandSetup.requestProfileOwnerSetupWithRoot(Activities.findActivityFrom(context));
 		} else throw new IllegalStateException();
 	}
 
@@ -214,7 +215,8 @@ public class SetupViewModel implements Parcelable {
 		if (result == Activity.RESULT_CANCELED) {
 			Log.i(TAG, "Provision is cancelled.");
 			Analytics.$().event("profile_provision_sys_activity_canceled").send();
-			return buildErrorVM(R.string.setup_solution_for_cancelled_provision, R.string.button_setup_troubleshooting, reason("provisioning_cancelled"));
+			return buildErrorVM(R.string.setup_solution_for_cancelled_provision, reason("provisioning_cancelled"))
+					.withExtraAction(R.string.button_setup_island_with_root).withNextButton(R.string.button_setup_troubleshooting);
 		}
 		if (result == Activity.RESULT_OK) {
 			Log.i(TAG, "System provision activity is done.");
@@ -239,17 +241,17 @@ public class SetupViewModel implements Parcelable {
 	}
 
 	private static SetupViewModel buildErrorVM(final @StringRes int message, final @Nullable Analytics.Event event) {
-		return buildErrorVM(message, R.string.button_instructions_online, event);
-	}
-
-	private static SetupViewModel buildErrorVM(final @StringRes int message, final @StringRes int button_extra, final @Nullable Analytics.Event event) {
 		if (event != null) event.send();
 		final SetupViewModel next = new SetupViewModel();
 		next.message = message;
 		next.button_next.set(-1);
-		next.button_extra = button_extra;
+		next.action_extra = R.string.button_instructions_online;	// Default extra action, can be overridden by withExtraAction().
 		return next;
 	}
+
+	private SetupViewModel withExtraAction(final @StringRes int text) { action_extra = text; return this; }
+
+	private SetupViewModel withNextButton(final @StringRes int label) { button_next.set(label); return this; }
 
 	private static Intent buildManagedProfileProvisioningIntent(final Context context) {
 		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
@@ -271,17 +273,6 @@ public class SetupViewModel implements Parcelable {
 				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
 	}
 
-	private static @Nullable Integer getSysPropMaxUsers() {
-		return Hacks.SystemProperties_getInt.invoke("fw.max_users", - 1).statically();
-	}
-
-	private static @Nullable Integer getResConfigMaxUsers() {
-		final Resources sys_res = Resources.getSystem();
-		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
-		if (res == 0) return null;
-		return Resources.getSystem().getInteger(res);
-	}
-
 	private static CharSequence readOwnerLabel(final Context context, final ComponentName owner) {
 		final PackageManager pm = context.getPackageManager();
 		try {
@@ -299,14 +290,14 @@ public class SetupViewModel implements Parcelable {
 		message = in.readInt();
 		button_back = in.readInt();
 		button_next.set(in.readInt());
-		button_extra = in.readInt();
+		action_extra = in.readInt();
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
 		dest.writeInt(message);
 		dest.writeInt(button_back);
 		dest.writeInt(button_next.get());
-		dest.writeInt(button_extra);
+		dest.writeInt(action_extra);
 	}
 
 	@Override public int describeContents() { return 0; }
