@@ -82,7 +82,7 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="dialog_reactivate_message">Island was unexpectedly deactivated, please grant the Device Admin permission to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island? You will LOSE ALL THE DATA IN ISLAND.\n\nDon\'t worry, apps and data outside Island will NEVER be affected.</string>
     <string name="dialog_destroy_exclusives_message">Since exclusively installed in Island, the following %1$d app(s) will be UNINSTALLED effectively from your device if Island is destroyed.\n\n%2$s\n\nAre you sure you want to proceed?</string>
-    <string name="dialog_deactivate_message">Are you sure to deactivate Island?\n\nYou have to go through the setup flow again to bring it back.</string>
+    <string name="dialog_deactivate_message">Are you sure to deactivate God mode?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_add_shortcut">Add a shortcut to de-freeze and launch %1$s?</string>
     <string name="dialog_provision_in_progress">Preparing Island…</string>

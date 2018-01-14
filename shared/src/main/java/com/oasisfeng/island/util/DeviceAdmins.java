@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
+import com.google.common.base.Preconditions;
 import com.oasisfeng.island.analytics.Analytics;
 
 import java.util.List;
@@ -29,7 +30,8 @@ public class DeviceAdmins {
 	}
 
 	private static ComponentName queryComponentName(final Context context) {
-		final List<ComponentName> active_admins = ((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE)).getActiveAdmins();
+		final List<ComponentName> active_admins
+				= Preconditions.checkNotNull((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE)).getActiveAdmins();
 		if (active_admins != null && ! active_admins.isEmpty()) for (final ComponentName active_admin : active_admins)
 			if (Modules.MODULE_ENGINE.equals(active_admin.getPackageName())) return active_admin;
 
@@ -51,6 +53,4 @@ public class DeviceAdmins {
 	}
 
 	private static ComponentName sDeviceAdminComponent;
-
-	private static final String TAG = DeviceAdmins.class.getSimpleName();
-}
+ }
