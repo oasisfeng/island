@@ -7,6 +7,5 @@ package com.oasisfeng.island;
  */
 public class InternalContentProviders {
 
-	public static class _0 extends com.oasisfeng.island.firebase.FirebaseCondom {}
 	public static class _1 extends com.oasisfeng.island.util.Users {}
 }

@@ -12,6 +12,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.firebase.FirebaseApp;
 import com.oasisfeng.condom.CondomContext;
 import com.oasisfeng.condom.CondomKit;
+import com.oasisfeng.condom.CondomOptions;
 import com.oasisfeng.island.IslandApplication;
 
 /**
@@ -27,15 +28,21 @@ public class FirebaseWrapper {
 
 	static {
 		Context context = IslandApplication.$();
-		final int gms_availability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
-		if (gms_availability != ConnectionResult.SUCCESS) {
+		if (! isGooglePlayServicesReady(context)) {
 			// Block Google Play services if not ready (either missing or version too low), to force Firebase Analytics to use local implementation
 			// and suppress the annoying notification of GMS missing or upgrade required.
-			final CondomContext condom = CondomContext.wrap(context, "Firebase", FirebaseCondom.buildOptions().addKit(new NotificationKit()));
+			final CondomContext condom = CondomContext.wrap(context, "Firebase",
+					new CondomOptions().setOutboundJudge((t, i, pkg) -> ! "com.google.android.gms".equals(pkg)).addKit(new NotificationKit()));
 			FirebaseApp.initializeApp(condom);
 			context = condom;
 		} else FirebaseApp.initializeApp(context);
 		sFirebaseContext = context;
+	}
+
+	private static boolean isGooglePlayServicesReady(final Context context) {
+		if (context.getPackageManager().resolveContentProvider("com.google.android.gsf.gservices", 0) == null) return false;
+		final int gms_availability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
+		return gms_availability == ConnectionResult.SUCCESS;
 	}
 
 	private static class NotificationKit implements CondomKit {
