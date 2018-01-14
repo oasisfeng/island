@@ -37,6 +37,7 @@ import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
+import com.oasisfeng.island.util.Users;
 
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
@@ -120,7 +121,7 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
 		// Check for incomplete provisioning, before DPM.isProvisioningAllowed() check which returns true in this case.
-		if (SDK_INT >= N && DevicePolicies.getManagedProfile(context) == null) {
+		if (SDK_INT >= N && Users.profile == null) {
 			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(context);
 			final Optional<ComponentName> profile_owner_result;
 			if (profile_id != 0 && (profile_owner_result = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) != null && profile_owner_result.isPresent()) {

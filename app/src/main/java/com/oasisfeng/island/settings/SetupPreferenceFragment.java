@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.os.UserHandle;
 import android.preference.Preference;
 import android.provider.Settings;
 import android.widget.Toast;
@@ -25,6 +24,7 @@ import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.setup.SetupViewModel;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
+import com.oasisfeng.island.util.Users;
 import com.oasisfeng.settings.ActionButtonPreference;
 
 import java.util.List;
@@ -73,13 +73,12 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 		}
 
 		final ActionButtonPreference pref_island = (ActionButtonPreference) findPreference(getString(R.string.key_setup_island));
-		final UserHandle profile = DevicePolicies.getManagedProfile(activity);
 		final int disabled_profile;
-		if (profile != null) {
-			final Optional<Boolean> is_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
-			if (is_profile_owner == null)
+		if (Users.profile != null) {
+			final Optional<Boolean> is_enabled_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
+			if (is_enabled_profile_owner == null || ! is_enabled_profile_owner.isPresent()) {
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_unknown, R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
-			else if (is_profile_owner.get()) {    // Normal (managed by Island)
+			} else if (is_enabled_profile_owner.get()) {    // Normal (managed by Island)
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed, R.drawable.ic_delete_forever_black_24dp, p -> {
 					IslandSetup.requestProfileRemoval(getActivity());
 					return true;

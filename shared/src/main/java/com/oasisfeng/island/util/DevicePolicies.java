@@ -14,7 +14,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import java.util.List;
+import com.google.common.base.Preconditions;
+
 import java.util.Set;
 
 import java9.util.Optional;
@@ -36,9 +37,7 @@ public class DevicePolicies {
 
 	/** @return whether Island is the profile owner, absent if no enabled profile or profile has no owner, or null for failure. */
 	public static @Nullable Optional<Boolean> isOwnerOfEnabledProfile(final Context context) {
-		final UserHandle profile = getManagedProfile(context);
-		if (profile == null) return Optional.empty();
-		return isProfileOwner(context, profile);
+		return Users.profile == null ? Optional.empty() : isProfileOwner(context, Users.profile);
 	}
 
 	/** @return whether Island is the profile owner, absent if no such profile or profile has no owner, or null for failure. */
@@ -48,21 +47,12 @@ public class DevicePolicies {
 				: Optional.of(Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName()));
 	}
 
-	public static @Nullable UserHandle getManagedProfile(final Context context) {
-		final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
-		if (um == null) return null;
-		final List<UserHandle> profiles = um.getUserProfiles();
-		for (final UserHandle profile : profiles)
-			if (! profile.equals(Users.owner)) return profile;   	// Only one managed profile is supported by Android at present.
-		return null;
-	}
-
 	/** @return the profile owner component (may not be present), or null for failure */
 	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final int profile) {
 		if (Hacks.DevicePolicyManager_getProfileOwnerAsUser.isAbsent()) return null;
 		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
 		try {
-			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(dpm));
+			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(Preconditions.checkNotNull(dpm)));
 		} catch (final RuntimeException e) {	// IllegalArgumentException("Requested profile owner for invalid userId", re) on API 21~23
 			return null;						//   or RuntimeException by RemoteException.rethrowFromSystemServer() on API 24+
 		}
