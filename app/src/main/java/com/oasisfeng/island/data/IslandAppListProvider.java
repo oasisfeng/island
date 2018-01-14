@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.os.RemoteException;
 import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,13 +17,15 @@ import android.util.Log;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
-import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.provisioning.CriticalAppsManager;
 import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.shuttle.ShuttleContext;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
@@ -36,12 +37,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 import java9.util.function.Consumer;
 import java9.util.function.Predicate;
+import java9.util.stream.Collectors;
 import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
+import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -119,50 +123,40 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		if (Users.hasProfile()) mClonedHiddenSystemApps.get().initializeIfNeeded(context());
 	}
 
-	private void refresh(final Map<String, IslandAppInfo> apps) {
+	private void refresh(final Map<String, IslandAppInfo> output_apps) {
 		if (Users.profile != null) {		// Collect Island-specific apps
 			if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {    // Since Android N, we can query ApplicationInfo directly
-				collectIslandApps_Api24(apps);
+				super.installedApps().map(app -> getApplicationInfo(app.packageName, PM_FLAGS_GET_APP_INFO, Users.profile))
+						.filter(info -> info != null && (info.flags & FLAG_INSTALLED) != 0)
+						.forEach(info -> output_apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
 				Log.d(TAG, "All apps loaded.");
-			} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), this::onIslandServiceConnected))
-				Log.w(TAG, "Failed to connect to Island");
+			} else {
+				final Context context = context();
+				final ListenableFuture<List<ApplicationInfo>> apps_future = MethodShuttle.runInProfile(context,
+						() -> StreamSupport.stream(context.getPackageManager().getInstalledApplications(PM_FLAGS_GET_APP_INFO))
+						.filter(app -> (app.flags & FLAG_INSTALLED) != 0).collect(Collectors.toList()));	// TODO: ParceledListSlice to avoid TransactionTooLargeException.
+				apps_future.addListener(() -> {
+					Log.v(TAG, "Connected to profile.");
+					final List<ApplicationInfo> apps;
+					try {
+						apps = apps_future.get();
+					} catch (final ExecutionException e) {
+						Log.w(TAG, "Failed to query apps in Island", e.getCause());
+						return;
+					} catch (final InterruptedException ignored) { return; }
 
-//			// Get all apps with launcher activity in profile.
-//			final List<LauncherActivityInfo> launchable_apps = mLauncherApps.get().getActivityList(null, profile);
-//			String previous_pkg = null;
-//			for (final LauncherActivityInfo app : launchable_apps) {
-//				final ApplicationInfo app_info = app.getApplicationInfo();
-//				final String pkg = app_info.packageName;
-//				if (pkg.equals(previous_pkg)) continue;		// In case multiple launcher entries in one app.
-//				apps.put(pkg, new IslandAppInfo(this, GlobalStatus.profile, app_info, null));
-//				previous_pkg = pkg;
-//			}
+					final List<IslandAppInfo> updated = new ArrayList<>(apps.size());
+					final ConcurrentHashMap<String, IslandAppInfo> app_map = mIslandAppMap.get();
+					for (final ApplicationInfo app : apps) {
+						final IslandAppInfo info = new IslandAppInfo(this, Users.profile, app, null);
+						app_map.put(app.packageName, info);
+						updated.add(info);
+					}
+					Log.d(TAG, "All apps loaded.");
+					notifyUpdate(updated);
+				}, MoreExecutors.directExecutor());
+			}
 		}
-	}
-
-	@RequiresApi(N) private void collectIslandApps_Api24(final Map<String, IslandAppInfo> apps) {
-		super.installedApps().map(app -> getApplicationInfo(app.packageName, PM_FLAGS_GET_APP_INFO, Users.profile))
-				.filter(info -> info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0)
-				.forEach(info -> apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
-	}
-
-	private void onIslandServiceConnected(final IIslandManager island) {
-		Log.v(TAG, "Connected to profile.");
-		final List<ApplicationInfo> apps; try {
-			apps = island.queryApps(PM_FLAGS_GET_APP_INFO, ApplicationInfo.FLAG_INSTALLED);
-		} catch (final RemoteException e) {
-			Log.e(TAG, "Unexpected remote error", e);
-			return;
-		}
-		final List<IslandAppInfo> updated = new ArrayList<>(apps.size());
-		final ConcurrentHashMap<String, IslandAppInfo> app_map = mIslandAppMap.get();
-		for (final ApplicationInfo app : apps) {
-			final IslandAppInfo info = new IslandAppInfo(this, Users.profile, app, null);
-			app_map.put(app.packageName, info);
-			updated.add(info);
-		}
-		Log.d(TAG, "All apps loaded.");
-		notifyUpdate(updated);
 	}
 
 	/** Synchronous on Android 6+, asynchronous otherwise
@@ -185,10 +179,10 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
 			final ApplicationInfo info = getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO, Users.profile);
-			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
+			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
 		} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), service -> {
 			final ApplicationInfo info = service.getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
-			callback.accept(info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? info : null);
+			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
 		})) callback.accept(null);
 	}
 
@@ -245,7 +239,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			}
 			if (app.isHidden()) return;		// The removal callback is triggered by freezing.
 			queryApplicationInfoInProfile(pkg, info -> {
-				if (info != null && (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {	// Frozen
+				if (info != null && (info.flags & FLAG_INSTALLED) != 0) {	// Frozen
 					final IslandAppInfo new_info = new IslandAppInfo(IslandAppListProvider.this, user, info, mIslandAppMap.get().get(pkg));
 					if (! new_info.isHidden()) {
 						Log.w(TAG, "Correct the flag for hidden package: " + pkg);

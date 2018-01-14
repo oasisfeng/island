@@ -25,10 +25,6 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.io.File;
-import java.util.List;
-
-import java9.util.stream.Collectors;
-import java9.util.stream.StreamSupport;
 
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -46,13 +42,6 @@ public class IslandManagerService extends IIslandManager.Stub {
 	public IslandManagerService(final Context context) {
 		mContext = context;
 		mDevicePolicies = new DevicePolicies(context);
-	}
-
-	// TODO: Use ParceledSlickList instead of List
-	@Override public List<ApplicationInfo> queryApps(final int query_flags, final int include_flags) {
-		final List<ApplicationInfo> apps = mContext.getPackageManager().getInstalledApplications(query_flags);
-		if (include_flags == 0) return apps;
-		return StreamSupport.stream(apps).filter(app -> (app.flags & include_flags) != 0).collect(Collectors.toList());
 	}
 
 	@Override public ApplicationInfo getApplicationInfo(final String pkg, final int flags) {
