@@ -52,6 +52,7 @@ import java9.util.Optional;
 import java9.util.stream.Collectors;
 
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 
@@ -150,16 +151,20 @@ public class IslandSetup {
 		if (activity == null) return;
 		String content = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?><device-owner package=\"" + Modules.MODULE_ENGINE + "\" />";
 		final Optional<Boolean> is_profile_owner;
+		final String admin_component = DeviceAdmins.getComponentName(activity).flattenToString();
 		if (Users.profile != null && (is_profile_owner = DevicePolicies.isProfileOwner(activity, Users.profile)) != null && is_profile_owner.orElse(false))
 			content += "<profile-owner package=\"" + Modules.MODULE_ENGINE + "\" name=\"Island\" userId=\"" + Users.toId(Users.profile)
-					+ "\" component=\"" + DeviceAdmins.getComponentName(activity).flattenToString() + "\" />";
+					+ "\" component=\"" + admin_component + "\" />";
 		content = content.replace("\"", "\\\"").replace("'", "\\'")
 				.replace("<", "\\<").replace(">", "\\>");
 
 		final String file = new File(Hacks.Environment_getSystemSecureDirectory.invoke().statically(), "device_owner.xml").getAbsolutePath();
-		final String command = "echo " + content + " > " + file + " && chmod 600 " + file + " && chown system:system " + file + " && echo DONE";
+		final StringBuilder command = new StringBuilder("echo ").append(content).append(" > ").append(file)
+				.append(" && chmod 600 ").append(file).append(" && chown system:system ").append(file);
+		if (SDK_INT >= LOLLIPOP_MR1) command.append(" && dpm set-active-admin ").append(admin_component).append(" ; echo DONE");
+		else command.append(" && echo DONE");
 
-		SafeAsyncTask.execute(activity, a -> Shell.SU.run(command), output -> {
+		SafeAsyncTask.execute(activity, a -> Shell.SU.run(command.toString()), output -> {
 			if (activity.isDestroyed() || activity.isFinishing()) return;
 			if (output == null || output.isEmpty()) {
 				Toast.makeText(activity, R.string.toast_setup_mainland_non_root, Toast.LENGTH_LONG).show();
@@ -172,6 +177,7 @@ public class IslandSetup {
 				return;
 			}
 			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : Joiner.on("\n").skipNulls().join(output)).send();
+			// Start the device-admin activation UI (no-op if already activated with root above), since "dpm set-active-admin" is not supported on Android 5.0.
 			fragment.startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(activity))
 					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, activity.getString(R.string.dialog_mainland_device_admin)), request_code);
