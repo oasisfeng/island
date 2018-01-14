@@ -78,7 +78,8 @@ import static android.os.Build.VERSION_CODES.N;
 			"com.google.android.feedback",			// Used by GMS for crash report
 			"com.google.android.contacts",			// Contacts (Google)
 			// MIUI-specific
-			"com.miui.core"							// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
+			"com.miui.core",						// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
+			"com.miui.securitycenter"				// Required by system Settings app of MIUI.
 	);
 	private static final Collection<Intent> sCriticalActivityIntents = Arrays.asList(
 			new Intent(Intent.ACTION_INSTALL_PACKAGE),				// Usually com.android.packageinstaller, may be altered by ROM.
