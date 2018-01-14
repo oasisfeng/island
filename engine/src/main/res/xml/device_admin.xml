@@ -3,12 +3,13 @@
     <uses-policies>
         <force-lock/>
         <wipe-data/>
-        <encrypted-storage/>
         <disable-camera/>
         <disable-keyguard-features/>
+        <!--<encrypted-storage/>-->
         <!--<watch-login/>-->
         <!--<limit-password/>-->
         <!--<expire-password/>-->
         <!--<reset-password/>-->
+        <!--<set-global-proxy/>-->
     </uses-policies>
 </device-admin>
