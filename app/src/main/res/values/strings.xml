@@ -145,10 +145,11 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
     <string name="pref_setup_mainland_summary_not_managed">Normal</string>
     <string name="pref_setup_mainland_activate_title">Activate God mode</string>
     <string name="pref_setup_mainland_activate_text">"God mode" allows Island to control apps in mainland, in the same way it controls apps in Island, plus some additional device-wide capabilities.\n\nIf your device is rooted, God mode can be activated in one click. (system partition untouched)\n\nFor non-root device, God mode could only be activated manually. Please follow the online guide for instructions.</string>
+    <string name="pref_setup_category_status">Status (click the side icon to setup / deactivate)</string>
     <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
-    <string name="pref_setup_mainland_reprovision_title">Re-provision Mainland</string>
+    <string name="pref_setup_mainland_reprovision_title">Repair Mainland</string>
     <string name="pref_setup_mainland_reprovision_summary">This may help to fix issues in Mainland.\nAll apps and data will be preserved.</string>
-    <string name="pref_setup_island_reprovision_title">Re-provision Island</string>
+    <string name="pref_setup_island_reprovision_title">Repair Island</string>
     <string name="pref_setup_island_reprovision_summary">This may help to fix issues in Island.\nAll apps and data will be preserved.</string>
 
     <string name="pref_about_header">About</string>
