@@ -56,7 +56,6 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -226,8 +225,10 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (! policies.isActiveDeviceOwner()) return;
 
-		if (SDK_INT >= O) policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
-		if (SDK_INT >= N) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_USER);
+		if (SDK_INT >= O) {
+			policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
+			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
+		}
 		try {
 			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
 				policies.setBackupServiceEnabled(true);
