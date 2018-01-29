@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
+import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
+import android.net.Uri;
 import android.provider.BlockedNumberContract;
 import android.provider.CalendarContract;
 import android.provider.CallLog;
@@ -29,11 +31,7 @@ import com.oasisfeng.perf.Performances;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
-import java9.util.stream.Collectors;
-import java9.util.stream.StreamSupport;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
@@ -52,7 +50,6 @@ import static android.os.Build.VERSION_CODES.N;
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
 			"android",
 			"com.android.systemui",					// This package is generally safe to either freeze or not, leave them unfrozen for better compatibility.
-			"com.android.packageinstaller",			// Package installer responsible for ACTION_INSTALL_PACKAGE (AOSP)
 			"com.android.settings",					// For various setting intent activities
 			"com.android.keychain",					// MIUI system will crash without this
 			"com.android.providers.telephony",		// The SMS & MMS and carrier info provider. (SMS & MMS provider is shared across all users)
@@ -73,7 +70,6 @@ import static android.os.Build.VERSION_CODES.N;
 			"com.android.providers.downloads.ui",	// Downloads
 			// Essential Google packages
 			"com.google.android.gsf",				// Google services framework
-			"com.google.android.packageinstaller",	// Package installer (Google)
 			WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES,	// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
 			"com.google.android.feedback",			// Used by GMS for crash report
 			"com.google.android.contacts",			// Contacts (Google)
@@ -82,7 +78,8 @@ import static android.os.Build.VERSION_CODES.N;
 			"com.miui.securitycenter"				// Required by system Settings app of MIUI.
 	);
 	private static final Collection<Intent> sCriticalActivityIntents = Arrays.asList(
-			new Intent(Intent.ACTION_INSTALL_PACKAGE),				// Usually com.android.packageinstaller, may be altered by ROM.
+			new Intent(Intent.ACTION_INSTALL_PACKAGE)				// Usually com.[google.]android.packageinstaller, may be altered by ROM.
+					.setData(Uri.fromParts("file", "dummy.apk", null)),
 			new Intent(Settings.ACTION_SETTINGS),					// Usually com.android.settings
 			new Intent("android.content.pm.action.REQUEST_PERMISSIONS"/* PackageManager.ACTION_REQUEST_PERMISSIONS */),
 																	// Runtime permission UI, may be special system app on some ROMs (e.g. MIUI)
@@ -140,13 +137,11 @@ import static android.os.Build.VERSION_CODES.N;
 
 		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
 		for (final Intent intent : sCriticalActivityIntents) {
-			@SuppressLint("WrongConstant") final List<String> pkgs =
-					StreamSupport.stream(pm.queryIntentActivities(intent, MATCH_DEFAULT_ONLY | Hacks.MATCH_ANY_USER_AND_UNINSTALLED))
-					.filter(info -> (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) != 0)
-					.map(info -> info.activityInfo.packageName)
-					.collect(Collectors.toList());
-			Log.i(TAG, "Critical package(s) for " + intent + ": " + pkgs);
-			critical_sys_pkgs.addAll(pkgs);
+			@SuppressLint("WrongConstant") final ResolveInfo info = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+			if (info == null || (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;
+			final String pkg = info.activityInfo.packageName;
+			Log.i(TAG, "Critical package for " + intent + ": " + pkg);
+			critical_sys_pkgs.add(pkg);
 		}
 		Performances.check(stopwatch, 1, "CriticalActivities");
 

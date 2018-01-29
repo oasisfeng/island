@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
@@ -21,6 +23,7 @@ import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.IntentFilters;
@@ -40,6 +43,7 @@ import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
@@ -245,6 +249,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		}
 		ensureInstallNonMarketAppAllowed(context, policies);
+		disableRedundantPackageInstaller(context, policies);	// To fix unexpectedly enabled package installer due to historical mistake in SystemAppsManager.
 
 		enableAdditionalForwarding(policies);
 
@@ -275,6 +280,19 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			Settings.Secure.putInt(resolver, INSTALL_NON_MARKET_APPS, 1);
 		} else policies.setSecureSetting(INSTALL_NON_MARKET_APPS, "1");
 		return Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0;
+	}
+
+	private static void disableRedundantPackageInstaller(final Context context, final DevicePolicies policies) {
+		final List<ResolveInfo> installers = context.getPackageManager().queryIntentActivities(
+				new Intent(Intent.ACTION_INSTALL_PACKAGE).setData(Uri.fromParts("file", "dummy.apk", null)), 0);
+		if (installers.size() <= 1) return;
+		final LauncherApps launcher_apps = Preconditions.checkNotNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
+		for (final ResolveInfo installer : installers) {
+			final String installer_pkg = installer.activityInfo.packageName;
+			if (launcher_apps.isPackageEnabled(installer_pkg, Users.owner)) continue;
+			policies.setApplicationHidden(installer_pkg, true);
+			Log.i(TAG, "Disabled redundant package installer: " + installer_pkg);
+		}
 	}
 
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {
