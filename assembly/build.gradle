@@ -81,7 +81,7 @@ dependencies {
     fullImplementation project(':mobile')
     fullImplementation project(':fileprovider')
 
-    implementation 'com.android.support:support-v4:27.0.2'          // To workaround the dependency conflict caused by "com.android.databinding:library"
+    implementation 'com.android.support:support-v4:27.1.1'          // To workaround the dependency conflict caused by "com.android.databinding:library"
     implementation 'com.google.firebase:firebase-analytics:11.8.0'  // To workaround the dependency conflict caused by "com.google.gms.google-services"
 }
 

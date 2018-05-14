@@ -26,8 +26,8 @@
             <!--suppress AndroidUnknownAttribute: selectedItemPosition is actually a valid attribute handled by AdapterViewBindingAdapter -->
             <Spinner
                 android:id="@+id/filters"
-                android:entries="@{apps.filterPrimaryOptions}"
-                android:selectedItemPosition="@={apps.filterPrimaryChoice}"
+                android:entries="@{apps.mFilterPrimaryOptions}"
+                android:selectedItemPosition="@={apps.mFilterPrimaryChoice}"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:popupTheme="@style/AppThemeOverlay.Dark.Popup"

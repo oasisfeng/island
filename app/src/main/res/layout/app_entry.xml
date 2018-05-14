@@ -14,19 +14,19 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:paddingBottom="2dp"
-        android:clipToPadding="false" comment:x2="Ensure the correct visual effect of elevation"
+        android:clipToPadding="false" comment:_clipToPadding="Ensure the correct visual effect of elevation"
         android:background="@{app.selected ? @color/background_highlight : @color/background}">
 
         <TextView
             android:id="@+id/entry_name"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingTop="2dp" comment:x1="Carefully adjusted padding for visually better elevation shadow"
-            android:paddingStart="32dp" comment:x2="Actual start/end padding should minus 16dp (the negative parent padding)"
+            android:paddingTop="2dp" comment:_paddingTop="Carefully adjusted padding for visually better elevation shadow"
+            android:paddingStart="32dp" comment:_paddingStart_paddingEnd="Actual start/end padding should minus 16dp (the negative parent padding)"
             android:paddingEnd="32dp"
             android:background="?android:attr/selectableItemBackground"
 
-            comment:x3="The 'pop up' effect"
+            comment:popUpEffect="The 'pop up' effect"
             android:elevation="@{app.selected ? @dimen/elevation_card_resting : 0}" tools:elevation="@dimen/elevation_card_resting"
             android:outlineProvider="bounds"
             android:scaleX="@{app.selected ? 1.01f : 1}"
@@ -43,7 +43,7 @@
 
             android:text="@{app.info.label}" tools:text="Island"
             android:drawableStart="@{app.icon ?? @drawable/app_icon_empty}" tools:drawableStart="@mipmap/ic_launcher"
-            android:drawableEnd="@{apps.selection == app &amp;&amp; app.info.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
+            android:drawableEnd="@{apps.mSelection == app &amp;&amp; app.info.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
             android:onViewAttachedToWindow="@{app::onViewAttached}"
             android:onClick="@{v -> apps.onItemClick(app)}"
             bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"/>

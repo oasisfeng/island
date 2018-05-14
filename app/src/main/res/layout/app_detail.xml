@@ -27,7 +27,7 @@
         app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
         app:behavior_hideable="true"
         app:behavior_peekHeight="88dp"
-        bind:behavior_state="@{apps.selection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
+        bind:behavior_state="@{apps.mSelection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
         bind:behavior_bottomSheetCallback="@{apps.bottom_sheet_callback}"
         android:onClick="@{apps::onBottomSheetClick}">
 
@@ -38,7 +38,7 @@
             android:background="?android:attr/colorPrimary"
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
             android:popupTheme="@style/AppThemeOverlay.Dark.Popup"
-            android:title="@{apps.selection.info.label}" tools:title="Island"
+            android:title="@{apps.mSelection.info.label}" tools:title="Island"
             bind:menu="@{apps.actions_menu}"
             android:onMenuItemClick="@{item -> apps.onActionClick(context, item)}"
             android:prompt="@{guide.prompt_action}"/>
@@ -50,7 +50,7 @@
             android:paddingStart="@dimen/margin_medium"
             android:paddingEnd="@dimen/margin_medium"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{apps.selection.getStatusText(context)}" tools:text="Frozen"/>
+            android:text="@{apps.mSelection.getStatusText(context)}" tools:text="Frozen"/>
 
         <TextView
             android:id="@+id/package_name"
@@ -60,7 +60,7 @@
             android:paddingEnd="@dimen/margin_medium"
             android:paddingTop="@dimen/margin_small"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{@string/field_app_id(apps.selection.info.packageName)}" tools:text="APP ID: com.oasisfeng.island"/>
+            android:text="@{@string/field_app_id(apps.mSelection.info.packageName)}" tools:text="APP ID: com.oasisfeng.island"/>
 
         <TextView
             android:id="@+id/debug_info"
@@ -70,7 +70,7 @@
             android:paddingEnd="@dimen/margin_medium"
             android:paddingTop="@dimen/margin_small"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@{apps.selection.debugInfo}" tools:text="DEBUG INFORMATION"
+            android:text="@{apps.mSelection.debugInfo}" tools:text="DEBUG INFORMATION"
             bind:shown="@{BuildConfig.DEBUG}" />
 
     </LinearLayout>

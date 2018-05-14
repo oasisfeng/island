@@ -1,6 +1,5 @@
 package com.oasisfeng.island;
 
-import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -13,6 +12,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.oasisfeng.android.base.Scopes;
@@ -35,7 +35,7 @@ import java9.util.Optional;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
 	private void startMainUi(final Bundle savedInstanceState) {
 		setContentView(R.layout.activity_main);
 		if (savedInstanceState != null) return;
-		getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
+		getSupportFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
 		performOverallAnalyticsIfNeeded();
 	}
 

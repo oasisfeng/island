@@ -1,13 +1,11 @@
 package com.oasisfeng.common.app;
 
-import android.databinding.BaseObservable;
-import android.databinding.Bindable;
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.ViewModel;
 import android.databinding.ObservableList;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
-import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.model.AppViewModel;
 
 import java.util.HashMap;
@@ -19,7 +17,7 @@ import java.util.Map;
  *
  * Created by Oasis on 2016/6/24.
  */
-public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable {
+public class BaseAppListViewModel<T extends AppViewModel> extends ViewModel {
 
 	// TODO: Rebuild the whole AbstractAppListViewModel to keep immutability?
 	protected void replaceApps(final List<T> apps) {
@@ -36,7 +34,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 			Log.d(TAG, "Update in place: " + pkg);
 			final int index = mApps.indexOf(old_app_vm);
 			mApps.updateItemAt(index, app);
-			if (mSelection == old_app_vm) setSelection(app);	// Keep the selection unchanged
+			if (mSelection.getValue() == old_app_vm) setSelection(app);	// Keep the selection unchanged
 		} else {
 			Log.d(TAG, "Put: " + pkg);
 			mApps.add(app);
@@ -67,7 +65,7 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 		if (app == null) return;
 		Log.d(TAG, "Remove: " + pkg);
 		mApps.remove(app);
-		if (mSelection == app) setSelection(null);
+		if (mSelection.getValue() == app) setSelection(null);
 	}
 
 	protected boolean contains(final String pkg) { return mAppsByPackage.containsKey(pkg); }
@@ -75,18 +73,15 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 
 	/* Selection related */
 
-	@SuppressWarnings("WeakerAccess"/* Publicly accessed in app_detail.xml */) @Bindable public @Nullable T getSelection() { return mSelection; }
-
 	public void clearSelection() {
 		setSelection(null);
 	}
 
 	protected void setSelection(final T selection) {
-		if (mSelection == selection) return;
-		if (mSelection != null) mSelection.selected.set(false);
-		mSelection = selection;
-		if (selection != null) selection.selected.set(true);
-		notifyPropertyChanged(BR.selection);
+		if (mSelection.getValue() == selection) return;
+		if (mSelection.getValue() != null) mSelection.getValue().selected.setValue(false);
+		mSelection.setValue(selection);
+		if (selection != null) selection.selected.setValue(true);
 	}
 
 	protected BaseAppListViewModel(final Class<T> clazz) {
@@ -97,5 +92,5 @@ public class BaseAppListViewModel<T extends AppViewModel> extends BaseObservable
 
 	private final ObservableSortedList<T> mApps;
 	private final Map<String, T> mAppsByPackage = new HashMap<>();	// Enforced constraint: apps from different users must not be shown at the same time.
-	private transient T mSelection;
+	public final MutableLiveData<T> mSelection = new MutableLiveData<>();
 }

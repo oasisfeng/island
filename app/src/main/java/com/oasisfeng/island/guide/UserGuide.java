@@ -1,11 +1,12 @@
 package com.oasisfeng.island.guide;
 
 import android.app.Activity;
+import android.arch.lifecycle.Observer;
 import android.databinding.BindingAdapter;
-import android.databinding.Observable;
 import android.databinding.ObservableField;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.v4.app.FragmentActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,6 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.model.AppListViewModel.Filter;
@@ -92,26 +92,24 @@ public class UserGuide {
 		return view;
 	}
 
-	public static @Nullable UserGuide initializeIfNeeded(final Activity activity, final AppListViewModel vm) {
+	public static @Nullable UserGuide initializeIfNeeded(final FragmentActivity activity, final AppListViewModel vm) {
 		final Scopes.Scope scope = Scopes.app(activity);
 
-		final boolean action_tips_pending = UserGuide.anyActionTipPending(scope);
+		final boolean action_tips_pending = anyActionTipPending(scope);
 		if (! action_tips_pending && scope.isMarked(SCOPE_KEY_TIP_FILTER)) return null;
 		final UserGuide guide = new UserGuide(activity, scope);
 
-		vm.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
-			if (property == BR.filterPrimaryChoice) {
-				final AppListViewModel vm = (AppListViewModel) sender;
-				final Filter filter = vm.getFilterPrimaryOptions().get(vm.getFilterPrimaryChoice()).parent();
-				if (guide.mFilter != null && filter != guide.mFilter) {
-					scope.markOnly(SCOPE_KEY_TIP_FILTER);				// User just switched filter, no need to show tip for filter switching.
-					activity.invalidateOptionsMenu();
-					if (! UserGuide.anyActionTipPending(scope))
-						vm.removeOnPropertyChangedCallback(this);	// No need to monitor filter or selection any more.
-				}
-				guide.mFilter = filter;
-			} else if (property == BR.selection) guide.mAppSelection = ((AppListViewModel) sender).getSelection();
+		vm.mFilterPrimaryChoice.observe(activity, new Observer<Integer>() { @Override public void onChanged(final Integer choice) {
+			final Filter filter = vm.mFilterPrimaryOptions.getValue().get(choice).parent();
+			if (guide.mFilter != null && filter != guide.mFilter) {
+				scope.markOnly(SCOPE_KEY_TIP_FILTER);                // User just switched filter, no need to show tip for filter switching.
+				activity.invalidateOptionsMenu();
+				if (! anyActionTipPending(scope))
+					vm.mFilterPrimaryChoice.removeObserver(this);    // No need to monitor filter or selection any more.
+			}
+			guide.mFilter = filter;
 		}});
+		vm.mSelection.observe(activity, selection -> guide.mAppSelection = selection);
 		if (action_tips_pending) {
 			final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 			provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {

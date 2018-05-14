@@ -3,8 +3,8 @@ package com.oasisfeng.island.console.apps;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.databinding.Observable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -21,6 +20,8 @@ import android.os.Process;
 import android.provider.DocumentsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -45,7 +46,6 @@ import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.guide.UserGuide;
-import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
@@ -62,7 +62,10 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.Context.BIND_AUTO_CREATE;
@@ -79,14 +82,15 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /** The main UI - App list */
+@ParametersAreNonnullByDefault
 public class AppListFragment extends Fragment {
 
-	@Override public void onCreate(final Bundle savedInstanceState) {
+	@Override public void onCreate(final @Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
-		final Activity activity = getActivity();
+		final FragmentActivity activity = getActivity();
 		mShuttleContext = new ShuttleContext(activity);
-		mViewModel = new AppListViewModel();
+		mViewModel = ViewModelProviders.of(this).get(AppListViewModel.class);
 		mViewModel.mProfileController = IslandManager.NULL;
 		mUserGuide = UserGuide.initializeIfNeeded(activity, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
@@ -115,7 +119,6 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onDestroy() {
 		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(mAppChangeObserver);
-		mViewModel.removeOnPropertyChangedCallback(onPropertyChangedCallback);
 		super.onDestroy();
 	}
 
@@ -155,22 +158,19 @@ public class AppListFragment extends Fragment {
 		}
 	};
 
-	private final Observable.OnPropertyChangedCallback onPropertyChangedCallback = new Observable.OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable observable, final int var) {
-		if (var == BR.selection) invalidateOptionsMenu();
-	}};
-
 	private void invalidateOptionsMenu() {
 		final Activity activity = getActivity();
 		if (activity != null) activity.invalidateOptionsMenu();
 	}
 
-	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final @Nullable Bundle saved_state) {
-		final Activity activity = getActivity();
+	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final @Nullable ViewGroup container, final @Nullable Bundle saved_state) {
+		final Activity activity = Objects.requireNonNull(getActivity());
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
 		mBinding.setGuide(mUserGuide);
+		mBinding.setLifecycleOwner(this);
 		mViewModel.attach(activity, mBinding.details.toolbar.getMenu(), saved_state);
-		mViewModel.addOnPropertyChangedCallback(onPropertyChangedCallback);
+		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
 
 		if (! Services.bind(activity, IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
 			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
@@ -186,7 +186,7 @@ public class AppListFragment extends Fragment {
 		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
 				if (getActivity() == null) return;
-				mViewModel.setFilterPrimaryChoice(position);
+				mViewModel.mFilterPrimaryChoice.setValue(position);
 			}
 			@Override public void onNothingSelected(final AdapterView<?> parent) {}
 		});
@@ -196,7 +196,8 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onDestroyView() {
 		if (mIslandManagerConnection != null) {
-			getActivity().unbindService(mIslandManagerConnection);
+			final FragmentActivity activity = getActivity();
+			if (activity != null) activity.unbindService(mIslandManagerConnection);
 			mIslandManagerConnection = null;
 		}
 		super.onDestroyView();
@@ -210,7 +211,7 @@ public class AppListFragment extends Fragment {
 		final Context context = getActivity();
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
-		menu.findItem(R.id.menu_search).setVisible(mViewModel.getSelection() == null).setOnActionExpandListener(mOnActionExpandListener);
+		menu.findItem(R.id.menu_search).setVisible(mViewModel.mSelection.getValue() == null).setOnActionExpandListener(mOnActionExpandListener);
 		menu.findItem(R.id.menu_files).setVisible(context != null && Users.hasProfile() &&
 				(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null));
 		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
@@ -252,7 +253,7 @@ public class AppListFragment extends Fragment {
 	}
 
 	private void requestPermissionAndLaunchFilesExplorerInIsland() {
-		final Context context = getActivity();
+		final Context context = Objects.requireNonNull(getActivity());
 		if (context.checkPermission(WRITE_EXTERNAL_STORAGE, Process.myPid(), Process.myUid()) == PERMISSION_GRANTED) {
 			final ListenableFuture<Boolean> future = MethodShuttle.runInProfile(context, () -> {
 				final Intent intent = findFileBrowser(context);

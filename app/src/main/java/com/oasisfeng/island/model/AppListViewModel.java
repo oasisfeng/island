@@ -9,8 +9,6 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.databinding.Bindable;
-import android.databinding.Observable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,6 +35,7 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
@@ -55,7 +54,9 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import java9.util.Optional;
@@ -107,14 +108,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return mActiveFilters;
 	}
 
-	@Bindable public int getFilterPrimaryChoice() { return mFilterPrimaryChoice; }
-
-	public void setFilterPrimaryChoice(final int index) {
-		if (mActiveFilters != null && mFilterPrimaryChoice == index) return;
-		mFilterPrimaryChoice = Math.min(index, mFilterPrimaryOptions.size() - 1);
-		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.get(mFilterPrimaryChoice));
+	private void setFilterPrimaryChoice(final int index) {
+		final int choice = Math.min(index, mFilterPrimaryOptions.getValue().size() - 1);
+		if (choice < 0) return;		// No options yet.
+		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.getValue().get(choice));
 		updateActiveFilters();
-		notifyPropertyChanged(BR.filterPrimaryChoice);
 	}
 
 	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
@@ -138,19 +136,18 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void updateActiveFilters() {
-		Predicate<IslandAppInfo> filter = mFilterShared.and(mFilterPrimaryOptions.get(mFilterPrimaryChoice).filter());
+		Predicate<IslandAppInfo> filter = mFilterShared.and(mFilterPrimaryOptions.getValue().get(mFilterPrimaryChoice.getValue()).filter());
 		if (! mFilterIncludeHiddenSystemApps) filter = filter.and(app -> ! app.isSystem() || app.isLaunchable());
 		if (! TextUtils.isEmpty(mFilterText)) filter = filter.and(this::matchQueryText);
 		mActiveFilters = filter;
 
-		final AppViewModel selected = getSelection();
+		final AppViewModel selected = mSelection.getValue();
 		clearSelection();
 
-		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
-		IslandAppInfo.startBatchLauncherActivityCheck(provider.getContext());	// Performance optimization
+		IslandAppInfo.startBatchLauncherActivityCheck(mAppListProvider.getContext());	// Performance optimization
 		final List<AppViewModel> apps;
 		try {
-			apps = provider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+			apps = mAppListProvider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		} finally {
 			IslandAppInfo.endBatchLauncherActivityCheck();
 		}
@@ -162,7 +159,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 				break;
 			}
 
-		final IslandAppInfo greenify = provider.get(GreenifyClient.getGreenifyPackage(provider.getContext()));
+		final IslandAppInfo greenify = mAppListProvider.get(GreenifyClient.GREENIFY_PKG);
 		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
 
@@ -173,22 +170,21 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	public AppListViewModel() {
 		super(AppViewModel.class);
-		addOnPropertyChangedCallback(new OnPropertyChangedCallback() { @Override public void onPropertyChanged(final Observable sender, final int property) {
-			if (property == BR.selection) updateActions();
-		}});
+		mSelection.observeForever(selection -> updateActions());
+		mFilterPrimaryChoice.observeForever(this::setFilterPrimaryChoice);
 	}
 
-	public void attach(final Activity activity, final Menu actions, final Bundle saved_state) {
-		mActivity = activity;
-		mDeviceOwner = new DevicePolicies(activity).isActiveDeviceOwner();
-		layout_manager = new LinearLayoutManager(activity);
+	public void attach(final Context context, final Menu actions, final Bundle saved_state) {
+		mAppListProvider = IslandAppListProvider.getInstance(context);
+		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
+		layout_manager = new LinearLayoutManager(context);
 		mActions = actions;
-		mFilterPrimaryOptions = StreamSupport.stream(Arrays.asList(Filter.values())).filter(Filter::visible).map(filter -> filter.new Entry(activity)).collect(Collectors.toList());
-		notifyPropertyChanged(BR.filterPrimaryOptions);
-		mFilterShared = IslandAppListProvider.excludeSelf(activity).and(AppInfo::isInstalled);
+		mFilterPrimaryOptions.setValue(StreamSupport.stream(Arrays.asList(Filter.values()))
+				.filter(Filter::visible).map(filter -> filter.new Entry(context)).collect(Collectors.toList()));
+		mFilterShared = IslandAppListProvider.excludeSelf(context).and(AppInfo::isInstalled);
 		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
-				.orElse(Math.min(Filter.Island.ordinal(), mFilterPrimaryOptions.size() - 1));
-		setFilterPrimaryChoice(filter_primary);
+				.orElse(Math.min(Filter.Island.ordinal(), mFilterPrimaryOptions.getValue().size() - 1));
+		mFilterPrimaryChoice.setValue(filter_primary);
 	}
 
 	public void setOwnerController(final IIslandManager controller) {
@@ -196,16 +192,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
-		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mFilterPrimaryChoice);
+		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mFilterPrimaryChoice.getValue());
 	}
 
 	private void updateActions() {
-		final AppViewModel selection = getSelection();
+		final AppViewModel selection = mSelection.getValue();
 		if (selection == null) return;
 		final IslandAppInfo app = selection.info();
 		final UserHandle profile = Users.profile;
-		final IslandAppListProvider provider = IslandAppListProvider.getInstance(mActivity);
-		final boolean exclusive = provider.isExclusive(app);
+		final boolean exclusive = mAppListProvider.isExclusive(app);
 
 		final boolean in_owner = Users.isOwner(app.user), is_managed = mDeviceOwner || ! in_owner;
 		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
@@ -242,8 +237,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
-		if (getSelection() == null) return;
-		final IslandAppInfo app = getSelection().info();
+		if (mSelection.getValue() == null) return;
+		final IslandAppInfo app = mSelection.getValue().info();
 		Analytics.$().event("action_launch").with(ITEM_ID, app.packageName).send();
 		if (! app.isHidden() && IslandManager.launchApp(v.getContext(), app.packageName, app.user)) return;	// Not frozen, launch the app directly.
 		String failure;
@@ -259,7 +254,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public boolean onActionClick(final Context context, final MenuItem item) {
-		final AppViewModel selection = getSelection();
+		final AppViewModel selection = mSelection.getValue();
 		if (selection == null) return false;
 		final IslandAppInfo app = selection.info();
 		final String pkg = app.packageName;
@@ -270,31 +265,32 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			cloneApp(context, app);
 			clearSelection();
 		} else if (id == R.id.menu_clone_back) {
-			mActivity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
+			Activities.startActivity(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
 			Analytics.$().event("action_install_outside").with(ITEM_ID, pkg).send();
 			clearSelection();
 		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
 			Analytics.$().event("action_freeze").with(ITEM_ID, pkg).send();
 
-			if (IslandAppListProvider.getInstance(context).isCritical(pkg)) {
-				Dialogs.buildAlert(mActivity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning)
+			final Activity activity = Activities.findActivityFrom(context);
+			if (activity != null && IslandAppListProvider.getInstance(context).isCritical(pkg)) {
+				Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning)
 						.withCancelButton().withOkButton(() -> freezeApp(context, selection)).show();
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
 			try {
 				controller.unfreezeApp(pkg);
-				refreshAppStateAsSysBugWorkaround(pkg);
+				refreshAppStateAsSysBugWorkaround(context, pkg);
 				clearSelection();
 			} catch (final RemoteException ignored) {}
 		} else if (id == R.id.menu_app_info) {
-			launchSettingsAppInfoActivity(app);
+			launchSettingsAppInfoActivity(context, app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
-			onRemovalRequested();
+			onRemovalRequested(context);
 		} else if (id == R.id.menu_shortcut) {
-			onShortcutRequested();
+			onShortcutRequested(context);
 		} else if (id == R.id.menu_greenify) {
-			onGreenifyRequested();
+			onGreenifyRequested(context);
 //		} else if (id == R.id.menu_enable) {
 //			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 //			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
@@ -314,108 +310,109 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			final boolean frozen = controller(app).freezeApp(app.packageName, "manual");
 			if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
 			else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
-			refreshAppStateAsSysBugWorkaround(app.packageName);
+			refreshAppStateAsSysBugWorkaround(context, app.packageName);
 		} catch (final RemoteException e) {
 			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 
-	private void launchSettingsAppInfoActivity(final IslandAppInfo app) {
+	private void launchSettingsAppInfoActivity(final Context context, final IslandAppInfo app) {
 		try {
 			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
-			((LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE))
+			Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
 					.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
 		} catch (final RemoteException | SecurityException ignored) {}
 	}
 
-	private void onShortcutRequested() {
-		if (getSelection() == null) return;
-		final String pkg = getSelection().info().packageName;
+	private void onShortcutRequested(final Context context) {
+		if (mSelection.getValue() == null) return;
+		final String pkg = mSelection.getValue().info().packageName;
 		Analytics.$().event("action_create_shortcut").with(ITEM_ID, pkg).send();
-		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(mActivity).getString(mActivity.getString(R.string.key_launch_shortcut_prefix), mActivity.getString(R.string.default_launch_shortcut_prefix));
-		final Boolean result = AbstractAppLaunchShortcut.createOnLauncher(mActivity, pkg, Users.isOwner(getSelection().info().user), shortcut_prefix);
-		if (result == null) Toast.makeText(mActivity, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();	// No toast if result == true, since the shortcut pinning is pending user confirmation.
-		else if (! result) Toast.makeText(mActivity, R.string.toast_shortcut_failed, Toast.LENGTH_LONG).show();
+		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.key_launch_shortcut_prefix), context.getString(R.string.default_launch_shortcut_prefix));
+		final Boolean result = AbstractAppLaunchShortcut.createOnLauncher(context, pkg, Users.isOwner(mSelection.getValue().info().user), shortcut_prefix);
+		if (result == null) Toast.makeText(context, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();	// No toast if result == true, since the shortcut pinning is pending user confirmation.
+		else if (! result) Toast.makeText(context, R.string.toast_shortcut_failed, Toast.LENGTH_LONG).show();
 	}
 
-	private void onGreenifyRequested() {
-		if (getSelection() == null) return;
-		final IslandAppInfo app = getSelection().info();
+	private void onGreenifyRequested(final Context context) {
+		if (mSelection.getValue() == null) return;
+		final IslandAppInfo app = mSelection.getValue().info();
 		Analytics.$().event("action_greenify").with(ITEM_ID, app.packageName).send();
 
 		final String mark = "greenify-explained";
-		final Boolean greenify_ready = GreenifyClient.checkGreenifyVersion(mActivity);
+		final Boolean greenify_ready = GreenifyClient.checkGreenifyVersion(context);
 		final boolean greenify_installed = greenify_ready != null;
 		final boolean unavailable_or_version_too_low = greenify_ready == null || ! greenify_ready;
-		if (unavailable_or_version_too_low || ! Scopes.app(mActivity).isMarked(mark)) {
-			String message = mActivity.getString(R.string.dialog_greenify_explanation);
+		if (unavailable_or_version_too_low || ! Scopes.app(context).isMarked(mark)) {
+			String message = context.getString(R.string.dialog_greenify_explanation);
 			if (greenify_installed && unavailable_or_version_too_low)
-				message += "\n\n" + mActivity.getString(R.string.dialog_greenify_version_too_low);
+				message += "\n\n" + context.getString(R.string.dialog_greenify_version_too_low);
 			final int button = ! greenify_installed ? R.string.dialog_button_install : ! greenify_ready ? R.string.dialog_button_upgrade : R.string.dialog_button_continue;
-			new AlertDialog.Builder(mActivity).setTitle(R.string.dialog_greenify_title).setMessage(message).setPositiveButton(button, (d, w) -> {
+			new AlertDialog.Builder(context).setTitle(R.string.dialog_greenify_title).setMessage(message).setPositiveButton(button, (d, w) -> {
 				if (! unavailable_or_version_too_low) {
-					Scopes.app(mActivity).markOnly(mark);
-					greenify(app);
-				} else GreenifyClient.openInAppMarket(mActivity);
+					Scopes.app(context).markOnly(mark);
+					greenify(context, app);
+				} else GreenifyClient.openInAppMarket(context);
 			}).show();
-		} else greenify(app);
+		} else greenify(context, app);
 	}
 
-	private void greenify(final IslandAppInfo app) {
-		if (! GreenifyClient.greenify(mActivity, app.packageName, app.user))
-			Toast.makeText(mActivity, R.string.toast_greenify_failed, Toast.LENGTH_LONG).show();
+	private static void greenify(final Context context, final IslandAppInfo app) {
+		if (! GreenifyClient.greenify(context, app.packageName, app.user))
+			Toast.makeText(context, R.string.toast_greenify_failed, Toast.LENGTH_LONG).show();
 	}
 
 	public void onBlockingRequested() {
-		if (getSelection() == null) return;
+		if (mSelection.getValue() == null) return;
 		try {
-			controller(getSelection().info()).block(getSelection().info.packageName);
+			controller(mSelection.getValue().info()).block(mSelection.getValue().info.packageName);
 		} catch (final RemoteException ignored) {}
 	}
 
 	public void onUnblockingRequested() {
-		if (getSelection() == null) return;
+		if (mSelection.getValue() == null) return;
 		try {
-			controller(getSelection().info()).unblock(getSelection().info.packageName);
+			controller(mSelection.getValue().info()).unblock(mSelection.getValue().info.packageName);
 		} catch (final RemoteException ignored) {}
 	}
 
-	private void onRemovalRequested() {
-		if (getSelection() == null) return;
-		final IslandAppInfo app = getSelection().info();
+	private void onRemovalRequested(final Context context) {
+		if (mSelection.getValue() == null) return;
+		final IslandAppInfo app = mSelection.getValue().info();
 		Analytics.$().event("action_uninstall").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, "system").send();
 		if (app.isSystem()) {
+			final Activity activity = Objects.requireNonNull(Activities.findActivityFrom(context));
 			if (app.isCritical()) {
-				Dialogs.buildAlert(mActivity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
-						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
-			} else Dialogs.buildAlert(mActivity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
-					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(app)).show();
+				Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
+						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(context, app)).show();
+			} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
+					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(context, app)).show();
 		} else try {
 			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
 			if (app.isSystem()) {
-				final LauncherApps launcher = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+				final LauncherApps launcher = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 				launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
 				Analytics.$().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send();
-			} else Activities.startActivity(mActivity, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", app.packageName, null))
+			} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", app.packageName, null))
 					.putExtra(Intent.EXTRA_USER, app.user));
 		} catch (final RemoteException ignored) {
-			final LauncherApps launcher_apps = (LauncherApps) mActivity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			launcher_apps.startAppDetailsActivity(new ComponentName(app.packageName, ""), Users.profile, null, null);
-			Toast.makeText(mActivity, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
+			final LauncherApps launcher = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
+			launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), Users.profile, null, null);
+			Toast.makeText(context, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
 		}
 	}
 
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */
-	private void refreshAppStateAsSysBugWorkaround(final String pkg) {
-		IslandAppListProvider.getInstance(mActivity).refreshPackage(pkg, Users.profile, false);
+	private static void refreshAppStateAsSysBugWorkaround(final Context context, final String pkg) {
+		IslandAppListProvider.getInstance(context).refreshPackage(pkg, Users.profile, false);
 	}
 
 	private void cloneApp(final Context context, final IslandAppInfo app) {
 		final int check_result;
 		final String pkg = app.packageName;
-		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(mActivity).get(app.packageName, Users.profile);
+		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(app.packageName, Users.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
-			launchSettingsAppInfoActivity(app_in_profile);
+			launchSettingsAppInfoActivity(context, app_in_profile);
 			return;
 		}
 
@@ -424,7 +421,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		} catch (final RemoteException ignored) { return; }		// FIXME: Error message
 		switch (check_result) {
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
-			Toast.makeText(mActivity, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
+			Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
 			if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
@@ -434,12 +431,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 					}
 				} catch (final RemoteException ignored) {}    	// FIXME: Error message
-			} else Toast.makeText(mActivity, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+			} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
-			Dialogs.buildAlert(mActivity, 0, R.string.dialog_clone_incapable_explanation)
-					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(mActivity, Config.URL_FAQ.get()))
+			final Activity activity = Activities.findActivityFrom(context);
+			if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
+					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
 					.setPositiveButton(android.R.string.cancel, null).show();
+			else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show();
 			return;
 		case IslandManager.CLONE_RESULT_OK_SYS_APP:
 			Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
@@ -455,7 +454,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 			break;
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
 			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			final ActivityInfo market_info = market_intent.resolveActivityInfo(mActivity.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
+			final ActivityInfo market_info = market_intent.resolveActivityInfo(context.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
 			if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
 				Analytics.$().event("clone_via_market").with(ITEM_ID, pkg).with(ITEM_CATEGORY, market_info.packageName).send();
 			showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
@@ -482,16 +481,17 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
-		if (! Scopes.app(mActivity).isMarked(mark)) {
-			Dialogs.buildAlert(mActivity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-				Scopes.app(mActivity).markOnly(mark);
+		final Activity activity = Activities.findActivityFrom(context);
+		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
+			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
+				Scopes.app(context).markOnly(mark);
 				doCloneApp(context, app);
 			}).show();
 		} else doCloneApp(context, app);
 	}
 
 	public final void onItemClick(final AppViewModel clicked) {
-		setSelection(clicked != getSelection() ? clicked : null);	// Click the selected one to deselect
+		setSelection(clicked != mSelection.getValue() ? clicked : null);	// Click the selected one to deselect
 	}
 
 	@SuppressWarnings("MethodMayBeStatic") public final void onBottomSheetClick(final View view) {
@@ -503,20 +503,16 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
 	}
 
-	@Bindable public List<Filter.Entry> getFilterPrimaryOptions() {		// Referenced by <Spinner> in layout
-		return mFilterPrimaryOptions;
-	}
-
 	/* Parcelable */
 
 	private AppListViewModel(final Parcel in) {
 		super(AppViewModel.class);
-		mFilterPrimaryChoice = in.readByte();
+		mFilterPrimaryChoice.setValue(in.readInt());
 		mFilterIncludeHiddenSystemApps = in.readByte() != 0;
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeByte((byte) mFilterPrimaryChoice);
+		dest.writeInt(mFilterPrimaryChoice.getValue());
 		dest.writeByte((byte) (mFilterIncludeHiddenSystemApps ? 1 : 0));
 	}
 
@@ -542,15 +538,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	public RecyclerView.LayoutManager layout_manager;
 
 	/* Attachable fields */
-	private Activity mActivity;
+	private IslandAppListProvider mAppListProvider;
 	private Menu mActions;
 	private IIslandManager mOwnerController;
 	public IIslandManager mProfileController;
 	/* Parcelable fields */
-	private int mFilterPrimaryChoice;
+	public final NonNullMutableLiveData<Integer> mFilterPrimaryChoice = new NonNullMutableLiveData<>(0);
 	private boolean mFilterIncludeHiddenSystemApps;
 	/* Transient fields */
-	private List<Filter.Entry> mFilterPrimaryOptions;
+	public final NonNullMutableLiveData<List<Filter.Entry>> mFilterPrimaryOptions = new NonNullMutableLiveData<>(Collections.emptyList());
 	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
 	private String mFilterText;
 	private boolean mDeviceOwner;

@@ -1,13 +1,15 @@
 package com.oasisfeng.common.app;
 
-import android.databinding.BaseObservable;
-import android.databinding.ObservableBoolean;
+import android.arch.lifecycle.ViewModel;
 import android.databinding.ObservableField;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.View;
 
 import com.oasisfeng.android.ui.IconResizer;
+import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
+import com.oasisfeng.island.IslandApplication;
+import com.oasisfeng.island.mobile.R;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 
@@ -16,11 +18,11 @@ import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
  *
  * Created by Oasis on 2016/8/11.
  */
-public class BaseAppViewModel extends BaseObservable {
+public class BaseAppViewModel extends ViewModel {
 
 	public final AppInfo info;
-	public final ObservableField<Drawable> icon = new ObservableField<>();
-	public transient final ObservableBoolean selected = new ObservableBoolean(false);
+	public final ObservableField<Drawable> icon = new ObservableField<>();		// Issue in data-binding - MutableLiveData causes initially empty icons.
+	public transient final NonNullMutableLiveData<Boolean> selected = new NonNullMutableLiveData<>(false);
 	private volatile boolean mIconLoadingStarted;
 
 	public boolean isSystem() { return (info.flags & FLAG_SYSTEM) != 0; }
@@ -44,6 +46,5 @@ public class BaseAppViewModel extends BaseObservable {
 		return TextUtils.equals(info.getLabel(), another.info.getLabel());
 	}
 
-
-	private final static IconResizer sIconResizer = new IconResizer();		// TODO: Avoid static
+	private final static IconResizer sIconResizer = new IconResizer((int) IslandApplication.$().getResources().getDimension(R.dimen.app_icon_size));	// TODO: Avoid static
 }
