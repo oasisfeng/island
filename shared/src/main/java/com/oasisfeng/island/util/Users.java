@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.os.Process;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -13,6 +14,8 @@ import com.google.common.base.Preconditions;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static android.content.Context.USER_SERVICE;
@@ -24,12 +27,12 @@ import static android.content.Context.USER_SERVICE;
  */
 public abstract class Users extends PseudoContentProvider {
 
-	public static @Nullable UserHandle profile;		// Semi-immutable (until profile is created or destroyed)
+	public static @Nullable UserHandle profile;		// The first profile (semi-immutable, until profile is created or destroyed)
 	public static UserHandle owner;
 
 	public static boolean hasProfile() { return profile != null; }
 
-	private static final UserHandle CURRENT = android.os.Process.myUserHandle();
+	private static final UserHandle CURRENT = Process.myUserHandle();
 	private static final int CURRENT_ID = toId(CURRENT);
 
 	public static UserHandle current() { return CURRENT; }
@@ -52,15 +55,17 @@ public abstract class Users extends PseudoContentProvider {
 				if (profile == null) profile = user_or_profile;		// Only one managed profile is supported by Android framework at present.
 			} else owner = user_or_profile;
 		}
-		sProfileId = profile != null ? toId(profile) : -1;
-		Log.i(TAG, "Profile ID: " + sProfileId);
+		final List<UserHandle> profiles = new ArrayList<>(user_and_profiles);
+		profiles.remove(owner);
+		sProfiles = profiles;
+		Log.i(TAG, "Profiles: " + sProfiles);
 	}
 
 	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user
 	public static boolean isOwner(final UserHandle user) { return toId(user) == 0; }
 
-	public static boolean isProfile() { return CURRENT_ID == sProfileId; }
-	public static boolean isProfile(final UserHandle user) { return toId(user) == sProfileId; }
+	public static boolean isProfile() { return sProfiles.contains(CURRENT); }
+	public static boolean isProfile(final UserHandle user) { return sProfiles.contains(user); }
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 
@@ -78,7 +83,7 @@ public abstract class Users extends PseudoContentProvider {
 	}};
 
 	private static final int PER_USER_RANGE = 100000;
-	private static int sProfileId = -1;		// -1 if no profile
+	private static List<UserHandle> sProfiles = Collections.emptyList();
 	private static final String TAG = "Users";
 
 	public static UserHandle fromId(final int user) {
