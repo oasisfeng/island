@@ -12,7 +12,7 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="48dp"
         android:paddingBottom="2dp"
         android:clipToPadding="false" comment:_clipToPadding="Ensure the correct visual effect of elevation"
         android:background="@{app.selected ? @color/background_highlight : @color/background}">
