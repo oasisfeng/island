@@ -10,6 +10,7 @@ import android.os.UserManager;
 import android.support.annotation.CheckResult;
 import android.support.annotation.RequiresApi;
 
+import com.google.common.base.Preconditions;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shuttle.ShuttleContext;
@@ -66,9 +67,10 @@ public class IslandManager {
 
 	/** @return profile ID, or 0 if none */
 	@RequiresApi(N) public static int getManagedProfileIdIncludingDisabled(final Context context) {
-		final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false).on(context.getSystemService(UserManager.class));
+		final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false)
+				.on(Preconditions.checkNotNull(context.getSystemService(UserManager.class)));
 		final int current_user = Process.myUserHandle().hashCode();
-		for (final int profile : profiles)
+		if (profiles != null) for (final int profile : profiles)
 			if (profile != current_user) return profile;   			// Only one managed profile is supported by Android at present.
 		return 0;
 	}

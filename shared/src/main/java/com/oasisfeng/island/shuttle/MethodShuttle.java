@@ -69,11 +69,11 @@ public class MethodShuttle {
 		final Field[] fields = clazz.getDeclaredFields();
 		final Object[] args;
 		if (constructor_params.length > 0) {
-			if (fields.length != constructor_params.length)
+			if (fields.length < constructor_params.length)		// Extra fields may be added by dev tools (e.g. instant-run).
 				throw new IllegalArgumentException("Parameter types mismatch: " + constructor + " / " + Arrays.deepToString(fields));
 
-			args = new Object[fields.length];
-			for (int i = 0; i < fields.length; i++) try {
+			args = new Object[constructor_params.length];
+			for (int i = 0; i < constructor_params.length; i++) try {
 				final Field field = fields[i];
 				if (field.getType() != constructor_params[i])
 					throw new IllegalArgumentException("Parameter types mismatch: " + constructor + " / " + Arrays.deepToString(fields));

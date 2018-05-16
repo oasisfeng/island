@@ -24,6 +24,8 @@
     <dimen name="fab_elevation">12dp</dimen>
     <dimen name="fab_elevation_pressed">8dp</dimen>
 
+    <dimen name="app_icon_size">36dp</dimen>
+
     <!-- Dimens used for the content inside the setup wizard layout. -->
     <dimen name="content_padding_bottom">24dp</dimen>
     <dimen name="content_padding_start_end">40dp</dimen>

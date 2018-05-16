@@ -23,7 +23,6 @@ import java.util.Set;
 import java9.util.stream.Collectors;
 import java9.util.stream.StreamSupport;
 
-import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -65,7 +64,7 @@ public class IslandAppInfo extends AppInfo {
 		final Boolean hidden = isHidden(this);
 		if (hidden != null) return hidden;
 		// The fallback implementation
-		return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
+		return ! ((LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Process.myUserHandle());
 	}
 
 	/** @return hidden state, or null if failed to */
@@ -94,7 +93,7 @@ public class IslandAppInfo extends AppInfo {
 			return Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager()) != null;
 		} else {
 			final LauncherApps launcher_apps;
-			if (isHidden() || (launcher_apps = (LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)) == null) {
+			if (isHidden() || (launcher_apps = (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE)) == null) {
 				final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
 				return context().getPackageManager().resolveActivity(intent, flags) != null;	// Disabled state is not reflected in this approach.
 			} else return isLauncherActivityAvailable(launcher_apps, packageName, user);	// Hidden app can not be detected via LauncherApps.

@@ -39,6 +39,8 @@ public class CriticalAppsManager {
 	}
 
 	@RequiresApi(N) public static @Nullable String getCurrentWebViewPackageName() {
+		if (Hacks.ServiceManager_getService == null || Hacks.IWebViewUpdateService$Stub_asInterface == null
+				|| Hacks.IWebViewUpdateService_getCurrentWebViewPackageName == null) return null;
 		try {
 			final IBinder service = Hacks.ServiceManager_getService.invoke("webviewupdate").statically();
 			if (service == null) throw new RuntimeException("Service not found: webviewupdate");
