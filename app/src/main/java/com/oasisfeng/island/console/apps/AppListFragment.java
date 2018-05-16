@@ -1,7 +1,6 @@
 package com.oasisfeng.island.console.apps;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.arch.lifecycle.ViewModelProviders;
@@ -29,7 +28,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -180,16 +178,7 @@ public class AppListFragment extends Fragment {
 			@Override public void onServiceDisconnected(final ComponentName name) {}
 		})) throw new IllegalStateException("Module engine not installed");
 
-		activity.setActionBar(mBinding.appbar);
-		final ActionBar actionbar = activity.getActionBar();
-		if (actionbar != null) actionbar.setDisplayShowTitleEnabled(false);
-		mBinding.filters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-			@Override public void onItemSelected(final AdapterView<?> parent, final View view, final int position, final long id) {
-				if (getActivity() == null) return;
-				mViewModel.mFilterPrimaryChoice.setValue(position);
-			}
-			@Override public void onNothingSelected(final AdapterView<?> parent) {}
-		});
+		activity.setActionBar(mBinding.actionbar);
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
 		return mBinding.getRoot();
 	}

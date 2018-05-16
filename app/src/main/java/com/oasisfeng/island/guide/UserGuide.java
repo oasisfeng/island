@@ -1,7 +1,6 @@
 package com.oasisfeng.island.guide;
 
 import android.app.Activity;
-import android.arch.lifecycle.Observer;
 import android.databinding.BindingAdapter;
 import android.databinding.ObservableField;
 import android.support.annotation.Nullable;
@@ -34,20 +33,14 @@ import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt;
  */
 public class UserGuide {
 
-	public final ObservableField<MaterialTapTargetPrompt.Builder> prompt_filter = new ObservableField<>();
 	public final ObservableField<MaterialTapTargetPrompt.Builder> prompt_action = new ObservableField<>();
 
 	public MenuItem.OnMenuItemClickListener getAvailableTip() {
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FILTER)) return mTipFilter;
 		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && mFilter == Filter.Mainland && mAppSelection != null && ! mAppSelection.isSystem()) return mTipClone;
 		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && mFilter == Filter.Island && mAppSelection != null) return mTipFreeze;
 		return null;
 	}
 
-	private final MenuItem.OnMenuItemClickListener mTipFilter = menu -> {
-		prompt_filter.set(buildPrompt(R.string.prompt_filter_title, R.string.prompt_filter_text).setPromptStateChangeListener(onHide(SCOPE_KEY_TIP_FILTER)));
-		return true;
-	};
 	private final MenuItem.OnMenuItemClickListener mTipClone = menu -> {
 		prompt_action.set(buildPrompt(R.string.prompt_clone_title, R.string.prompt_clone_text).setIcon(R.drawable.ic_add_to_photos_24dp)
 				.setPromptStateChangeListener(onHide(SCOPE_KEY_TIP_CLONE)));
@@ -96,37 +89,26 @@ public class UserGuide {
 		final Scopes.Scope scope = Scopes.app(activity);
 
 		final boolean action_tips_pending = anyActionTipPending(scope);
-		if (! action_tips_pending && scope.isMarked(SCOPE_KEY_TIP_FILTER)) return null;
+		if (! action_tips_pending) return null;
 		final UserGuide guide = new UserGuide(activity, scope);
 
-		vm.mFilterPrimaryChoice.observe(activity, new Observer<Integer>() { @Override public void onChanged(final Integer choice) {
-			final Filter filter = vm.mFilterPrimaryOptions.getValue().get(choice).parent();
-			if (guide.mFilter != null && filter != guide.mFilter) {
-				scope.markOnly(SCOPE_KEY_TIP_FILTER);                // User just switched filter, no need to show tip for filter switching.
-				activity.invalidateOptionsMenu();
-				if (! anyActionTipPending(scope))
-					vm.mFilterPrimaryChoice.removeObserver(this);    // No need to monitor filter or selection any more.
-			}
-			guide.mFilter = filter;
-		}});
+		vm.mFilterPrimaryChoice.observe(activity, choice -> guide.mFilter = vm.getCurrentChoice());
 		vm.mSelection.observe(activity, selection -> guide.mAppSelection = selection);
-		if (action_tips_pending) {
-			final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
-			provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
-				@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
-					if (apps.size() != 1) return;		// Batch update is never triggered by user interaction.
-					final IslandAppInfo app = apps.iterator().next();
-					if (app.isHidden())
-						scope.markOnly(SCOPE_KEY_TIP_FREEZE);		// User just froze an app, no need to show tip for app freezing.
-					else if (Users.isProfile(app.user) && app.getLastInfo() == null)
-						scope.markOnly(SCOPE_KEY_TIP_CLONE);		// User just cloned an app, no need to show tip for app cloning.
-					if (scope.isMarked(SCOPE_KEY_TIP_FREEZE) && scope.isMarked(SCOPE_KEY_TIP_CLONE))
-						provider.unregisterObserver(this);			// No more interest for package events.
-				}
+		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
+		provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
+			@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
+				if (apps.size() != 1) return;		// Batch update is never triggered by user interaction.
+				final IslandAppInfo app = apps.iterator().next();
+				if (app.isHidden())
+					scope.markOnly(SCOPE_KEY_TIP_FREEZE);		// User just froze an app, no need to show tip for app freezing.
+				else if (Users.isProfile(app.user) && app.getLastInfo() == null)
+					scope.markOnly(SCOPE_KEY_TIP_CLONE);		// User just cloned an app, no need to show tip for app cloning.
+				if (scope.isMarked(SCOPE_KEY_TIP_FREEZE) && scope.isMarked(SCOPE_KEY_TIP_CLONE))
+					provider.unregisterObserver(this);			// No more interest for package events.
+			}
 
-				@Override public void onPackageRemoved(final Collection<IslandAppInfo> apps) {}
-			});
-		}
+			@Override public void onPackageRemoved(final Collection<IslandAppInfo> apps) {}
+		});
 		return guide;
 	}
 
@@ -141,7 +123,6 @@ public class UserGuide {
 	private Filter mFilter;
 	private AppViewModel mAppSelection;
 
-	private static final String SCOPE_KEY_TIP_FILTER = "tip_filter";
 	private static final String SCOPE_KEY_TIP_CLONE = "tip_clone";
 	private static final String SCOPE_KEY_TIP_FREEZE = "tip_freeze";
 }

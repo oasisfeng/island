@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="filter_island">Island</string>
-    <string name="filter_mainland">Mainland</string>
+    <string name="tab_mainland">Mainland</string>
+    <string name="tab_island">Island</string>
+    <string name="tab_discovery">Discovery</string>
 
     <string name="status_alive">Active</string>
     <string name="status_frozen">Frozen</string>
@@ -166,8 +167,6 @@ the sandbox environment</b>. Island never collect data related to your privacy, 
 
     <!-- New User Guide -->
 
-    <string name="prompt_filter_title">Switch app collection</string>
-    <string name="prompt_filter_text">Use the spinner to switch among different collection of apps.\n\nAvailable actions for app may differ.</string>
     <string name="prompt_freeze_title">Freeze app in Island</string>
     <string name="prompt_freeze_text">Once frozen, the app in Island will vanish until being explicit unfrozen.\n\nApp could do absolutely nothing in frozen state.</string>
     <string name="prompt_clone_title">Clone app to Island</string>

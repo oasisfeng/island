@@ -2,6 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:bind="http://schemas.android.com/apk/res-auto"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         tools:context=".MainActivity">
 
     <data>
@@ -15,25 +16,13 @@
     <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
 
         <Toolbar
-            android:id="@+id/appbar"
+            android:id="@+id/actionbar"
             android:layout_width="match_parent"
             android:layout_height="?android:attr/actionBarSize"
             android:background="?android:attr/colorPrimary"
             android:elevation="4dp"
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-            android:popupTheme="@style/AppThemeOverlay.Dark.Popup">
-
-            <!--suppress AndroidUnknownAttribute: selectedItemPosition is actually a valid attribute handled by AdapterViewBindingAdapter -->
-            <Spinner
-                android:id="@+id/filters"
-                android:entries="@{apps.mFilterPrimaryOptions}"
-                android:selectedItemPosition="@={apps.mFilterPrimaryChoice}"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:popupTheme="@style/AppThemeOverlay.Dark.Popup"
-                android:prompt="@{guide.prompt_filter}"/>
-
-        </Toolbar>
+            android:popupTheme="@style/AppThemeOverlay.Dark.Popup" />
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/app_list"
@@ -45,7 +34,7 @@
             android:paddingEnd="-16dp"
             android:clipToPadding="false"
             android:background="@color/background"
-            bind:layoutManager="@{apps.layout_manager}"
+            app:layoutManager="android.support.v7.widget.LinearLayoutManager"
             bind:items="@{apps.items}"
             bind:item_binder="@{apps.item_binder}"
             bind:item_layout="@{@layout/app_entry}"
@@ -69,6 +58,18 @@
             android:layout_height="wrap_content"
             android:visibility="@{card != null ? View.VISIBLE : View.GONE}"
             bind:vm="@{card}" />
+
+        <android.support.design.widget.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_gravity="bottom"
+            app:menu="@menu/bottom_navigation"
+            app:itemBackground="?android:attr/colorPrimaryDark"
+            app:itemIconTint="@android:color/white"
+            app:itemTextColor="@drawable/bottom_navigation_text_color"
+            app:selectedItemId="@={apps.mFilterPrimaryChoice}" />
 
         <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" bind:guide="@{guide}"/>
 

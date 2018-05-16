@@ -19,10 +19,9 @@ import android.os.UserHandle;
 import android.preference.PreferenceManager;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.BottomSheetBehavior;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -52,18 +51,16 @@ import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java9.util.Optional;
 import java9.util.function.BooleanSupplier;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
-import java9.util.stream.StreamSupport;
 
 import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
 import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
@@ -75,6 +72,7 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
  *
  * Created by Oasis on 2015/7/7.
  */
+@ParametersAreNonnullByDefault
 public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
 
 	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
@@ -83,36 +81,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("WeakerAccess") public enum Filter {
-		Island		(R.string.filter_island,    Users::hasProfile,  app -> Users.isProfile(app.user) && app.shouldShowAsEnabled()),
-		Mainland	(R.string.filter_mainland,  () -> true,         app -> Users.isOwner(app.user)),
+		Island		(Users::hasProfile,  app -> Users.isProfile(app.user) && app.shouldShowAsEnabled()),
+		Mainland	(() -> true,         app -> Users.isOwner(app.user)),
 		;
 		boolean visible() { return mVisibility.getAsBoolean(); }
-		Filter(final @StringRes int label, final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mLabel = label; mVisibility = visibility; mFilter = filter; }
+		Filter(final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mVisibility = visibility; mFilter = filter; }
 
-		private final @StringRes int mLabel;
 		private final BooleanSupplier mVisibility;
 		private final Predicate<IslandAppInfo> mFilter;
-
-		public class Entry {
-			Entry(final Context context) { mContext = context; }
-			public Filter parent() { return Filter.this; }
-			Predicate<IslandAppInfo> filter() { return mFilter; }
-			@Override public String toString() { return mContext.getString(mLabel); }
-			private final Context mContext;
-		}
 	}
 
 	public boolean areSystemAppsIncluded() { return mFilterIncludeHiddenSystemApps; }
 
 	private Predicate<IslandAppInfo> activeFilters() {
 		return mActiveFilters;
-	}
-
-	private void setFilterPrimaryChoice(final int index) {
-		final int choice = Math.min(index, mFilterPrimaryOptions.getValue().size() - 1);
-		if (choice < 0) return;		// No options yet.
-		Log.d(TAG, "Filter primary: " + mFilterPrimaryOptions.getValue().get(choice));
-		updateActiveFilters();
 	}
 
 	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
@@ -136,10 +118,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void updateActiveFilters() {
-		Predicate<IslandAppInfo> filter = mFilterShared.and(mFilterPrimaryOptions.getValue().get(mFilterPrimaryChoice.getValue()).filter());
-		if (! mFilterIncludeHiddenSystemApps) filter = filter.and(app -> ! app.isSystem() || app.isLaunchable());
-		if (! TextUtils.isEmpty(mFilterText)) filter = filter.and(this::matchQueryText);
-		mActiveFilters = filter;
+		if (mFilterShared == null) return;		// When called by constructor.
+		final Filter primary_filter = getCurrentChoice();
+		Log.d(TAG, "Primary filter: " + primary_filter);
+		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
+		if (! mFilterIncludeHiddenSystemApps) combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isLaunchable());
+		if (! TextUtils.isEmpty(mFilterText)) combined_filter = combined_filter.and(this::matchQueryText);
+		mActiveFilters = combined_filter;
 
 		final AppViewModel selected = mSelection.getValue();
 		clearSelection();
@@ -163,27 +148,24 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
 
-	private static Set<String> getLaunchableApps(final LauncherApps launcher_apps, final UserHandle user) {
-		return StreamSupport.stream(launcher_apps.getActivityList(null, user))
-				.map(lai -> lai.getComponentName().getPackageName()).collect(Collectors.toSet());
+	public Filter getCurrentChoice() {
+		final int tab_id = mFilterPrimaryChoice.getValue();
+		if (tab_id == R.id.tab_mainland) return Filter.Mainland;
+		return Filter.Island.visible() ? Filter.Island : Filter.Mainland;
 	}
 
 	public AppListViewModel() {
 		super(AppViewModel.class);
 		mSelection.observeForever(selection -> updateActions());
-		mFilterPrimaryChoice.observeForever(this::setFilterPrimaryChoice);
+		mFilterPrimaryChoice.observeForever(choice -> updateActiveFilters());
 	}
 
-	public void attach(final Context context, final Menu actions, final Bundle saved_state) {
+	public void attach(final Context context, final Menu actions, final @Nullable Bundle saved_state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
-		layout_manager = new LinearLayoutManager(context);
 		mActions = actions;
-		mFilterPrimaryOptions.setValue(StreamSupport.stream(Arrays.asList(Filter.values()))
-				.filter(Filter::visible).map(filter -> filter.new Entry(context)).collect(Collectors.toList()));
 		mFilterShared = IslandAppListProvider.excludeSelf(context).and(AppInfo::isInstalled);
-		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE))
-				.orElse(Math.min(Filter.Island.ordinal(), mFilterPrimaryOptions.getValue().size() - 1));
+		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(R.id.tab_island/* default */);
 		mFilterPrimaryChoice.setValue(filter_primary);
 	}
 
@@ -535,7 +517,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		item.setVariable(BR.app, model);
 		item.setVariable(BR.apps, this);
 	};
-	public RecyclerView.LayoutManager layout_manager;
 
 	/* Attachable fields */
 	private IslandAppListProvider mAppListProvider;
@@ -546,7 +527,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	public final NonNullMutableLiveData<Integer> mFilterPrimaryChoice = new NonNullMutableLiveData<>(0);
 	private boolean mFilterIncludeHiddenSystemApps;
 	/* Transient fields */
-	public final NonNullMutableLiveData<List<Filter.Entry>> mFilterPrimaryOptions = new NonNullMutableLiveData<>(Collections.emptyList());
 	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
 	private String mFilterText;
 	private boolean mDeviceOwner;
