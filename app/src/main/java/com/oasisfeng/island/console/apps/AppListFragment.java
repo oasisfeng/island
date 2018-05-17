@@ -3,7 +3,6 @@ package com.oasisfeng.island.console.apps;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,8 +18,6 @@ import android.os.Process;
 import android.provider.DocumentsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,9 +30,11 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.oasisfeng.android.app.LifecycleFragment;
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.android.util.SafeAsyncTask;
+import com.oasisfeng.androidx.lifecycle.ViewModelProviders;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
 import com.oasisfeng.island.analytics.Analytics;
@@ -81,16 +80,16 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /** The main UI - App list */
 @ParametersAreNonnullByDefault
-public class AppListFragment extends Fragment {
+public class AppListFragment extends LifecycleFragment {
 
 	@Override public void onCreate(final @Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
-		final FragmentActivity activity = getActivity();
+		final Activity activity = getActivity();
 		mShuttleContext = new ShuttleContext(activity);
 		mViewModel = ViewModelProviders.of(this).get(AppListViewModel.class);
 		mViewModel.mProfileController = IslandManager.NULL;
-		mUserGuide = UserGuide.initializeIfNeeded(activity, mViewModel);
+		mUserGuide = UserGuide.initializeIfNeeded(activity, this, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
 
@@ -185,7 +184,7 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onDestroyView() {
 		if (mIslandManagerConnection != null) {
-			final FragmentActivity activity = getActivity();
+			final Activity activity = getActivity();
 			if (activity != null) activity.unbindService(mIslandManagerConnection);
 			mIslandManagerConnection = null;
 		}

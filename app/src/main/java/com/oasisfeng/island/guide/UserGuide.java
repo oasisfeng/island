@@ -1,11 +1,11 @@
 package com.oasisfeng.island.guide;
 
 import android.app.Activity;
+import android.arch.lifecycle.LifecycleOwner;
 import android.databinding.BindingAdapter;
 import android.databinding.ObservableField;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
-import android.support.v4.app.FragmentActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,15 +85,15 @@ public class UserGuide {
 		return view;
 	}
 
-	public static @Nullable UserGuide initializeIfNeeded(final FragmentActivity activity, final AppListViewModel vm) {
+	public static @Nullable UserGuide initializeIfNeeded(final Activity activity, final LifecycleOwner lifecycle_owner, final AppListViewModel vm) {
 		final Scopes.Scope scope = Scopes.app(activity);
 
 		final boolean action_tips_pending = anyActionTipPending(scope);
 		if (! action_tips_pending) return null;
 		final UserGuide guide = new UserGuide(activity, scope);
 
-		vm.mFilterPrimaryChoice.observe(activity, choice -> guide.mFilter = vm.getCurrentChoice());
-		vm.mSelection.observe(activity, selection -> guide.mAppSelection = selection);
+		vm.mFilterPrimaryChoice.observe(lifecycle_owner, choice -> guide.mFilter = vm.getCurrentChoice());
+		vm.mSelection.observe(lifecycle_owner, selection -> guide.mAppSelection = selection);
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 		provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
 			@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
