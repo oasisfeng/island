@@ -3,11 +3,15 @@ package com.oasisfeng.island.featured;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.content.Context;
+import android.os.UserManager;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.StringRes;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.widget.Toast;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
@@ -16,13 +20,18 @@ import com.oasisfeng.android.google.GooglePlayStore;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Consumer;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.FeaturedEntryBinding;
 import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.settings.SetupPreferenceFragment;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.Users;
 
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.support.v7.widget.helper.ItemTouchHelper.END;
@@ -69,6 +78,39 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
 					R.string.featured_button_setup, context -> SettingsActivity.startWithPreference(context, SetupPreferenceFragment.class));
 
+		final UserManager um = Objects.requireNonNull((UserManager) getApplication().getSystemService(Context.USER_SERVICE));
+		final boolean enabled = is_device_owner && um.getUserRestrictions(Users.owner).containsKey(UserManager.DISALLOW_DEBUGGING_FEATURES)
+				|| Users.hasProfile() && um.getUserRestrictions(Users.profile).containsKey(UserManager.DISALLOW_DEBUGGING_FEATURES);
+		addFeatureRaw(app, "adb_secure", is_device_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
+				R.string.featured_adb_secure_description, 0, enabled ? R.string.featured_button_disable : R.string.featured_button_enable, (FeaturedViewModel vm) -> {
+			final Context context = vm.getApplication();
+			final boolean enabling = vm.button.getValue() == R.string.featured_button_enable;
+			if (is_device_owner) {
+				final DevicePolicies policies = new DevicePolicies(context);
+				if (enabling) policies.addUserRestriction(UserManager.DISALLOW_DEBUGGING_FEATURES);
+				else policies.clearUserRestriction(UserManager.DISALLOW_DEBUGGING_FEATURES);
+			}
+			if (! Users.hasProfile()) {		// No managed profile, all done.
+				vm.button.setValue(enabling ? R.string.featured_button_disable : R.string.featured_button_enable);
+				return;
+			}
+
+			final ListenableFuture<Boolean> future = MethodShuttle.runInProfile(context, () -> {
+				final DevicePolicies policies = new DevicePolicies(context);
+				if (enabling) policies.addUserRestriction(UserManager.DISALLOW_DEBUGGING_FEATURES);
+				else policies.clearUserRestriction(UserManager.DISALLOW_DEBUGGING_FEATURES);
+				return enabling;
+			});
+			future.addListener(() -> {
+				try {
+					vm.button.setValue(future.get() ? R.string.featured_button_disable : R.string.featured_button_enable);
+				} catch (final InterruptedException | ExecutionException e) {
+					Analytics.$().logAndReport(TAG, "Error setting featured button", e);
+					Toast.makeText(getApplication(), R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+				}
+			}, MoreExecutors.directExecutor());
+		});
+
 		if (ALWAYS_SHOW_ALL || ! apps.isInstalledInCurrentUser("com.oasisfeng.greenify"))
 			addFeature(app, "greenify", R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify,
 					R.string.featured_button_install, context -> Apps.of(context).showInMarket("com.oasisfeng.greenify", "island", "featured"));
@@ -96,4 +138,5 @@ public class FeaturedListViewModel extends AndroidViewModel {
 	}
 
 	private static final AtomicInteger sOrderGenerator = new AtomicInteger();
+	private static final String TAG = "FLVM";
 }
