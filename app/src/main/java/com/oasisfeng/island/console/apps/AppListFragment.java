@@ -3,6 +3,7 @@ package com.oasisfeng.island.console.apps;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.arch.lifecycle.ViewModelProvider;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -42,6 +43,7 @@ import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.featured.FeaturedListViewModel;
 import com.oasisfeng.island.guide.UserGuide;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
@@ -84,11 +86,14 @@ public class AppListFragment extends LifecycleFragment {
 
 	@Override public void onCreate(final @Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setRetainInstance(true);	// To keep view-model (by keeping the view-model provider)
 		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
 		mShuttleContext = new ShuttleContext(activity);
-		mViewModel = ViewModelProviders.of(this).get(AppListViewModel.class);
+		final ViewModelProvider provider = ViewModelProviders.of(this);
+		mViewModel = provider.get(AppListViewModel.class);
 		mViewModel.mProfileController = IslandManager.NULL;
+		mFeaturedViewModel = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 	}
@@ -164,9 +169,10 @@ public class AppListFragment extends LifecycleFragment {
 		final Activity activity = Objects.requireNonNull(getActivity());
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
+		mBinding.setFeatured(mFeaturedViewModel);
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
-		mViewModel.attach(activity, mBinding.details.toolbar.getMenu(), saved_state);
+		mViewModel.attach(activity, mBinding.details.toolbar.getMenu(), mBinding.bottomNavigation.getMenu(), saved_state);
 		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
 
 		if (! Services.bind(activity, IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
@@ -343,6 +349,7 @@ public class AppListFragment extends LifecycleFragment {
 
 	private AppListBinding mBinding;
 	private AppListViewModel mViewModel;
+	private FeaturedListViewModel mFeaturedViewModel;
 	private @Nullable UserGuide mUserGuide;
 	private ShuttleContext mShuttleContext;
 	private ServiceConnection mIslandManagerConnection;

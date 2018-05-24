@@ -84,7 +84,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		Island		(Users::hasProfile,  app -> Users.isProfile(app.user) && app.shouldShowAsEnabled()),
 		Mainland	(() -> true,         app -> Users.isOwner(app.user)),
 		;
-		boolean visible() { return mVisibility.getAsBoolean(); }
+		boolean available() { return mVisibility.getAsBoolean(); }
 		Filter(final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mVisibility = visibility; mFilter = filter; }
 
 		private final BooleanSupplier mVisibility;
@@ -119,7 +119,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private void updateActiveFilters() {
 		if (mFilterShared == null) return;		// When called by constructor.
-		final Filter primary_filter = getCurrentChoice();
+		final Filter primary_filter = getCurrentPrimaryFilter();
+		if (primary_filter == null) return;
 		Log.d(TAG, "Primary filter: " + primary_filter);
 		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
 		if (! mFilterIncludeHiddenSystemApps) combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isLaunchable());
@@ -148,25 +149,33 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
 
-	public Filter getCurrentChoice() {
-		final int tab_id = mFilterPrimaryChoice.getValue();
+	/** @return null if not primary filter is currently selected. (not in app list, for example) */
+	public @Nullable Filter getCurrentPrimaryFilter() {
+		final int tab_id = mCurrentTab.getValue();
 		if (tab_id == R.id.tab_mainland) return Filter.Mainland;
-		return Filter.Island.visible() ? Filter.Island : Filter.Mainland;
+		if (tab_id == R.id.tab_island && Filter.Island.available()) return Filter.Island;
+		return null;
 	}
 
 	public AppListViewModel() {
 		super(AppViewModel.class);
 		mSelection.observeForever(selection -> updateActions());
-		mFilterPrimaryChoice.observeForever(choice -> updateActiveFilters());
+		mCurrentTab.observeForever(choice -> updateActiveFilters());
 	}
 
-	public void attach(final Context context, final Menu actions, final @Nullable Bundle saved_state) {
+	public void attach(final Context context, final Menu actions, final Menu tabs, final @Nullable Bundle saved_state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
 		mActions = actions;
 		mFilterShared = IslandAppListProvider.excludeSelf(context).and(AppInfo::isInstalled);
-		final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(R.id.tab_island/* default */);
-		mFilterPrimaryChoice.setValue(filter_primary);
+
+		if (! Filter.Island.available()) {		// Island is unavailable
+			tabs.findItem(R.id.tab_island).setVisible(false);
+			mCurrentTab.setValue(R.id.tab_mainland);
+		} else {
+			final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(R.id.tab_island/* default */);
+			mCurrentTab.setValue(filter_primary);
+		}
 	}
 
 	public void setOwnerController(final IIslandManager controller) {
@@ -174,7 +183,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
-		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mFilterPrimaryChoice.getValue());
+		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mCurrentTab.getValue());
 	}
 
 	private void updateActions() {
@@ -489,12 +498,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	private AppListViewModel(final Parcel in) {
 		super(AppViewModel.class);
-		mFilterPrimaryChoice.setValue(in.readInt());
+		mCurrentTab.setValue(in.readInt());
 		mFilterIncludeHiddenSystemApps = in.readByte() != 0;
 	}
 
 	@Override public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeInt(mFilterPrimaryChoice.getValue());
+		dest.writeInt(mCurrentTab.getValue());
 		dest.writeByte((byte) (mFilterIncludeHiddenSystemApps ? 1 : 0));
 	}
 
@@ -524,7 +533,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	private IIslandManager mOwnerController;
 	public IIslandManager mProfileController;
 	/* Parcelable fields */
-	public final NonNullMutableLiveData<Integer> mFilterPrimaryChoice = new NonNullMutableLiveData<>(0);
+	public final NonNullMutableLiveData<Integer> mCurrentTab = new NonNullMutableLiveData<>(0);		// Menu ID
 	private boolean mFilterIncludeHiddenSystemApps;
 	/* Transient fields */
 	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always

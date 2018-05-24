@@ -13,6 +13,17 @@
     <string name="status_appendix_cloned">Cloned</string>
     <string name="status_appendix_exclusive">Exclusive</string>
 
+    <string name="featured_button_setup">Setup</string>
+    <string name="featured_button_install">Install</string>
+    <string name="featured_god_mode_title">God Mode</string>
+    <string name="featured_god_mode_description">\"God mode\" is a special mode of Island for advanced users, to help you take control of ALL apps (in both island and mainland). So you can freeze unwanted apps without root.</string>
+    <string name="featured_greenify_title">Greenify</string>
+    <string name="featured_greenify_description">Automatically freeze selected apps if not in active use, after screen goes off.</string>
+    <string name="featured_icebox_title">Ice Box</string>
+    <string name="featured_icebox_description">Easy and pleasant app launching experience for frozen apps in mainland. (Launching Island apps are not yet supported by Ice Box)</string>
+    <string name="featured_coolapk_title">CoolApk</string>
+    <string name="featured_coolapk_description">Upgrade frozen apps easily, no need to unfreeze them first.</string>
+
     <string name="setup_profile_welcome">Welcome</string>
     <string name="setup_island_intro">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data
 outside (including call logs, contacts and etc) even if permissions are granted.

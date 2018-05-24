@@ -9,7 +9,6 @@
     <color name="background">#F3F3F3</color>
     <color name="background_highlight">@android:color/white</color>
     <color name="text">#DF000000</color>
-    <color name="bottom_sheet_background">@color/primary</color>
     <color name="card_attention">#FFFFE082</color>
     <color name="card_button">#259B24</color>
     <!-- Specific colors -->

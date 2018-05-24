@@ -36,8 +36,10 @@ public class UserGuide {
 	public final ObservableField<MaterialTapTargetPrompt.Builder> prompt_action = new ObservableField<>();
 
 	public MenuItem.OnMenuItemClickListener getAvailableTip() {
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && mFilter == Filter.Mainland && mAppSelection != null && ! mAppSelection.isSystem()) return mTipClone;
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && mFilter == Filter.Island && mAppSelection != null) return mTipFreeze;
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && mCurrentPrimaryFilter == Filter.Mainland && mAppSelection != null && ! mAppSelection.isSystem())
+			return mTipClone;
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && mCurrentPrimaryFilter == Filter.Island && mAppSelection != null)
+			return mTipFreeze;
 		return null;
 	}
 
@@ -92,7 +94,7 @@ public class UserGuide {
 		if (! action_tips_pending) return null;
 		final UserGuide guide = new UserGuide(activity, scope);
 
-		vm.mFilterPrimaryChoice.observe(lifecycle_owner, choice -> guide.mFilter = vm.getCurrentChoice());
+		vm.mCurrentTab.observe(lifecycle_owner, choice -> guide.mCurrentPrimaryFilter = vm.getCurrentPrimaryFilter());
 		vm.mSelection.observe(lifecycle_owner, selection -> guide.mAppSelection = selection);
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 		provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
@@ -120,7 +122,7 @@ public class UserGuide {
 
 	private final Activity mActivity;
 	private final Scopes.Scope mAppScope;
-	private Filter mFilter;
+	private @Nullable Filter mCurrentPrimaryFilter;
 	private AppViewModel mAppSelection;
 
 	private static final String SCOPE_KEY_TIP_CLONE = "tip_clone";

@@ -1,6 +1,7 @@
 package com.oasisfeng.island.settings;
 
 import android.app.ActionBar;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.support.annotation.XmlRes;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
+import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.util.Modules;
@@ -30,6 +32,11 @@ import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
  * On tablets, settings are split by category, with category headers shown to the left of the list of settings.
  */
 public class SettingsActivity extends PreferenceActivity {
+
+	public static void startWithPreference(final Context context, final Class<? extends PreferenceFragment> fragment) {
+		final Intent intent = new Intent(context, SettingsActivity.class).putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, fragment.getName());
+		Activities.startActivity(context, intent);
+	}
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

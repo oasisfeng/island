@@ -1,6 +1,5 @@
 package com.oasisfeng.island;
 
-import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -15,6 +14,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.util.Log;
 
+import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.analytics.Analytics.Property;
@@ -35,7 +35,7 @@ import java9.util.Optional;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 
-public class MainActivity extends Activity {
+public class MainActivity extends LifecycleActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

@@ -9,6 +9,7 @@
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="android.view.View" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
+        <variable name="featured" type="com.oasisfeng.island.featured.FeaturedListViewModel" />
         <variable name="card" type="com.oasisfeng.ui.card.CardViewModel" />
         <variable name="guide" type="com.oasisfeng.island.guide.UserGuide" />
     </data>
@@ -29,6 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="?android:attr/actionBarSize"
+            bind:shown="@{apps.mCurrentTab != @id/tab_discovery}"
             android:paddingBottom="88dp"
             android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
             android:paddingEnd="-16dp"
@@ -39,6 +41,22 @@
             bind:item_binder="@{apps.item_binder}"
             bind:item_layout="@{@layout/app_entry}"
             tools:listitem="@layout/app_entry" /> <!-- "paddingBottom" should be no less than "behavior_peekHeight" of bottom sheet. -->
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/featured_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="?android:attr/actionBarSize"
+            bind:shown="@{apps.mCurrentTab == @id/tab_discovery}"
+            android:paddingBottom="88dp"
+            android:clipToPadding="false"
+            android:background="@color/background"
+            app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+            bind:items="@{featured.features}"
+            bind:item_binder="@{featured.item_binder}"
+            bind:item_layout="@{@layout/featured_entry}"
+            bind:item_touch="@{featured.item_touch_helper}"
+            tools:listitem="@layout/app_entry" />
 
         <TextView
             android:layout_width="match_parent"
@@ -66,10 +84,10 @@
             android:layout_alignParentBottom="true"
             android:layout_gravity="bottom"
             app:menu="@menu/bottom_navigation"
-            app:itemBackground="?android:attr/colorPrimaryDark"
+            app:itemBackground="?android:attr/colorPrimary"
             app:itemIconTint="@android:color/white"
             app:itemTextColor="@drawable/bottom_navigation_text_color"
-            app:selectedItemId="@={apps.mFilterPrimaryChoice}" />
+            bind:selectedItemId="@={apps.mCurrentTab}" />
 
         <include android:id="@+id/details" layout="@layout/app_detail" bind:apps="@{apps}" bind:guide="@{guide}"/>
 

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:bind="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable name="vm" type="com.oasisfeng.island.featured.FeaturedViewModel" />
+    </data>
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_small"
+        android:layout_marginEnd="@dimen/margin_small"
+        android:layout_marginTop="@dimen/margin_small"
+        android:layout_marginBottom="0dp"
+        android:elevation="@dimen/elevation_card_resting"
+        app:contentPadding="@dimen/card_content_padding"
+        app:cardBackgroundColor="@{vm.dismissed ? @color/background : @color/background_highlight}">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/featured_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:layout_alignParentEnd="true"
+                android:layout_gravity="end"
+                bind:shown="@{vm.icon != null}"
+                android:src="@{vm.icon}" tools:src="@drawable/ic_launcher_icebox" />
+
+            <TextView
+                android:id="@+id/featured_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/featured_icon"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginEnd="@dimen/margin_small"
+                android:textAppearance="@android:style/TextAppearance.Material.Title"
+                android:textSize="18sp"
+                android:text="@{vm.title}" tools:text="Title" />
+
+            <TextView
+                android:id="@+id/featured_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/featured_title"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/featured_icon"
+                android:layout_marginTop="12sp"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginEnd="@dimen/margin_small"
+                android:textAppearance="@android:style/TextAppearance.Material.Body1"
+                android:textSize="14sp"
+                android:text="@{vm.description}" tools:text="Description Description Description Description Description" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/featured_description"
+                android:layout_alignParentEnd="true"
+                style="@android:style/Widget.Material.Button.Borderless.Colored"
+                android:layout_marginBottom="@{- @dimen/card_content_padding / 2}" tools:layout_marginBottom="-6dp"
+                bind:shown="@{vm.button != 0}"
+                android:text="@{context.getString(vm.button)}" tools:text="Install"
+                android:onClick="@{() -> vm.function.accept(vm)}"/>
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+
+</layout>
