@@ -38,7 +38,7 @@ public class GreenifyClient {
 					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		final Activity activity = Activities.findActivityFrom(context);
 		try {
-			if (activity != null) ((Activity) context).startActivityForResult(intent, 0);
+			if (activity != null) activity.startActivityForResult(intent, 0);
 			else context.startActivity(intent.putExtra("caller", PendingIntent.getBroadcast(context, 0, new Intent(), FLAG_UPDATE_CURRENT)));
 		} catch (final ActivityNotFoundException e) {
 			return false;
