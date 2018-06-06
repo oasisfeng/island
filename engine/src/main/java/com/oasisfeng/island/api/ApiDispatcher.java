@@ -94,7 +94,12 @@ class ApiDispatcher {
 
 		final Uri uri = intent.getData();
 		if (uri == null) return "No data in Intent: " + intent;
-		if (! "intent".equals(uri.getScheme())) return "Unsupported intent data scheme: " + intent;
+		final String scheme = uri.getScheme();
+
+		if ("package".equals(scheme))
+			return new IslandManagerService(context).launchApp(uri.getSchemeSpecificPart());
+
+		if (! "intent".equals(scheme)) return "Unsupported intent data scheme: " + intent;
 		final Intent target;
 		try {
 			target = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
