@@ -47,6 +47,7 @@ public class Hacks {
 	public static final Hack.HackedField<ApplicationInfo, Integer> ApplicationInfo_privateFlags;
 	public static final Hack.HackedField<ApplicationInfo, Integer> ApplicationInfo_versionCode;
 	public static final Hack.HackedTargetField<String> PrintManager_PRINT_SPOOLER_PACKAGE_NAME;
+	public static final Hack.HackedField<PowerManager, Object> PowerManager_mService;
 
 	public static final Hack.HackedMethod2<Boolean, Void, Unchecked, Unchecked, Unchecked, String, Boolean> SystemProperties_getBoolean;
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer> SystemProperties_getInt;
@@ -73,6 +74,7 @@ public class Hacks {
 		ApplicationInfo_versionCode = Hack.into(ApplicationInfo.class).field("versionCode").fallbackTo(0);
 		PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT >= N && ! isAndroidP()).into(PrintManager.class)
 				.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
+		PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
 
 		SystemProperties_getBoolean = Hack.into("android.os.SystemProperties").staticMethod("getBoolean")
 				.returning(boolean.class).fallbackReturning(false).withParams(String.class, boolean.class);
