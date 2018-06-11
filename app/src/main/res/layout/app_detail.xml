@@ -26,7 +26,7 @@
         android:elevation="@dimen/elevation_card_raised"
         app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
         app:behavior_hideable="true"
-        app:behavior_peekHeight="88dp"
+        app:behavior_peekHeight="80dp"
         bind:behavior_state="@{apps.mSelection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
         bind:behavior_bottomSheetCallback="@{apps.bottom_sheet_callback}"
         android:onClick="@{apps::onBottomSheetClick}">
