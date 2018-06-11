@@ -36,9 +36,10 @@ public class UserGuide {
 	public final ObservableField<MaterialTapTargetPrompt.Builder> prompt_action = new ObservableField<>();
 
 	public MenuItem.OnMenuItemClickListener getAvailableTip() {
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && mCurrentPrimaryFilter == Filter.Mainland && mAppSelection != null && ! mAppSelection.isSystem())
+		final Filter primary_filter = mAppListViewModel.mPrimaryFilter.getValue();
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && primary_filter == Filter.Mainland && mAppSelection != null && ! mAppSelection.isSystem())
 			return mTipClone;
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && mCurrentPrimaryFilter == Filter.Island && mAppSelection != null)
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && primary_filter == Filter.Island && mAppSelection != null)
 			return mTipFreeze;
 		return null;
 	}
@@ -94,7 +95,7 @@ public class UserGuide {
 		if (! action_tips_pending) return null;
 		final UserGuide guide = new UserGuide(activity, scope);
 
-		vm.mCurrentTab.observe(lifecycle_owner, choice -> guide.mCurrentPrimaryFilter = vm.getCurrentPrimaryFilter());
+		guide.mAppListViewModel = vm;
 		vm.mSelection.observe(lifecycle_owner, selection -> guide.mAppSelection = selection);
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 		provider.registerObserver(new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
@@ -122,8 +123,8 @@ public class UserGuide {
 
 	private final Activity mActivity;
 	private final Scopes.Scope mAppScope;
-	private @Nullable Filter mCurrentPrimaryFilter;
 	private AppViewModel mAppSelection;
+	private AppListViewModel mAppListViewModel;
 
 	private static final String SCOPE_KEY_TIP_CLONE = "tip_clone";
 	private static final String SCOPE_KEY_TIP_FREEZE = "tip_freeze";

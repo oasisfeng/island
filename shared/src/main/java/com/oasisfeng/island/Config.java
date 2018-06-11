@@ -19,6 +19,8 @@ public enum Config {
 	URL_FAQ("url_faq"),
 	URL_SETUP("url_setup"),
 	URL_SETUP_TROUBLESHOOTING("url_setup_trouble"),
+	URL_FILE_SHUTTLE("url_file_shuttle"),
+	URL_COOLAPK("url_coolapk"),
 	PERMISSION_REQUEST_ALLOWED_APPS("permission_allowed_apps");
 
 	public String get() {

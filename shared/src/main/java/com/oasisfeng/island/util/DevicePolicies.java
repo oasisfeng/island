@@ -156,6 +156,11 @@ public class DevicePolicies {
 		mDevicePolicyManager.setSecureSetting(sCachedComponent, setting, value);
 	}
 
+	/** @see DevicePolicyManager#setGlobalSetting(ComponentName, String, String) */
+	public void setGlobalSetting(final String setting, final String value) {
+		mDevicePolicyManager.setGlobalSetting(sCachedComponent, setting, value);
+	}
+
 	/** @see DevicePolicyManager#addUserRestriction(ComponentName, String) */
 	public void addUserRestriction(final String key) {
 		mDevicePolicyManager.addUserRestriction(sCachedComponent, key);

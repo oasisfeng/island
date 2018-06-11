@@ -10,7 +10,6 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.os.UserHandle;
 import android.util.Log;
 
@@ -122,19 +121,6 @@ public class MainActivity extends LifecycleActivity {
 		}).start();
 	}
 
-	@Override protected void onResume() {
-		super.onResume();
-
-		final long uptime = SystemClock.uptimeMillis();
-		if (uptime - mLastUptimeResumeEventSent >= 3000) mNumResumeEventSentRecently = 0;
-		if (mNumResumeEventSentRecently < 3) {
-			sendBroadcast(new Intent(Events.ACTION_MAIN_UI_RESUME).setPackage(getPackageName()));
-			mNumResumeEventSentRecently++;
-			mLastUptimeResumeEventSent = uptime;
-		}
-	}
-	private int mNumResumeEventSentRecently;
-	private long mLastUptimeResumeEventSent;
 	private boolean mIsDeviceOwner;
 
 	private static final String TAG = MainActivity.class.getSimpleName();

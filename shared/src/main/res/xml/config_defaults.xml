@@ -2,15 +2,23 @@
 <defaultsMap>
     <entry>
         <key>url_faq</key>
-        <value>https://oasisfeng.github.io/island/faq.html</value>
+        <value>https://island.oasisfeng.com/faq.html</value>
     </entry>
     <entry>
         <key>url_setup</key>
-        <value>https://oasisfeng.github.io/island/setup.html</value>
+        <value>https://island.oasisfeng.com/setup.html</value>
     </entry>
     <entry>
         <key>url_setup_trouble</key>
-        <value>https://oasisfeng.github.io/island/faq.html</value>
+        <value>https://island.oasisfeng.com/faq.html</value>
+    </entry>
+    <entry>
+        <key>url_file_shuttle</key>
+        <value>https://island.oasisfeng.com/files.html</value>
+    </entry>
+    <entry>
+        <key>url_coolapk</key>
+        <value>https://www.coolapk.com/apk/com.coolapk.market?utm_source=island&amp;utm_campaign=featured</value>
     </entry>
     <entry>
         <key>permission_allowed_apps</key>

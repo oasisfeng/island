@@ -1,7 +1,7 @@
 <manifest package="com.oasisfeng.island.fileprovider" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" /> <!-- EventReceiver -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" tools:ignore="ProtectedPermissions" /> <!-- EventReceiver -->
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
@@ -22,14 +22,6 @@
                   android:name=".ExternalStorageProviderProxy"
                   android:exported="false"
                   android:process=":file"/> <!-- Always running in different user from ShuttleProvider, therefore never use the same process. -->
-
-        <receiver android:name=".EventReceiver"
-                  android:exported="false"> <!-- Share the same process of main UI -->
-            <intent-filter>
-                <action android:name="MAIN_UI_RESUME" /> <!-- This event is also triggered when permission request dialog is closed and main UI is resumed. -->
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
 
     </application>
 </manifest>

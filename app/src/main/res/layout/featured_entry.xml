@@ -11,13 +11,13 @@
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/margin_small"
-        android:layout_marginEnd="@dimen/margin_small"
+        android:layout_marginStart="@dimen/margin_medium"
+        android:layout_marginEnd="@dimen/margin_medium"
         android:layout_marginTop="@dimen/margin_small"
         android:layout_marginBottom="0dp"
         android:elevation="@dimen/elevation_card_resting"
         app:contentPadding="@dimen/card_content_padding"
-        app:cardBackgroundColor="@{vm.dismissed ? @color/background : @color/background_highlight}">
+        app:cardBackgroundColor="@{safeUnbox(vm.dismissed) ? @color/background : @color/background_highlight}">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -25,13 +25,13 @@
 
             <ImageView
                 android:id="@+id/featured_icon"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_marginEnd="16dp"
                 android:layout_alignParentEnd="true"
                 android:layout_gravity="end"
                 bind:shown="@{vm.icon != null}"
-                android:src="@{vm.icon}" tools:src="@drawable/ic_launcher_icebox" />
+                android:src="@{vm.icon}" tools:src="@drawable/ic_launcher_greenify" />
 
             <TextView
                 android:id="@+id/featured_title"
@@ -40,11 +40,10 @@
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
                 android:layout_toStartOf="@id/featured_icon"
-                android:layout_marginStart="@dimen/margin_small"
-                android:layout_marginEnd="@dimen/margin_small"
+                android:layout_margin="@dimen/margin_small"
                 android:textAppearance="@android:style/TextAppearance.Material.Title"
                 android:textSize="18sp"
-                android:text="@{vm.title}" tools:text="Title" />
+                android:text="@{vm.title}" tools:text="@string/featured_greenify_title" />
 
             <TextView
                 android:id="@+id/featured_description"
@@ -52,13 +51,14 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/featured_title"
                 android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
                 android:layout_toStartOf="@id/featured_icon"
                 android:layout_marginTop="12sp"
                 android:layout_marginStart="@dimen/margin_small"
                 android:layout_marginEnd="@dimen/margin_small"
                 android:textAppearance="@android:style/TextAppearance.Material.Body1"
                 android:textSize="14sp"
-                android:text="@{vm.description}" tools:text="Description Description Description Description Description" />
+                android:text="@{vm.description}" tools:text="@string/featured_greenify_description" />
 
             <Button
                 android:layout_width="wrap_content"
@@ -67,8 +67,8 @@
                 android:layout_alignParentEnd="true"
                 style="@android:style/Widget.Material.Button.Borderless.Colored"
                 android:layout_marginBottom="@{- @dimen/card_content_padding / 2}" tools:layout_marginBottom="-6dp"
-                bind:shown="@{vm.button != 0}"
-                android:text="@{context.getString(vm.button)}" tools:text="Install"
+                bind:shown="@{safeUnbox(vm.button) != 0}"
+                android:text="@{safeUnbox(vm.button) != 0 ? context.getString(safeUnbox(vm.button)) : null}" tools:text="Install"
                 android:onClick="@{() -> vm.function.accept(vm)}"/>
 
         </RelativeLayout>

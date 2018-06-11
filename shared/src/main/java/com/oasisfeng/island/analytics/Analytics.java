@@ -63,6 +63,7 @@ public interface Analytics {
 		EncryptionRequired("encryption_required"),
 		DeviceEncrypted("device_encrypted"),
 		RemoteConfigAvailable("remote_config_avail"),
+		FileShuttleEnabled("file_shuttle_enabled"),
 		;
 		Property(final String name) { this.name = name; }
 

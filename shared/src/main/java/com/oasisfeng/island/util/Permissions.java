@@ -25,7 +25,7 @@ import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
  *
  * Created by Oasis on 2017/10/8.
  */
-public class Permissions {
+public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 
 	private static final boolean TEST_NO_DEV_PERMISSIONS = BuildConfig.DEBUG && false;
 

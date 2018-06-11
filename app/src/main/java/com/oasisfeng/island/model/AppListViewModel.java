@@ -2,6 +2,7 @@ package com.oasisfeng.island.model;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.arch.lifecycle.MutableLiveData;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,8 +13,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.preference.PreferenceManager;
@@ -21,6 +20,7 @@ import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.BottomSheetBehavior;
 import android.text.TextUtils;
 import android.util.Log;
@@ -34,7 +34,6 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
-import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
@@ -43,6 +42,7 @@ import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.featured.FeaturedListViewModel;
 import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
@@ -73,7 +73,7 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
  * Created by Oasis on 2015/7/7.
  */
 @ParametersAreNonnullByDefault
-public class AppListViewModel extends BaseAppListViewModel<AppViewModel> implements Parcelable {
+public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
@@ -118,8 +118,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	private void updateActiveFilters() {
-		if (mFilterShared == null) return;		// When called by constructor.
-		final Filter primary_filter = getCurrentPrimaryFilter();
+		if (mFilterShared == null) return;		// When called by constructor
+		final Filter primary_filter = mPrimaryFilter.getValue();
 		if (primary_filter == null) return;
 		Log.d(TAG, "Primary filter: " + primary_filter);
 		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
@@ -131,12 +131,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		clearSelection();
 
 		IslandAppInfo.startBatchLauncherActivityCheck(mAppListProvider.getContext());	// Performance optimization
-		final List<AppViewModel> apps;
-		try {
-			apps = mAppListProvider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
-		} finally {
-			IslandAppInfo.endBatchLauncherActivityCheck();
-		}
+		final List<AppViewModel> apps = mAppListProvider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
+		IslandAppInfo.endBatchLauncherActivityCheck();
 		replaceApps(apps);
 
 		if (selected != null) for (final AppViewModel app : apps)
@@ -149,32 +145,45 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
 
-	/** @return null if not primary filter is currently selected. (not in app list, for example) */
-	public @Nullable Filter getCurrentPrimaryFilter() {
-		final int tab_id = mCurrentTab.getValue();
-		if (tab_id == R.id.tab_mainland) return Filter.Mainland;
-		if (tab_id == R.id.tab_island && Filter.Island.available()) return Filter.Island;
-		return null;
-	}
-
 	public AppListViewModel() {
 		super(AppViewModel.class);
 		mSelection.observeForever(selection -> updateActions());
-		mCurrentTab.observeForever(choice -> updateActiveFilters());
 	}
 
-	public void attach(final Context context, final Menu actions, final Menu tabs, final @Nullable Bundle saved_state) {
+	public boolean onTabSwitched(final Context context, final MenuItem tab) {
+		final int tab_menu_id = tab.getItemId();
+		if (tab_menu_id == R.id.tab_discovery) {
+			mPrimaryFilter.setValue(null);
+			mFeatured.visible.setValue(Boolean.TRUE);
+			mFeatured.update(context);
+			return true;
+		} else mFeatured.visible.setValue(Boolean.FALSE);
+
+		if (tab_menu_id == R.id.tab_island) {
+			if (! Filter.Island.available()) return false;
+			mPrimaryFilter.setValue(Filter.Island);
+		} else if (tab_menu_id == R.id.tab_mainland) {
+			mPrimaryFilter.setValue(Filter.Mainland);
+		} else return false;
+		updateActiveFilters();
+		return true;
+	}
+
+	public void attach(final Context context, final Menu actions, final BottomNavigationView tabs, final @Nullable Bundle saved_state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
 		mActions = actions;
 		mFilterShared = IslandAppListProvider.excludeSelf(context).and(AppInfo::isInstalled);
+		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
 
 		if (! Filter.Island.available()) {		// Island is unavailable
-			tabs.findItem(R.id.tab_island).setVisible(false);
-			mCurrentTab.setValue(R.id.tab_mainland);
+			tabs.getMenu().findItem(R.id.tab_island).setVisible(false);
+			tabs.setSelectedItemId(R.id.tab_mainland);
 		} else {
-			final int filter_primary = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(R.id.tab_island/* default */);
-			mCurrentTab.setValue(filter_primary);
+			final int ordinal = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(Filter.Island.ordinal()/* default */);
+			final Filter primary_filter = Filter.values()[ordinal];
+			tabs.setSelectedItemId(primary_filter == Filter.Mainland ? R.id.tab_mainland : R.id.tab_island);
+			mPrimaryFilter.setValue(primary_filter);
 		}
 	}
 
@@ -183,7 +192,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
-		saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, mCurrentTab.getValue());
+		final Filter primary_filter = mPrimaryFilter.getValue();
+		if (primary_filter != null) saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, primary_filter.ordinal());
 	}
 
 	private void updateActions() {
@@ -496,23 +506,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 
 	/* Parcelable */
 
-	private AppListViewModel(final Parcel in) {
-		super(AppViewModel.class);
-		mCurrentTab.setValue(in.readInt());
-		mFilterIncludeHiddenSystemApps = in.readByte() != 0;
-	}
-
-	@Override public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeInt(mCurrentTab.getValue());
-		dest.writeByte((byte) (mFilterIncludeHiddenSystemApps ? 1 : 0));
-	}
-
-	@Override public int describeContents() { return 0; }
-	public static final Creator<AppListViewModel> CREATOR = new Creator<AppListViewModel>() {
-		@Override public AppListViewModel createFromParcel(final Parcel in) { return new AppListViewModel(in); }
-		@Override public AppListViewModel[] newArray(final int size) { return new AppListViewModel[size]; }
-	};
-
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {
 
 		@Override public void onStateChanged(@NonNull final View bottom_sheet, final int new_state) {
@@ -527,13 +520,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> impleme
 		item.setVariable(BR.apps, this);
 	};
 
+	public FeaturedListViewModel mFeatured;
 	/* Attachable fields */
 	private IslandAppListProvider mAppListProvider;
 	private Menu mActions;
 	private IIslandManager mOwnerController;
 	public IIslandManager mProfileController;
 	/* Parcelable fields */
-	public final NonNullMutableLiveData<Integer> mCurrentTab = new NonNullMutableLiveData<>(0);		// Menu ID
+	public final MutableLiveData<Filter> mPrimaryFilter = new MutableLiveData<>();
 	private boolean mFilterIncludeHiddenSystemApps;
 	/* Transient fields */
 	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
