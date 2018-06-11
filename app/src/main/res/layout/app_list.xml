@@ -36,6 +36,7 @@
             android:clipToPadding="false"
             android:background="@color/background"
             app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+            bind:shown="@{! safeUnbox(featured.visible)}"
             bind:items="@{apps.items}"
             bind:item_binder="@{apps.item_binder}"
             bind:item_layout="@{@layout/app_entry}"
