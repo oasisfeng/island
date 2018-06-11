@@ -15,7 +15,7 @@
         android:layout_height="48dp"
         android:paddingBottom="2dp"
         android:clipToPadding="false" comment:_clipToPadding="Ensure the correct visual effect of elevation"
-        android:background="@{app.selected ? @color/background_highlight : @color/background}">
+        android:background="@{safeUnbox(app.selected) ? @color/background_highlight : @color/background}">
 
         <TextView
             android:id="@+id/entry_name"
@@ -27,10 +27,10 @@
             android:background="?android:attr/selectableItemBackground"
 
             comment:popUpEffect="The 'pop up' effect"
-            android:elevation="@{app.selected ? @dimen/elevation_card_resting : 0}" tools:elevation="@dimen/elevation_card_resting"
+            android:elevation="@{safeUnbox(app.selected) ? @dimen/elevation_card_resting : 0}" tools:elevation="@dimen/elevation_card_resting"
             android:outlineProvider="bounds"
-            android:scaleX="@{app.selected ? 1.01f : 1}"
-            android:scaleY="@{app.selected ? 1.01f : 1}"
+            android:scaleX="@{safeUnbox(app.selected) ? 1.01f : 1}"
+            android:scaleY="@{safeUnbox(app.selected) ? 1.01f : 1}"
 
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:gravity="start|center_vertical"
