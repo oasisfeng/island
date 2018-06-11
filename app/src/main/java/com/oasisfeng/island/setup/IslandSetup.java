@@ -119,7 +119,7 @@ public class IslandSetup {
 			final LauncherApps launcher_apps = (LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			if (Preconditions.checkNotNull(launcher_apps).getActivityList(activity.getPackageName(), Users.profile).isEmpty()) {
 				Analytics.$().event("setup_island_root_failed").withRaw("command", commands.toString())
-						.with(CONTENT, Joiner.on("\n").skipNulls().join(result)).send();
+						.with(CONTENT, result == null ? "<null>" : Joiner.on("\n").skipNulls().join(result)).send();
 				dismissProgressAndShowError(activity, progress, 2);
 			}
 		});
@@ -158,7 +158,7 @@ public class IslandSetup {
 		content = content.replace("\"", "\\\"").replace("'", "\\'")
 				.replace("<", "\\<").replace(">", "\\>");
 
-		final String file = new File(Hacks.Environment_getSystemSecureDirectory.invoke().statically(), "device_owner.xml").getAbsolutePath();
+		final String file = new File(getDataSystemDirectory(), "device_owner.xml").getAbsolutePath();
 		final StringBuilder command = new StringBuilder("echo ").append(content).append(" > ").append(file)
 				.append(" && chmod 600 ").append(file).append(" && chown system:system ").append(file);
 		if (SDK_INT >= LOLLIPOP_MR1) command.append(" && dpm set-active-admin ").append(admin_component).append(" ; echo DONE");
@@ -183,6 +183,12 @@ public class IslandSetup {
 					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, activity.getString(R.string.dialog_mainland_device_admin)), request_code);
 			// Procedure is followed in onAddAdminResult().
 		});
+	}
+
+	private static File getDataSystemDirectory() {
+		if (Hacks.Environment_getDataSystemDirectory != null) return Hacks.Environment_getDataSystemDirectory.invoke().statically();
+		final String data_path = System.getenv("ANDROID_DATA");
+		return new File(data_path == null ? new File("/data") : new File(data_path), "system");
 	}
 
 	public static void onAddAdminResult(final Activity activity) {

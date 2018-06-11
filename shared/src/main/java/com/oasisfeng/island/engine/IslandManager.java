@@ -20,6 +20,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -67,12 +68,20 @@ public class IslandManager {
 
 	/** @return profile ID, or 0 if none */
 	@RequiresApi(N) public static int getManagedProfileIdIncludingDisabled(final Context context) {
-		final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false)
-				.on(Preconditions.checkNotNull(context.getSystemService(UserManager.class)));
-		final int current_user = Process.myUserHandle().hashCode();
-		if (profiles != null) for (final int profile : profiles)
-			if (profile != current_user) return profile;   			// Only one managed profile is supported by Android at present.
-		return 0;
+		if (Hacks.UserManager_getProfileIds != null) {
+			final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false)
+					.on(Preconditions.checkNotNull(context.getSystemService(UserManager.class)));
+			final int current_user = Process.myUserHandle().hashCode();
+			for (final int profile : profiles)
+				if (profile != current_user) return profile;            		// Only one managed profile is supported by Android at present.
+			return 0;
+		} else {	// Fallback to profiles without disabled.
+			final List<UserHandle> profiles = Objects.requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles();
+			final UserHandle current_user = Process.myUserHandle();
+			for (final UserHandle profile : profiles)
+				if (! profile.equals(current_user)) return profile.hashCode();	// Only one managed profile is supported by Android at present.
+			return 0;
+		}
 	}
 
 	public static @CheckResult boolean useServiceInProfile(final Context context, final Services.ServiceReadyThrows<IIslandManager, RemoteException> procedure) {
