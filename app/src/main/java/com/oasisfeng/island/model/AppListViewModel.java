@@ -13,9 +13,11 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -62,6 +64,7 @@ import java9.util.function.BooleanSupplier;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 
+import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
@@ -75,6 +78,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
+	private static final String ACTION_SHOW_APP_INFO = "android.intent.action.SHOW_APP_INFO";	// clone of Intent.ACTION_SHOW_APP_INFO
+	private static final String EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME";		// clone of Intent.EXTRA_PACKAGE_NAME
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
@@ -278,8 +283,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				refreshAppStateAsSysBugWorkaround(context, pkg);
 				clearSelection();
 			} catch (final RemoteException ignored) {}
-		} else if (id == R.id.menu_app_info) {
-			launchSettingsAppInfoActivity(context, app);
+		} else if (id == R.id.menu_app_settings) {
+			launchExternalAppSettings(context, app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
 			onRemovalRequested(context);
 		} else if (id == R.id.menu_shortcut) {
@@ -311,12 +316,34 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 	}
 
-	private void launchSettingsAppInfoActivity(final Context context, final IslandAppInfo app) {
+	private void launchSystemAppSettings(final Context context, final IslandAppInfo app) {
 		try {
 			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
 			Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
 					.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-		} catch (final RemoteException | SecurityException ignored) {}
+		} catch (final RemoteException | SecurityException e) {
+			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+		}
+	}
+
+	private void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
+		final Intent target = new Intent(ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, app.packageName);
+		if (! Users.isOwner(app.user) || context.getPackageManager().queryIntentActivities(target, 0).isEmpty()) {
+			launchSystemAppSettings(context, app);
+			return;
+		}
+
+		try {
+			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
+		} catch (final RemoteException | SecurityException e) {
+			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+			return;
+		}
+
+		final Intent chooser = new Intent(Intent.ACTION_CHOOSER).putExtra(Intent.EXTRA_INTENT, target);
+		chooser.putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[] { new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+				Uri.fromParts("package", app.packageName, null)) });
+		Activities.startActivity(context, chooser);
 	}
 
 	private void onShortcutRequested(final Context context) {
@@ -379,9 +406,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			final Activity activity = Objects.requireNonNull(Activities.findActivityFrom(context));
 			if (app.isCritical()) {
 				Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
-						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(context, app)).show();
+						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 			} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
-					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSettingsAppInfoActivity(context, app)).show();
+					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 		} else try {
 			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
 			if (app.isSystem()) {
@@ -407,7 +434,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final String pkg = app.packageName;
 		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(app.packageName, Users.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
-			launchSettingsAppInfoActivity(context, app_in_profile);
+			launchSystemAppSettings(context, app_in_profile);
 			return;
 		}
 

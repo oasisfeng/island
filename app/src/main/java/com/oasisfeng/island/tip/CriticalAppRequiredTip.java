@@ -18,6 +18,7 @@ import com.oasisfeng.island.util.Users;
 import com.oasisfeng.ui.card.CardViewModel;
 
 import java.util.List;
+import java.util.Objects;
 
 import java9.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 	private CardViewModel buildCardIfActionRequired(final Context context, final String pkg, final @Nullable IslandAppInfo app) {
 		if (app != null && app.enabled && ! app.isHidden()) return null;		// No action required for this app.
 		final CardViewModel card = new CardViewModel(context, R.string.tip_critical_package_required, 0,
-				getIgnoreActionLabel(), app == null ? R.string.action_clone : app.isHidden() ? R.string.action_unfreeze : R.string.action_app_info) {
+				getIgnoreActionLabel(), app == null ? R.string.action_clone : app.isHidden() ? R.string.action_unfreeze : R.string.action_app_settings) {
 
 			@Override public void onButtonStartClick(final Context context, final CardView card) {
 				dismiss(card);
@@ -68,8 +69,8 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 				} else if (app.isHidden()) {
 					Services.use(new ShuttleContext(context), IIslandManager.class, IIslandManager.Stub::asInterface,
 							service -> service.unfreezeApp(pkg));
-				} else ((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE)).startAppDetailsActivity(
-						new ComponentName(pkg, ""), Users.profile, null, null);
+				} else Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
+						.startAppDetailsActivity(new ComponentName(pkg, ""), Users.profile, null, null);
 			}
 		};
 		card.text = context.getString(R.string.tip_critical_package_message, app != null ? app.getLabel() : Apps.of(context).getAppName(pkg));

@@ -70,7 +70,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_unfreeze">Unfreeze</string>
     <string name="action_shortcut">Create Unfreeze &amp; Launch shortcut</string>
     <string name="action_greenify">Auto-freeze with Greenify</string>
-    <string name="action_app_info">App info</string>
+    <string name="action_app_settings">App settings</string>
     <string name="action_remove">Remove</string>
     <string name="action_uninstall">Uninstall</string>
 
