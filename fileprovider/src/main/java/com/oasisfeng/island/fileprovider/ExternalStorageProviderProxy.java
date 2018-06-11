@@ -39,6 +39,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.content.Context.CONTEXT_IGNORE_SECURITY;
@@ -56,6 +57,7 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
  */
 public class ExternalStorageProviderProxy extends ContentProvider {
 
+	private static final String PREFIX_SHUTTLE_NAME = "⇌ ";
 	private static final String TARGET_AUTHORITY = "com.android.externalstorage.documents";
 	private static final String TARGET_PACKAGE = "com.android.externalstorage";
 
@@ -78,7 +80,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 		return processQuery(uri, () -> mDelegate.query(toTargetUri(uri), projection, queryArgs, cancellationSignal));
 	}
 
-	private static @Nullable Cursor processQuery(final Uri uri, final Supplier<Cursor> procedure) {
+	private @Nullable Cursor processQuery(final Uri uri, final Supplier<Cursor> procedure) {
 		final Cursor cursor;
 		try {
 			cursor = procedure.get();
@@ -91,7 +93,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 		}
 		if (cursor == null) return null;
 		if ("/root".equals(uri.getPath()))
-			return new TweakedRootCursor(cursor);
+			return new TweakedRootCursor(cursor, Objects.requireNonNull(getContext()).getString(R.string.file_shuttle_summary));
 		return cursor;
 	}
 
@@ -244,8 +246,8 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 			return true;
 		} catch (PackageManager.NameNotFoundException/* Should not happen */| ReflectiveOperationException e) {
 			Analytics.$().logAndReport(TAG, "Failed to init due to incompatibility.", e);
-		} catch (final RuntimeException e) {
-			Analytics.$().logAndReport(TAG, "Failed to init.", e);
+		} catch (final Throwable t) {	// No just RuntimeException, but also Error expected. (e.g. NoSuchFieldError thrown by ExternalStorageProvider)
+			Analytics.$().logAndReport(TAG, "Failed to init.", t);
 		}
 		mDelegate = new PseudoContentProvider();
 		return false;
@@ -290,16 +292,47 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 
 	private static class TweakedRootCursor extends CursorWrapper {
 
-		TweakedRootCursor(final Cursor cursor) {
+		TweakedRootCursor(final Cursor cursor, final String summary) {
 			super(cursor);
-			mTitleColumnIndex = super.getColumnIndex(DocumentsContract.Root.COLUMN_TITLE);
-			mFlagsColumnIndex = super.getColumnIndex(DocumentsContract.Root.COLUMN_FLAGS);
+			mTitleColumnIndex = cursor.getColumnIndex(DocumentsContract.Root.COLUMN_TITLE);
+			mFlagsColumnIndex = cursor.getColumnIndex(DocumentsContract.Root.COLUMN_FLAGS);
 			if (BuildConfig.DEBUG) dumpCursor(cursor);
+			mAppendSummaryColumn = cursor.getColumnIndex(DocumentsContract.Root.COLUMN_SUMMARY) < 0;
+			mSummary = summary;
+			Log.d(TAG, "AppendSummaryColumn: " + mAppendSummaryColumn);
+		}
+
+		/* Append our COLUMN_SUMMARY to this cursor if absent in original cursor */
+
+		@Override public int getColumnCount() {
+			return mAppendSummaryColumn ? super.getColumnCount() + 1 : super.getColumnCount();
+		}
+		@Override public int getColumnIndex(final String name) {
+			return mAppendSummaryColumn && DocumentsContract.Root.COLUMN_SUMMARY.equals(name) ? super.getColumnCount() : super.getColumnIndex(name);
+		}
+		@Override public int getColumnIndexOrThrow(final String name) throws IllegalArgumentException {
+			return mAppendSummaryColumn && DocumentsContract.Root.COLUMN_SUMMARY.equals(name) ? super.getColumnCount() : super.getColumnIndexOrThrow(name);
+		}
+		@Override public String getColumnName(final int index) {
+			return mAppendSummaryColumn && index == super.getColumnCount() ? DocumentsContract.Root.COLUMN_SUMMARY : super.getColumnName(index);
+		}
+		@Override public String[] getColumnNames() {
+			String[] names = super.getColumnNames();
+			if (mAppendSummaryColumn) {
+				names = Arrays.copyOf(names, names.length + 1);
+				names[names.length - 1] = DocumentsContract.Root.COLUMN_SUMMARY;
+			}
+			return names;
+		}
+		@Override public int getType(final int index) {
+			return mAppendSummaryColumn && index == super.getColumnCount() ? FIELD_TYPE_STRING : super.getType(index);
 		}
 
 		@Override public String getString(final int column_index) {
+			if (mAppendSummaryColumn && column_index == super.getColumnCount()) return mSummary;
 			final String value = super.getString(column_index);
-			return column_index == mTitleColumnIndex ? "⇄ " + value : value;
+			Log.d(TAG, "Cursor.getString(" + getColumnName(column_index) + ") = " + value);
+			return column_index == mTitleColumnIndex ? PREFIX_SHUTTLE_NAME + value : value;
 		}
 
 		@Override public long getLong(final int column_index) {		// TYPE_INTEGER is actually retrieved by getLong() for cross-process cursor.
@@ -335,5 +368,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 
 		private final int mTitleColumnIndex;
 		private final int mFlagsColumnIndex;
+		private final boolean mAppendSummaryColumn;
+		private final String mSummary;
 	}
 }
