@@ -134,7 +134,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			if (component == null) return false;
 			if (! prepareToLaunchApp(component.getPackageName())) return false;
 
-			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setComponent(component);
+			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK);
 			try {
 				startActivity(launch_intent);
 			} catch (final ActivityNotFoundException e) {
