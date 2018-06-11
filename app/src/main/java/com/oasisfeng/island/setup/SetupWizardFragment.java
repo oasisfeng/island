@@ -25,16 +25,16 @@ public class SetupWizardFragment extends Fragment implements NavigationBar.Navig
 	private static final String EXTRA_VIEW_MODEL = "vm";
 
 	@Override public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-		if (savedInstanceState != null) {
-			mViewModel = savedInstanceState.getParcelable(EXTRA_VIEW_MODEL);
-		} else {
+		final SetupViewModel vm;
+		if (savedInstanceState == null) {
 			final Bundle args = getArguments();
-			final SetupViewModel vm = args != null ? args.getParcelable(null) : null;
-			if (vm == null) {
-				mViewModel = new SetupViewModel();		// Initial view - "Welcome"
-				mViewModel.button_next.set(R.string.setup_accept);	// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
-			} else mViewModel = vm;
-		}
+			vm = args != null ? args.getParcelable(null) : null;
+		} else vm = savedInstanceState.getParcelable(EXTRA_VIEW_MODEL);
+
+		if (vm == null) {
+			mViewModel = new SetupViewModel();		// Initial view - "Welcome"
+			mViewModel.button_next.set(R.string.setup_accept);	// "Accept" button for device-admin privilege consent, required by Google Play developer policy.
+		} else mViewModel = vm;
 
 		mContainerViewId = container.getId();
 		final SetupWizardBinding binding = SetupWizardBinding.inflate(inflater, container, false);
