@@ -26,9 +26,11 @@ import com.oasisfeng.island.util.Users;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import static android.content.Intent.*;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
@@ -74,25 +76,25 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			final ShortcutInfo.Builder info = new ShortcutInfo.Builder(context, getShortcutId(pkg, owner ? null : Users.profile)).setShortLabel(label)
 					.setIntent(launch_intent).setIcon(Icon.createWithBitmap(icon_bitmap.get()));	// createWithResource may not compatible with all launchers.
 			try {
-				return ((ShortcutManager) context.getSystemService(SHORTCUT_SERVICE)).requestPinShortcut(info.build(), null);
+				return Objects.requireNonNull((ShortcutManager) context.getSystemService(SHORTCUT_SERVICE)).requestPinShortcut(info.build(), null);
 			} catch (final RuntimeException e) {
 				Analytics.$().report(e);
 				return false;
 			}
 		} else {
 			final Intent intent = new Intent(ACTION_INSTALL_SHORTCUT).putExtra("duplicate", false)	// To prevent duplicate creation
-					.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launch_intent).putExtra(Intent.EXTRA_SHORTCUT_NAME, label);
+					.putExtra(EXTRA_SHORTCUT_INTENT, launch_intent).putExtra(EXTRA_SHORTCUT_NAME, label);
 			try {
-				final Intent.ShortcutIconResource icon = new Intent.ShortcutIconResource();
+				final ShortcutIconResource icon = new ShortcutIconResource();
 				icon.packageName = pkg;
 				icon.resourceName = context.getPackageManager().getResourcesForApplication(pkg).getResourceName(activity.getIconResource());
-				intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon);
+				intent.putExtra(EXTRA_SHORTCUT_ICON_RESOURCE, icon);
 			} catch (final NameNotFoundException | Resources.NotFoundException e) {	// NameNotFoundException if app is not installed in owner user.
 				final Bitmap bitmap = icon_bitmap.get();
 				if (bitmap == null) return false;	// Analytics is already done in createLargeIconBitmap above.
-				intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, bitmap);
+				intent.putExtra(EXTRA_SHORTCUT_ICON, bitmap);
 			}
-			final ResolveInfo launcher = pm.resolveActivity(new Intent(ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), MATCH_DEFAULT_ONLY);
+			final ResolveInfo launcher = pm.resolveActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_HOME), MATCH_DEFAULT_ONLY);
 			if (launcher != null) intent.setPackage(launcher.activityInfo.packageName);
 			context.sendBroadcast(intent);
 			return null;
@@ -113,7 +115,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			final Intent target_intent;
 			final String intent_uri = uri.buildUpon().scheme("intent").build().toString();
 			try {
-				target_intent = Intent.parseUri(intent_uri, Intent.URI_INTENT_SCHEME);
+				target_intent = parseUri(intent_uri, URI_INTENT_SCHEME);
 			} catch (final URISyntaxException e) {
 				Analytics.$().event("invalid_shortcut_uri").with(Analytics.Param.LOCATION, intent_uri).send();
 				return false;
@@ -129,9 +131,10 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			return true;
 		} else {
 			final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
+			if (component == null) return false;
 			if (! prepareToLaunchApp(component.getPackageName())) return false;
 
-			final Intent launch_intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(component);
+			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setComponent(component);
 			try {
 				startActivity(launch_intent);
 			} catch (final ActivityNotFoundException e) {

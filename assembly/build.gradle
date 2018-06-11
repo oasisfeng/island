@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 27     // Module "fileprovider" indirectly accessed private APIs in dark greylist, via loaded remote class.
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 

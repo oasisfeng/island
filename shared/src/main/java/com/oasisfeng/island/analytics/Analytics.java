@@ -41,9 +41,9 @@ public interface Analytics {
 	@CheckResult Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
 	void reportEvent(String event, Bundle params);
 	void report(Throwable t);
-	default void logAndReport(final String tag, final String message, final Exception e) {
-		Log.e(tag, message, e);
-		report(e);
+	default void logAndReport(final String tag, final String message, final Throwable t) {
+		Log.e(tag, message, t);
+		report(t);
 	}
 
 	interface Trace {
