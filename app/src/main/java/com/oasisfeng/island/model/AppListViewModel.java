@@ -62,8 +62,6 @@ import java9.util.function.BooleanSupplier;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 
-import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
-import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
@@ -130,7 +128,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final AppViewModel selected = mSelection.getValue();
 		clearSelection();
 
-		IslandAppInfo.startBatchLauncherActivityCheck(mAppListProvider.getContext());	// Performance optimization
+		IslandAppInfo.startBatchLauncherActivityCheck(Objects.requireNonNull(mAppListProvider.getContext()));	// Performance optimization
 		final List<AppViewModel> apps = mAppListProvider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		IslandAppInfo.endBatchLauncherActivityCheck();
 		replaceApps(apps);
@@ -140,9 +138,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				setSelection(app);
 				break;
 			}
-
-		final IslandAppInfo greenify = mAppListProvider.get(GreenifyClient.GREENIFY_PKG);
-		mGreenifyAvailable = greenify != null && greenify.isInstalled() && ! greenify.isHidden();
 	}
 
 	public AppListViewModel() {
@@ -212,8 +207,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mActions.findItem(R.id.menu_remove).setVisible(exclusive ? system : (! system || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
 		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
 		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
-		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled)
-				.setShowAsActionFlags(mGreenifyAvailable ? SHOW_AS_ACTION_ALWAYS : SHOW_AS_ACTION_NEVER);
+		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -534,7 +528,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private String mFilterText;
 	private boolean mDeviceOwner;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
-	private boolean mGreenifyAvailable;
 	private final Handler mHandler = new Handler();
 
 	private static final String TAG = "Island.Apps";
