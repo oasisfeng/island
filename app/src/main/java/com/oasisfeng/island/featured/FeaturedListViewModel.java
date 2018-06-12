@@ -83,7 +83,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		final Apps apps = Apps.of(context);
 		final Activity activity = Objects.requireNonNull(Activities.findActivityFrom(context));
 		final Application app = getApplication();
-		final boolean is_device_owner = new DevicePolicies(context).isActiveDeviceOwner();
+		final boolean is_device_owner = new DevicePolicies(context).isActiveDeviceOwner(), has_profile = Users.hasProfile();
 		features.beginBatchedUpdates();
 		features.clear();
 
@@ -111,7 +111,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 		final UserManager um = Objects.requireNonNull((UserManager) app.getSystemService(Context.USER_SERVICE));
 		final boolean adb_secure_enabled = (is_device_owner && um.getUserRestrictions(Users.owner).containsKey(DISALLOW_DEBUGGING_FEATURES)
-				|| Users.hasProfile() && um.getUserRestrictions(Users.profile).containsKey(DISALLOW_DEBUGGING_FEATURES));
+				|| has_profile && um.getUserRestrictions(Users.profile).containsKey(DISALLOW_DEBUGGING_FEATURES));
 		if (SHOW_ALL || adb_secure_enabled || "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.ADB_ENABLED)))
 			addFeatureRaw(app, "adb_secure", is_device_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
 					R.string.featured_adb_secure_description, 0, adb_secure_enabled ? R.string.featured_button_disable : R.string.featured_button_enable,
@@ -130,9 +130,9 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					R.string.featured_button_install, c -> showInMarket(c, "rikka.appops"));
 
 		if (SHOW_ALL || ! apps.isInstalledBy(GooglePlayStore.PACKAGE_NAME)) {
-			final boolean installed = apps.isInstalledInCurrentUser(PACKAGE_COOLAPK);
+			final boolean installed = Apps.of(context).isInstalledOnDevice(PACKAGE_COOLAPK);
 			addFeature(app, "coolapk", R.string.featured_coolapk_title, R.string.featured_coolapk_description, R.drawable.ic_launcher_coolapk,
-					installed ? R.string.featured_button_launch : R.string.featured_button_install, installed ? c -> Apps.of(c).launch(PACKAGE_COOLAPK) : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
+					installed ? 0 : R.string.featured_button_install, installed ? null : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
 		}
 
 		features.endBatchedUpdates();

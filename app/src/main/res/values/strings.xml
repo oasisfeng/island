@@ -21,7 +21,7 @@
     <string name="featured_file_shuttle_title">File Shuttle</string>
     <string name="featured_file_shuttle_description">File Shuttle provides cross-border file access and makes managing files inside Island much easier. It requires manual permission granting with ADB via USB-connected PC to activate.</string>
     <string name="featured_fx_title">FX File Explorer</string>
-    <string name="featured_fx_description">File Shuttle of Island provides cross-border file access via Android \"Storage Access Framework\". But not all apps in the wild (even some popular file manage apps) support SAF.\n\nFX File Explorer has full support for SAF, just clone and launch it inside Island, select \"Connect to Storage\" in drop-down menu. The File Shuttle of Island is in the side menu (with prefix ).</string>
+    <string name="featured_fx_description">File Shuttle of Island provides cross-border file access via Android \"Storage Access Framework\". But not all apps in the wild (even some popular file manage apps) support SAF.\n\nFX File Explorer has full support for SAF, just clone and launch it inside Island, select \"Connect to Storage\" in drop-down menu. The File Shuttle of Island is in the side menu.</string>
     <string name="featured_adb_secure_title">ADB Secure</string>
     <string name="featured_adb_secure_island_title">ADB Secure (for Island space only)</string>
     <string name="featured_adb_secure_description">Restrict ADB (Android Debugging Bridge) shell from executing dangerous commands (install APK, change settings and etc.).\nIf "God mode" is activated, this could protect the whole device (including sneaky app installation via USB cable.</string>
@@ -34,7 +34,7 @@
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">Android for Work is incapable to block apps from accessing device-level data (e.g. IMEI, SMS). AppOps is a powerful tool to selectively block such accesses gracefully from specified apps.</string>
     <string name="featured_coolapk_title">CoolApk</string>
-    <string name="featured_coolapk_description">Upgrade frozen apps easily, no need to unfreeze them first. (\"Show hidden apps\" must be enabled in the \"labs settings\" of CoolApk)</string>
+    <string name="featured_coolapk_description">Upgrade frozen apps easily, no need to unfreeze them first. (\"Show hidden apps\" must be enabled in the \"labs settings\" of CoolApk)\n\nTo upgrade apps solely installed in Island, you still need to use the clone of CoolApk inside Island.</string>
 
     <string name="setup_profile_welcome">Welcome</string>
     <string name="setup_island_intro">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data
