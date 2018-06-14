@@ -125,7 +125,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			addFeature(app, "icebox", R.string.featured_icebox_title, R.string.featured_icebox_description, R.drawable.ic_launcher_icebox,
 					R.string.featured_button_install, c -> showInMarket(c, "com.catchingnow.icebox"));
 
-		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("rikka.appops"))
+		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("rikka.appops") && ! apps.isInstalledInCurrentUser("rikka.appops.pro"))
 			addFeature(app, "appops", R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,
 					R.string.featured_button_install, c -> showInMarket(c, "rikka.appops"));
 
