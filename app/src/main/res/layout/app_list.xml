@@ -83,6 +83,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_gravity="bottom"
+            android:layout_marginStart="-10dp" tools:comments="To avoid white edges when fading and scaling out"
+            android:layout_marginEnd="-10dp"
             app:menu="@menu/bottom_navigation"
             app:itemBackground="?android:attr/colorPrimary"
             app:itemIconTint="@android:color/white"

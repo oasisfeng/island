@@ -29,6 +29,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
@@ -185,6 +187,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			tabs.setSelectedItemId(primary_filter == Filter.Mainland ? R.id.tab_mainland : R.id.tab_island);
 			mPrimaryFilter.setValue(primary_filter);
 		}
+		mSelection.observeForever(selection -> {
+			final Interpolator interpolator = new AccelerateDecelerateInterpolator();
+			if (selection != null) tabs.animate().alpha(0).translationZ(-10).scaleX(0.95f).scaleY(0.95f).setDuration(200).setInterpolator(interpolator);
+			else tabs.animate().alpha(1).translationZ(0).scaleX(1).scaleY(1).setDuration(200).setInterpolator(interpolator);
+		});
 	}
 
 	public void setOwnerController(final IIslandManager controller) {
