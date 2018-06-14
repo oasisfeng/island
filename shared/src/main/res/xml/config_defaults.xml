@@ -2,19 +2,19 @@
 <defaultsMap>
     <entry>
         <key>url_faq</key>
-        <value>https://island.oasisfeng.com/faq.html</value>
+        <value>https://island.oasisfeng.com/faq</value>
     </entry>
     <entry>
         <key>url_setup</key>
-        <value>https://island.oasisfeng.com/setup.html</value>
+        <value>https://island.oasisfeng.com/setup</value>
     </entry>
     <entry>
         <key>url_setup_trouble</key>
-        <value>https://island.oasisfeng.com/faq.html</value>
+        <value>https://island.oasisfeng.com/faq</value>
     </entry>
     <entry>
         <key>url_file_shuttle</key>
-        <value>https://island.oasisfeng.com/files.html</value>
+        <value>https://island.oasisfeng.com/files</value>
     </entry>
     <entry>
         <key>url_coolapk</key>
