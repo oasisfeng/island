@@ -16,6 +16,7 @@ import android.util.Log;
 
 import com.google.common.base.Preconditions;
 
+import java.util.List;
 import java.util.Set;
 
 import java9.util.Optional;
@@ -227,6 +228,21 @@ public class DevicePolicies {
 	/** @see DevicePolicyManager#getPermissionGrantState(ComponentName, String, String) */
 	@RequiresApi(M) public int getPermissionGrantState(final String pkg, final String permission) {
 		return mDevicePolicyManager.getPermissionGrantState(sCachedComponent, pkg, permission);
+	}
+
+	/** @see DevicePolicyManager#setPermittedInputMethods(ComponentName, List) */
+	public void setPermittedInputMethods(final List<String> packages) {
+		mDevicePolicyManager.setPermittedInputMethods(sCachedComponent, packages);
+	}
+
+	/** @see DevicePolicyManager#setPermittedAccessibilityServices(ComponentName, List) */
+	public void setPermittedAccessibilityServices(final List<String> packages) {
+		mDevicePolicyManager.setPermittedAccessibilityServices(sCachedComponent, packages);
+	}
+
+	/** @see DevicePolicyManager#setPermittedCrossProfileNotificationListeners(ComponentName, List) */
+	@RequiresApi(O) public void setPermittedCrossProfileNotificationListeners(final List<String> packages) {
+		mDevicePolicyManager.setPermittedCrossProfileNotificationListeners(sCachedComponent, packages);
 	}
 
 	/** @see DevicePolicyManager#isBackupServiceEnabled(ComponentName) */

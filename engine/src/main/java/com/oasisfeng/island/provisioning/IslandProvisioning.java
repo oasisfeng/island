@@ -267,6 +267,11 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		// For Greenify (non-root automated hibernation for apps in Island)
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
+
+		// Some Samsung devices default to restrict all 3rd-party IMEs.
+		policies.setPermittedInputMethods(null);
+		policies.setPermittedAccessibilityServices(null);
+		if (SDK_INT >= O) policies.setPermittedCrossProfileNotificationListeners(null);
 	}
 
 	public static boolean ensureInstallNonMarketAppAllowed(final Context context, final DevicePolicies policies) {
