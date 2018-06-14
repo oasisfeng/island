@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 
 import com.google.common.base.Preconditions;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.shared.BuildConfig;
 
 import java.util.List;
 
@@ -36,9 +37,8 @@ public class DeviceAdmins {
 			if (Modules.MODULE_ENGINE.equals(active_admin.getPackageName())) return active_admin;
 
 		final Intent intent = new Intent(DeviceAdminReceiver.ACTION_DEVICE_ADMIN_ENABLED).setPackage(Modules.MODULE_ENGINE);
-		try {
-			final List<ResolveInfo> admins = context.getPackageManager().queryBroadcastReceivers(intent, PackageManager.GET_DISABLED_COMPONENTS);
-			if (admins.size() != 1) throw new IllegalStateException("Engine module is not correctly installed: " + admins);
+		final List<ResolveInfo> admins = context.getPackageManager().queryBroadcastReceivers(intent, PackageManager.GET_DISABLED_COMPONENTS);
+		if (admins.size() == 1) {
 			final ResolveInfo admin = admins.get(0);
 			sDeviceAdminComponent = new ComponentName(Modules.MODULE_ENGINE, admins.get(0).activityInfo.name);
 			if (! admin.activityInfo.enabled) {
@@ -46,10 +46,9 @@ public class DeviceAdmins {
 				context.getPackageManager().setComponentEnabledSetting(sDeviceAdminComponent, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
 			}
 			return sDeviceAdminComponent;
-		} catch (final SecurityException e) {
-			Analytics.$().report(e);
-			return new ComponentName(Modules.MODULE_ENGINE, "com.oasisfeng.island.IslandDeviceAdminReceiver");	// Fallback
-		}
+		}	// No resolve result on some Android 7.x devices, cause unknown.
+		if (BuildConfig.DEBUG) throw new IllegalStateException("Engine module is not correctly installed: " + admins);
+		return new ComponentName(Modules.MODULE_ENGINE, "com.oasisfeng.island.IslandDeviceAdminReceiver");	// Fallback
 	}
 
 	private static ComponentName sDeviceAdminComponent;
