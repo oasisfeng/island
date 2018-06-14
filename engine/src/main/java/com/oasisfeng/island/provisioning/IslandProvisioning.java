@@ -111,7 +111,6 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 
 		final boolean is_manual_setup = Intent.ACTION_USER_INITIALIZE.equals(intent.getAction()) || intent.getAction() == null/* recovery procedure triggered by MainActivity */;
-		final Analytics.Trace trace = Analytics.startTrace(is_manual_setup ? "Provision (Manual)" : "Provision (Managed)");
 		Analytics.$().setProperty(Analytics.Property.IslandSetup, is_manual_setup ? "manual" : "managed");
 		Log.d(TAG, "Provisioning profile (" + Users.toId(android.os.Process.myUserHandle()) + (is_manual_setup ? ", manual) " : ")"));
 
@@ -151,8 +150,6 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			}
 			new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(this, R.string.toast_setup_complete, Toast.LENGTH_LONG).show());
 		}
-
-		trace.stop();
 	}
 
 	@RequiresApi(M) private static boolean grantEssentialDebugPermissionsIfPossible(final Context context, final DevicePolicies policies) {

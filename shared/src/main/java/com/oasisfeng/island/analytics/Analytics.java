@@ -53,10 +53,6 @@ public interface Analytics {
 		default void incrementCounter(final String counter_name) { incrementCounter(counter_name, 1); }
 	}
 
-	static Trace startTrace(final String name) {
-		return PerformanceTrace.startTrace(name);
-	}
-
 	enum Property {
 		DeviceOwner("device_owner"),
 		IslandSetup("island_setup"),
