@@ -6,10 +6,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.StringDef;
 
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java9.util.Optional;
 
@@ -25,6 +28,7 @@ import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
  *
  * Created by Oasis on 2017/10/8.
  */
+@ParametersAreNonnullByDefault
 public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 
 	private static final boolean TEST_NO_DEV_PERMISSIONS = BuildConfig.DEBUG && false;
@@ -39,6 +43,12 @@ public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 	public static boolean ensure(final Context context, final @DevPermission String permission) {
 		if (has(context, permission)) return true;
 		if (SDK_INT < M || SDK_INT > O) return false;
+		if (sGrantingDevPermissionAllowed == Boolean.FALSE) return false;
+
+		return sGrantingDevPermissionAllowed = tryGranting(context, permission);
+	}
+
+	@RequiresApi(M) private static boolean tryGranting(final Context context, final String permission) {
 		final String sp = Build.VERSION.SECURITY_PATCH;
 		if (sp.contains("2018") || sp.contains("2017-11") || sp.contains("2017-12")) return false;	// No longer works after 2017.11 security patch. (CVE-2017-0830)
 
@@ -51,4 +61,6 @@ public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 		if (! result) Analytics.$().event("permission_failure").withRaw("permission", permission).withRaw("SP", sp).send();
 		return result;
 	}
+
+	private static Boolean sGrantingDevPermissionAllowed;
 }
