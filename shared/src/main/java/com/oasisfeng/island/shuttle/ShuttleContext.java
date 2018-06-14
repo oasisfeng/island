@@ -5,6 +5,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.UserHandle;
 import android.util.Log;
 
 import com.oasisfeng.island.util.Hacks;
@@ -29,12 +30,14 @@ public class ShuttleContext extends ContextWrapper {
 	public ShuttleContext(final Context base) { super(base); }
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
-		if (Users.profile == null) return false;
-		if (! ALWAYS_USE_SHUTTLE && Permissions.ensure(this, INTERACT_ACROSS_USERS))
-			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, Users.profile).on(getBaseContext())) {
+		final UserHandle profile = Users.profile;
+		if (profile == null) return false;
+		if (! ALWAYS_USE_SHUTTLE && Permissions.ensure(this, INTERACT_ACROSS_USERS)) try {
+			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, profile).on(getBaseContext())) {
 				Log.d(TAG, "Connecting to service in profile: " + service);
 				return true;
 			}
+		} catch (final SecurityException ignored) {}	// Very few devices still throw SecurityException, cause known.
 
 		final ShuttleServiceConnection existent = mConnections.get(connection);
 		final ShuttleServiceConnection shuttle_connection = existent != null ? existent : connection instanceof ShuttleServiceConnection
