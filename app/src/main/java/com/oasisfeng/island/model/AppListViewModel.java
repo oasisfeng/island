@@ -531,6 +531,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 		@Override public void onStateChanged(@NonNull final View bottom_sheet, final int new_state) {
 			if (new_state == BottomSheetBehavior.STATE_HIDDEN) clearSelection();
+			else bottom_sheet.bringToFront();	// Force a lift due to bottom sheet appearing underneath BottomNavigationView on some devices, despite the layout order or elevation.
 		}
 
 		@Override public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {}
