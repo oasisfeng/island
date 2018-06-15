@@ -181,6 +181,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (! Filter.Island.available()) {		// Island is unavailable
 			tabs.getMenu().findItem(R.id.tab_island).setVisible(false);
 			tabs.setSelectedItemId(R.id.tab_mainland);
+			mPrimaryFilter.setValue(Filter.Mainland);
 		} else {
 			final int ordinal = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(Filter.Island.ordinal()/* default */);
 			final Filter primary_filter = Filter.values()[ordinal];
