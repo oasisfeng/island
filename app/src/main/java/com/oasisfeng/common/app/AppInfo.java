@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,9 +16,13 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 
 import java.util.concurrent.TimeUnit;
+
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 
 /**
  * Information about an installed app, more than {@link ApplicationInfo}.
@@ -55,13 +58,8 @@ public class AppInfo extends ApplicationInfo {
 
 	public AppInfo getLastInfo() { return mLastInfo; }
 
-	interface IconFilter {
-		@UiThread Drawable process(Drawable raw_icon);
-	}
-
-	interface IconConsumer {
-		@UiThread void accept(Drawable icon);
-	}
+	interface IconFilter { @UiThread Drawable process(Drawable raw_icon); }
+	interface IconConsumer { @UiThread void accept(Drawable icon); }
 
 	@UiThread void loadUnbadgedIcon(final @Nullable IconFilter filter, final IconConsumer consumer) {
 		loadIcon(filter, consumer, false);
@@ -115,7 +113,11 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) return loadUnbadgedIcon(pm);
+		if (SDK_INT >= LOLLIPOP_MR1) try {
+			return loadUnbadgedIcon(pm);
+		} catch (final SecurityException e) {		// Appears on some Samsung devices (e.g. Galaxy S7, Note 8) with Android 8.0
+			Analytics.$().logAndReport(TAG, "Error loading unbadged icon for " + this, e);
+		}
 		Drawable dr = null;
 		if (packageName != null) dr = pm.getDrawable(packageName, icon, this);
 		if (dr == null) dr = pm.getDefaultActivityIcon();
@@ -139,4 +141,6 @@ public class AppInfo extends ApplicationInfo {
 	private Drawable mCachedIcon;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;
+
+	private static final String TAG = "AppInfo";
 }
