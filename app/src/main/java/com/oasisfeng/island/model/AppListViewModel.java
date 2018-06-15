@@ -179,7 +179,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
 
 		if (! Filter.Island.available()) {		// Island is unavailable
-			tabs.getMenu().findItem(R.id.tab_island).setVisible(false);
+			tabs.getMenu().removeItem(R.id.tab_island);
 			tabs.setSelectedItemId(R.id.tab_mainland);
 			mPrimaryFilter.setValue(Filter.Mainland);
 		} else {
