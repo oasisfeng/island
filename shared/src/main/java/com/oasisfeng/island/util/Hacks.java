@@ -99,9 +99,9 @@ public class Hacks {
 		final String IWebViewUpdateService = "android.webkit.IWebViewUpdateService";
 		IWebViewUpdateService$Stub_asInterface = Hack.into(IWebViewUpdateService + "$Stub").staticMethod("asInterface")
 				.returning(Hack.ANY_TYPE).withParam(IBinder.class);
-		if (SDK_INT >= N && ! isAndroidP()) IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
+		if (SDK_INT >= N) IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 				.returning(String.class).throwing(RemoteException.class).withoutParams();
-		Environment_getDataSystemDirectory = isAndroidP() ? null : (SDK_INT < N ? Hack.into(Environment.class).staticMethod("getSystemSecureDirectory")
+		Environment_getDataSystemDirectory = (SDK_INT < N ? Hack.into(Environment.class).staticMethod("getSystemSecureDirectory")
 				: Hack.into(Environment.class).staticMethod("getDataSystemDirectory")).returning(File.class).withoutParams();
 	}
 
