@@ -14,11 +14,8 @@ import android.support.annotation.RequiresApi;
 import android.support.annotation.RequiresPermission;
 import android.util.Log;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.oasisfeng.android.util.Supplier;
+import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.engine.IslandManager;
@@ -35,9 +32,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 import java9.util.function.Consumer;
 import java9.util.function.Predicate;
@@ -132,19 +129,14 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 				Log.d(TAG, "All apps loaded.");
 			} else {
 				final Context context = context();
-				final ListenableFuture<List<ApplicationInfo>> apps_future = MethodShuttle.runInProfile(context,
-						() -> StreamSupport.stream(context.getPackageManager().getInstalledApplications(PM_FLAGS_GET_APP_INFO))
-						.filter(app -> (app.flags & FLAG_INSTALLED) != 0).collect(Collectors.toList()));	// TODO: ParceledListSlice to avoid TransactionTooLargeException.
-				apps_future.addListener(() -> {
-					Log.v(TAG, "Connected to profile.");
-					final List<ApplicationInfo> apps;
-					try {
-						apps = apps_future.get();
-					} catch (final ExecutionException e) {
-						Log.w(TAG, "Failed to query apps in Island", e.getCause());
+				// TODO: ParceledListSlice to avoid TransactionTooLargeException.
+				MethodShuttle.runInProfile(context,	() -> StreamSupport.stream(context.getPackageManager().getInstalledApplications(PM_FLAGS_GET_APP_INFO))
+						.filter(app -> (app.flags & FLAG_INSTALLED) != 0).collect(Collectors.toList())).whenComplete((apps, e) -> {
+					if (e != null) {
+						Log.w(TAG, "Failed to query apps in Island", e);
 						return;
-					} catch (final InterruptedException ignored) { return; }
-
+					}
+					Log.v(TAG, "Connected to profile.");
 					final List<IslandAppInfo> updated = new ArrayList<>(apps.size());
 					final ConcurrentHashMap<String, IslandAppInfo> app_map = mIslandAppMap.get();
 					for (final ApplicationInfo app : apps) {
@@ -154,7 +146,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 					}
 					Log.d(TAG, "All apps loaded.");
 					notifyUpdate(updated);
-				}, MoreExecutors.directExecutor());
+				});
 			}
 		}
 	}
@@ -196,7 +188,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	public void refreshPackage(final String pkg, final @Nullable UserHandle user, final boolean add) {
-		if (! Objects.equal(user, Users.profile)) return;
+		if (! Objects.equals(user, Users.profile)) return;
 		Log.d(TAG, "Update: " + pkg + (add ? " for pkg add" : " for pkg change"));
 		queryApplicationInfoInProfile(pkg, info -> {
 			if (info == null) return;

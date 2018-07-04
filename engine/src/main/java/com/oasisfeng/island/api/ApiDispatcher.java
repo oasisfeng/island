@@ -16,15 +16,16 @@ import android.support.annotation.Nullable;
 import android.util.ArrayMap;
 import android.util.Log;
 
-import com.google.common.base.Splitter;
 import com.oasisfeng.island.engine.IslandManagerService;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import java9.util.Objects;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 import java9.util.stream.Stream;
@@ -123,7 +124,7 @@ class ApiDispatcher {
 		final Stream<String> pkgs;
 		final boolean single;
 		if (single = "package".equals(scheme)) pkgs = Stream.of(ssp);
-		else if ("packages".equals(scheme)) pkgs = StreamSupport.stream(Splitter.on(',').omitEmptyStrings().trimResults().splitToList(ssp));
+		else if ("packages".equals(scheme)) pkgs = StreamSupport.stream(Arrays.asList(ssp.split(","))).filter(Objects::nonNull).map(String::trim);
 		else return "Unsupported intent data scheme: " + intent;	// Should never happen
 
 		try {

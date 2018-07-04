@@ -3,13 +3,9 @@ package com.oasisfeng.island.shuttle;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Parcel;
-import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import com.oasisfeng.android.service.AidlService;
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.android.util.Consumer;
@@ -18,7 +14,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
+
+import java9.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletionStage;
 
 /**
  * Shuttle for general method invocation.
@@ -32,13 +30,13 @@ public class MethodShuttle {
 
 	/** @param lambda should be a lambda function without return value.
 	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried. */
-	public static ListenableFuture<Void> runInProfile(final Context context, final GeneralVoidMethod lambda) {
+	public static CompletionStage<Void> runInProfile(final Context context, final GeneralVoidMethod lambda) {
 		return shuttle(context, lambda);
 	}
 
 	/** @param lambda should be a lambda function with return value of type <code>R</code>.
 	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried. */
-	public static <R> ListenableFuture<R> runInProfile(final Context context, final GeneralMethod<R> lambda) {
+	public static <R> CompletionStage<R> runInProfile(final Context context, final GeneralMethod<R> lambda) {
 		return shuttle(context, lambda);
 	}
 
@@ -46,20 +44,14 @@ public class MethodShuttle {
 	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried.
 	 * @deprecated */
 	public static <R> void runInProfile(final Context context, final GeneralMethod<R> lambda, final @Nullable Consumer<R> consumer) {
-		final ListenableFuture<R> future = shuttle(context, lambda);
-		if (consumer != null) future.addListener(() -> {
-			final R result;
-			try {
-				result = future.get();
-			} catch (final ExecutionException e) {
-				Log.w("Shuttle", "Error executing " + lambda, e.getCause());
-				return;
-			} catch (final InterruptedException e) { return; }
-			consumer.accept(result);
-		}, MoreExecutors.directExecutor());
+		final CompletionStage<R> future = shuttle(context, lambda);
+		if (consumer != null) future.whenComplete((result, e) -> {
+			if (e != null) Log.w("Shuttle", "Error executing " + lambda, e.getCause());
+			else consumer.accept(result);
+		});
 	}
 
-	private static <Result> ListenableFuture<Result> shuttle(final Context context, final Object lambda) {
+	private static <Result> CompletionStage<Result> shuttle(final Context context, final Object lambda) {
 		final Class<?> clazz = lambda.getClass();
 		final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
 		if (constructors == null || constructors.length < 1) throw new IllegalArgumentException("The method must have at least one constructor");
@@ -88,18 +80,18 @@ public class MethodShuttle {
 		final MethodInvocation<Result> invocation = new MethodInvocation<>();
 		invocation.clazz = clazz.getName();
 		invocation.args = args;
-		final SettableFuture<Result> future = SettableFuture.create();
+		final CompletableFuture<Result> future = new CompletableFuture<>();
 		if (! Services.use(new ShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, shuttle -> {
 			try {
 				shuttle.invoke(invocation);
 			} catch (final Exception e) {
 				Log.w(TAG, "Error executing " + invocation.clazz, e);
-				future.setException(e);
+				future.completeExceptionally(e);
 				return;
 			}
-			if (invocation.throwable != null) future.setException(invocation.throwable);
-			else future.set(invocation.result);
-		})) future.setException(new IllegalStateException("Error connecting " + Service.class.getCanonicalName()));
+			if (invocation.throwable != null) future.completeExceptionally(invocation.throwable);
+			else future.complete(invocation.result);
+		})) return CompletableFuture.failedFuture(new IllegalStateException("Error connecting " + Service.class.getCanonicalName()));
 		return future;
 	}
 
@@ -109,28 +101,26 @@ public class MethodShuttle {
 	public static class Service extends AidlService<IMethodShuttle.Stub> {
 
 		@Nullable @Override protected IMethodShuttle.Stub createBinder() {
-			return new IMethodShuttle.Stub() {
-				@Override public void invoke(final MethodInvocation invocation) throws RemoteException {
-					try {
-						final Class<?> clazz = Class.forName(invocation.clazz);
-						final Constructor<?> constructor = clazz.getDeclaredConstructors()[0];
-						constructor.setAccessible(true);
-						final Object[] args = invocation.args;
-						final Class<?>[] arg_types = constructor.getParameterTypes();
-						for (int i = 0; i < arg_types.length; i++) if (arg_types[i] == Context.class) args[i] = Service.this;	// Fill in context
-						final Object instance = constructor.newInstance(args);
-						if (instance instanceof GeneralVoidMethod)
-							((GeneralVoidMethod) instance).invoke();
-						else if (instance instanceof GeneralMethod) //noinspection unchecked
-							invocation.result = ((GeneralMethod) instance).invoke();
-						else throw new IllegalArgumentException("Internal error: method mismatch");
-					} catch (Throwable t) {
-						if (t instanceof InvocationTargetException) t = ((InvocationTargetException) t).getTargetException();
-						invocation.throwable = t;
-						Log.w(TAG, "Error executing " + invocation.clazz, t);
-					}
+			return new IMethodShuttle.Stub() { @Override public void invoke(final MethodInvocation invocation) {
+				try {
+					final Class<?> clazz = Class.forName(invocation.clazz);
+					final Constructor<?> constructor = clazz.getDeclaredConstructors()[0];
+					constructor.setAccessible(true);
+					final Object[] args = invocation.args;
+					final Class<?>[] arg_types = constructor.getParameterTypes();
+					for (int i = 0; i < arg_types.length; i++) if (arg_types[i] == Context.class) args[i] = Service.this;	// Fill in context
+					final Object instance = constructor.newInstance(args);
+					if (instance instanceof GeneralVoidMethod)
+						((GeneralVoidMethod) instance).invoke();
+					else if (instance instanceof GeneralMethod) //noinspection unchecked
+						invocation.result = ((GeneralMethod) instance).invoke();
+					else throw new IllegalArgumentException("Internal error: method mismatch");
+				} catch (Throwable t) {
+					if (t instanceof InvocationTargetException) t = ((InvocationTargetException) t).getTargetException();
+					invocation.throwable = t;
+					Log.w(TAG, "Error executing " + invocation.clazz, t);
 				}
-			};
+			}};
 		}
 	}
 

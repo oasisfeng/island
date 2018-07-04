@@ -14,14 +14,12 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import com.google.common.base.Preconditions;
-
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import java9.util.Optional;
 
-import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -51,9 +49,9 @@ public class DevicePolicies {
 	/** @return the profile owner component (may not be present), or null for failure */
 	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final int profile) {
 		if (Hacks.DevicePolicyManager_getProfileOwnerAsUser.isAbsent()) return null;
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE);
+		final DevicePolicyManager dpm = Objects.requireNonNull((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE));
 		try {
-			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(Preconditions.checkNotNull(dpm)));
+			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwnerAsUser.invoke(profile).on(dpm));
 		} catch (final RuntimeException e) {	// IllegalArgumentException("Requested profile owner for invalid userId", re) on API 21~23
 			return null;						//   or RuntimeException by RemoteException.rethrowFromSystemServer() on API 24+
 		}

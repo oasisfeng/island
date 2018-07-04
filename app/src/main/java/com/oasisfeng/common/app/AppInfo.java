@@ -12,17 +12,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.oasisfeng.android.util.Supplier;
+import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.data.IslandAppInfo;
-
-import java.util.concurrent.TimeUnit;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Information about an installed app, more than {@link ApplicationInfo}.
@@ -98,19 +94,8 @@ public class AppInfo extends ApplicationInfo {
 		// mLabel is not worth trimming and kept for performance
 	}
 
-	protected <T> Supplier<T> lazyImmutable(final Supplier<T> supplier) { return Suppliers.memoize(supplier); }
-	protected <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) {
-		return new Supplier<T>() {
-			@Override public T get() {
-				final T current_value = delegate.get();
-				if (! Objects.equal(current_value, value)) ;
-				value = current_value;
-				return current_value;
-			}
-			private T value;
-			private final Supplier<T> delegate = Suppliers.memoizeWithExpiration(supplier, 1, TimeUnit.SECONDS);
-		};
-	}
+	protected static <T> Supplier<T> lazyImmutable(final Supplier<T> supplier) { return Suppliers.memoize(supplier); }
+	protected static <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, SECONDS); }
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
 		if (SDK_INT >= LOLLIPOP_MR1) try {
@@ -126,14 +111,14 @@ public class AppInfo extends ApplicationInfo {
 
 	@NonNull protected Context context() { return mProvider.context(); }
 
-	@Override public String toString() { return fillToString(MoreObjects.toStringHelper(IslandAppInfo.class)).toString(); }
+	@Override public String toString() { return buildToString(AppInfo.class).append('}').toString(); }
 
-	protected MoreObjects.ToStringHelper fillToString(final MoreObjects.ToStringHelper helper) {
-		helper.add("pkg", packageName);
-		if (! isInstalled()) helper.addValue("not installed");
-		if (isSystem()) helper.addValue("system");
-		if (! enabled) helper.addValue("disabled");
-		return helper;
+	protected StringBuilder buildToString(final Class<?> clazz) {
+		final StringBuilder builder = new StringBuilder(clazz.getSimpleName()).append('{').append(packageName);
+		if (! isInstalled()) builder.append(", not installed");
+		if (isSystem()) builder.append(", system");
+		if (! enabled) builder.append(", disabled");
+		return builder;
 	}
 
 	protected final AppListProvider mProvider;

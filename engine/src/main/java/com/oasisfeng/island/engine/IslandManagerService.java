@@ -16,7 +16,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import com.google.common.base.Supplier;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
@@ -25,6 +24,8 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.io.File;
+
+import java9.util.function.Supplier;
 
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;

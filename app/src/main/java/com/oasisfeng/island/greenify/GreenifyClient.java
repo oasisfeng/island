@@ -12,8 +12,9 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.support.annotation.Nullable;
 
-import com.google.common.base.Preconditions;
 import com.oasisfeng.android.app.Activities;
+
+import java.util.Objects;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Context.USER_SERVICE;
@@ -30,7 +31,7 @@ public class GreenifyClient {
 	private static final int MIN_GREENIFY_VERSION = 306;    // Greenify 3.0 (build 5)
 
 	public static boolean greenify(final Context context, final String pkg, final UserHandle user) {
-		final long user_sn = Preconditions.checkNotNull((UserManager) context.getSystemService(USER_SERVICE)).getSerialNumberForUser(user);
+		final long user_sn = Objects.requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getSerialNumberForUser(user);
 		if (user_sn == - 1) return false;
 		final Intent intent = new Intent(ACTION_GREENIFY).setPackage(GREENIFY_PKG).setData(Uri.parse("package:" + pkg + "#usn=" + user_sn));
 		if (getGreenifyVersion(context) > 39500)        // EXTRA_CALLER_ID is supported in newer version of Greenify
@@ -76,6 +77,6 @@ public class GreenifyClient {
 		}
 	}
 
-	public static final String GREENIFY_PKG = "com.oasisfeng.greenify";
+	private static final String GREENIFY_PKG = "com.oasisfeng.greenify";
 }
 

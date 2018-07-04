@@ -19,11 +19,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
@@ -45,7 +40,7 @@ import com.oasisfeng.island.util.Users;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Objects;
 
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
@@ -55,6 +50,8 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
+import static java9.util.stream.Collectors.joining;
+import static java9.util.stream.StreamSupport.stream;
 
 /**
  * Implementation of Island / Mainland setup & shutdown.
@@ -78,10 +75,10 @@ public class IslandSetup {
 			Users.refreshUsers(activity);
 			if (! Users.hasProfile()) {		// Profile creation failed
 				if (result == null || result.isEmpty()) return;		// Just root failure
-				Analytics.$().event("setup_island_root_failed").withRaw("commands", Joiner.on("\n").join(commands))
+				Analytics.$().event("setup_island_root_failed").withRaw("commands", stream(commands).collect(joining("\n")))
 						.withRaw("fw_max_users", String.valueOf(getSysPropMaxUsers()))
 						.withRaw("config_multiuserMaximumUsers", String.valueOf(getResConfigMaxUsers()))
-						.with(CONTENT, Joiner.on("\n").skipNulls().join(result)).send();
+						.with(CONTENT, stream(result).collect(joining("\n"))).send();
 				dismissProgressAndShowError(activity, progress, 1);
 				return;
 			}
@@ -116,10 +113,10 @@ public class IslandSetup {
 		commands.append(" && am start-user ").append(profile_id);
 
 		SafeAsyncTask.execute(activity, a -> Shell.SU.run(commands.toString()), result -> {
-			final LauncherApps launcher_apps = (LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			if (Preconditions.checkNotNull(launcher_apps).getActivityList(activity.getPackageName(), Users.profile).isEmpty()) {
+			final LauncherApps launcher_apps = Objects.requireNonNull((LauncherApps) activity.getSystemService(Context.LAUNCHER_APPS_SERVICE));
+			if (launcher_apps.getActivityList(activity.getPackageName(), Users.profile).isEmpty()) {
 				Analytics.$().event("setup_island_root_failed").withRaw("command", commands.toString())
-						.with(CONTENT, result == null ? "<null>" : Joiner.on("\n").skipNulls().join(result)).send();
+						.with(CONTENT, result == null ? "<null>" : stream(result).collect(joining("\n"))).send();
 				dismissProgressAndShowError(activity, progress, 2);
 			}
 		});
@@ -172,11 +169,11 @@ public class IslandSetup {
 				return;
 			}
 			if (! "DONE".equals(output.get(output.size() - 1))) {
-				Analytics.$().event("setup_mainland_root").with(CONTENT, Joiner.on("\n").skipNulls().join(output)).send();
+				Analytics.$().event("setup_mainland_root").with(CONTENT, stream(output).collect(joining("\n"))).send();
 				Toast.makeText(activity, R.string.toast_setup_mainland_root_failed, Toast.LENGTH_LONG).show();
 				return;
 			}
-			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : Joiner.on("\n").skipNulls().join(output)).send();
+			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : stream(output).collect(joining("\n"))).send();
 			// Start the device-admin activation UI (no-op if already activated with root above), since "dpm set-active-admin" is not supported on Android 5.0.
 			fragment.startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(activity))
@@ -241,7 +238,7 @@ public class IslandSetup {
 						destroyProfile(activity);
 						return;
 					}
-					final String names = Joiner.on("\n").skipNulls().join(Iterables.limit(exclusive_clones, MAX_DESTROYING_APPS_LIST));
+					final String names = stream(exclusive_clones).limit(MAX_DESTROYING_APPS_LIST).collect(joining("\n"));
 					final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
 					new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 							.setMessage(activity.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
@@ -263,23 +260,19 @@ public class IslandSetup {
 
 	private static void destroyProfile(final Activity activity) {
 		@SuppressWarnings("UnnecessaryLocalVariable") final Context context = activity;		// MethodShuttle accepts only Context, but not Activity.
-		final ListenableFuture<Void> future = MethodShuttle.runInProfile(activity, () -> {
+		MethodShuttle.runInProfile(activity, () -> {
 			final DevicePolicies policies = new DevicePolicies(context);
 			policies.clearCrossProfileIntentFilters();
 			policies.getManager().wipeData(0);
-		});
-		future.addListener(() -> {
-			try {
-				future.get();
-			} catch (InterruptedException | ExecutionException e) {
-				if (! (e instanceof ExecutionException && e.getCause() instanceof DeadObjectException))	// DeadObjectException is normal, as wipeData() also terminated the calling process.
-					showPromptForProfileManualRemoval(activity);
+		}).whenComplete((result, e) -> {
+			if (e != null && ! (e instanceof DeadObjectException)) {	// DeadObjectException is normal, as wipeData() also terminated the calling process.
+				showPromptForProfileManualRemoval(activity);
 				return;
 			}
 			ClonedHiddenSystemApps.reset(activity, Users.profile);
 			activity.finishAffinity();	// Finish the whole activity stack.
 			System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
-		}, MoreExecutors.directExecutor());
+		});
 	}
 
 	private static final String TAG = IslandSetup.class.getSimpleName();

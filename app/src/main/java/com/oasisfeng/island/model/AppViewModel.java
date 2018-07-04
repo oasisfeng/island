@@ -3,18 +3,14 @@ package com.oasisfeng.island.model;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.Ordering;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
-import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
+import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.Users;
-
-import java.util.Arrays;
+import com.oasisfeng.java.util.Comparator;
+import com.oasisfeng.java.util.Comparators;
 
 /**
  * View-model for app entry
@@ -45,13 +41,13 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		else if (info().isHidden()) status.append(context.getString(R.string.status_frozen));
 		else status.append(context.getString(R.string.status_alive));
 		final boolean exclusive = IslandAppListProvider.getInstance(context).isExclusive(info());
-		final String appendixes = Joiner.on(", ").skipNulls().join(Arrays.asList(
-				isSystem() ? context.getString(R.string.status_appendix_system) : null,
-				info().isCritical() ? context.getString(R.string.status_appendix_critical) : null,
-				Users.isOwner(info().user) ? (exclusive ? null : context.getString(R.string.status_appendix_cloned))
-						: (exclusive ? context.getString(R.string.status_appendix_exclusive) : null)
-		));
-		if (! appendixes.isEmpty()) status.append(" (").append(appendixes).append(')');
+		final StringBuilder appendixes = new StringBuilder();
+		if (isSystem()) appendixes.append(", ").append(context.getString(R.string.status_appendix_system));
+		if (info().isCritical()) appendixes.append(", ").append(context.getString(R.string.status_appendix_critical));
+		if (Users.isOwner(info().user)) {
+			if (! exclusive) appendixes.append(", ").append(context.getString(R.string.status_appendix_cloned));
+		} else if (exclusive) appendixes.append(", ").append(context.getString(R.string.status_appendix_exclusive));
+		if (appendixes.length() > 0) status.append(" (").append(appendixes).append(')');
 		return status;
 	}
 
@@ -81,12 +77,12 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	@Override public String toString() {
-		return info().fillToString(MoreObjects.toStringHelper(AppViewModel.class)).add("state", state).toString();
+		return info().buildToString(AppViewModel.class).append(", state=").append(state).append('}').toString();
 	}
 
-	private static final Ordering<AppViewModel> ORDERING = Ordering.natural()
-			.onResultOf((Function<AppViewModel, Comparable>) app -> app.state.order)		// Order by state
-//			.compound(Ordering.natural().reverse().onResultOf(AppViewModel::isExclusive))	// Exclusive clones first
-			.compound(Ordering.natural().onResultOf(AppViewModel::isSystem))				// Non-system apps first
-			.compound(Ordering.natural().onResultOf(app -> app.info.getLabel()));			// Order by label
+	private static final Comparator<AppViewModel> ORDERING = Comparators.<AppViewModel>
+			comparingInt(app -> app.state.order)		// Order by state
+//			.thenCompare(AppViewModel::isExclusive)		// Exclusive clones first
+			.thenCompare(AppViewModel::isSystem)		// Non-system apps first
+			.thenCompare(app -> app.info.getLabel());	// Order by label
 }

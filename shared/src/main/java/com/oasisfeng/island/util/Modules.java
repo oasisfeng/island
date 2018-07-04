@@ -12,9 +12,8 @@ import android.provider.DocumentsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.google.common.base.Preconditions;
-
 import java.util.List;
+import java.util.Objects;
 
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
@@ -57,7 +56,7 @@ public class Modules {
 		final ComponentName launcher_activity = resolveActivity(context, intent);
 		//if (BuildConfig.DEBUG && launcher_activity == null)
 			// TODO: Find launcher activity across all packages with the same UID.
-		return Preconditions.checkNotNull(launcher_activity, "UI module not installed");
+		return Objects.requireNonNull(launcher_activity, "UI module not installed");
 	}
 
 	private static ComponentName resolveActivity(final Context context, final Intent intent) {

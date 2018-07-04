@@ -4,8 +4,6 @@ import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Ticker;
 import com.oasisfeng.deagle.BuildConfig;
 
 import java.util.concurrent.TimeUnit;

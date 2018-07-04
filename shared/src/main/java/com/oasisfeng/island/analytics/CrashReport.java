@@ -2,8 +2,8 @@ package com.oasisfeng.island.analytics;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.oasisfeng.android.util.Supplier;
+import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.IslandApplication;
 import com.oasisfeng.island.shared.BuildConfig;
 

@@ -5,8 +5,8 @@ import android.security.KeyPairGeneratorSpec;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.oasisfeng.android.util.Supplier;
+import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
 
 import java.io.IOException;

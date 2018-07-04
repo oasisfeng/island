@@ -10,8 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.google.common.base.MoreObjects;
-
 /**
  * Special {@link ServiceConnection} to be used together with ServiceShuttle. Cannot be shared by more than one service.
  *
@@ -94,8 +92,8 @@ public abstract class ShuttleServiceConnection implements ServiceConnection {
 
 		@Override public String toString() {
 			if (mConnectedService == null) return super.toString();
-			return MoreObjects.toStringHelper(TAG).addValue(System.identityHashCode(this))
-					.add("comp", mConnectedService.component.flattenToShortString()).add("binder", mConnectedService.binder).toString();
+			return new StringBuilder("ShuttleServiceConnection{").append(System.identityHashCode(this)).append(", comp=")
+					.append(mConnectedService.component.flattenToShortString()).append(", binder=").append(mConnectedService.binder).toString();
 		}
 
 		Dispatcher(final @NonNull ShuttleServiceConnection connection) { this.mConnection = connection; }

@@ -21,12 +21,12 @@ import android.provider.Telephony.Carriers;
 import android.provider.UserDictionary;
 import android.util.Log;
 
-import com.google.common.base.Stopwatch;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.perf.Performances;
+import com.oasisfeng.perf.Stopwatch;
 
 import java.util.Arrays;
 import java.util.Collection;

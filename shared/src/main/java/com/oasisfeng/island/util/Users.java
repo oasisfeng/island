@@ -10,13 +10,13 @@ import android.os.Process;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.google.common.base.Preconditions;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static android.content.Context.USER_SERVICE;
 
@@ -48,7 +48,7 @@ public abstract class Users extends PseudoContentProvider {
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
 		profile = null;
-		final List<UserHandle> user_and_profiles = Preconditions.checkNotNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
+		final List<UserHandle> user_and_profiles = Objects.requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
 		for (final UserHandle user_or_profile : user_and_profiles) {
 			if (toId(user_or_profile) > 100) continue;				// Exclude special profiles (e.g. XSpace in MIUI in user ID 999)
 			if (! isOwner(user_or_profile)) {

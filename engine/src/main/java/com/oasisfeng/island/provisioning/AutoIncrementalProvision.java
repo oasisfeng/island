@@ -1,12 +1,12 @@
 package com.oasisfeng.island.provisioning;
 
-import com.google.common.base.Stopwatch;
 import com.oasisfeng.island.engine.BuildConfig;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.pattern.PseudoContentProvider;
 import com.oasisfeng.perf.Performances;
+import com.oasisfeng.perf.Stopwatch;
 
 import java9.util.Optional;
 

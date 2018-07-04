@@ -12,8 +12,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.widget.Toast;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
@@ -38,7 +36,6 @@ import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -153,20 +150,18 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			return;
 		}
 
-		final ListenableFuture<Boolean> future = MethodShuttle.runInProfile(context, () -> {
+		MethodShuttle.runInProfile(context, () -> {
 			final DevicePolicies device_policies = new DevicePolicies(context);		// The "policies" instance can not be passed into profile.
 			if (enabling) device_policies.addUserRestriction(DISALLOW_DEBUGGING_FEATURES);
 			else device_policies.clearUserRestriction(DISALLOW_DEBUGGING_FEATURES);
 			return enabling;
-		});
-		future.addListener(() -> {
-			try {
-				vm.button.setValue(future.get() ? R.string.featured_button_disable : R.string.featured_button_enable);
-			} catch (final InterruptedException | ExecutionException e) {
+		}).whenComplete((result, e) -> {
+			if (e != null) {
 				Analytics.$().logAndReport(TAG, "Error setting featured button", e);
 				Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
 			}
-		}, MoreExecutors.directExecutor());
+			vm.button.setValue(result ? R.string.featured_button_disable : R.string.featured_button_enable);
+		});
 	}
 
 	private static void showInMarket(final Context context, final String pkg) {

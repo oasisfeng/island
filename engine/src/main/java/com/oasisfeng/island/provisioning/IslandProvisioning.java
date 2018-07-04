@@ -23,10 +23,9 @@ import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.oasisfeng.android.content.IntentFilters;
+import com.oasisfeng.android.util.Supplier;
+import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.InternalService;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
@@ -44,6 +43,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
@@ -292,7 +292,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		final List<ResolveInfo> installers = context.getPackageManager().queryIntentActivities(
 				new Intent(Intent.ACTION_INSTALL_PACKAGE).setData(Uri.fromParts("file", "dummy.apk", null)), 0);
 		if (installers.size() <= 1) return;
-		final LauncherApps launcher_apps = Preconditions.checkNotNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
+		final LauncherApps launcher_apps = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 		for (final ResolveInfo installer : installers) {
 			final String installer_pkg = installer.activityInfo.packageName;
 			if (launcher_apps.isPackageEnabled(installer_pkg, Users.owner)) continue;
