@@ -11,6 +11,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.support.v4.content.pm.ShortcutManagerCompat;
@@ -105,7 +106,8 @@ public class ShortcutShuttle extends BroadcastReceiver {
 				Log.w(TAG, "Icon resource not found for shortcut pinning request (" + shortcut_name + "): " + icon_res.resourceName);
 				return;
 			}
-			shortcut_icon = ShortcutIcons.createLargeIconBitmap(context, pkg_res.getDrawable(res_id), icon_res.packageName);
+			final Drawable badged_icon = pm.getUserBadgedIcon(pkg_res.getDrawable(res_id), profile);
+			shortcut_icon = ShortcutIcons.createLargeIconBitmap(context, badged_icon, icon_res.packageName);
 			if (shortcut_icon == null) {
 				Log.w(TAG, "Failed to build icon bitmap for icon resource: " + icon_res.resourceName);
 				return;

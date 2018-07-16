@@ -1,12 +1,12 @@
 package com.oasisfeng.island.shortcut;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
+import android.content.pm.LauncherActivityInfo;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
@@ -30,14 +30,21 @@ import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import static android.content.Intent.*;
 import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.CATEGORY_LAUNCHER;
+import static android.content.Intent.EXTRA_SHORTCUT_ICON;
+import static android.content.Intent.EXTRA_SHORTCUT_ICON_RESOURCE;
+import static android.content.Intent.EXTRA_SHORTCUT_INTENT;
+import static android.content.Intent.EXTRA_SHORTCUT_NAME;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.ShortcutIconResource;
+import static android.content.Intent.URI_INTENT_SCHEME;
+import static android.content.Intent.parseUri;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
-import static com.oasisfeng.island.util.Hacks.MATCH_ANY_USER_AND_UNINSTALLED;
 
 /**
  * Create launch shortcut for apps in Island or mainland, from the owner user space.
@@ -58,17 +65,18 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 	/** @return true if launcher supports shortcut pinning, false for failure, or null if legacy shortcut installation broadcast is sent, */
 	public static @Nullable Boolean createOnLauncher(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) {
 		final PackageManager pm = context.getPackageManager();
-		@SuppressLint("WrongConstant")		// GET_UNINSTALLED_PACKAGE is not working here as elsewhere, if app is not installed in owner user.
-		final List<ResolveInfo> activities = pm.queryIntentActivities(new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg), MATCH_ANY_USER_AND_UNINSTALLED);
+		final List<LauncherActivityInfo> activities = Objects.requireNonNull((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
+				.getActivityList(pkg, owner ? Users.owner : Users.profile);
 		if (activities.isEmpty()) {
 			Analytics.$().event("shortcut_non_launchable").with(ITEM_ID, pkg).send();
 			return false;
 		}
-		final ActivityInfo activity = activities.get(0).activityInfo;
-		final ComponentName component = new ComponentName(activity.packageName, activity.name);
-		final String label = shortcut_prefix + activity.loadLabel(pm);
-		final Supplier<Bitmap> icon_bitmap = () -> ShortcutIcons.createLargeIconBitmap(context, activity.loadIcon(pm),
-				owner || SDK_INT >= O ? Users.owner : Users.profile, pkg);	// No badge icon on Android O, since launcher will use the icon of Island as badge.
+		final LauncherActivityInfo activity = activities.get(0);
+		final ComponentName component = activity.getComponentName();
+		final String label = shortcut_prefix + activity.getLabel();
+		final Supplier<Bitmap> icon_bitmap = () -> ShortcutIcons.createLargeIconBitmap(context, owner || SDK_INT >= O ? activity.getIcon(0)
+				: activity.getBadgedIcon(0), pkg);		// No badge icon on Android O, since launcher will use the icon of Island as badge.
+
 		final Intent launch_intent = new Intent(owner ? ACTION_LAUNCH_APP : ACTION_LAUNCH_CLONE).addCategory(CATEGORY_LAUNCHER)
 				.setData(Uri.fromParts("target", component.flattenToShortString(), null));
 
@@ -87,7 +95,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			try {
 				final ShortcutIconResource icon = new ShortcutIconResource();
 				icon.packageName = pkg;
-				icon.resourceName = context.getPackageManager().getResourcesForApplication(pkg).getResourceName(activity.getIconResource());
+				icon.resourceName = context.getPackageManager().getResourcesForApplication(pkg).getResourceName(activity.getApplicationInfo().icon);
 				intent.putExtra(EXTRA_SHORTCUT_ICON_RESOURCE, icon);
 			} catch (final NameNotFoundException | Resources.NotFoundException e) {	// NameNotFoundException if app is not installed in owner user.
 				final Bitmap bitmap = icon_bitmap.get();

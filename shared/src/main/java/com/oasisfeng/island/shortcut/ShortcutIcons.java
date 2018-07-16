@@ -2,7 +2,6 @@ package com.oasisfeng.island.shortcut;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.AdaptiveIconDrawable;
@@ -10,13 +9,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
-import android.os.UserHandle;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.android.ui.IconResizer;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.util.Users;
+
+import java.util.Objects;
 
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
@@ -29,12 +28,11 @@ import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
  */
 public class ShortcutIcons {
 
-	public static @Nullable Bitmap createLargeIconBitmap(final Context context, final Drawable drawable, final UserHandle user, final String pkg) {
-		final PackageManager pm = context.getPackageManager();
-		final int icon_size = ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getLauncherLargeIconSize();
+	public static @Nullable Bitmap createLargeIconBitmap(final Context context, final Drawable drawable, final String pkg) {
+		final int icon_size = Objects.requireNonNull((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getLauncherLargeIconSize();
 		final Drawable icon = new IconResizer(icon_size).createIconThumbnail(drawable);	// Resize the app icon in case it's too large. (also avoid TransactionTooLargeException)
 		icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
-		final Bitmap bitmap = drawableToBitmap(Users.isOwner(user) ? icon : pm.getUserBadgedIcon(icon, user));
+		final Bitmap bitmap = drawableToBitmap(icon);
 		if (bitmap == null) Analytics.$().event("invalid_app_icon").with(ITEM_ID, pkg).with(ITEM_CATEGORY, drawable.getClass().getName()).send();
 		return bitmap;
 	}
