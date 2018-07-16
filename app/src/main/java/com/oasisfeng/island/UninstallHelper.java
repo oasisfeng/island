@@ -30,6 +30,7 @@ import com.oasisfeng.island.util.Users;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.List;
+import java.util.Objects;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.app.PendingIntent.getBroadcast;
@@ -90,7 +91,7 @@ public class UninstallHelper extends PseudoContentProvider {
 			if (Users.isOwner()) return;
 			final String action = intent.getAction();
 			if (ACTION_RECHECK_ISLAND.equals(action) || Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-				if (! Permissions.has(context, INTERACT_ACROSS_USERS)) return;		// TODO: Android 5.x without INTERACT_ACROSS_USERS?
+				if (! Permissions.has(context, INTERACT_ACROSS_USERS)) return;		// FIXME: Solution if no permission INTERACT_ACROSS_USERS
 				final PackageManager owner_pm = ContextShuttle.getPackageManagerAsUser(context, Users.owner);
 				if (owner_pm == null) return;
 				try { @SuppressLint("WrongConstant")
@@ -101,12 +102,12 @@ public class UninstallHelper extends PseudoContentProvider {
 					Log.e(TAG, "Island not found");
 				}
 			} else if (ACTION_DESTROY_ISLAND.equals(action)) {
-				final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+				final DevicePolicyManager dpm = Objects.requireNonNull((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE));
 				dpm.wipeData(0);
 				// No need to cancel the notification as it will be canceled after managed profile is removed.
 			} else if (ACTION_RESTORE_ISLAND.equals(action)) {
 				NotificationIds.UninstallHelper.cancel(context);		// Cancel the notification and re-check later in minutes.
-				final AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+				final AlarmManager am = Objects.requireNonNull((AlarmManager) context.getSystemService(Context.ALARM_SERVICE));
 				final long now = SystemClock.elapsedRealtime();
 				final Intent recheck = new Intent(context, getClass()).setAction(ACTION_RECHECK_ISLAND);
 				am.set(AlarmManager.ELAPSED_REALTIME, now + 180_000, getBroadcast(context, 0, recheck, FLAG_UPDATE_CURRENT));
