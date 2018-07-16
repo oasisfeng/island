@@ -31,7 +31,8 @@ import java9.util.stream.Collectors;
 import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
-import static android.content.pm.PackageManager.GET_SIGNATURES;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.O_MR1;
 
 /**
  * Dispatch the API calls.
@@ -60,8 +61,9 @@ class ApiDispatcher {
 		if (value == null) return "Unauthorized client: " + pkg;
 		final int signature_hash = value;
 		if (signature_hash == 0) return null;
+		if (SDK_INT > O_MR1 && ! Users.isOwner()) return null; // FIXME: Figure out a new way to verify signature on Android P, which enforces permission INTERACT_ACROSS_USERS for MATCH_ANY_USER.
 		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
-			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, GET_SIGNATURES | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 			for (final Signature signature : pkg_info.signatures)
 				if (signature.hashCode() != signature_hash) return "Package signature mismatch";
 			sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.

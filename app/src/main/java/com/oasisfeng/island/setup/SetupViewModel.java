@@ -1,7 +1,6 @@
 package com.oasisfeng.island.setup;
 
 import android.accounts.Account;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.admin.DevicePolicyManager;
@@ -10,7 +9,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.databinding.ObservableInt;
 import android.os.Parcel;
@@ -162,9 +160,8 @@ public class SetupViewModel implements Parcelable {
 			final String device_owner = new DevicePolicies(context).getDeviceOwner();
 			if (device_owner != null) {
 				CharSequence owner_label = null;
-				try { @SuppressLint("WrongConstant")
-					final ApplicationInfo owner_info = pm.getApplicationInfo(device_owner, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
-					owner_label = owner_info.loadLabel(pm);
+				try {
+					owner_label = pm.getApplicationInfo(device_owner, PackageManager.GET_UNINSTALLED_PACKAGES).loadLabel(pm);
 				} catch (final PackageManager.NameNotFoundException ignored) {}		// Should never happen.
 
 				final SetupViewModel error = buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));

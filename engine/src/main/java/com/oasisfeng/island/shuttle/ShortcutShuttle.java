@@ -23,7 +23,6 @@ import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shortcut.AppLaunchShortcut;
 import com.oasisfeng.island.shortcut.ShortcutIcons;
 import com.oasisfeng.island.util.Cryptography;
-import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
@@ -56,7 +55,7 @@ public class ShortcutShuttle extends BroadcastReceiver {
 			try {
 				final String signature = Cryptography.sign(context, target_intent_uri);
 				intent.putExtra(AppLaunchShortcut.EXTRA_SIGNATURE, signature);
-			} catch (GeneralSecurityException | IOException e) {
+			} catch (final GeneralSecurityException | IOException e) {
 				Analytics.$().event("intent_sign_error").with(ITEM_ID, target_intent_uri).with(ITEM_CATEGORY, e.getClass().getCanonicalName()).send();
 				Analytics.$().report(e);
 			}
@@ -95,7 +94,7 @@ public class ShortcutShuttle extends BroadcastReceiver {
 			final PackageManager pm = context.getPackageManager();
 			final Resources pkg_res;
 			try { @SuppressLint("WrongConstant")
-				final ApplicationInfo app_info = pm.getApplicationInfo(icon_res.packageName, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+				final ApplicationInfo app_info = pm.getApplicationInfo(icon_res.packageName, PackageManager.GET_UNINSTALLED_PACKAGES);
 				pkg_res = pm.getResourcesForApplication(app_info);
 			} catch (final PackageManager.NameNotFoundException e) {
 				Log.w(TAG, "Package of icon resource not found: " + icon_res.packageName);
@@ -106,7 +105,7 @@ public class ShortcutShuttle extends BroadcastReceiver {
 				Log.w(TAG, "Icon resource not found for shortcut pinning request (" + shortcut_name + "): " + icon_res.resourceName);
 				return;
 			}
-			shortcut_icon = ShortcutIcons.createLargeIconBitmap(context, pkg_res.getDrawable(res_id), profile, icon_res.packageName);
+			shortcut_icon = ShortcutIcons.createLargeIconBitmap(context, pkg_res.getDrawable(res_id), icon_res.packageName);
 			if (shortcut_icon == null) {
 				Log.w(TAG, "Failed to build icon bitmap for icon resource: " + icon_res.resourceName);
 				return;

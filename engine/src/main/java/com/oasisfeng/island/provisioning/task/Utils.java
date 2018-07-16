@@ -17,10 +17,10 @@
 package com.oasisfeng.island.provisioning.task;
 
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.RemoteException;
 
 import com.oasisfeng.island.provisioning.task.DeleteNonRequiredAppsTask.IPackageManager;
-import com.oasisfeng.island.util.Hacks;
 
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +47,7 @@ class Utils {
         List<ApplicationInfo> aInfos = null;
         try {
             aInfos = ipm.getInstalledApplications(
-                    Hacks.MATCH_ANY_USER_AND_UNINSTALLED, userId).getList();
+                    PackageManager.GET_UNINSTALLED_PACKAGES, userId).getList();
         } catch (RemoteException neverThrown) {
             ProvisionLogger.loge("This should not happen.", neverThrown);
         }

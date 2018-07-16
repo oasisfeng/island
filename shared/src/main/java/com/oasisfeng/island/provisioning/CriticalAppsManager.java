@@ -31,7 +31,7 @@ public class CriticalAppsManager {
 			final String webview_pkg = getCurrentWebViewPackageName();
 			if (webview_pkg != null) pkgs.add(webview_pkg);
 			try { @SuppressLint("WrongConstant") // Chrome may not be current provider, since current provider may fallback to system WebView during provisioning.
-			final ApplicationInfo chrome_info = pm.getApplicationInfo(WellKnownPackages.PACKAGE_GOOGLE_CHROME, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+			final ApplicationInfo chrome_info = pm.getApplicationInfo(WellKnownPackages.PACKAGE_GOOGLE_CHROME, PackageManager.MATCH_UNINSTALLED_PACKAGES);
 				pkgs.add(chrome_info.packageName);
 			} catch (final PackageManager.NameNotFoundException ignored) {}
 		}
