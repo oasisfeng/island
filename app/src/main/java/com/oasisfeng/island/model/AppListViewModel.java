@@ -446,8 +446,17 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			return;
 		}
 
+		if ((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
+			try {
+				Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
+				if (mProfileController.enableSystemApp(app.packageName)) {
+					Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+				} else Toast.makeText(context, context.getString(R.string.toast_cannot_clone, app.getLabel()), Toast.LENGTH_SHORT).show();
+			} catch (final RemoteException ignored) {}	// FIXME: Error message
+			return;
+		}
 		try {
-			check_result = mProfileController.cloneApp(pkg, false);
+			check_result = mProfileController.cloneUserApp(pkg, app.sourceDir, false);
 		} catch (final RemoteException ignored) { return; }		// FIXME: Error message
 		switch (check_result) {
 		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
@@ -470,10 +479,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 					.setPositiveButton(android.R.string.cancel, null).show();
 			else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show();
 			return;
-		case IslandManager.CLONE_RESULT_OK_SYS_APP:
-			Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
-			doCloneApp(context, app);
-			break;
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
 			Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
@@ -492,13 +497,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 	}
 
-	private void doCloneApp(final Context context, final IslandAppInfo app) {
+	private void doCloneApp(final IslandAppInfo app) {
 		final int result; try {
-			result = mProfileController.cloneApp(app.packageName, true);
+			result = mProfileController.cloneUserApp(app.packageName, app.sourceDir, true);
 		} catch (final RemoteException ignored) { return; }	// FIXME: Error message
 		switch (result) {
-		case IslandManager.CLONE_RESULT_OK_SYS_APP:		// Need visual feedback since the just finished procedure is completely silent.
-			Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
@@ -515,9 +518,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
 			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 				Scopes.app(context).markOnly(mark);
-				doCloneApp(context, app);
+				doCloneApp(app);
 			}).show();
-		} else doCloneApp(context, app);
+		} else doCloneApp(app);
 	}
 
 	public final void onItemClick(final AppViewModel clicked) {

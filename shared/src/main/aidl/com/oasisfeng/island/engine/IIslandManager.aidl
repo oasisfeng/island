@@ -5,7 +5,8 @@ import android.content.pm.ApplicationInfo;
 interface IIslandManager {
 
 	ApplicationInfo getApplicationInfo(String pkg, int flags);
-	int cloneApp(String pkg, boolean do_it);
+	boolean enableSystemApp(String pkg);
+	int cloneUserApp(String pkg, String apk_path, boolean do_it);
 	/** @return whether the package is frozen, or true if not found */
 	boolean freezeApp(String pkg, String reason);
 	/** @return whether the package is unfrozen, or false if not found */

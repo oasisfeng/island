@@ -1,6 +1,5 @@
 package com.oasisfeng.island.engine;
 
-import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -20,14 +19,12 @@ import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
-import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.io.File;
 
 import java9.util.function.Supplier;
 
-import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
@@ -84,28 +81,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 		return null;
 	}
 
-	@Override public int cloneApp(final String pkg, final boolean do_it) {
-		final PackageManager pm = mContext.getPackageManager();
-		final String apk_path;
-		try { @SuppressLint({"WrongConstant", "deprecation"})
-			final ApplicationInfo app_info = pm.getApplicationInfo(pkg, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
-			if ((app_info.flags & FLAG_INSTALLED) != 0) {
-				Log.e(TAG, "Already cloned: " + pkg);
-				return IslandManager.CLONE_RESULT_ALREADY_CLONED;
-			}
-
-			// System apps can be enabled by DevicePolicyManager.enableSystemApp(), which calls installExistingPackage().
-			if ((app_info.flags & FLAG_SYSTEM) != 0) {
-				if (do_it) enableSystemApp(pkg);
-				return IslandManager.CLONE_RESULT_OK_SYS_APP;
-			}
-			apk_path = app_info.sourceDir;
-		} catch (final PackageManager.NameNotFoundException ignored) {
-			return IslandManager.CLONE_RESULT_NOT_FOUND;
-		}
-
-		/* For non-system app, we initiate the manual installation process. */
-
+	@Override public int cloneUserApp(final String pkg, final String apk_path, final boolean do_it) {
 		// Blindly clear these restrictions
 		mDevicePolicies.clearUserRestrictionsIfNeeded(mContext, UserManager.DISALLOW_INSTALL_APPS);
 
@@ -164,9 +140,8 @@ public class IslandManagerService extends IIslandManager.Stub {
 			Log.d(TAG, "System apps enabled for: " + intent);
 	}
 
-	private void enableSystemApp(final String pkg) {
-		if (! mDevicePolicies.enableSystemApp(pkg))
-			Log.e(TAG, "Failed to enable: " + pkg);
+	@Override public boolean enableSystemApp(final String pkg) {
+		return mDevicePolicies.enableSystemApp(pkg);
 	}
 
 	private final Context mContext;
