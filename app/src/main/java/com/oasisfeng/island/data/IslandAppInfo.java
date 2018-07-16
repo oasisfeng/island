@@ -1,21 +1,20 @@
 package com.oasisfeng.island.data;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
-import android.support.annotation.Nullable;
-import android.util.Pair;
 
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.util.Hacks;
-import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -26,7 +25,6 @@ import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Process.myUserHandle;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -84,45 +82,22 @@ public class IslandAppInfo extends AppInfo {
 
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
-	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() ->
-			checkLaunchable(Hacks.MATCH_ANY_USER_AND_UNINSTALLED | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS), 1, SECONDS);
+	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() -> checkLaunchable(Hacks.MATCH_ANY_USER_AND_UNINSTALLED), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags) {
-		if (Users.isOwner(user)) return super.checkLaunchable(flags);
-		if (Permissions.has(context(), INTERACT_ACROSS_USERS) && ! Hacks.PackageManager_resolveActivityAsUser.isAbsent()) {
-			final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
-			return Hacks.PackageManager_resolveActivityAsUser.invoke(intent, flags, Users.toId(user)).on(context().getPackageManager()) != null;
-		} else {
-			final LauncherApps launcher_apps;
-			if (isHidden() || (launcher_apps = (LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)) == null) {
-				final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
-				return context().getPackageManager().resolveActivity(intent, flags) != null;	// Disabled state is not reflected in this approach.
-			} else return isLauncherActivityAvailable(launcher_apps, packageName, user);	// Hidden app can not be detected via LauncherApps.
-		}
+		if (sLaunchableAppsCache != null) return sLaunchableAppsCache.contains(packageName);
+		return super.checkLaunchable(flags);
 	}
 
-	private static boolean isLauncherActivityAvailable(final LauncherApps launcher_apps, final String pkg, final UserHandle user) {
-		if (sLauncherReadyAppsCache != null) {
-			if (Users.isOwner(user)) return sLauncherReadyAppsCache.first.get().contains(pkg);
-			else if (Users.isProfile(user)) return sLauncherReadyAppsCache.second.get().contains(pkg);
-		}
-		return ! launcher_apps.getActivityList(pkg, user).isEmpty();
+	public static void cacheLaunchableApps(final Context context) {
+		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager()
+				.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+		sLaunchableAppsCache = StreamSupport.stream(activities).map(resolve -> resolve.activityInfo.packageName).collect(Collectors.toSet());
 	}
 
-	public static void startBatchLauncherActivityCheck(final Context context) {
-		final LauncherApps launcher_apps = (LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE);
-		if (launcher_apps == null) return;
-		sLauncherReadyAppsCache = new Pair<>(	Suppliers.memoize(() -> queryAppsWithLauncherActivityAvailable(launcher_apps, Users.owner)),
-												Suppliers.memoize(() -> queryAppsWithLauncherActivityAvailable(launcher_apps, Users.profile)));
-	}
-	public static void endBatchLauncherActivityCheck() { sLauncherReadyAppsCache = null; }
+	public static void invalidateLaunchableAppsCache() { sLaunchableAppsCache = null; }
 
-	private static @Nullable Pair<Supplier<Set<String>>, Supplier<Set<String>>> sLauncherReadyAppsCache;
-
-	private static Set<String> queryAppsWithLauncherActivityAvailable(final LauncherApps launcher_apps, final UserHandle user) {
-		return StreamSupport.stream(launcher_apps.getActivityList(null, user))
-				.map(lai -> lai.getComponentName().getPackageName()).collect(Collectors.toSet());
-	}
+	private static Set<String> sLaunchableAppsCache;
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 

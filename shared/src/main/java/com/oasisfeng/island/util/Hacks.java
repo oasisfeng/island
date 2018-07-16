@@ -9,7 +9,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -49,8 +48,12 @@ public class Hacks {
 		});
 	}
 
-	@Deprecated public static final int PackageManager_MATCH_ANY_USER = 0x00400000;
-	public static final int MATCH_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | /* MATCH_ANY_USER */ 0x00400000;
+	private static final int MATCH_ANY_USER = 0x00400000;		// Requires INTERACT_ACROSS_USERS since Android P.
+	// When used in @ApplicationInfoFlags in @PackageInfoFlags:
+	//   For owner user, GET_UNINSTALLED_PACKAGES implicitly set MATCH_ANY_USER. For managed profile, MATCH_ANY_USER requires permission INTERACT_ACROSS_USERS.
+	// Otherwise no permission required.
+	// See PackageManagerService.updateFlagsForPackage()
+	public static final int MATCH_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer>
 			ApplicationInfo_privateFlags = Hack.onlyIf(SDK_INT >= M).into(ApplicationInfo.class).field("privateFlags").fallbackTo(null);
@@ -80,9 +83,6 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle>
 			Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class)
 			.fallbackReturning(false).withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
-	public static final Hack.HackedMethod3<ResolveInfo, PackageManager, Unchecked, Unchecked, Unchecked, Intent, Integer, Integer>
-			PackageManager_resolveActivityAsUser = Hack.into(PackageManager.class).method("resolveActivityAsUser")
-			.returning(ResolveInfo.class).fallbackReturning(null).withParams(Intent.class, int.class, int.class);
 	@RequiresApi(N) public static final @Nullable Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
 			UserManager_getProfileIds = SDK_INT < N || isAndroidP() ? null : Hack.into(UserManager.class).method("getProfileIds")
 			.returning(int[].class).withParams(int.class, boolean.class);

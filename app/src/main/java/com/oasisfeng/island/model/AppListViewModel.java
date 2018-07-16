@@ -135,9 +135,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final AppViewModel selected = mSelection.getValue();
 		clearSelection();
 
-		IslandAppInfo.startBatchLauncherActivityCheck(Objects.requireNonNull(mAppListProvider.getContext()));	// Performance optimization
+		IslandAppInfo.cacheLaunchableApps(Objects.requireNonNull(mAppListProvider.getContext()));	// Performance optimization
 		final List<AppViewModel> apps = mAppListProvider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
-		IslandAppInfo.endBatchLauncherActivityCheck();
+		IslandAppInfo.invalidateLaunchableAppsCache();
 		replaceApps(apps);
 
 		if (selected != null) for (final AppViewModel app : apps)
