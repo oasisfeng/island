@@ -226,6 +226,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (! policies.isActiveDeviceOwner()) return;
 
+		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
 		if (SDK_INT >= O) {
 			policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
 			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
