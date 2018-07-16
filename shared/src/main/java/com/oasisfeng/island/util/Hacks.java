@@ -77,9 +77,9 @@ public class Hacks {
 	static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked>
 			DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
 			.returning(String.class).fallbackReturning(null).withoutParams();
-	@RequiresApi(N) public static Hack.HackedMethod3<ApplicationInfo, LauncherApps, Exception, Unchecked, Unchecked, String, Integer, UserHandle>
+	@RequiresApi(N) public static final @Nullable Hack.HackedMethod3<ApplicationInfo, LauncherApps, Exception, Unchecked, Unchecked, String, Integer, UserHandle>
 			LauncherApps_getApplicationInfo = SDK_INT < N ? null : Hack.into(LauncherApps.class).method("getApplicationInfo").throwing()	// NameNotFoundException added since Android O.
-			.returning(ApplicationInfo.class).fallbackReturning(null).withParams(String.class, int.class, UserHandle.class);
+			.returning(ApplicationInfo.class).withParams(String.class, int.class, UserHandle.class);
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle>
 			Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class)
 			.fallbackReturning(false).withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
@@ -96,7 +96,7 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod1<?, Void, Unchecked, Unchecked, Unchecked, IBinder>
 			IWebViewUpdateService$Stub_asInterface = Hack.into(IWebViewUpdateService + "$Stub").staticMethod("asInterface")
 			.returning(Hack.ANY_TYPE).withParam(IBinder.class);
-	@RequiresApi(N) public static @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
+	@RequiresApi(N) public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
 			IWebViewUpdateService_getCurrentWebViewPackageName = SDK_INT < N ? null :
 			Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 			.returning(String.class).throwing(RemoteException.class).withoutParams();

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
@@ -122,8 +123,8 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private void refresh(final Map<String, IslandAppInfo> output_apps) {
 		if (Users.profile != null) {		// Collect Island-specific apps
-			if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {    // Since Android N, we can query ApplicationInfo directly
-				super.installedApps().map(app -> getApplicationInfo(app.packageName, PM_FLAGS_GET_APP_INFO, Users.profile))
+			if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && Hacks.LauncherApps_getApplicationInfo != null) {    // Since Android N, we can query ApplicationInfo directly
+				super.installedApps().map(app -> getApplicationInfo(app.packageName, Users.profile))
 						.filter(info -> info != null && (info.flags & FLAG_INSTALLED) != 0)
 						.forEach(info -> output_apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
 				Log.d(TAG, "All apps loaded.");
@@ -168,19 +169,22 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			return;
 		} catch (final SecurityException ignored) {}	// Fall-through. This should hardly happen as permission is checked.
 
-		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && ! Hacks.LauncherApps_getApplicationInfo.isAbsent()) {
+		final List<LauncherActivityInfo> activities;
+		if (! ShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && Hacks.LauncherApps_getApplicationInfo != null) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
-			final ApplicationInfo info = getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO, Users.profile);
+			final ApplicationInfo info = getApplicationInfo(pkg, Users.profile);
 			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
+		} else if (! (activities = mLauncherApps.get().getActivityList(pkg, profile)).isEmpty()) {	// In case it has launcher activity and not frozen
+			callback.accept(activities.get(0).getApplicationInfo());
 		} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), service -> {
 			final ApplicationInfo info = service.getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
 		})) callback.accept(null);
 	}
 
-	@RequiresApi(N) ApplicationInfo getApplicationInfo(final String pkg, final int flags, final UserHandle user) {
+	@RequiresApi(N) ApplicationInfo getApplicationInfo(final String pkg, final UserHandle user) {
 		try {
-			return Hacks.LauncherApps_getApplicationInfo.invoke(pkg, flags, user).on(mLauncherApps.get());
+			return Objects.requireNonNull(Hacks.LauncherApps_getApplicationInfo).invoke(pkg, PM_FLAGS_GET_APP_INFO, user).on(mLauncherApps.get());
 		} catch (final Exception e) {	// NameNotFoundException will be thrown since Android O instead of retuning null on Android N.
 			if (e instanceof RuntimeException) throw (RuntimeException) e;
 			return null;
