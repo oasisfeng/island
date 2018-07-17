@@ -251,15 +251,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final IslandAppInfo app = mSelection.getValue().info();
 		Analytics.$().event("action_launch").with(ITEM_ID, app.packageName).send();
 		if (! app.isHidden() && IslandManager.launchApp(v.getContext(), app.packageName, app.user)) return;	// Not frozen, launch the app directly.
-		String failure;
 		try {
-			failure = controller(app).launchApp(app.packageName);
-		} catch (final RemoteException e) {
-			failure = e.toString();
-		}
-		if (failure != null) {
-			Analytics.$().event("app_launch_error").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, failure).send();
-			Toast.makeText(v.getContext(), R.string.toast_failed_to_launch_app, Toast.LENGTH_SHORT).show();
+			final String failure = controller(app).launchApp(app.packageName);
+			if (failure != null) {
+				Analytics.$().event("app_launch_error").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, failure).send();
+				Toast.makeText(v.getContext(), R.string.toast_failed_to_launch_app, Toast.LENGTH_SHORT).show();
+			}
+		} catch (final RemoteException | SecurityException e) {
+			reportAndShowToastForInternalException(v.getContext(), "Error unfreezing and launching app: " + app.packageName, e);
 		}
 	}
 
@@ -268,7 +267,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (selection == null) return false;
 		final IslandAppInfo app = selection.info();
 		final String pkg = app.packageName;
-		final IIslandManager controller = controller(app);
 
 		final int id = item.getItemId();
 		if (id == R.id.menu_clone) {
@@ -288,11 +286,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
-			try {
-				controller.unfreezeApp(pkg);
+			if (unfreeze(context, app)) {
 				refreshAppStateAsSysBugWorkaround(context, pkg);
 				clearSelection();
-			} catch (final RemoteException ignored) {}
+			}
 		} else if (id == R.id.menu_app_settings) {
 			launchExternalAppSettings(context, app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
@@ -321,19 +318,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
 			else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
 			refreshAppStateAsSysBugWorkaround(context, app.packageName);
-		} catch (final RemoteException e) {
-			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+		} catch (final RemoteException | SecurityException e) {
+			reportAndShowToastForInternalException(context, "Error freezing app: " + app_vm.info.packageName, e);
 		}
 	}
 
 	private void launchSystemAppSettings(final Context context, final IslandAppInfo app) {
-		try {
-			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
-			Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
-					.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-		} catch (final RemoteException | SecurityException e) {
-			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-		}
+		if (app.isHidden()) if (! unfreeze(context, app)) return;    // Stock app info activity requires the app not hidden.
+		Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
+				.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
 	}
 
 	private void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
@@ -342,13 +335,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			launchSystemAppSettings(context, app);
 			return;
 		}
-
-		try {
-			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Stock app info activity requires the app not hidden.
-		} catch (final RemoteException | SecurityException e) {
-			Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-			return;
-		}
+		if (app.isHidden()) if (! unfreeze(context, app)) return;
 
 		final Intent chooser = new Intent(Intent.ACTION_CHOOSER).putExtra(Intent.EXTRA_INTENT, target);
 		chooser.putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[] { new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -398,45 +385,46 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (mSelection.getValue() == null) return;
 		try {
 			controller(mSelection.getValue().info()).block(mSelection.getValue().info.packageName);
-		} catch (final RemoteException ignored) {}
+		} catch (final RemoteException | SecurityException ignored) {}
 	}
 
 	public void onUnblockingRequested() {
 		if (mSelection.getValue() == null) return;
 		try {
 			controller(mSelection.getValue().info()).unblock(mSelection.getValue().info.packageName);
-		} catch (final RemoteException ignored) {}
+		} catch (final RemoteException | SecurityException ignored) {}
 	}
 
 	private void onRemovalRequested(final Context context) {
 		if (mSelection.getValue() == null) return;
 		final IslandAppInfo app = mSelection.getValue().info();
 		Analytics.$().event("action_uninstall").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, "system").send();
+		if (app.isHidden()) if (! unfreeze(context, app)) return;	// Unfreeze it first, otherwise we cannot receive the package removal event.
 		if (app.isSystem()) {
+			Analytics.$().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send();
 			final Activity activity = Objects.requireNonNull(Activities.findActivityFrom(context));
 			if (app.isCritical()) {
 				Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 			} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
-		} else try {
-			if (app.isHidden()) controller(app).unfreezeApp(app.packageName);	// Unfreeze it first, otherwise we cannot receive the package removal event.
-			if (app.isSystem()) {
-				final LauncherApps launcher = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
-				launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
-				Analytics.$().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send();
-			} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE).setData(Uri.fromParts("package", app.packageName, null))
-					.putExtra(Intent.EXTRA_USER, app.user));
-		} catch (final RemoteException ignored) {
-			final LauncherApps launcher = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
-			launcher.startAppDetailsActivity(new ComponentName(app.packageName, ""), Users.profile, null, null);
-			Toast.makeText(context, "Click \"Uninstall\" to remove the clone.", Toast.LENGTH_LONG).show();
-		}
+		} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
+				.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
 	}
 
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */
 	private static void refreshAppStateAsSysBugWorkaround(final Context context, final String pkg) {
 		IslandAppListProvider.getInstance(context).refreshPackage(pkg, Users.profile, false);
+	}
+
+	private boolean unfreeze(final Context context, final IslandAppInfo app) {
+		try {
+			controller(app).unfreezeApp(app.packageName);
+			return true;
+		} catch (final RemoteException | SecurityException e) {
+			reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, e);
+			return false;
+		}
 	}
 
 	private void cloneApp(final Context context, final IslandAppInfo app) {
@@ -454,14 +442,19 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				if (mProfileController.enableSystemApp(app.packageName)) {
 					Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 				} else Toast.makeText(context, context.getString(R.string.toast_cannot_clone, app.getLabel()), Toast.LENGTH_SHORT).show();
-			} catch (final RemoteException ignored) {}	// FIXME: Error message
+			} catch (final RemoteException | SecurityException e) {
+				reportAndShowToastForInternalException(context, "Error cloning system app: " + app.packageName, e);
+			}
 			return;
 		}
 		try {
-			check_result = mProfileController.cloneUserApp(pkg, app.sourceDir, false);
-		} catch (final RemoteException ignored) { return; }		// FIXME: Error message
+			check_result = mProfileController.cloneUserApp(pkg, app.sourceDir, false);	// Dry run to check prerequisites.
+		} catch (final RemoteException | SecurityException e) {
+			reportAndShowToastForInternalException(context, "Error checking user app for cloning: " + app.packageName, e);
+			return;
+		}
 		switch (check_result) {
-		case IslandManager.CLONE_RESULT_NOT_FOUND:    			// FIXME: Error message
+		case IslandManager.CLONE_RESULT_NOT_FOUND:
 			Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
@@ -471,7 +464,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 						app.stopTreatingHiddenSysAppAsDisabled();
 						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 					}
-				} catch (final RemoteException ignored) {}    	// FIXME: Error message
+				} catch (final RemoteException | SecurityException e) {
+					reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, e);
+				}
 			} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 			return;
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
@@ -499,10 +494,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 	}
 
-	private void doCloneApp(final IslandAppInfo app) {
+	private void doCloneUserApp(final Context context, final IslandAppInfo app) {
 		final int result; try {
 			result = mProfileController.cloneUserApp(app.packageName, app.sourceDir, true);
-		} catch (final RemoteException ignored) { return; }	// FIXME: Error message
+		} catch (final RemoteException | SecurityException e) {
+			reportAndShowToastForInternalException(context, "Error cloning user app: " + app.packageName, e);
+			return;
+		}
 		switch (result) {
 		case IslandManager.CLONE_RESULT_OK_INSTALL:
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
@@ -520,9 +518,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
 			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 				Scopes.app(context).markOnly(mark);
-				doCloneApp(app);
+				doCloneUserApp(context, app);
 			}).show();
-		} else doCloneApp(app);
+		} else doCloneUserApp(context, app);
 	}
 
 	public final void onItemClick(final AppViewModel clicked) {
@@ -532,6 +530,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	@SuppressWarnings("MethodMayBeStatic") public final void onBottomSheetClick(final View view) {
 		final BottomSheetBehavior bottom_sheet = BottomSheetBehavior.from(view);
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+	}
+
+	private static void reportAndShowToastForInternalException(final Context context, final String log, final Exception e) {
+		Analytics.$().logAndReport(TAG, log, e);
+		Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
 	}
 
 	private IIslandManager controller(final IslandAppInfo app) {
