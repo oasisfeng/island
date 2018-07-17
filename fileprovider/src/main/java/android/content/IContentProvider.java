@@ -1,6 +1,7 @@
 package android.content;
 
 import android.os.IInterface;
+import android.support.annotation.Keep;
 import android.support.annotation.RestrictTo;
 
 /**
@@ -8,6 +9,6 @@ import android.support.annotation.RestrictTo;
  *
  * Created by Oasis on 2017/4/11.
  */
-@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+@Keep @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 public interface IContentProvider extends IInterface {
 }

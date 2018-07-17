@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.support.annotation.Keep;
 import android.support.annotation.RequiresApi;
 
 import java.io.FileNotFoundException;
@@ -24,7 +25,7 @@ import static android.os.Build.VERSION_CODES.N;
  *
  * Created by Oasis on 2017/4/11.
  */
-public abstract class ContentResolver {
+@Keep public abstract class ContentResolver {
 
 	/* Critical hidden APIs implemented by ContextImpl.ApplicationContentResolver. They must be overridden by ContentResolver forwarder. */
 
