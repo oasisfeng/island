@@ -15,6 +15,7 @@ import android.util.Log;
 
 import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.base.Scopes;
+import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.analytics.Analytics.Property;
 import com.oasisfeng.island.console.apps.AppListFragment;
@@ -114,11 +115,11 @@ public class MainActivity extends LifecycleActivity {
 
 	private void performOverallAnalyticsIfNeeded() {
 		if (! BuildConfig.DEBUG && ! Scopes.boot(this).mark("overall_analytics")) return;
-		new Thread(() -> {
+		Loopers.addIdleTask(() -> {
 			final Analytics analytics = Analytics.$();
 			analytics.setProperty(Property.DeviceOwner, mIsDeviceOwner);
 			analytics.setProperty(Property.RemoteConfigAvailable, Config.isRemote());
-		}).start();
+		});
 	}
 
 	private boolean mIsDeviceOwner;

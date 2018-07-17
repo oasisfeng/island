@@ -4,7 +4,7 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
-import com.oasisfeng.island.IslandApplication;
+import com.oasisfeng.island.firebase.FirebaseWrapper;
 import com.oasisfeng.island.shared.BuildConfig;
 
 import io.fabric.sdk.android.Fabric;
@@ -19,11 +19,11 @@ public abstract class CrashReport {
 	static CrashlyticsCore $() { return sSingleton.get(); }
 
 	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
-		Fabric.with(IslandApplication.$(), new Crashlytics());
+		Fabric.with(new Fabric.Builder(FirebaseWrapper.init()).kits(new Crashlytics()).debuggable(BuildConfig.DEBUG).build());
 		return CrashlyticsCore.getInstance();
 	});
 
-	public static void init() {
+	public static void initCrashHandler() {
 		if (BuildConfig.DEBUG) return;
 		final Thread.UncaughtExceptionHandler current_exception_handler = Thread.getDefaultUncaughtExceptionHandler();
 		if (! (current_exception_handler instanceof LazyThreadExceptionHandler))
@@ -36,8 +36,7 @@ public abstract class CrashReport {
 			if (Thread.getDefaultUncaughtExceptionHandler() instanceof LazyThreadExceptionHandler)
 				Thread.setDefaultUncaughtExceptionHandler(mDefaultHandler);	// Revert global exception handler before initializing crash report service.
 
-			Fabric.with(IslandApplication.$(), new Crashlytics());
-
+			$();	// Initialize if not yet
 			final Thread.UncaughtExceptionHandler handler = t.getUncaughtExceptionHandler();
 			if (handler != null) handler.uncaughtException(t, e);
 		}

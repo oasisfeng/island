@@ -18,7 +18,7 @@ public class IslandApplication extends Application {
 	public IslandApplication() {
 		if (sInstance != null) throw new IllegalStateException("Already initialized");
 		sInstance = this;
-		CrashReport.init();
+		CrashReport.initCrashHandler();
 	}
 
 	private static IslandApplication sInstance;
