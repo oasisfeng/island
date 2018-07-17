@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 27
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
@@ -82,7 +82,7 @@ dependencies {
     fullImplementation project(':fileprovider')
 
     implementation 'com.android.support:support-v4:27.1.1'          // To workaround the dependency conflict caused by "com.android.databinding:library"
-    implementation 'com.google.firebase:firebase-analytics:11.8.0'  // To workaround the dependency conflict caused by "com.google.gms.google-services"
+    implementation 'com.google.firebase:firebase-analytics:15.0.2'  // To workaround the dependency conflict caused by "com.google.gms.google-services"
 }
 
 // Firebase plug-in
