@@ -208,6 +208,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final AppViewModel selection = mSelection.getValue();
 		if (selection == null) return;
 		final IslandAppInfo app = selection.info();
+		Analytics.$().trace("app", app.packageName).trace("user", Users.toId(app.user)).trace("hidden", app.isHidden())
+				.trace("system", app.isSystem()).trace("critical", app.isCritical());
 		final UserHandle profile = Users.profile;
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 

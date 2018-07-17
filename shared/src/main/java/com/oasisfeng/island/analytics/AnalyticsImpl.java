@@ -38,6 +38,21 @@ class AnalyticsImpl implements Analytics {
 		};
 	}
 
+	@Override public Analytics trace(final String key, final String value) {
+		CrashReport.$().setString(key, value);
+		return this;
+	}
+
+	@Override public Analytics trace(final String key, final int value) {
+		CrashReport.$().setInt(key, value);
+		return this;
+	}
+
+	@Override public Analytics trace(final String key, final boolean value) {
+		CrashReport.$().setBool(key, value);
+		return this;
+	}
+
 	@Override public void report(final Throwable t) {
 		if (! BuildConfig.DEBUG) CrashReport.$().logException(t);
 	}

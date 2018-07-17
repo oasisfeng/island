@@ -40,6 +40,9 @@ public interface Analytics {
 
 	@CheckResult Event event(@Size(min = 1, max = 40) @Pattern("^[a-zA-Z][a-zA-Z0-9_]*$") String event);
 	void reportEvent(String event, Bundle params);
+	Analytics trace(String key, String value);
+	Analytics trace(String key, int value);
+	Analytics trace(String key, boolean value);
 	void report(Throwable t);
 	default void logAndReport(final String tag, final String message, final Throwable t) {
 		Log.e(tag, message, t);
