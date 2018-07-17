@@ -72,11 +72,13 @@ class AnalyticsImpl implements Analytics {
 		mGoogleAnalytics.send(builder.build());
 
 		mFirebaseAnalytics.logEvent(event, params);
+		CrashReport.$().log("Event: " + event + " " + params.toString().substring(6));
 	}
 
 	@Override public void setProperty(final Property property, final String value) {
 		mGoogleAnalytics.set("&cd" + property.ordinal() + 1, value);	// Custom dimension (index >= 1)
 		mFirebaseAnalytics.setUserProperty(property.name, value);
+		CrashReport.$().setString(property.name, value);
 	}
 
 	private AnalyticsImpl(final Context context) {
