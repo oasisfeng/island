@@ -13,13 +13,18 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.Handler;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
+import android.system.StructStat;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.android.os.Loopers;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shuttle.ContextShuttle;
@@ -29,12 +34,15 @@ import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
+import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.app.PendingIntent.getBroadcast;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -51,11 +59,31 @@ public class UninstallHelper extends PseudoContentProvider {
 	private static final String ACTION_RECHECK_ISLAND = "RECHECK_ISLAND";
 
 	@Override public boolean onCreate() {
-		if (Users.isOwner()) return false;		// Do nothing in owner user.
-		Loopers.addIdleTask(new Handler(), () -> {
+		if (! Users.isOwner()) Loopers.addIdleTask(this::check);		// Do nothing in owner user.
+		return false;
+	}
+
+	private void check() {
+		final File app_mainland_data_path = new File(new File(Environment.getDataDirectory(), "data"), context().getPackageName());
+		try {
+			final StructStat stat = Os.stat(app_mainland_data_path.getAbsolutePath());
+			if (stat != null) context().getPackageManager().setComponentEnabledSetting(new ComponentName(context(), getClass()),
+					COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);	// Mark as enabled if path is compatible.
+		} catch (final ErrnoException e) {
+			if (e.errno != OsConstants.ENOENT) {
+				Analytics.$().report(e);
+				return;
+			}
+			if (COMPONENT_ENABLED_STATE_ENABLED == context().getPackageManager().getComponentEnabledSetting(new ComponentName(context(), getClass()))) {
+				onIslandRemovedInOwnerUser(context());		// Only if the path compatibility is confirmed when it was still installed.
+				return;
+			} else Log.w(TAG, "Uninstallation state in mainland cannot be detected due to incompatibility");
+		}
+
+		if (SDK_INT < O) {		// No longer works on Android O+
 			final LauncherApps launcher = (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			if (launcher != null) launcher.registerCallback(new LauncherApps.Callback() {
-				@Override public void onPackageRemoved(final String pkg, final UserHandle user) {		// NOT WORKING since Android O.
+				@Override public void onPackageRemoved(final String pkg, final UserHandle user) {
 					if (context().getPackageName().equals(pkg) && Users.isOwner(user)) onIslandRemovedInOwnerUser(context());
 				}
 
@@ -64,8 +92,7 @@ public class UninstallHelper extends PseudoContentProvider {
 				@Override public void onPackagesAvailable(final String[] packageNames, final UserHandle user, final boolean replacing) {}
 				@Override public void onPackagesUnavailable(final String[] packageNames, final UserHandle user, final boolean replacing) {}
 			});
-		});
-		return true;
+		}
 	}
 
 	private static void onIslandRemovedInOwnerUser(final Context context) {
@@ -126,5 +153,5 @@ public class UninstallHelper extends PseudoContentProvider {
 		}
 	}
 
-	private static final String TAG = "Uninstall";
+	private static final String TAG = "Island.UH";
 }
