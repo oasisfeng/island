@@ -35,7 +35,7 @@ public class IslandManager {
 
 	public static final int CLONE_RESULT_ALREADY_CLONED = 0;
 	public static final int CLONE_RESULT_OK_INSTALL = 1;
-	public static final int CLONE_RESULT_OK_SYS_APP = 2;
+	public static final int CLONE_RESULT_OK_INSTALL_EXISTING = 2;
 	public static final int CLONE_RESULT_OK_GOOGLE_PLAY = 10;
 	public static final int CLONE_RESULT_UNKNOWN_SYS_MARKET = 11;
 	public static final int CLONE_RESULT_NOT_FOUND = -1;

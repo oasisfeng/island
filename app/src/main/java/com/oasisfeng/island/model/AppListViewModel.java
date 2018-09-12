@@ -480,6 +480,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
 			break;
+		case IslandManager.CLONE_RESULT_OK_INSTALL_EXISTING:
+			Analytics.$().event("clone_install_existing").with(ITEM_ID, pkg).send();
+			doCloneUserApp(context, app);		// No explanation needed.
+			break;
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
 			Analytics.$().event("clone_via_play").with(ITEM_ID, pkg).send();
 			showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
@@ -506,6 +510,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
 		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
 			return;		// Expected result
+		case IslandManager.CLONE_RESULT_OK_INSTALL_EXISTING:		// Visual feedback for instant cloning.
+			Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+			return;
 		case IslandManager.CLONE_RESULT_NOT_FOUND:
 		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
 		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:

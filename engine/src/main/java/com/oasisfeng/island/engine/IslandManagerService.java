@@ -1,6 +1,7 @@
 package com.oasisfeng.island.engine;
 
 import android.app.Service;
+import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,6 +20,7 @@ import android.util.Log;
 
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.widget.Toasts;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.provisioning.IslandProvisioning;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -32,6 +34,8 @@ import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
+import static com.oasisfeng.island.engine.IslandManager.CLONE_RESULT_OK_INSTALL_EXISTING;
 import static com.oasisfeng.island.engine.IslandManager.CLONE_RESULT_OK_INSTALL;
 
 /**
@@ -90,6 +94,15 @@ public class IslandManagerService extends IIslandManager.Stub {
 	@Override public int cloneUserApp(final String pkg, final String apk_path, final boolean do_it) {
 		// Blindly clear these restrictions
 		mDevicePolicies.clearUserRestrictionsIfNeeded(mContext, UserManager.DISALLOW_INSTALL_APPS);
+
+		if (SDK_INT >= P && mContext.getSystemService(DevicePolicyManager.class).isAffiliatedUser()) try {
+			if (! do_it) return CLONE_RESULT_OK_INSTALL_EXISTING;
+			if (mDevicePolicies.installExistingPackage(pkg))
+				return CLONE_RESULT_OK_INSTALL_EXISTING;
+			Log.e(TAG, "Error cloning existent user app: " + pkg);								// Fall-through
+		} catch (final SecurityException e) {
+			Analytics.$().logAndReport(TAG, "Error cloning existent user app: " + pkg, e);	// Fall-through
+		}
 
 		if (! IslandProvisioning.ensureInstallNonMarketAppAllowed(mContext, mDevicePolicies))
 			return cloneUserAppViaMarketApp(pkg, do_it);

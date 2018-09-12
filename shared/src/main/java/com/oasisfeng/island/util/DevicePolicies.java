@@ -10,6 +10,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -26,6 +27,7 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
 
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
@@ -198,11 +200,6 @@ public class DevicePolicies {
 		}
 	}
 
-	/** @see DevicePolicyManager#getUserRestrictions(ComponentName) */
-	@RequiresApi(N) public Bundle getUserRestrictions() {
-		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
-	}
-
 	/** @see DevicePolicyManager#setProfileName(ComponentName, String) */
 	public void setProfileName(final String name) {
 		mDevicePolicyManager.setProfileName(sCachedComponent, name);
@@ -218,16 +215,6 @@ public class DevicePolicies {
 		mDevicePolicyManager.removeActiveAdmin(sCachedComponent);
 	}
 
-	/** @see DevicePolicyManager#setPermissionGrantState(ComponentName, String, String, int) */
-	@RequiresApi(M) public boolean setPermissionGrantState(final String pkg, final String permission, final int state) {
-		return mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
-	}
-
-	/** @see DevicePolicyManager#getPermissionGrantState(ComponentName, String, String) */
-	@RequiresApi(M) public int getPermissionGrantState(final String pkg, final String permission) {
-		return mDevicePolicyManager.getPermissionGrantState(sCachedComponent, pkg, permission);
-	}
-
 	/** @see DevicePolicyManager#setPermittedInputMethods(ComponentName, List) */
 	public void setPermittedInputMethods(final List<String> packages) {
 		mDevicePolicyManager.setPermittedInputMethods(sCachedComponent, packages);
@@ -238,9 +225,19 @@ public class DevicePolicies {
 		mDevicePolicyManager.setPermittedAccessibilityServices(sCachedComponent, packages);
 	}
 
-	/** @see DevicePolicyManager#setPermittedCrossProfileNotificationListeners(ComponentName, List) */
-	@RequiresApi(O) public void setPermittedCrossProfileNotificationListeners(final List<String> packages) {
-		mDevicePolicyManager.setPermittedCrossProfileNotificationListeners(sCachedComponent, packages);
+	/** @see DevicePolicyManager#setPermissionGrantState(ComponentName, String, String, int) */
+	@RequiresApi(M) public boolean setPermissionGrantState(final String pkg, final String permission, final int state) {
+		return mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
+	}
+
+	/** @see DevicePolicyManager#getPermissionGrantState(ComponentName, String, String) */
+	@RequiresApi(M) public int getPermissionGrantState(final String pkg, final String permission) {
+		return mDevicePolicyManager.getPermissionGrantState(sCachedComponent, pkg, permission);
+	}
+
+	/** @see DevicePolicyManager#getUserRestrictions(ComponentName) */
+	@RequiresApi(N) public Bundle getUserRestrictions() {
+		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 	}
 
 	/** @see DevicePolicyManager#isBackupServiceEnabled(ComponentName) */
@@ -255,8 +252,19 @@ public class DevicePolicies {
 		mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled);
 	}
 
+	/** @see DevicePolicyManager#setAffiliationIds(ComponentName, Set) */
 	@RequiresApi(O) public void setAffiliationIds(final Set<String> ids) {
 		mDevicePolicyManager.setAffiliationIds(sCachedComponent, ids);
+	}
+
+	/** @see DevicePolicyManager#setPermittedCrossProfileNotificationListeners(ComponentName, List) */
+	@RequiresApi(O) public void setPermittedCrossProfileNotificationListeners(final List<String> packages) {
+		mDevicePolicyManager.setPermittedCrossProfileNotificationListeners(sCachedComponent, packages);
+	}
+
+	/** @see DevicePolicyManager#installExistingPackage(ComponentName, String) */
+	@RequiresApi(P) @CheckResult public boolean installExistingPackage(final String pkg) {
+		return mDevicePolicyManager.installExistingPackage(sCachedComponent, pkg);
 	}
 
 	public DevicePolicyManager getManager() { return mDevicePolicyManager; }
