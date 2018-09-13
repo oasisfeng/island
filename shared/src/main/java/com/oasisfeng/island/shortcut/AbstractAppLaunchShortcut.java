@@ -5,28 +5,26 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.LauncherActivityInfo;
-import android.content.pm.LauncherApps;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.Users;
 
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -41,10 +39,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.ShortcutIconResource;
 import static android.content.Intent.URI_INTENT_SCHEME;
 import static android.content.Intent.parseUri;
-import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
-import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
 /**
  * Create launch shortcut for apps in Island or mainland, from the owner user space.
@@ -58,33 +54,27 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 
 	public static final String ACTION_LAUNCH_CLONE = "com.oasisfeng.island.action.LAUNCH_CLONE";
 	private static final String ACTION_LAUNCH_APP = "com.oasisfeng.island.action.LAUNCH_APP";
+	private static final String SCHEME_PACKAGE = "package";		// Introduced in Island 2.8
+	private static final String SCHEME_TARGET = "target";		// DO NOT REMOVE, used by shortcut created with Island 2.7.5 and before.
+	private static final String ACTION_INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
 
 	protected abstract boolean validateIncomingIntent(final Intent target, final Intent outer);
 	protected abstract boolean prepareToLaunchApp(final String pkg);
 
 	/** @return true if launcher supports shortcut pinning, false for failure, or null if legacy shortcut installation broadcast is sent, */
-	public static @Nullable Boolean createOnLauncher(final Context context, final String pkg, final boolean owner, final String shortcut_prefix) {
-		final PackageManager pm = context.getPackageManager();
-		final List<LauncherActivityInfo> activities = Objects.requireNonNull((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
-				.getActivityList(pkg, owner ? Users.owner : Users.profile);
-		if (activities.isEmpty()) {
-			Analytics.$().event("shortcut_non_launchable").with(ITEM_ID, pkg).send();
-			return false;
-		}
-		final LauncherActivityInfo activity = activities.get(0);
-		final ComponentName component = activity.getComponentName();
-		final String label = shortcut_prefix + activity.getLabel();
-		final Supplier<Bitmap> icon_bitmap = () -> ShortcutIcons.createLargeIconBitmap(context, owner || SDK_INT >= O ? activity.getIcon(0)
-				: activity.getBadgedIcon(0), pkg);		// No badge icon on Android O, since launcher will use the icon of Island as badge.
-
-		final Intent launch_intent = new Intent(owner ? ACTION_LAUNCH_APP : ACTION_LAUNCH_CLONE).addCategory(CATEGORY_LAUNCHER)
-				.setData(Uri.fromParts("target", component.flattenToShortString(), null));
+	public static @Nullable Boolean createOnLauncher(final Context context, final String pkg, final ApplicationInfo app, final UserHandle user,
+													 final CharSequence label, final @DrawableRes int icon) {
+		final boolean for_owner = Users.isOwner(user);
+		final String action = for_owner ? ACTION_LAUNCH_APP : ACTION_LAUNCH_CLONE;
+		final Intent launch_intent = new Intent(action, Uri.fromParts(SCHEME_PACKAGE, pkg, null)).addCategory(CATEGORY_LAUNCHER);
 
 		if (SDK_INT >= O) {
-			final ShortcutInfo.Builder info = new ShortcutInfo.Builder(context, getShortcutId(pkg, owner ? null : Users.profile)).setShortLabel(label)
-					.setIntent(launch_intent).setIcon(Icon.createWithBitmap(icon_bitmap.get()));	// createWithResource may not compatible with all launchers.
+			final ShortcutManager sm = context.getSystemService(ShortcutManager.class);
+			if (sm == null) return null;
+			final ShortcutInfo.Builder info = new ShortcutInfo.Builder(context, getShortcutId(pkg, for_owner ? null : Users.profile)).setShortLabel(label)
+					.setIntent(launch_intent).setIcon(Icon.createWithBitmap(makeShortcutIconBitmap(context, app, user, icon)));	// createWithResource() cannot handle profile app, and may not compatible with all launchers.
 			try {
-				return Objects.requireNonNull((ShortcutManager) context.getSystemService(SHORTCUT_SERVICE)).requestPinShortcut(info.build(), null);
+				return sm.requestPinShortcut(info.build(), null);
 			} catch (final RuntimeException e) {
 				Analytics.$().report(e);
 				return false;
@@ -93,23 +83,36 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			final Intent intent = new Intent(ACTION_INSTALL_SHORTCUT).putExtra("duplicate", false)	// To prevent duplicate creation
 					.putExtra(EXTRA_SHORTCUT_INTENT, launch_intent).putExtra(EXTRA_SHORTCUT_NAME, label);
 			try {
-				final ShortcutIconResource icon = new ShortcutIconResource();
-				icon.packageName = pkg;
-				icon.resourceName = context.getPackageManager().getResourcesForApplication(pkg).getResourceName(activity.getApplicationInfo().icon);
-				intent.putExtra(EXTRA_SHORTCUT_ICON_RESOURCE, icon);
+				final ShortcutIconResource shortcut_icon = new ShortcutIconResource();
+				shortcut_icon.packageName = pkg;
+				shortcut_icon.resourceName = context.getPackageManager().getResourcesForApplication(pkg).getResourceName(app.icon);
+				intent.putExtra(EXTRA_SHORTCUT_ICON_RESOURCE, shortcut_icon);
 			} catch (final NameNotFoundException | Resources.NotFoundException e) {	// NameNotFoundException if app is not installed in owner user.
-				final Bitmap bitmap = icon_bitmap.get();
+				final Bitmap bitmap = makeShortcutIconBitmap(context, app, user, icon);
 				if (bitmap == null) return false;	// Analytics is already done in createLargeIconBitmap above.
 				intent.putExtra(EXTRA_SHORTCUT_ICON, bitmap);
 			}
-			final ResolveInfo launcher = pm.resolveActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_HOME), MATCH_DEFAULT_ONLY);
-			if (launcher != null) intent.setPackage(launcher.activityInfo.packageName);
+			final ActivityInfo launcher = new Intent(ACTION_MAIN).addCategory(CATEGORY_HOME).resolveActivityInfo(context.getPackageManager(), 0);
+			if (launcher != null) intent.setPackage(launcher.packageName);
 			context.sendBroadcast(intent);
 			return null;
 		}
 	}
 
-	/** Format: {package}[@{user}] */
+	private static Bitmap makeShortcutIconBitmap(final Context context, final ApplicationInfo app, final UserHandle user, final int icon) {
+		final PackageManager pm = context.getPackageManager();
+		Drawable drawable = null;
+		if (icon != 0) try {
+			final Resources resources = pm.getResourcesForApplication(app);
+			drawable = resources.getDrawableForDensity(icon, 0, null);
+		} catch (final NameNotFoundException | Resources.NotFoundException ignored) {}
+		if (drawable == null) drawable = app.loadIcon(pm);		// Fallback to default density icon
+		if (SDK_INT < O && ! Users.isOwner(user))	// Without badge icon on Android O+, since launcher will use the icon of Island as badge.
+			drawable = pm.getUserBadgedIcon(drawable, user);
+		return ShortcutIcons.createLargeIconBitmap(context, drawable, app.packageName);
+	}
+
+	/** Format: launch:{package}[@{user}] */
 	private static String getShortcutId(final String pkg, final @Nullable UserHandle user) {
 		return "launch:" + (user == null || Users.isOwner(user) ? pkg : pkg + "@" + Users.toId(user));
 	}
@@ -138,16 +141,20 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			}
 			return true;
 		} else {
-			final ComponentName component = ComponentName.unflattenFromString(uri.getSchemeSpecificPart());
-			if (component == null) return false;
-			if (! prepareToLaunchApp(component.getPackageName())) return false;
+			final String scheme = uri.getScheme(), target = uri.getSchemeSpecificPart(), pkg;
+			ComponentName component = null;
+			if (SCHEME_PACKAGE.equals(scheme)) pkg = target;
+			else if (SCHEME_TARGET.equals(scheme)) pkg = (component = ComponentName.unflattenFromString(target)).getPackageName();
+			else return false;
+			if (! prepareToLaunchApp(pkg)) return false;
 
-			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK);
+			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg).setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK);
 			try {
 				startActivity(launch_intent);
 			} catch (final ActivityNotFoundException e) {
+				if (component == null) return false;	// Already attempted to launch by package above.
 				try {
-					startActivity(launch_intent.setComponent(null).setPackage(component.getPackageName()));
+					startActivity(launch_intent.setComponent(null).setPackage(pkg));
 				} catch (final ActivityNotFoundException ex) {
 					return false;
 				}
@@ -178,6 +185,5 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 
 	protected abstract void onLaunchFailed();
 
-	private static final String ACTION_INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
 	private static final String TAG = "AppShortcut";
 }

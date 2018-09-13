@@ -344,13 +344,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private void onShortcutRequested(final Context context) {
-		if (mSelection.getValue() == null) return;
-		final String pkg = mSelection.getValue().info().packageName;
+		final AppViewModel app_vm = mSelection.getValue();
+		if (app_vm == null) return;
+		final IslandAppInfo app= app_vm.info();
+		final String pkg = app.packageName;
 		Analytics.$().event("action_create_shortcut").with(ITEM_ID, pkg).send();
 		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.key_launch_shortcut_prefix), context.getString(R.string.default_launch_shortcut_prefix));
-		final Boolean result = AbstractAppLaunchShortcut.createOnLauncher(context, pkg, Users.isOwner(mSelection.getValue().info().user), shortcut_prefix);
-		if (result == null) Toast.makeText(context, R.string.toast_shortcut_created, Toast.LENGTH_SHORT).show();	// No toast if result == true, since the shortcut pinning is pending user confirmation.
-		else if (! result) Toast.makeText(context, R.string.toast_shortcut_failed, Toast.LENGTH_LONG).show();
+		final Boolean result = AbstractAppLaunchShortcut.createOnLauncher(context, pkg, app, app.user, shortcut_prefix + app.getLabel(), app.icon);
+		if (result == null || result) Toast.makeText(context, R.string.toast_shortcut_request_sent, Toast.LENGTH_SHORT).show();	// MIUI has no UI for shortcut pinning.
+		else Toast.makeText(context, R.string.toast_shortcut_failed, Toast.LENGTH_LONG).show();
 	}
 
 	private void onGreenifyRequested(final Context context) {
