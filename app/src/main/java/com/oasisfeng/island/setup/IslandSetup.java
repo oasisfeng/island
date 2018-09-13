@@ -189,7 +189,7 @@ public class IslandSetup {
 	}
 
 	public static void onAddAdminResult(final Activity activity) {
-		if (! new DevicePolicies(activity).isAdminActive()) return;
+		if (! new DevicePolicies(activity).invoke(DevicePolicyManager::isAdminActive)) return;
 		Dialogs.buildAlert(activity, 0, R.string.dialog_mainland_setup_done).withCancelButton()
 				.setPositiveButton(R.string.dialog_button_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
 	}
@@ -262,7 +262,7 @@ public class IslandSetup {
 		@SuppressWarnings("UnnecessaryLocalVariable") final Context context = activity;		// MethodShuttle accepts only Context, but not Activity.
 		MethodShuttle.runInProfile(activity, () -> {
 			final DevicePolicies policies = new DevicePolicies(context);
-			policies.clearCrossProfileIntentFilters();
+			policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);
 			policies.getManager().wipeData(0);
 		}).whenComplete((result, e) -> {
 			if (e != null && ! (e instanceof DeadObjectException)) {	// DeadObjectException is normal, as wipeData() also terminated the calling process.

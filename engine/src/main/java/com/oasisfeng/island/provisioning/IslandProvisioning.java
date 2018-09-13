@@ -134,9 +134,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		enableCriticalAppsIfNeeded(this, policies);
 
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
-			policies.setProfileName(getString(R.string.profile_name));
+			policies.execute(DevicePolicyManager::setProfileName, getString(R.string.profile_name));
 			Log.d(TAG, "Enable profile now.");
-			policies.setProfileEnabled();
+			policies.execute(DevicePolicyManager::setProfileEnabled);
 		}
 		Analytics.$().event("profile_post_provision_done").send();
 
@@ -196,7 +196,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 		for (final String pkg : pkgs) try {
 			policies.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
-			policies.setApplicationHidden(pkg, false);
+			policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false);
 		} catch (final IllegalArgumentException ignored) {}		// Ignore non-existent packages.
 	}
 
@@ -212,7 +212,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
-		policies.clearCrossProfileIntentFilters();
+		policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);
 
 		final int provision_type = PreferenceManager.getDefaultSharedPreferences(context).getInt(PREF_KEY_PROFILE_PROVISION_TYPE, 0);
 		if (provision_type == 1) ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
@@ -228,7 +228,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
 		if (SDK_INT >= O) {
-			policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
+			policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
 			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
 		}
 		try {
@@ -242,7 +242,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning. */
 	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (SDK_INT >= O) {
-			policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
+			policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
 			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);
 		}
 		if (SDK_INT >= M) {
@@ -273,9 +273,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Some Samsung devices default to restrict all 3rd-party IMEs.
-		policies.setPermittedInputMethods(null);
-		policies.setPermittedAccessibilityServices(null);
-		if (SDK_INT >= O) policies.setPermittedCrossProfileNotificationListeners(null);
+		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
+		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
+		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
 	}
 
 	public static boolean ensureInstallNonMarketAppAllowed(final Context context, final DevicePolicies policies) {
@@ -288,7 +288,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		if (SDK_INT < LOLLIPOP_MR1) {		// INSTALL_NON_MARKET_APPS is not whitelisted by DPM.setSecureSetting() until Android 5.1.
 			if (! Permissions.has(context, WRITE_SECURE_SETTINGS)) return false;
 			Settings.Secure.putInt(resolver, INSTALL_NON_MARKET_APPS, 1);
-		} else policies.setSecureSetting(INSTALL_NON_MARKET_APPS, "1");
+		} else policies.execute(DevicePolicyManager::setSecureSetting, INSTALL_NON_MARKET_APPS, "1");
 		return Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
@@ -300,7 +300,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		for (final ResolveInfo installer : installers) {
 			final String installer_pkg = installer.activityInfo.packageName;
 			if (launcher_apps.isPackageEnabled(installer_pkg, Users.owner)) continue;
-			policies.setApplicationHidden(installer_pkg, true);
+			policies.invoke(DevicePolicyManager::setApplicationHidden, installer_pkg, true);
 			Log.i(TAG, "Disabled redundant package installer: " + installer_pkg);
 		}
 	}

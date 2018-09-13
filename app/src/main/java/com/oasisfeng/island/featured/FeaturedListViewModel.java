@@ -2,6 +2,7 @@ package com.oasisfeng.island.featured;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.admin.DevicePolicyManager;
 import android.arch.lifecycle.AndroidViewModel;
 import android.content.Context;
 import android.os.UserManager;
@@ -141,9 +142,9 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (policies.isActiveDeviceOwner()) {
 			if (! enabling) {
-				policies.clearUserRestriction(DISALLOW_DEBUGGING_FEATURES);
-				policies.setGlobalSetting(Settings.Global.ADB_ENABLED, "1");		// DISALLOW_DEBUGGING_FEATURES also disables ADB.
-			} else policies.addUserRestriction(DISALLOW_DEBUGGING_FEATURES);
+				policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
+				policies.execute(DevicePolicyManager::setGlobalSetting, Settings.Global.ADB_ENABLED, "1");	// DISALLOW_DEBUGGING_FEATURES also disables ADB.
+			} else policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 		}
 		if (! Users.hasProfile()) {		// No managed profile, all done.
 			vm.button.setValue(enabling ? R.string.featured_button_disable : R.string.featured_button_enable);
@@ -152,8 +153,8 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 		MethodShuttle.runInProfile(context, () -> {
 			final DevicePolicies device_policies = new DevicePolicies(context);		// The "policies" instance can not be passed into profile.
-			if (enabling) device_policies.addUserRestriction(DISALLOW_DEBUGGING_FEATURES);
-			else device_policies.clearUserRestriction(DISALLOW_DEBUGGING_FEATURES);
+			if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
+			else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 			return enabling;
 		}).whenComplete((result, e) -> {
 			if (e != null) {

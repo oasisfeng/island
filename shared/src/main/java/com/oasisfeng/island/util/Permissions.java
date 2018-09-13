@@ -57,7 +57,8 @@ public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 			final Optional<Boolean> is_owner = DevicePolicies.isOwnerOfEnabledProfile(context);
 			if (is_owner == null || ! is_owner.orElse(false)) return false;
 		}
-		final boolean result = new DevicePolicies(context).setPermissionGrantState(context.getPackageName(), permission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+		final boolean result = new DevicePolicies(context).invoke((dpm, admin) ->
+				dpm.setPermissionGrantState(admin, context.getPackageName(), permission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED));
 		if (! result) Analytics.$().event("permission_failure").withRaw("permission", permission).withRaw("SP", sp).send();
 		return result;
 	}

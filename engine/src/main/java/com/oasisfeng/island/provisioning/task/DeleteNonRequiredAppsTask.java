@@ -410,8 +410,8 @@ public class DeleteNonRequiredAppsTask {
         PackageManager(final Context base) { super(base.getPackageManager()); mDevicePolicies = new DevicePolicies(base); }
 
         void deletePackageAsUser(String pkg, PackageDeleteObserver observer, int flags, int mUserId) {
-            mDevicePolicies.setApplicationHidden(pkg, true);
-            if (mDevicePolicies.isApplicationHidden(pkg)) observer.packageDeleted(pkg, DELETE_SUCCEEDED);
+			mDevicePolicies.invoke(DevicePolicyManager::setApplicationHidden, pkg, true);
+            if (mDevicePolicies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) observer.packageDeleted(pkg, DELETE_SUCCEEDED);
             else observer.packageDeleted(pkg, DELETE_FAILED_INTERNAL_ERROR);
         }
 

@@ -79,7 +79,7 @@ public class MainActivity extends LifecycleActivity {
 
 	private void onCreateInProfile() {
 		final DevicePolicies policies = new DevicePolicies(this);
-		if (! policies.isAdminActive()) {
+		if (! policies.invoke(DevicePolicyManager::isAdminActive)) {
 			Analytics.$().event("inactive_device_admin").send();
 			startActivity(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(this))

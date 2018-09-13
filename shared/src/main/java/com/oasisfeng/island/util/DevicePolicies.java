@@ -6,28 +6,24 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import java9.util.Optional;
+import java9.util.function.BiConsumer;
+import java9.util.function.BiFunction;
 
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
-import static android.os.Build.VERSION_CODES.O;
-import static android.os.Build.VERSION_CODES.P;
 
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
@@ -59,8 +55,6 @@ public class DevicePolicies {
 		}
 	}
 
-	/* Shortcuts for APIs in DevicePolicyManager */
-
 	public boolean isActiveDeviceOwner() {
 		return mDevicePolicyManager.isAdminActive(sCachedComponent) && isDeviceOwner();
 	}
@@ -76,15 +70,6 @@ public class DevicePolicies {
 			return Hacks.DevicePolicyManager_getDeviceOwner.invoke().on(getManager());
 		} else if (isActiveDeviceOwner()) return sCachedComponent.getPackageName();        // Fall-back check, only if we are the device owner.
 		else return "";
-	}
-
-	/** @see DevicePolicyManager#addCrossProfileIntentFilter(ComponentName, IntentFilter, int) */
-	public void addCrossProfileIntentFilter(final IntentFilter filter, final int flags) {
-		mDevicePolicyManager.addCrossProfileIntentFilter(sCachedComponent, filter, flags);
-	}
-
-	public void clearCrossProfileIntentFilters() {
-		mDevicePolicyManager.clearCrossProfileIntentFilters(sCachedComponent);
 	}
 
 	/** @return true if successfully enabled, false if package not found or not system app.
@@ -113,60 +98,6 @@ public class DevicePolicies {
 		}
 	}
 
-	/** @return Whether the hidden setting of the package was successfully updated, (false if not found)
-	 *  @see DevicePolicyManager#setApplicationHidden(ComponentName, String, boolean) */
-	public boolean setApplicationHidden(final String pkg, final boolean hidden) {
-		return mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, hidden);
-	}
-
-	/** @return true if the package is hidden or not installed on device, false otherwise (including not installed in current user/profile).
-	 *  @see DevicePolicyManager#isApplicationHidden(ComponentName, String) */
-	public boolean isApplicationHidden(final String pkg) {
-		return mDevicePolicyManager.isApplicationHidden(sCachedComponent, pkg);
-	}
-
-	/**
-	 * Called by device or profile owners to suspend packages for this user.
-	 * <p>A suspended package will not be able to start activities. Its notifications will be hidden, it will not show up in recents, will not be able to show toasts or dialogs or ring the device.
-	 * <p>The package must already be installed.
-	 *
-	 * @param pkgs	The package names to suspend or unsuspend.
-	 * @param suspended	If set to true than the packages will be suspended, if set to false the packages will be unsuspended.
-	 * @return an array of package names for which the suspended status is not set as requested in this method.
-	 */
-	@RequiresApi(N) public String[] setPackagesSuspended(final String[] pkgs, final boolean suspended) {
-		return mDevicePolicyManager.setPackagesSuspended(sCachedComponent, pkgs, suspended);
-	}
-
-	/**
-	 * Called by device or profile owners to determine if a package is suspended.
-	 *
-	 * @param pkg The name of the package to retrieve the suspended status of.
-	 */
-	@RequiresApi(N) public boolean isPackageSuspended(final String pkg) throws NameNotFoundException {
-		return mDevicePolicyManager.isPackageSuspended(sCachedComponent, pkg);
-	}
-
-	/** @see DevicePolicyManager#isAdminActive(ComponentName) */
-	public boolean isAdminActive() {
-		return mDevicePolicyManager.isAdminActive(sCachedComponent);
-	}
-
-	/** @see DevicePolicyManager#setSecureSetting(ComponentName, String, String) */
-	public void setSecureSetting(final String setting, final String value) {
-		mDevicePolicyManager.setSecureSetting(sCachedComponent, setting, value);
-	}
-
-	/** @see DevicePolicyManager#setGlobalSetting(ComponentName, String, String) */
-	public void setGlobalSetting(final String setting, final String value) {
-		mDevicePolicyManager.setGlobalSetting(sCachedComponent, setting, value);
-	}
-
-	/** @see DevicePolicyManager#addUserRestriction(ComponentName, String) */
-	public void addUserRestriction(final String key) {
-		mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
-	}
-
 	public void addUserRestrictionIfNeeded(final Context context, final String key) {
 		if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
 		if (SDK_INT >= N) {
@@ -179,15 +110,10 @@ public class DevicePolicies {
 		}
 	}
 
-	/** @see DevicePolicyManager#clearUserRestriction(ComponentName, String) */
-	public void clearUserRestriction(final String key) {
-		mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
-	}
-
 	public void clearUserRestrictionsIfNeeded(final Context context, final String... keys) {
 		Bundle restrictions = null;
 		for (final String key : keys) {
-			if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
+			if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;	// Immutable
 			if (SDK_INT >= N) {
 				if (restrictions == null) restrictions = mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 				if (restrictions.containsKey(key))
@@ -200,71 +126,22 @@ public class DevicePolicies {
 		}
 	}
 
-	/** @see DevicePolicyManager#setProfileName(ComponentName, String) */
-	public void setProfileName(final String name) {
-		mDevicePolicyManager.setProfileName(sCachedComponent, name);
-	}
-
-	/** @see DevicePolicyManager#setProfileEnabled(ComponentName) */
-	public void setProfileEnabled() {
-		mDevicePolicyManager.setProfileEnabled(sCachedComponent);
-	}
-
-	/** @see DevicePolicyManager#removeActiveAdmin(ComponentName) */
-	public void removeActiveAdmin() {
-		mDevicePolicyManager.removeActiveAdmin(sCachedComponent);
-	}
-
-	/** @see DevicePolicyManager#setPermittedInputMethods(ComponentName, List) */
-	public void setPermittedInputMethods(final List<String> packages) {
-		mDevicePolicyManager.setPermittedInputMethods(sCachedComponent, packages);
-	}
-
-	/** @see DevicePolicyManager#setPermittedAccessibilityServices(ComponentName, List) */
-	public void setPermittedAccessibilityServices(final List<String> packages) {
-		mDevicePolicyManager.setPermittedAccessibilityServices(sCachedComponent, packages);
-	}
-
-	/** @see DevicePolicyManager#setPermissionGrantState(ComponentName, String, String, int) */
-	@RequiresApi(M) public boolean setPermissionGrantState(final String pkg, final String permission, final int state) {
-		return mDevicePolicyManager.setPermissionGrantState(sCachedComponent, pkg, permission, state);
-	}
-
-	/** @see DevicePolicyManager#getPermissionGrantState(ComponentName, String, String) */
-	@RequiresApi(M) public int getPermissionGrantState(final String pkg, final String permission) {
-		return mDevicePolicyManager.getPermissionGrantState(sCachedComponent, pkg, permission);
-	}
-
-	/** @see DevicePolicyManager#getUserRestrictions(ComponentName) */
-	@RequiresApi(N) public Bundle getUserRestrictions() {
-		return mDevicePolicyManager.getUserRestrictions(sCachedComponent);
-	}
-
 	/** @see DevicePolicyManager#isBackupServiceEnabled(ComponentName) */
 	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
-	public boolean isBackupServiceEnabled() {
-		return mDevicePolicyManager.isBackupServiceEnabled(sCachedComponent);
-	}
+	public boolean isBackupServiceEnabled() { return mDevicePolicyManager.isBackupServiceEnabled(sCachedComponent); }
 
 	/** @see DevicePolicyManager#setBackupServiceEnabled(ComponentName, boolean) */
 	@RequiresApi(N_MR1) @SuppressLint("NewApi") // Hidden on Android 7.1.x
-	public void setBackupServiceEnabled(final boolean enabled) {
-		mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled);
+	public void setBackupServiceEnabled(final boolean enabled) { mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled); }
+
+	/** @see DevicePolicyManager#isPackageSuspended(ComponentName, String) */
+	@RequiresApi(N) public boolean isPackageSuspended(final String pkg) throws PackageManager.NameNotFoundException {	// Helper due to exception
+		return mDevicePolicyManager.isPackageSuspended(sCachedComponent, pkg);
 	}
 
-	/** @see DevicePolicyManager#setAffiliationIds(ComponentName, Set) */
-	@RequiresApi(O) public void setAffiliationIds(final Set<String> ids) {
-		mDevicePolicyManager.setAffiliationIds(sCachedComponent, ids);
-	}
-
-	/** @see DevicePolicyManager#setPermittedCrossProfileNotificationListeners(ComponentName, List) */
-	@RequiresApi(O) public void setPermittedCrossProfileNotificationListeners(final List<String> packages) {
-		mDevicePolicyManager.setPermittedCrossProfileNotificationListeners(sCachedComponent, packages);
-	}
-
-	/** @see DevicePolicyManager#installExistingPackage(ComponentName, String) */
-	@RequiresApi(P) @CheckResult public boolean installExistingPackage(final String pkg) {
-		return mDevicePolicyManager.installExistingPackage(sCachedComponent, pkg);
+	/** @see DevicePolicyManager#addCrossProfileIntentFilter(ComponentName, IntentFilter, int) */
+	public void addCrossProfileIntentFilter(final IntentFilter filter, final int flags) {	// Need this helper since IntentFilters may throws.
+		mDevicePolicyManager.addCrossProfileIntentFilter(sCachedComponent, filter, flags);
 	}
 
 	public DevicePolicyManager getManager() { return mDevicePolicyManager; }
@@ -276,6 +153,32 @@ public class DevicePolicies {
 	public DevicePolicies(final Context context) {
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
 		cacheDeviceAdminComponent(context);
+	}
+
+	/* Helpers for more APIs in DevicePolicyManager */
+
+	public interface TriConsumer<A, B, C> { void accept(A a, B b, C c); }
+	public interface TriFunction<A, B, C, R> { R apply(A a, B b, C c); }
+	public interface QuadConsumer<A, B, C, D> { void accept(A a, B b, C c, D d); }
+	public interface QuadFunction<A, B, C, D, R> { R apply(A a, B b, C c, D d); }
+
+	public void execute(final BiConsumer<DevicePolicyManager, ComponentName> callee) {
+		callee.accept(mDevicePolicyManager, sCachedComponent);
+	}
+	public <A> void execute(final TriConsumer<DevicePolicyManager, ComponentName, A> callee, final A a) {
+		callee.accept(mDevicePolicyManager, sCachedComponent, a);
+	}
+	public <A, B> void execute(final QuadConsumer<DevicePolicyManager, ComponentName, A, B> callee, final A a, final B b) {
+		callee.accept(mDevicePolicyManager, sCachedComponent, a, b);
+	}
+	public <R> R invoke(final BiFunction<DevicePolicyManager, ComponentName, R> callee) {
+		return callee.apply(mDevicePolicyManager, sCachedComponent);
+	}
+	public <A, R> R invoke(final TriFunction<DevicePolicyManager, ComponentName, A, R> callee, final A a) {
+		return callee.apply(mDevicePolicyManager, sCachedComponent, a);
+	}
+	public <A, B, R> R invoke(final QuadFunction<DevicePolicyManager, ComponentName, A, B, R> callee, final A a, final B b) {
+		return callee.apply(mDevicePolicyManager, sCachedComponent, a, b);
 	}
 
 	private final DevicePolicyManager mDevicePolicyManager;

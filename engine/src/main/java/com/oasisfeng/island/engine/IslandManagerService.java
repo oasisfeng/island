@@ -60,23 +60,25 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 	@Override public boolean freezeApp(final String pkg, final String reason) {
 		Log.i(TAG, "Freeze: " + pkg + " for " + reason);
-		return mDevicePolicies.setApplicationHidden(pkg, true) || mDevicePolicies.isApplicationHidden(pkg);
+		return mDevicePolicies.invoke(DevicePolicyManager::setApplicationHidden, pkg, true)
+				|| mDevicePolicies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
 	}
 
 	@Override public boolean unfreezeApp(final String pkg) {
 		Log.i(TAG, "Unfreeze: " + pkg);
-		return mDevicePolicies.setApplicationHidden(pkg, false) || ! mDevicePolicies.isApplicationHidden(pkg);
+		return mDevicePolicies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false)
+				|| ! mDevicePolicies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
 	}
 
 	@Override public String launchApp(final String pkg) {
 		if (! Users.isOwner() || new DevicePolicies(mContext).isActiveDeviceOwner()) {
-			if (mDevicePolicies.isApplicationHidden(pkg)) {		// Hidden or not installed
-				if (! mDevicePolicies.setApplicationHidden(pkg, false))
+			if (mDevicePolicies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) {		// Hidden or not installed
+				if (! mDevicePolicies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false))
 					if (! Apps.of(mContext).isInstalledInCurrentUser(pkg)) return "not_installed";	// Not installed in profile, just give up.
 			}
 			if (SDK_INT >= N) try {
 				if (mDevicePolicies.isPackageSuspended(pkg))
-					mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
+					mDevicePolicies.invoke(DevicePolicyManager::setPackagesSuspended, new String[] { pkg }, false);
 			} catch (final PackageManager.NameNotFoundException ignored) { return "not_found"; }
 		}
 
@@ -97,7 +99,7 @@ public class IslandManagerService extends IIslandManager.Stub {
 
 		if (SDK_INT >= P && mContext.getSystemService(DevicePolicyManager.class).isAffiliatedUser()) try {
 			if (! do_it) return CLONE_RESULT_OK_INSTALL_EXISTING;
-			if (mDevicePolicies.installExistingPackage(pkg))
+			if (mDevicePolicies.invoke(DevicePolicyManager::installExistingPackage, pkg))
 				return CLONE_RESULT_OK_INSTALL_EXISTING;
 			Log.e(TAG, "Error cloning existent user app: " + pkg);								// Fall-through
 		} catch (final SecurityException e) {
@@ -155,12 +157,12 @@ public class IslandManagerService extends IIslandManager.Stub {
 	}
 
 	@RequiresApi(N) @Override public boolean block(final String pkg) {
-		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, true);
+		final String[] failed = mDevicePolicies.invoke(DevicePolicyManager::setPackagesSuspended, new String[] { pkg }, true);
 		return failed == null || failed.length == 0;
 	}
 
 	@RequiresApi(N) @Override public boolean unblock(final String pkg) {
-		final String[] failed = mDevicePolicies.setPackagesSuspended(new String[] { pkg }, false);
+		final String[] failed = mDevicePolicies.invoke(DevicePolicyManager::setPackagesSuspended, new String[] { pkg }, false);
 		return failed == null || failed.length == 0;
 	}
 
