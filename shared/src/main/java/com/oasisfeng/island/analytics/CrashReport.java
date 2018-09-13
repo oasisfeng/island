@@ -16,7 +16,11 @@ import io.fabric.sdk.android.Fabric;
  */
 public abstract class CrashReport {
 
-	static CrashlyticsCore $() { return sSingleton.get(); }
+	static void logException(final Throwable t) { sSingleton.get().logException(t); }
+	static void log(final String message) { sSingleton.get().log(message); }
+	static void setProperty(final String key, final String value) { sSingleton.get().setString(key, value); }
+	static void setProperty(final String key, final int value) { sSingleton.get().setInt(key, value); }
+	static void setProperty(final String key, final boolean value) { sSingleton.get().setBool(key, value); }
 
 	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
 		Fabric.with(new Fabric.Builder(FirebaseWrapper.init()).kits(new Crashlytics()).debuggable(BuildConfig.DEBUG).build());
@@ -36,7 +40,8 @@ public abstract class CrashReport {
 			if (Thread.getDefaultUncaughtExceptionHandler() instanceof LazyThreadExceptionHandler)
 				Thread.setDefaultUncaughtExceptionHandler(mDefaultHandler);	// Revert global exception handler before initializing crash report service.
 
-			$();	// Initialize if not yet
+			sSingleton.get();	// Initialize if not yet
+
 			final Thread.UncaughtExceptionHandler handler = t.getUncaughtExceptionHandler();
 			if (handler != null) handler.uncaughtException(t, e);
 		}

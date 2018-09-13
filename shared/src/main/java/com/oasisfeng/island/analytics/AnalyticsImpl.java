@@ -39,22 +39,22 @@ class AnalyticsImpl implements Analytics {
 	}
 
 	@Override public Analytics trace(final String key, final String value) {
-		CrashReport.$().setString(key, value);
+		CrashReport.setProperty(key, value);
 		return this;
 	}
 
 	@Override public Analytics trace(final String key, final int value) {
-		CrashReport.$().setInt(key, value);
+		CrashReport.setProperty(key, value);
 		return this;
 	}
 
 	@Override public Analytics trace(final String key, final boolean value) {
-		CrashReport.$().setBool(key, value);
+		CrashReport.setProperty(key, value);
 		return this;
 	}
 
 	@Override public void report(final Throwable t) {
-		if (! BuildConfig.DEBUG) CrashReport.$().logException(t);
+		CrashReport.logException(t);
 	}
 
 	@Override public void reportEvent(final String event, final Bundle params) {
@@ -72,13 +72,13 @@ class AnalyticsImpl implements Analytics {
 		mGoogleAnalytics.send(builder.build());
 
 		mFirebaseAnalytics.logEvent(event, params);
-		CrashReport.$().log("Event: " + event + " " + params.toString().substring(6));
+		CrashReport.log("Event: " + event + " " + params.toString().substring(6));
 	}
 
 	@Override public void setProperty(final Property property, final String value) {
 		mGoogleAnalytics.set("&cd" + property.ordinal() + 1, value);	// Custom dimension (index >= 1)
 		mFirebaseAnalytics.setUserProperty(property.name, value);
-		CrashReport.$().setString(property.name, value);
+		CrashReport.setProperty(property.name, value);
 	}
 
 	private AnalyticsImpl(final Context context) {
