@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.UserHandle;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.Users;
@@ -104,12 +105,19 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		Drawable drawable = null;
 		if (icon != 0) try {
 			final Resources resources = pm.getResourcesForApplication(app);
-			drawable = resources.getDrawableForDensity(icon, 0, null);
+			drawable = resources.getDrawableForDensity(icon, getDpiForLargeIcon(resources.getDisplayMetrics().densityDpi), null);
 		} catch (final NameNotFoundException | Resources.NotFoundException ignored) {}
 		if (drawable == null) drawable = app.loadIcon(pm);		// Fallback to default density icon
 		if (SDK_INT < O && ! Users.isOwner(user))	// Without badge icon on Android O+, since launcher will use the icon of Island as badge.
 			drawable = pm.getUserBadgedIcon(drawable, user);
 		return ShortcutIcons.createLargeIconBitmap(context, drawable, app.packageName);
+	}
+
+	private static int getDpiForLargeIcon(final int dpi) {
+		if (dpi >= DisplayMetrics.DENSITY_XHIGH) return DisplayMetrics.DENSITY_XXHIGH;
+		if (dpi >= DisplayMetrics.DENSITY_HIGH) return DisplayMetrics.DENSITY_XHIGH;
+		if (dpi >= DisplayMetrics.DENSITY_MEDIUM) return DisplayMetrics.DENSITY_HIGH;
+		return DisplayMetrics.DENSITY_MEDIUM;
 	}
 
 	/** Format: launch:{package}[@{user}] */
