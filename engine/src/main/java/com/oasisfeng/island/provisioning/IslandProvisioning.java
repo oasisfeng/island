@@ -241,7 +241,10 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning. */
 	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
-		if (SDK_INT >= O) policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
+		if (SDK_INT >= O) {
+			policies.setAffiliationIds(Collections.singleton(AFFILIATION_ID));
+			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);
+		}
 		if (SDK_INT >= M) {
 			grantEssentialDebugPermissionsIfPossible(context, policies);
 			policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
