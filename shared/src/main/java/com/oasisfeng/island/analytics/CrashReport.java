@@ -1,6 +1,5 @@
 package com.oasisfeng.island.analytics;
 
-import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
@@ -16,6 +15,8 @@ import io.fabric.sdk.android.Fabric;
  */
 public abstract class CrashReport {
 
+	private static final boolean DISABLED = BuildConfig.DEBUG;
+
 	static void logException(final Throwable t) { sSingleton.get().logException(t); }
 	static void log(final String message) { sSingleton.get().log(message); }
 	static void setProperty(final String key, final String value) { sSingleton.get().setString(key, value); }
@@ -23,7 +24,8 @@ public abstract class CrashReport {
 	static void setProperty(final String key, final boolean value) { sSingleton.get().setBool(key, value); }
 
 	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
-		Fabric.with(new Fabric.Builder(FirebaseWrapper.init()).kits(new Crashlytics()).debuggable(BuildConfig.DEBUG).build());
+		Fabric.with(new Fabric.Builder(FirebaseWrapper.init()).debuggable(BuildConfig.DEBUG)
+				.kits(new CrashlyticsCore.Builder().disabled(DISABLED).build()).build());
 		return CrashlyticsCore.getInstance();
 	});
 
