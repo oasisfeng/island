@@ -1,5 +1,4 @@
 apply plugin: 'com.android.feature'
-apply plugin: 'com.jakewharton.hugo'
 
 android {
     compileSdkVersion 27

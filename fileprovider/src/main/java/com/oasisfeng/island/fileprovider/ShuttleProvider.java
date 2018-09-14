@@ -21,8 +21,6 @@ import com.oasisfeng.island.util.Users;
 
 import java.io.FileNotFoundException;
 
-import hugo.weaving.DebugLog;
-
 import static android.os.Build.VERSION_CODES.O;
 
 /**
@@ -30,7 +28,7 @@ import static android.os.Build.VERSION_CODES.O;
  *
  * Created by Oasis on 2017/8/29.
  */
-@DebugLog public class ShuttleProvider extends ContentProvider {
+public class ShuttleProvider extends ContentProvider {
 
 	private static final String EXTRA_URI = "uri";			// Disclosed from DocumentsContract
 
