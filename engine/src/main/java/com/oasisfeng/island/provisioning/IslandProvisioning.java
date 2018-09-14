@@ -60,6 +60,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
@@ -222,9 +223,17 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		disableLauncherActivity(context);
 	}
 
+	public static void startDeviceAndProfileOwnerSharedPostProvisioning(final Context context, final DevicePolicies policies) {
+		if (SDK_INT >= N) {
+			policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
+			policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
+		}
+	}
+
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (! policies.isActiveDeviceOwner()) return;
+		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
 		if (SDK_INT >= O) {
@@ -249,6 +258,9 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			grantEssentialDebugPermissionsIfPossible(context, policies);
 			policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		}
+
+		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
+
 		ensureInstallNonMarketAppAllowed(context, policies);
 		disableRedundantPackageInstaller(context, policies);	// To fix unexpectedly enabled package installer due to historical mistake in SystemAppsManager.
 
@@ -272,7 +284,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		// For Greenify (non-root automated hibernation for apps in Island)
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
-		// Some Samsung devices default to restrict all 3rd-party IMEs.
+		// Some Samsung devices default to restrict all 3rd-party cross-profile services (IMEs, accessibility and etc).
 		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
 		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
 		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);

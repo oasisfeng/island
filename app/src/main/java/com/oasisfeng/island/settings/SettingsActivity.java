@@ -1,6 +1,7 @@
 package com.oasisfeng.island.settings;
 
 import android.app.ActionBar;
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -12,6 +13,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
+import android.preference.TwoStatePreference;
 import android.support.annotation.StringRes;
 import android.support.annotation.XmlRes;
 import android.support.v4.app.NavUtils;
@@ -20,12 +22,15 @@ import android.view.MenuItem;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 
 import java.util.List;
 
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On handset devices, settings are presented as a single list.
@@ -135,6 +140,21 @@ public class SettingsActivity extends PreferenceActivity {
 	/** This fragment shows general preferences only. It is used when the activity is showing a two-pane settings UI. */
 	public static class GeneralPreferenceFragment extends SubPreferenceFragment {
 		public GeneralPreferenceFragment() { super(R.xml.pref_general, R.string.key_launch_shortcut_prefix); }
+
+		@Override public void onCreate(final Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+			final TwoStatePreference pref_show_admin_message = (TwoStatePreference) findPreference(getString(R.string.key_show_admin_message));
+			final DevicePolicies policies;
+			if (SDK_INT >= N && (policies = new DevicePolicies(getActivity())).isActiveDeviceOwner()) {
+				pref_show_admin_message.setChecked(policies.invoke(DevicePolicyManager::getShortSupportMessage) != null);
+				pref_show_admin_message.setOnPreferenceChangeListener((pref, value) -> {
+					final boolean enabled = value == Boolean.TRUE;
+					policies.execute(DevicePolicyManager::setShortSupportMessage, enabled ? getText(R.string.device_admin_support_message_short) : null);
+					policies.execute(DevicePolicyManager::setLongSupportMessage, enabled ? getText(R.string.device_admin_support_message_long) : null);
+					return true;
+				});
+			} else if (pref_show_admin_message != null) removeLeafPreference(getPreferenceScreen(), pref_show_admin_message);
+		}
 	}
 
 	public static class PrivacyPreferenceFragment extends SubPreferenceFragment {

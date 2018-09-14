@@ -1,7 +1,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <EditTextPreference android:key="@string/key_launch_shortcut_prefix"
-                        android:title="@string/pref_general_launch_shortcut_prefix_title"
+                        android:title="@string/pref_launch_shortcut_prefix_title"
                         android:defaultValue="@string/default_launch_shortcut_prefix" />
+
+    <SwitchPreference android:key="@string/key_show_admin_message"
+                      android:title="@string/pref_show_admin_message_title"
+                      android:summary="@string/pref_show_admin_message_summary"
+                      android:persistent="false" />
 
 </PreferenceScreen>
