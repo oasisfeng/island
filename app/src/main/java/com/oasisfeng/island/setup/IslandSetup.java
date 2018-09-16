@@ -139,7 +139,8 @@ public class IslandSetup {
 	}
 
 	public static void requestDeviceOwnerActivation(final Fragment fragment, final int request_code) {
-		Dialogs.buildAlert(fragment.getActivity(), R.string.pref_setup_mainland_activate_title, R.string.pref_setup_mainland_activate_text)
+		Dialogs.buildAlert(fragment.getActivity(), fragment.getText(R.string.featured_god_mode_title),
+				fragment.getText(R.string.featured_god_mode_description) + "\n\n" + fragment.getText(R.string.dialog_activate_god_mode_additional_text))
 				.setPositiveButton(R.string.dialog_button_continue, (d, w) -> activateDeviceOwnerOrShowSetupGuide(fragment, request_code)).show();
 	}
 
