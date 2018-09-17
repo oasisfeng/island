@@ -144,6 +144,7 @@ public class AppListFragment extends LifecycleFragment {
 		mBinding.setFeatured(mFeaturedViewModel);
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
+		activity.setActionBar(mBinding.actionbar);	// Must before attach
 		mViewModel.attach(activity, mBinding.appDetail.toolbar.getMenu(), mBinding.bottomNavigation, saved_state);
 		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
 
@@ -155,7 +156,6 @@ public class AppListFragment extends LifecycleFragment {
 			@Override public void onServiceDisconnected(final ComponentName name) {}
 		})) throw new IllegalStateException("Module engine not installed");
 
-		activity.setActionBar(mBinding.actionbar);
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
 		return mBinding.getRoot();
 	}

@@ -153,6 +153,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	public boolean onTabSwitched(final Context context, final MenuItem tab) {
+		setTitle(context, tab);
 		final int tab_menu_id = tab.getItemId();
 		if (tab_menu_id == R.id.tab_discovery) {
 			mPrimaryFilter.setValue(null);
@@ -167,7 +168,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} else if (tab_menu_id == R.id.tab_mainland) {
 			mPrimaryFilter.setValue(Filter.Mainland);
 		} else return false;
-		updateActiveFilters();
 		return true;
 	}
 
@@ -182,17 +182,23 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			tabs.getMenu().removeItem(R.id.tab_island);
 			tabs.setSelectedItemId(R.id.tab_mainland);
 			mPrimaryFilter.setValue(Filter.Mainland);
+			setTitle(context, tabs.getMenu().findItem(R.id.tab_mainland));
 		} else {
 			final int ordinal = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(Filter.Island.ordinal()/* default */);
 			final Filter primary_filter = Filter.values()[ordinal];
 			tabs.setSelectedItemId(primary_filter == Filter.Mainland ? R.id.tab_mainland : R.id.tab_island);
 			mPrimaryFilter.setValue(primary_filter);
+			setTitle(context, tabs.getMenu().findItem(tabs.getSelectedItemId()));
 		}
 		mSelection.observeForever(selection -> {
 			final Interpolator interpolator = new AccelerateDecelerateInterpolator();
 			if (selection != null) tabs.animate().alpha(0).translationZ(-10).scaleX(0.95f).scaleY(0.95f).setDuration(200).setInterpolator(interpolator);
 			else tabs.animate().alpha(1).translationZ(0).scaleX(1).scaleY(1).setDuration(200).setInterpolator(interpolator);
 		});
+	}
+
+	private static void setTitle(final Context context, final MenuItem tab) {
+		if (context instanceof Activity) Objects.requireNonNull(((Activity) context).getActionBar()).setTitle(tab.getTitle());
 	}
 
 	public void setOwnerController(final IIslandManager controller) {
