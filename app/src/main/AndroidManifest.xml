@@ -30,6 +30,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter android:priority="-1"> <!-- Used by IslandProvisioning to launch this activity from Island after successful provisioning -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.oasisfeng.island.category.MAIN_ACTIVITY" />
+            </intent-filter>
         </activity>
 
         <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
@@ -37,16 +42,15 @@
         <provider android:authorities="${applicationId}.apps"
                   android:name="com.oasisfeng.island.data.IslandAppListProvider"
                   android:exported="false"
-                  android:multiprocess="true"/>
+                  android:multiprocess="true" />
 
         <provider android:authorities="${applicationId}.removal"
                   android:name="com.oasisfeng.island.UninstallHelper"
-                  android:exported="false"/>
+                  android:exported="false" />
 
-        <receiver android:name="com.oasisfeng.island.UninstallHelper$UninstallReceiver"
-                  android:exported="false">
+        <receiver android:name="com.oasisfeng.island.UninstallHelper$UninstallReceiver" android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

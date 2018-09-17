@@ -7,6 +7,6 @@
     <string name="notification_provisioning_text">It may take several minutes.</string>
 
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
-    <string name="toast_setup_complete">Setup is complete, please launch Island.</string>
+    <string name="toast_setup_complete">Island setup is complete.</string>
     <string name="toast_enable_install_from_unknown_source">Please enable this setting for Island to clone apps.</string>
 </resources>

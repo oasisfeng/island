@@ -2,6 +2,7 @@ package com.oasisfeng.island.provisioning;
 
 import android.app.Notification;
 import android.app.admin.DevicePolicyManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -85,6 +86,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 9;
 	private static final String AFFILIATION_ID = "com.oasisfeng.island";
+	private static final String CATEGORY_MAIN_ACTIVITY = "com.oasisfeng.island.category.MAIN_ACTIVITY";
 
 	public static void start(final Context context, final @Nullable String action) {
 		final Intent intent = new Intent(action).setComponent(getComponent(context, IslandProvisioning.class));
@@ -145,10 +147,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
 		if (! launchMainActivityAsUser(this, Users.owner)) {
-			if (SDK_INT < O) {
-				Analytics.$().event("error_launch_main_ui").send();
-				Log.e(TAG, "Failed to launch main activity in owner user.");
-			}
+			Analytics.$().event("error_launch_main_ui").send();
+			Log.e(TAG, "Failed to launch main activity in owner user.");
 			new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(this, R.string.toast_setup_complete, Toast.LENGTH_LONG).show());
 		}
 	}
@@ -179,10 +179,19 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		if (apps == null) return false;
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		if (! apps.isActivityEnabled(activity, user))
-			return false;    // Since Android O, activities in owner user in invisible to managed profile.
-		apps.startMainActivity(activity, user, null, null);
-		return true;
+		if (apps.isActivityEnabled(activity, user)) {
+			apps.startMainActivity(activity, user, null, null);
+			return true;
+		}
+		// Since Android O, activities in owner user is invisible to managed profile, use special forward rule to launch it in owner user.
+		new DevicePolicies(context).execute(DevicePolicyManager::addCrossProfileIntentFilter,
+				IntentFilters.forAction(Intent.ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
+		try {
+			context.startActivity(new Intent(Intent.ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY));
+			return true;
+		} catch (final ActivityNotFoundException e) {
+			return false;
+		}
 	}
 
 	private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning
