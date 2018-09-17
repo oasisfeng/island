@@ -164,8 +164,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="notification_channel_background_state">Background state</string>
     <string name="notification_channel_important">Important</string>
 
-    <string name="notification_remove_island_after_uninstall_title">Remove Island completely</string>
-    <string name="notification_remove_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
+    <string name="notification_island_after_uninstall_title">Remove Island completely</string>
+    <string name="notification_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
     <string name="notification_action_restore">Restore</string>
 
     <!-- New User Guide -->

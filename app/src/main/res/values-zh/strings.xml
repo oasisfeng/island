@@ -162,8 +162,8 @@
     <string name="notification_channel_background_state">后台状态</string>
     <string name="notification_channel_important">重要事项</string>
 
-    <string name="notification_remove_island_after_uninstall_title">彻底清除壶中界</string>
-    <string name="notification_remove_island_after_uninstall_text">毁灭壶中界，连同其中的所有应用和数据？</string>
+    <string name="notification_island_after_uninstall_title">壶中界已失去控制</string>
+    <string name="notification_island_after_uninstall_text">让其毁灭（连同其中的所有应用和数据）还是重生？</string>
     <string name="notification_action_restore">重生</string>
 
     <!-- New User Guide -->

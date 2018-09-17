@@ -48,7 +48,7 @@
                   android:name="com.oasisfeng.island.UninstallHelper"
                   android:exported="false" />
 
-        <receiver android:name="com.oasisfeng.island.UninstallHelper$UninstallReceiver" android:exported="false">
+        <receiver android:name="com.oasisfeng.island.UninstallHelper$UninstallReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
