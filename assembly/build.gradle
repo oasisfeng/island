@@ -70,6 +70,8 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.firebase:firebase-core:16.0.3'       // Required by Firebase
+
     // Engine only
     engineImplementation project(':engine')
     // Mobile only
@@ -82,7 +84,6 @@ dependencies {
     fullImplementation project(':fileprovider')
 
     implementation 'com.android.support:support-v4:27.1.1'          // To workaround the dependency conflict caused by "com.android.databinding:library"
-    implementation 'com.google.firebase:firebase-analytics:15.0.2'  // To workaround the dependency conflict caused by "com.google.gms.google-services"
 }
 
 // Firebase plug-in
