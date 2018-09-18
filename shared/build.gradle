@@ -1,7 +1,7 @@
 apply plugin: 'com.android.feature'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 27
 
     defaultConfig {
         minSdkVersion 21
