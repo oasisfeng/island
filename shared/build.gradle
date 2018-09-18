@@ -35,6 +35,8 @@ android {
 dependencies {
     application project(':assembly')
     feature project(':engine')
+    feature project(':mobile')
+    feature project(':fileprovider')
 
     api project(':deagle')
     api 'com.google.code.findbugs:jsr305:3.0.1'
