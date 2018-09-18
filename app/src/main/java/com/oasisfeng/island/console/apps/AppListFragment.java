@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -78,9 +79,16 @@ public class AppListFragment extends LifecycleFragment {
 
 	@Override public void onResume() {
 		super.onResume();
+		if (SystemClock.uptimeMillis() - mTimeLastPaused < 1_000) return;	// Avoid updating for brief pausing caused by cross-profile functionality.
 		if (mFeaturedViewModel.visible.getValue()) mFeaturedViewModel.update(getActivity());
 		Loopers.addIdleTask(() -> Optional.ofNullable(getActivity()).map(Tip::next).ifPresent(mBinding::setCard));
 	}
+
+	@Override public void onPause() {
+		super.onPause();
+		mTimeLastPaused = SystemClock.uptimeMillis();
+	}
+	private long mTimeLastPaused;
 
 	@Override public void onStop() {
 		mViewModel.mProfileController = IslandManager.NULL;
