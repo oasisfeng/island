@@ -6,7 +6,7 @@
     <string name="tab_discovery">天书</string>
 
     <string name="status_alive">自由</string>
-    <string name="status_frozen">封印</string>
+    <string name="status_frozen">冻结</string>
     <string name="status_disabled">停用</string>
     <string name="status_appendix_system">系统</string>
     <string name="status_appendix_critical">关键</string>
@@ -25,21 +25,21 @@
     <string name="featured_adb_secure_island_title">ADB 安全结界（仅限壶中界）</string>
     <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n如果启用“黄帝之名”，还可以在整个设备层面限制 ADB 终端权限（包括阻止连接的设备通过 USB 连接隐秘的安装应用）。</string>
     <string name="featured_god_mode_title">黄帝之名</string>
-    <string name="featured_god_mode_description">“黄帝之名”可召唤黄帝当年创造山海界的上古神器“东皇钟”，赋予在壶中界之外同时驾驭山海界的力量。以“黄帝之名”，不仅可以封印山海界中的应用，还能召唤其它神器相助。</string>
+    <string name="featured_god_mode_description">“黄帝之名”可召唤黄帝当年创造山海界的上古神器“东皇钟”，赋予在壶中界之外同时驾驭山海界的力量。以“黄帝之名”，不仅可以冻结山海界中的应用，还能召唤其它神器相助。</string>
     <string name="featured_greenify_title">绿色守护</string>
-    <string name="featured_greenify_description">在屏幕关闭后，自动封印选定的应用，除非它们仍然在工作中。</string>
+    <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_icebox_title">冰箱</string>
-    <string name="featured_icebox_description">轻松愉悦的应用封印（以“冻结”之名）和启动体验。（仅限山海界的应用，尚不支持壶中界的应用）</string>
+    <string name="featured_icebox_description">轻松愉悦的应用冻结和启动体验。（仅限山海界的应用，尚不支持壶中界的应用）</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">壶中界的应用并没有被剥夺窥测山海界与壶中界共同基石（如 IMEI、短信）的能力。而 App Ops 则拥有选择性剥夺指定应用各种窥测能力的法力。</string>
     <string name="featured_coolapk_title">酷安</string>
-    <string name="featured_coolapk_description">轻松升级封印的应用，无需事先解除封印。（需在酷安的设置 - 实验室中开启“显示隐藏应用”）\n\n升级壶中界的应用需要在壶中界运行酷安。</string>
+    <string name="featured_coolapk_description">轻松升级冻结的应用，无需事先解冻。（需在酷安的设置 - 实验室中开启“显示隐藏应用”）\n\n升级壶中界的应用需要在壶中界运行酷安。</string>
 
     <string name="setup_profile_welcome">欢迎来到壶中界</string>
-    <string name="setup_island_intro">壶中界是一个独立的应用和数据空间。可以为外部（山海界）的应用选择性的在壶中界创造分身，也可以将应用单独安装在壶中界。
-壶中界的应用访问到的个人数据（通讯录、通话记录等）完全独立于山海界，它们即便被授予了相关的权限，也无法访问到山海界的个人数据。
-\n\n应用分身的数据也彼此独立，互不影响。壶中界的应用还可以在需要的时候被封印，使其看起来完全消失无踪，也无法进行任何后台行为。
-\n\n开始创建壶中界，意味着你同意授予“工作资料”（壶中界底层机制）的管理权限。我们并不收集您的隐私数据，详情请参阅我们在 Google Play 市场中的隐私政策。</string>
+    <string name="setup_island_intro">壶中界是一个独立的应用和数据空间。可以为应用选择性的在壶中界创造分身，也可以将应用单独安装在壶中界。
+壶中界的应用访问到的个人数据（通讯录、通话记录等）是完全隔离，独立于外部的，它们即便被授予了相关的权限，也无法访问到外部的个人数据。
+\n\n应用分身的数据也独立于外部的该应用，互不影响。壶中界的应用还可以在需要的时候被冻结，使其看起来完全消失无踪，也无法进行任何后台行为。
+\n\n开始创建壶中界，意味着你同意授予“工作资料”（壶中界底层机制）的管理权限。我们不会收集您的隐私数据，详情请参阅我们在 Google Play 市场中的隐私政策。</string>
     <string name="setup_accept">同意</string>
     <string name="setup_error_multi_user_not_allowed">抱歉，此设备不支持必需的“Android 多用户”特性。</string>
     <string name="setup_error_managed_profile_not_supported">抱歉，此设备不支持必需的“Android 工作资料”特性。</string>
@@ -60,10 +60,10 @@
 
     <string name="action_clone">分身</string>
     <string name="action_clone_back">分身回山海界</string>
-    <string name="action_freeze">封印</string>
-    <string name="action_unfreeze">接触封印</string>
-    <string name="action_shortcut">创建“解除封印并启动”快捷方式</string>
-    <string name="action_greenify">委托绿色守护自动封印</string>
+    <string name="action_freeze">冻结</string>
+    <string name="action_unfreeze">接触冻结</string>
+    <string name="action_shortcut">创建“解冻并启动”快捷方式</string>
+    <string name="action_greenify">委托绿色守护自动冻结</string>
     <string name="action_app_settings">应用设置</string>
     <string name="action_remove">移除分身</string>
     <string name="action_uninstall">卸载</string>
@@ -81,7 +81,7 @@
     <string name="dialog_clone_via_sys_market_explanation">即将启动设备内置的应用市场完成应用分身，届时请按照常规的应用安装步骤完成应用的安装。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。\n\n注意：无法确定此设备内置的应用市场是否支持 Android 工作资料机制。如果安装应用的分身失败，请参考“常见问题解答”中提供的解决方案。</string>
     <string name="dialog_clone_incapable_explanation">抱歉，在 Android 5.1 之前，缺少内置的应用市场（如 Google Play）将无法完成应用分身。请参考“常见问题解答”中提供的解决方案。</string>
     <string name="dialog_greenify_title">与绿色守护的协同</string>
-    <string name="dialog_greenify_explanation">基于节省内存和电量的原则，壶中界自身是后台纯净的，因此需要借助绿色守护精巧的状态检测和休眠管理实现应用的自动封印（以休眠之名）。</string>
+    <string name="dialog_greenify_explanation">基于节省内存和电量的原则，壶中界自身是后台纯净的，因此需要借助绿色守护精巧的状态检测和休眠管理实现应用的自动冻结（以休眠之名）。</string>
     <string name="dialog_greenify_version_too_low">绿色守护需要升级到更新的版本</string>
     <string name="dialog_reactivate_message">通往壶中界的入口被意外关闭，请再次授予设备管理权限以重新开启。</string>
     <string name="dialog_destroy_message">确定希望毁灭整个壶中界？其中的应用分身和所有数据将会完全湮灭，无法恢复。\n\n别担心，外部的应用和数据不会受到任何影响。</string>
@@ -115,7 +115,7 @@
     <string name="toast_shortcut_failed">快捷方式创建失败</string>
     <string name="toast_greenify_failed">绿色化失败</string>
     <string name="toast_internal_error">抱歉，出现了内部异常，请退出后重新尝试。</string>
-    <string name="toast_error_freeze_failure">封印失败</string>
+    <string name="toast_error_freeze_failure">冻结失败</string>
     <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
     <string name="toast_failed_to_launch_app">抱歉，启动应用时出现了异常。</string>
     <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>
@@ -168,8 +168,8 @@
 
     <!-- New User Guide -->
 
-    <string name="prompt_freeze_title">封印壶中界的应用</string>
-    <string name="prompt_freeze_text">被封印应用会完全消失，看起来就像是卸载了一样，直到解除其封印。\n\n在封印状态的应用绝对无法做任何事情。</string>
+    <string name="prompt_freeze_title">冻结壶中界的应用</string>
+    <string name="prompt_freeze_text">被冻结应用会完全消失，看起来就像是卸载了一样，直到将其解冻。\n\n在冻结状态的应用绝对无法做任何事情。</string>
     <string name="prompt_clone_title">在壶中界创造应用的分身</string>
     <string name="prompt_clone_text">山海界的应用可以在壶中界获得分身。\n\n应用的分身就像是新安装的应用副本，有自己独立的数据。他们只共享应用的执行文件以节省空间。</string>
 
