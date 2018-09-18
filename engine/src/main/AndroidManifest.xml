@@ -17,6 +17,7 @@
 
         <activity android:name="com.oasisfeng.island.shortcut.AppLaunchShortcut"
                   android:hardwareAccelerated="false"
+                  android:resumeWhilePausing="true"
                   android:excludeFromRecents="true"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar"
                   android:clearTaskOnLaunch="true"
@@ -38,10 +39,11 @@
 
         <activity android:name="com.oasisfeng.island.api.ApiActivity"
                   android:hardwareAccelerated="false"
+                  android:resumeWhilePausing="true"
                   android:excludeFromRecents="true"
                   android:alwaysRetainTaskState="true"
                   android:taskAffinity=":api"
-                  android:theme="@style/android:Theme.Translucent.NoTitleBar" >
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar" >
 
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
@@ -55,7 +57,6 @@
         </activity>
 
         <receiver android:name="com.oasisfeng.island.api.ApiReceiver">
-
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
@@ -63,15 +64,15 @@
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
             </intent-filter>
-
         </receiver>
 
         <!-- ServiceShuttleActivity (non-exported) -->
         <activity android:name="com.oasisfeng.island.InternalActivity$_1"
                   android:exported="false"
                   android:hardwareAccelerated="false"
+                  android:resumeWhilePausing="true"
                   android:excludeFromRecents="true"
-                  android:theme="@style/android:Theme.NoDisplay"
+                  android:theme="@android:style/Theme.NoDisplay"
                   android:taskAffinity=":shuttle" >
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.BIND_SERVICE" />
