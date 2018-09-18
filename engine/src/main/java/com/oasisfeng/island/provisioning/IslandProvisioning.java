@@ -105,7 +105,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
 		final DevicePolicies policies = new DevicePolicies(this);
 		// Grant essential permissions early, since they may be required in the following provision procedure.
-		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(this, policies);
+		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(this);
 
 		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
@@ -153,8 +153,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		}
 	}
 
-	@RequiresApi(M) private static boolean grantEssentialDebugPermissionsIfPossible(final Context context, final DevicePolicies policies) {
-		return Permissions.ensure(context, INTERACT_ACROSS_USERS) && Permissions.ensure(context, WRITE_SECURE_SETTINGS);
+	@RequiresApi(M) private static void grantEssentialDebugPermissionsIfPossible(final Context context) {
+		if (Permissions.ensure(context, INTERACT_ACROSS_USERS)) Permissions.ensure(context, WRITE_SECURE_SETTINGS);
 	}
 
 	@WorkerThread public static void performIncrementalProfileOwnerProvisioningIfNeeded(final Context context) {
@@ -264,7 +264,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);
 		}
 		if (SDK_INT >= M) {
-			grantEssentialDebugPermissionsIfPossible(context, policies);
+			grantEssentialDebugPermissionsIfPossible(context);
 			policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		}
 

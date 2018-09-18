@@ -27,7 +27,7 @@ public class ContextShuttle {
 	}
 
 	@RequiresPermission(INTERACT_ACROSS_USERS)
-	public static Context createPackageContextAsUser(final Context context, final String pkg, final UserHandle user) throws NameNotFoundException {
+	public static @Nullable Context createPackageContextAsUser(final Context context, final String pkg, final UserHandle user) throws NameNotFoundException {
 		return Hacks.Context_createPackageContextAsUser.invoke(pkg, 0, user).on(context);
 	}
 }
