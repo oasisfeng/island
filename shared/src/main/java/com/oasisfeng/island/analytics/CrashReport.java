@@ -30,7 +30,7 @@ public abstract class CrashReport {
 	});
 
 	public static void initCrashHandler() {
-		if (BuildConfig.DEBUG) return;
+		if (DISABLED) return;
 		final Thread.UncaughtExceptionHandler current_exception_handler = Thread.getDefaultUncaughtExceptionHandler();
 		if (! (current_exception_handler instanceof LazyThreadExceptionHandler))
 			Thread.setDefaultUncaughtExceptionHandler(new LazyThreadExceptionHandler(current_exception_handler));
@@ -38,14 +38,27 @@ public abstract class CrashReport {
 
 	private static class LazyThreadExceptionHandler implements Thread.UncaughtExceptionHandler {
 
-		@Override public void uncaughtException(final Thread t, final Throwable e) {
-			if (Thread.getDefaultUncaughtExceptionHandler() instanceof LazyThreadExceptionHandler)
-				Thread.setDefaultUncaughtExceptionHandler(mDefaultHandler);	// Revert global exception handler before initializing crash report service.
+		@Override public void uncaughtException(final Thread thread, final Throwable e) {
+			final Thread.UncaughtExceptionHandler default_handler_before = Thread.getDefaultUncaughtExceptionHandler();
+			if (default_handler_before instanceof LazyThreadExceptionHandler)
+				Thread.setDefaultUncaughtExceptionHandler(mDefaultHandler);	// Revert global default handler before initializing crash report service.
 
+			final Thread.UncaughtExceptionHandler handler_before = getActualUncaughtExceptionHandler(thread);
 			sSingleton.get();	// Initialize if not yet
+			final Thread.UncaughtExceptionHandler handler_after = getActualUncaughtExceptionHandler(thread);
 
-			final Thread.UncaughtExceptionHandler handler = t.getUncaughtExceptionHandler();
-			if (handler != null) handler.uncaughtException(t, e);
+			if (handler_after != handler_before) {	// Thread handler changed by the initialization above.
+				handler_after.uncaughtException(thread, e);
+			} else mDefaultHandler.uncaughtException(thread, e);	// Crashlytics may be already initialized before, NEVER call current handler to avoid recursion.
+		}
+
+		private static Thread.UncaughtExceptionHandler getActualUncaughtExceptionHandler(final Thread thread) {
+			Thread.UncaughtExceptionHandler ueh = thread.getUncaughtExceptionHandler();
+			while (ueh.getClass() == ThreadGroup.class) {
+				ueh = ((ThreadGroup) ueh).getParent();
+				if (ueh == null) return Thread.getDefaultUncaughtExceptionHandler();	// All ancestors are ThreadGroup, return global UncaughtExceptionHandler.
+			}
+			return ueh;
 		}
 
 		LazyThreadExceptionHandler(final Thread.UncaughtExceptionHandler default_handler) {
