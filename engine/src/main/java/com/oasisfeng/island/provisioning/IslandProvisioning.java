@@ -55,7 +55,6 @@ import static android.content.Intent.ACTION_SEND;
 import static android.content.Intent.ACTION_SEND_MULTIPLE;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_BROWSABLE;
-import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
@@ -276,11 +275,8 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		enableAdditionalForwarding(policies);
 
 		// Prepare AppLaunchShortcut
-		final IntentFilter launchpad_filter = new IntentFilter(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE);
-		launchpad_filter.addDataScheme("target");
-		launchpad_filter.addCategory(Intent.CATEGORY_DEFAULT);
-		launchpad_filter.addCategory(CATEGORY_LAUNCHER);
-		policies.addCrossProfileIntentFilter(launchpad_filter, FLAG_MANAGED_CAN_ACCESS_PARENT);
+		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")
+				.withCategories(Intent.CATEGORY_DEFAULT, Intent.CATEGORY_LAUNCHER), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare ServiceShuttle
 		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);

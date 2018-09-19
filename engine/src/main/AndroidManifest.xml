@@ -28,12 +28,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="target" />
+                <data android:scheme="package" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="target" />
+                <data android:scheme="package" />
             </intent-filter>
         </activity>
 

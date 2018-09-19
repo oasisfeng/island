@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
@@ -152,11 +153,18 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 			final String scheme = uri.getScheme(), target = uri.getSchemeSpecificPart(), pkg;
 			ComponentName component = null;
 			if (SCHEME_PACKAGE.equals(scheme)) pkg = target;
-			else if (SCHEME_TARGET.equals(scheme)) pkg = (component = ComponentName.unflattenFromString(target)).getPackageName();
-			else return false;
+			else if (SCHEME_TARGET.equals(scheme)) {
+				if ((component = ComponentName.unflattenFromString(target)) == null) return false;
+				pkg = component.getPackageName();
+			} else return false;
 			if (! prepareToLaunchApp(pkg)) return false;
 
-			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg).setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK);
+			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg).addFlags(FLAG_ACTIVITY_NEW_TASK);
+			if (component == null) {    // Entrance activity may not contain CATEGORY_DEFAULT, component must be set in launch intent.
+				final ResolveInfo resolve = getPackageManager().resolveActivity(launch_intent, 0);
+				if (resolve == null) return false;
+				launch_intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));
+			} else launch_intent.setComponent(component);
 			try {
 				startActivity(launch_intent);
 			} catch (final ActivityNotFoundException e) {
