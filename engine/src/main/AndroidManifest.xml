@@ -46,7 +46,6 @@
                   android:alwaysRetainTaskState="true"
                   android:taskAffinity=":api"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar" >
-
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
@@ -55,13 +54,13 @@
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
             </intent-filter>
-
         </activity>
 
         <receiver android:name="com.oasisfeng.island.api.ApiReceiver">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
+                <action android:name="com.oasisfeng.island.action.LAUNCH" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
