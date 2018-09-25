@@ -27,11 +27,9 @@ import com.oasisfeng.island.shared.BuildConfig;
 
 import java.io.File;
 
-import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
-import static android.os.Build.VERSION_CODES.O_MR1;
 
 /**
  * All reflection-based hacks should be defined here
@@ -60,7 +58,7 @@ public class Hacks {
 	public static final Hack.HackedField<ApplicationInfo, Integer>
 			ApplicationInfo_versionCode = Hack.into(ApplicationInfo.class).field("versionCode").fallbackTo(0);
 	public static final Hack.HackedTargetField<String>
-			PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT >= N && ! isAndroidP()).into(PrintManager.class)
+			PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT >= N && ! Builds.isAndroidPIncludingPreviews()).into(PrintManager.class)
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
@@ -84,7 +82,7 @@ public class Hacks {
 			Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class)
 			.fallbackReturning(false).withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
 	@RequiresApi(N) public static final @Nullable Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
-			UserManager_getProfileIds = SDK_INT < N || isAndroidP() ? null : Hack.into(UserManager.class).method("getProfileIds")
+			UserManager_getProfileIds = SDK_INT < N || Builds.isAndroidPIncludingPreviews() ? null : Hack.into(UserManager.class).method("getProfileIds")
 			.returning(int[].class).withParams(int.class, boolean.class);
 	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle>
 			Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
@@ -104,7 +102,4 @@ public class Hacks {
 			Environment_getDataSystemDirectory = Hack.into(Environment.class)
 			.staticMethod(SDK_INT < N ? "getSystemSecureDirectory" : "getDataSystemDirectory").returning(File.class).withoutParams();
 
-	private static boolean isAndroidP() {
-		return SDK_INT > O_MR1 || (SDK_INT == O_MR1 && PREVIEW_SDK_INT > 0);
-	}
 }

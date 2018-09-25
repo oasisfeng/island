@@ -17,7 +17,9 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.island.util.Builds;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import java.net.URISyntaxException;
@@ -31,8 +33,7 @@ import java9.util.stream.Collectors;
 import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.O_MR1;
+import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * Dispatch the API calls.
@@ -61,7 +62,8 @@ class ApiDispatcher {
 		if (value == null) return "Unauthorized client: " + pkg;
 		final int signature_hash = value;
 		if (signature_hash == 0) return null;
-		if (SDK_INT > O_MR1 && ! Users.isOwner()) return null; // FIXME: Figure out a new way to verify signature on Android P, which enforces permission INTERACT_ACROSS_USERS for MATCH_ANY_USER.
+		if (Builds.isAndroidPIncludingPreviews() && ! Users.isOwner() && ! Permissions.has(context, INTERACT_ACROSS_USERS))
+			return null;	// FIXME: Figure out a new way to verify signature on Android P without permission INTERACT_ACROSS_USERS.
 		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
 			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
 			for (final Signature signature : pkg_info.signatures)
