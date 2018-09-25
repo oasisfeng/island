@@ -39,32 +39,24 @@ public abstract class CrashReport {
 	private static class LazyThreadExceptionHandler implements Thread.UncaughtExceptionHandler {
 
 		@Override public void uncaughtException(final Thread thread, final Throwable e) {
-			final Thread.UncaughtExceptionHandler default_handler_before = Thread.getDefaultUncaughtExceptionHandler();
-			if (default_handler_before instanceof LazyThreadExceptionHandler)
-				Thread.setDefaultUncaughtExceptionHandler(mDefaultHandler);	// Revert global default handler before initializing crash report service.
-
-			final Thread.UncaughtExceptionHandler handler_before = getActualUncaughtExceptionHandler(thread);
-			sSingleton.get();	// Initialize if not yet
-			final Thread.UncaughtExceptionHandler handler_after = getActualUncaughtExceptionHandler(thread);
-
-			if (handler_after != handler_before) {	// Thread handler changed by the initialization above.
-				handler_after.uncaughtException(thread, e);
-			} else mDefaultHandler.uncaughtException(thread, e);	// Crashlytics may be already initialized before, NEVER call current handler to avoid recursion.
-		}
-
-		private static Thread.UncaughtExceptionHandler getActualUncaughtExceptionHandler(final Thread thread) {
-			Thread.UncaughtExceptionHandler ueh = thread.getUncaughtExceptionHandler();
-			while (ueh.getClass() == ThreadGroup.class) {
-				ueh = ((ThreadGroup) ueh).getParent();
-				if (ueh == null) return Thread.getDefaultUncaughtExceptionHandler();	// All ancestors are ThreadGroup, return global UncaughtExceptionHandler.
+			if (mHandlingUncaughtException) {		// Avoid infinite recursion
+				mOriginalHandler.uncaughtException(thread, e);
+				return;
 			}
-			return ueh;
+			mHandlingUncaughtException = true;
+
+			sSingleton.get();	// Initialize if not yet
+
+			final Thread.UncaughtExceptionHandler handler = thread.getUncaughtExceptionHandler();
+			if (handler != null) handler.uncaughtException(thread, e);	// May re-enter this method if delegate is initialized above.
+			mHandlingUncaughtException = false;
 		}
 
 		LazyThreadExceptionHandler(final Thread.UncaughtExceptionHandler default_handler) {
-			mDefaultHandler = default_handler;
+			mOriginalHandler = default_handler;
 		}
 
-		private final Thread.UncaughtExceptionHandler mDefaultHandler;
+		private final Thread.UncaughtExceptionHandler mOriginalHandler;
+		private boolean mHandlingUncaughtException;
 	}
 }
