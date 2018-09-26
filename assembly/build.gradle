@@ -8,7 +8,7 @@ android {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
         targetSdkVersion 27     // Module "fileprovider" indirectly accessed private APIs in dark greylist, via loaded remote class.
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     dataBinding.enabled true
@@ -70,8 +70,6 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.firebase:firebase-core:16.0.3'       // Required by Firebase
-
     // Engine only
     engineImplementation project(':engine')
     // Mobile only
@@ -83,7 +81,9 @@ dependencies {
     fullImplementation project(':mobile')
     fullImplementation project(':fileprovider')
 
-    implementation 'com.android.support:support-v4:27.1.1'          // To workaround the dependency conflict caused by "com.android.databinding:library"
+    // To workaround the dependency conflicts caused by "com.android.databinding:library"
+    implementation 'com.android.support:support-core-ui:28.0.0'
+    implementation 'com.android.support:support-fragment:28.0.0'
 }
 
 // Firebase plug-in
