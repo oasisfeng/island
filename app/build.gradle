@@ -32,6 +32,10 @@ android {
 }
 
 dependencies {
+    application project(':assembly')
+    feature project(':engine')
+    feature project(':fileprovider')
+
     implementation project(':shared')
     implementation project(':deagle')
 

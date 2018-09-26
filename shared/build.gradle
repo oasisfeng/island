@@ -8,8 +8,6 @@ android {
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
-    baseFeature true
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -33,11 +31,6 @@ android {
 }
 
 dependencies {
-    application project(':assembly')
-    feature project(':engine')
-    feature project(':mobile')
-    feature project(':fileprovider')
-
     api project(':deagle')
     api 'com.google.code.findbugs:jsr305:3.0.1'
     api 'net.sourceforge.streamsupport:android-retrostreams:1.6.3'
