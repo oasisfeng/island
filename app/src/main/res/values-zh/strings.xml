@@ -43,7 +43,7 @@
     <string name="setup_accept">同意</string>
     <string name="setup_error_multi_user_not_allowed">抱歉，此设备不支持必需的“Android 多用户”特性。</string>
     <string name="setup_error_managed_profile_not_supported">抱歉，此设备不支持必需的“Android 工作资料”特性。</string>
-    <string name="setup_error_provisioning_incomplete">壶中界的创建不完整，此前的创建尝试可能并未成功。\n\n<b>如果您的设备或其它三方工具施加了“自启动”（或类似的）限制，请务必首先将壶中界接触限制或加入白名单，然后再次创建壶中界。</b></string>
+    <string name="setup_error_provisioning_incomplete">壶中界的创建不完整，此前的创建尝试可能并未成功。\n\n<b>如果您的设备或其它三方工具施加了“自启动”（或类似的）限制，请务必首先将壶中界解除限制或加入白名单，然后再次创建壶中界。</b></string>
     <string name="setup_error_managed_device">抱歉，由于此设备已被 <b>%1$s</b> 接管，壶中界无法创建。</string>
     <string name="setup_error_other_work_profile">抱歉，由于设备上的其它应用已经创造了未知的异界，壶中界无法与之共存。如果仍然希望创建壶中界，须首先至“系统设置 -（用户和）账号”中“移除工作资料”。</string>
     <string name="setup_error_missing_managed_provisioning">抱歉，由于此设备并未完整支持必需的“Android 工作资料”特性。</string>
@@ -61,7 +61,7 @@
     <string name="action_clone">分身</string>
     <string name="action_clone_back">分身回山海界</string>
     <string name="action_freeze">冻结</string>
-    <string name="action_unfreeze">接触冻结</string>
+    <string name="action_unfreeze">解除冻结</string>
     <string name="action_shortcut">创建“解冻并启动”快捷方式</string>
     <string name="action_greenify">委托绿色守护自动冻结</string>
     <string name="action_app_settings">应用设置</string>
