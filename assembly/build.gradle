@@ -19,9 +19,6 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug {
-            ext.enableCrashlytics = false
-        }
     }
 
     flavorDimensions "packaging"

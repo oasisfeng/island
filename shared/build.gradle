@@ -8,6 +8,16 @@ android {
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
+    buildTypes {
+        release {
+            buildConfigField("boolean", "CRASHLYTICS_ENABLED", "true")
+        }
+        debug {
+            ext.enableCrashlytics = false
+            buildConfigField("boolean", "CRASHLYTICS_ENABLED", "${ext.enableCrashlytics}")
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
