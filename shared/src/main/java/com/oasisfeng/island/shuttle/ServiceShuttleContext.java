@@ -23,11 +23,11 @@ import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
  *
  * Created by Oasis on 2017/2/16.
  */
-public class ShuttleContext extends ContextWrapper {
+public class ServiceShuttleContext extends ContextWrapper {
 
 	public static final boolean ALWAYS_USE_SHUTTLE = Boolean.FALSE;		// For test purpose
 
-	public ShuttleContext(final Context base) { super(base); }
+	public ServiceShuttleContext(final Context base) { super(base); }
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
 		final UserHandle profile = Users.profile;

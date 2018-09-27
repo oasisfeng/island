@@ -13,7 +13,7 @@ import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.android.service.Services;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.shuttle.ShuttleContext;
+import com.oasisfeng.island.shuttle.ServiceShuttleContext;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
@@ -85,7 +85,7 @@ public class IslandManager {
 	}
 
 	public static @CheckResult boolean useServiceInProfile(final Context context, final Services.ServiceReadyThrows<IIslandManager, RemoteException> procedure) {
-		return Services.use(context instanceof ShuttleContext || Users.isProfile() ? context : new ShuttleContext(context),
+		return Services.use(context instanceof ServiceShuttleContext || Users.isProfile() ? context : new ServiceShuttleContext(context),
 				IIslandManager.class, IIslandManager.Stub::asInterface, procedure);
 	}
 

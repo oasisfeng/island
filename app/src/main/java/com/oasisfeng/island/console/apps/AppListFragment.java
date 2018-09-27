@@ -37,7 +37,7 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
-import com.oasisfeng.island.shuttle.ShuttleContext;
+import com.oasisfeng.island.shuttle.ServiceShuttleContext;
 import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.tip.Tip;
 import com.oasisfeng.island.util.Modules;
@@ -61,7 +61,7 @@ public class AppListFragment extends LifecycleFragment {
 		setRetainInstance(true);	// To keep view-model (by keeping the view-model provider)
 		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
-		mShuttleContext = new ShuttleContext(activity);
+		mServiceShuttleContext = new ServiceShuttleContext(activity);
 		final ViewModelProvider provider = ViewModelProviders.of(this);
 		mViewModel = provider.get(AppListViewModel.class);
 		mViewModel.mProfileController = IslandManager.NULL;
@@ -73,7 +73,7 @@ public class AppListFragment extends LifecycleFragment {
 	@Override public void onStart() {
 		super.onStart();
 		if (Users.hasProfile())
-			if (! mShuttleContext.bindService(new Intent(IIslandManager.class.getName()).setPackage(Modules.MODULE_ENGINE), mServiceConnection, BIND_AUTO_CREATE))
+			if (! mServiceShuttleContext.bindService(new Intent(IIslandManager.class.getName()).setPackage(Modules.MODULE_ENGINE), mServiceConnection, BIND_AUTO_CREATE))
 				Toast.makeText(getActivity(), "Error connecting to Island", Toast.LENGTH_LONG).show();
 	}
 
@@ -93,7 +93,7 @@ public class AppListFragment extends LifecycleFragment {
 	@Override public void onStop() {
 		mViewModel.mProfileController = IslandManager.NULL;
 		if (Users.hasProfile()) try {
-			mShuttleContext.unbindService(mServiceConnection);
+			mServiceShuttleContext.unbindService(mServiceConnection);
 		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
 		mViewModel.clearSelection();
 		super.onStop();
@@ -236,7 +236,7 @@ public class AppListFragment extends LifecycleFragment {
 	private AppListViewModel mViewModel;
 	private FeaturedListViewModel mFeaturedViewModel;
 	private @Nullable UserGuide mUserGuide;
-	private ShuttleContext mShuttleContext;
+	private ServiceShuttleContext mServiceShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 
 	private static final String TAG = "Island.AppsUI";

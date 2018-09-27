@@ -19,7 +19,7 @@ import java9.util.concurrent.CompletableFuture;
 import java9.util.concurrent.CompletionStage;
 
 /**
- * Shuttle for general method invocation.
+ * Shuttle for general method invocation, on top of service shuttle.
  *
  * Created by Oasis on 2017/3/31.
  */
@@ -81,7 +81,7 @@ public class MethodShuttle {
 		invocation.clazz = clazz.getName();
 		invocation.args = args;
 		final CompletableFuture<Result> future = new CompletableFuture<>();
-		if (! Services.use(new ShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, shuttle -> {
+		if (! Services.use(new ServiceShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, shuttle -> {
 			try {
 				shuttle.invoke(invocation);
 			} catch (final Exception e) {
