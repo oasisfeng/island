@@ -1,9 +1,16 @@
 package com.oasisfeng.island.api;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+
+import com.oasisfeng.android.os.UserHandles;
+import com.oasisfeng.island.util.Hacks;
 
 /**
  * API via activity (better for crossing the user border)
@@ -15,7 +22,20 @@ public class ApiActivity extends Activity {
 	private void onIntent(final Intent intent) {
 		Log.i(TAG, "API request: " + intent.toUri(0));
 		if (intent.getAction() != null) {
-			String result = ApiDispatcher.verifyCaller(this, intent, getCallingPackage());
+			String result;
+			final ComponentName caller = getCallingActivity();
+			if (caller != null) try { @SuppressLint("WrongConstant")		// Invoked with startActivityForResult()
+				final ActivityInfo info = getPackageManager().getActivityInfo(caller, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+				int uid = info.applicationInfo.uid;
+				if (UserHandles.getUserId(uid) != 0) {
+					final String[] potential_pkgs = getPackageManager().getPackagesForUid(uid);
+					if (potential_pkgs == null) uid = UserHandles.getAppId(uid);	// Fix the incorrect UID when MATCH_ANY_USER is used.
+				}
+				result = ApiDispatcher.verifyCaller(this, intent, caller.getPackageName(), uid);
+			} catch (final PackageManager.NameNotFoundException e) {
+				result = "Unverifiable caller activity: " + caller.flattenToShortString();
+			} else result = ApiDispatcher.verifyCaller(this, intent, null, - 1);
+
 			if (result == null) {
 				result = ApiDispatcher.dispatch(this, intent);
 				if (result == null) {

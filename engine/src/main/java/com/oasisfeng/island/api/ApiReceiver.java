@@ -19,7 +19,7 @@ public class ApiReceiver extends BroadcastReceiver {
 		Log.i(TAG, "API request: " + intent.toUri(0));
 		if ((intent.getFlags() & FLAG_RECEIVER_FOREGROUND) == 0) Log.w(TAG, "Add Intent.FLAG_RECEIVER_FOREGROUND to API intent for less delay.");
 
-		String result = ApiDispatcher.verifyCaller(context, intent, null);
+		String result = ApiDispatcher.verifyCaller(context, intent, null, -1);
 		if (result != null) {
 			setResultIfOrdered(Api.latest.RESULT_UNVERIFIED_IDENTITY, result);
 			Log.w(TAG, "Caller verification failure: " + result);

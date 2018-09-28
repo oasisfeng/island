@@ -2,6 +2,13 @@
 <resources>
     <string name="profile_name">Island</string>
 
+    <string name="permission_group_control_island_apps_label">Control Island apps</string>
+    <string name="permission_group_control_island_apps_description">control apps managed by Island</string>
+    <string name="permission_freeze_app_label">Freeze Island apps</string>
+    <string name="permission_freeze_app_description">This app can freeze and unfreeze any app managed by Island.</string>
+    <string name="permission_launch_app_label">Launch Island apps</string>
+    <string name="permission_launch_app_description">This app can launch any app managed by Island, which will be unfrozen if needed.</string>
+
     <string name="notification_standby_text">Standby</string>
     <string name="notification_provisioning_title">Provisioning Island…</string>
     <string name="notification_provisioning_text">It may take several minutes.</string>

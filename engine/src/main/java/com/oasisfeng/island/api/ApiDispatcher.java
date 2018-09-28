@@ -33,6 +33,9 @@ import java9.util.stream.Collectors;
 import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
+import static android.content.pm.PackageManager.GET_SIGNATURES;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
@@ -42,35 +45,51 @@ import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
  */
 class ApiDispatcher {
 
-	/** @return null if verified, or error message for debugging purpose (NOT part of the API protocol). */
-	static String verifyCaller(final Context context, final Intent intent, final @Nullable String caller) {
-		final String pkg;
-		if (caller == null) {
+	/**
+	 * Verify the qualification of this API invocation, mainly the permission of API caller.
+	 *
+	 * @param pkg the package name of API caller, if known.
+	 * @param uid the UID of API caller, not used if caller_pkg is null.
+	 * @return null if verified, or error message for debugging purpose (NOT part of the API protocol).
+	 */
+	static String verifyCaller(final Context context, final Intent intent, @Nullable String pkg, int uid) {
+		if (pkg == null) {
 			final PendingIntent id = intent.getParcelableExtra(Api.latest.EXTRA_CALLER_ID);
-			if (id == null) return "Missing required extra (PendingIntent): " + Api.latest.EXTRA_CALLER_ID;
-			final int uid = id.getCreatorUid();
-			if (Users.isSameApp(uid, Process.myUid())) return null;		// From myself (possibly in other user).
+			if (id == null) return "Missing required PendingIntent extra: " + Api.latest.EXTRA_CALLER_ID;
 			pkg = id.getCreatorPackage();
-			if (pkg == null) return "No creator information in PendingIntent: " + id;
-		} else pkg = caller;
-		// This log should generally be placed in the caller site, leave it here just to avoid this for internal API caller (with component always).
+			uid = id.getCreatorUid();
+			if (pkg == null) return "No creator information in " + id;
+		}
+		if (Users.isSameApp(uid, Process.myUid())) return null;		// From myself (possibly in other user).
+		// This log should generally be placed in the caller site, do it after same app check to skip this for internal API caller with component set.
 		if (intent.getPackage() == null && intent.getComponent() != null)
 			Log.w(TAG, "Never use implicit intent or explicit intent with component name for API request, use Intent.setPackage() instead.");
-		Log.v(TAG, "API caller: " + pkg);
 
+		Log.d(TAG, "API invoked by " + pkg);
+		if (SDK_INT >= M) {
+			final int permission_result = context.checkPermission(Api.latest.PERMISSION_FREEZE_PACKAGE, 0, uid);
+			if (permission_result == PackageManager.PERMISSION_GRANTED) return null;
+		}
+
+		// Fallback verification for API v1 clients.
 		final Integer value = sVerifiedCallers.get(pkg);
 		if (value == null) return "Unauthorized client: " + pkg;
 		final int signature_hash = value;
-		if (signature_hash == 0) return null;
+		if (signature_hash == 0) return null;	// 0 means already verified (cached)
+
 		if (Builds.isAndroidPIncludingPreviews() && ! Users.isOwner() && ! Permissions.has(context, INTERACT_ACROSS_USERS))
-			return null;	// FIXME: Figure out a new way to verify signature on Android P without permission INTERACT_ACROSS_USERS.
+			return "Permission denied";		// Legacy verification is not supported on Android P+, due to MATCH_ANY_USER being restricted.
 		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
-			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, PackageManager.GET_SIGNATURES | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
-			for (final Signature signature : pkg_info.signatures)
-				if (signature.hashCode() != signature_hash) return "Package signature mismatch";
-			sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
-			return null;
+			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, GET_SIGNATURES | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+			return verifySignature(pkg, signature_hash, pkg_info);
 		} catch (final PackageManager.NameNotFoundException e) { return "Client package not found: " + pkg; }		// Should hardly happen
+	}
+
+	@Nullable private static String verifySignature(final String pkg, final int signature_hash, final PackageInfo pkg_info) {
+		for (final Signature signature : pkg_info.signatures)
+			if (signature.hashCode() != signature_hash) return "Package signature mismatch";
+		sVerifiedCallers.put(pkg, 0);		// No further signature check for this caller in the lifetime of this process.
+		return null;
 	}
 
 	/** @return null for success, or error message for debugging purpose (NOT part of the API protocol). */
