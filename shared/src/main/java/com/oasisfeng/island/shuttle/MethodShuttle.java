@@ -8,7 +8,6 @@ import android.util.Log;
 
 import com.oasisfeng.android.service.AidlService;
 import com.oasisfeng.android.service.Services;
-import com.oasisfeng.android.util.Consumer;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -38,17 +37,6 @@ public class MethodShuttle {
 	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried. */
 	public static <R> CompletionStage<R> runInProfile(final Context context, final GeneralMethod<R> lambda) {
 		return shuttle(context, lambda);
-	}
-
-	/** @param lambda should be a lambda function with return value of type <code>R</code>.
-	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried.
-	 * @deprecated */
-	public static <R> void runInProfile(final Context context, final GeneralMethod<R> lambda, final @Nullable Consumer<R> consumer) {
-		final CompletionStage<R> future = shuttle(context, lambda);
-		if (consumer != null) future.whenComplete((result, e) -> {
-			if (e != null) Log.w("Shuttle", "Error executing " + lambda, e.getCause());
-			else consumer.accept(result);
-		});
 	}
 
 	private static <Result> CompletionStage<Result> shuttle(final Context context, final Object lambda) {

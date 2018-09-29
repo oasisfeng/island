@@ -70,7 +70,7 @@ import static android.os.Build.VERSION_CODES.M;
 		else try { begin_time = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).firstInstallTime; }
 		catch (final PackageManager.NameNotFoundException e) { throw new IllegalStateException("Cannot retrieve package info"); }
 
-		MethodShuttle.runInProfile(context, () -> queryUsedPackagesDuring(context, begin_time, System.currentTimeMillis()), used_pkgs -> {
+		MethodShuttle.runInProfile(context, () -> queryUsedPackagesDuring(context, begin_time, System.currentTimeMillis())).thenAccept(used_pkgs -> {
 			final SharedPreferences.Editor editor = mStore.edit().clear();
 			if (used_pkgs.size() > 0) {
 				final IslandAppListProvider apps = IslandAppListProvider.getInstance(context);
