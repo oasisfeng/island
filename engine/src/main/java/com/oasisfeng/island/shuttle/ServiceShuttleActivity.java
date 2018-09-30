@@ -1,13 +1,10 @@
 package com.oasisfeng.island.shuttle;
 
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -15,14 +12,12 @@ import android.util.Log;
 
 import com.oasisfeng.island.util.ProfileUser;
 
-import java.util.List;
-
 /**
  * Proxy activity to implement {@link ServiceShuttle}.
  *
  * Created by Oasis on 2016/8/21.
  */
-public class ServiceShuttleActivity extends Activity {
+public abstract class ServiceShuttleActivity extends Activity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -53,7 +48,7 @@ public class ServiceShuttleActivity extends Activity {
 		}
 	}
 
-	private static final String TAG = ServiceShuttleActivity.class.getSimpleName();
+	private static final String TAG = "Island.SSA";
 
 	/** Delegate ServiceConnection running in target user, delivering callbacks back to the caller in originating user. */
 	private static class DelegateServiceConnection extends IUnbinder.Stub implements ServiceConnection, IBinder.DeathRecipient {
@@ -72,8 +67,7 @@ public class ServiceShuttleActivity extends Activity {
 				return;
 			}
 			try { delegate.onServiceConnected(name, service, this); }
-			catch (final RemoteException ignored) { return; }
-			context.startService(new Intent(context, ShuttleKeeper.class));
+			catch (final RemoteException ignored) {}
 		}
 
 		@Override public void onServiceDisconnected(final ComponentName name) {
@@ -83,7 +77,7 @@ public class ServiceShuttleActivity extends Activity {
 			catch (final RemoteException ignored) {}
 		}
 
-		@Override public boolean unbind() throws RemoteException {
+		@Override public boolean unbind() {
 			Log.d(TAG, "Unbind " + delegate.asBinder() + " from " + intent);
 			delegate.asBinder().unlinkToDeath(this, 0);
 			return doUnbind();
@@ -102,33 +96,11 @@ public class ServiceShuttleActivity extends Activity {
 				Log.e(TAG, "Failed to unbind service", e);
 				return false;
 			}
-			stopShuttleKeeperIfNeeded(context, intent);
 			return true;
-		}
-
-		private static void stopShuttleKeeperIfNeeded(final Context context, final Intent intent) {
-			if (DUMMY_RECEIVER.peekService(context, intent) != null) return;	// Fast check for common cases
-
-			final ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-			if (am == null) return;
-			final List<ActivityManager.RunningServiceInfo> services = am.getRunningServices(Integer.MAX_VALUE);
-			String pkg = intent.getPackage();
-			if (pkg == null) {
-				final ResolveInfo resolved = context.getPackageManager().resolveService(intent, 0);
-				if (resolved == null) throw new IllegalArgumentException("Service not found: " + intent);
-				pkg = resolved.serviceInfo.packageName;
-			}
-			for (final ActivityManager.RunningServiceInfo service : services) {
-				if (! pkg.equals(service.service.getPackageName())) continue;
-				if (service.clientCount != 0) return;		// Service is still bound
-			}
-			context.stopService(new Intent(context, ShuttleKeeper.class));
 		}
 
 		private final Context context;
 		private final Intent intent;
 		private final IServiceConnection delegate;
-
-		private static final BroadcastReceiver DUMMY_RECEIVER = new BroadcastReceiver() { @Override public void onReceive(final Context c, final Intent i) {}};
 	}
 }

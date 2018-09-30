@@ -2,6 +2,7 @@ package com.oasisfeng.island.model;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.admin.DevicePolicyManager;
 import android.arch.lifecycle.MutableLiveData;
 import android.content.ComponentName;
 import android.content.Context;
@@ -14,7 +15,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
-import android.os.RemoteException;
 import android.os.UserHandle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -42,26 +42,29 @@ import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.controller.IslandAppClones;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.engine.IIslandManager;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.featured.FeaturedListViewModel;
 import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
-import com.oasisfeng.island.model.AppViewModel.State;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.OwnerUser;
+import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import java9.util.Optional;
+import java9.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletionStage;
 import java9.util.function.BooleanSupplier;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
@@ -69,6 +72,7 @@ import java9.util.stream.Collectors;
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
+import static java.util.Objects.requireNonNull;
 
 /**
  * View model for apps
@@ -135,7 +139,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final AppViewModel selected = mSelection.getValue();
 		clearSelection();
 
-		IslandAppInfo.cacheLaunchableApps(Objects.requireNonNull(mAppListProvider.getContext()));	// Performance optimization
+		IslandAppInfo.cacheLaunchableApps(requireNonNull(mAppListProvider.getContext()));	// Performance optimization
 		final List<AppViewModel> apps = mAppListProvider.installedApps().filter(activeFilters()).map(AppViewModel::new).collect(Collectors.toList());
 		IslandAppInfo.invalidateLaunchableAppsCache();
 		replaceApps(apps);
@@ -198,11 +202,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private static void setTitle(final Context context, final MenuItem tab) {
-		if (context instanceof Activity) Objects.requireNonNull(((Activity) context).getActionBar()).setTitle(tab.getTitle());
-	}
-
-	public void setOwnerController(final IIslandManager controller) {
-		mOwnerController = controller;
+		if (context instanceof Activity) requireNonNull(((Activity) context).getActionBar()).setTitle(tab.getTitle());
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
@@ -252,19 +252,24 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		updateActions();
 	}
 
-	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final View v) {
+	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final Context context, final IslandAppInfo app) {
 		if (mSelection.getValue() == null) return;
-		final IslandAppInfo app = mSelection.getValue().info();
-		Analytics.$().event("action_launch").with(ITEM_ID, app.packageName).send();
-		if (! app.isHidden() && IslandManager.launchApp(v.getContext(), app.packageName, app.user)) return;	// Not frozen, launch the app directly.
-		try {
-			final String failure = controller(app).launchApp(app.packageName);
-			if (failure != null) {
-				Analytics.$().event("app_launch_error").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, failure).send();
-				Toast.makeText(v.getContext(), R.string.toast_failed_to_launch_app, Toast.LENGTH_SHORT).show();
-			}
-		} catch (final RemoteException | SecurityException e) {
-			reportAndShowToastForInternalException(v.getContext(), "Error unfreezing and launching app: " + app.packageName, e);
+		final String pkg = app.packageName;
+		Analytics.$().event("action_launch").with(ITEM_ID, pkg).send();
+		if (! app.isHidden() && IslandManager.launchApp(context, pkg, app.user)) return;	// Not frozen, launch the app directly.
+		if (app.isHidden()) {    // TODO: or isBlocked()?
+			(Users.isOwner(app.user) ? CompletableFuture.completedFuture(IslandManager.ensureAppFreeToLaunch(context, pkg))
+					: MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppFreeToLaunch(context, pkg))).thenAccept(failure -> {
+				if (failure == null)
+					if (! IslandManager.launchApp(context, pkg, app.user)) failure = "launcher_activity_not_found";
+				if (failure != null) {
+					Toast.makeText(context, R.string.toast_failed_to_launch_app, Toast.LENGTH_LONG).show();
+					Analytics.$().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, "launcher_activity_not_found").send();
+				}
+			}).exceptionally(t -> {
+				reportAndShowToastForInternalException(context, "Error unfreezing and launching app: " + pkg, t);
+				return null;
+			});
 		}
 	}
 
@@ -292,10 +297,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
-			if (unfreeze(context, app)) {
+			unfreeze(context, app).thenAccept(result -> {
+				if (! result) return;
 				refreshAppStateAsSysBugWorkaround(context, pkg);
 				clearSelection();
-			}
+			});
 		} else if (id == R.id.menu_app_settings) {
 			launchExternalAppSettings(context, app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
@@ -312,41 +318,54 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private void freezeApp(final Context context, final AppViewModel app_vm) {
-		// Select the next app for convenient continuous freezing.
-		final int next_index = indexOf(app_vm) + 1;
-		final AppViewModel next;
-		if (next_index < size() && (next = getAppAt(next_index)).state == State.Alive) setSelection(next);
-		else clearSelection();
-
 		final IslandAppInfo app = app_vm.info();
-		try {
-			final boolean frozen = controller(app).freezeApp(app.packageName, "manual");
-			if (frozen) app.stopTreatingHiddenSysAppAsDisabled();
-			else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
-			refreshAppStateAsSysBugWorkaround(context, app.packageName);
-		} catch (final RemoteException | SecurityException e) {
-			reportAndShowToastForInternalException(context, "Error freezing app: " + app_vm.info.packageName, e);
-		}
+		final String pkg = app.packageName;
+		(Users.isOwner(app.user) ? CompletableFuture.completedFuture(ensureAppHiddenState(context, pkg, true))
+				: MethodShuttle.runInProfile(context, () -> ensureAppHiddenState(context, pkg, true))).thenAccept(frozen -> {
+			if (frozen) {
+				app.stopTreatingHiddenSysAppAsDisabled();
+				// Select the next app for convenient continuous freezing.
+				final int next_index = indexOf(app_vm) + 1;
+				final AppViewModel next;
+				if (next_index < size() && (next = getAppAt(next_index)).state == AppViewModel.State.Alive) setSelection(next);
+				else clearSelection();
+			} else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
+			refreshAppStateAsSysBugWorkaround(context, pkg);
+		});
 	}
 
-	private void launchSystemAppSettings(final Context context, final IslandAppInfo app) {
-		if (app.isHidden()) if (! unfreeze(context, app)) return;    // Stock app info activity requires the app not hidden.
-		Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
-				.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
+	@OwnerUser @ProfileUser private static boolean ensureAppHiddenState(final Context context, final String pkg, final boolean state) {
+		final DevicePolicies policies = new DevicePolicies(context);
+		if (policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, state)) return true;
+		// Since setApplicationHidden() return false if already in that state, also check the current state.
+		final boolean hidden = policies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
+		return state == hidden;
 	}
 
-	private void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
+	private static void launchSystemAppSettings(final Context context, final IslandAppInfo app) {
+		// Stock app info activity requires the target app not hidden.
+		unfreezeIfNeeded(context, app).thenAccept(unfrozen -> {
+			if (unfrozen) requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
+					.startAppDetailsActivity(new ComponentName(app.packageName, ""), app.user, null, null);
+		});
+	}
+
+	private static void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
 		final Intent target = new Intent(ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, app.packageName);
 		if (! Users.isOwner(app.user) || context.getPackageManager().queryIntentActivities(target, 0).isEmpty()) {
 			launchSystemAppSettings(context, app);
 			return;
 		}
-		if (app.isHidden()) if (! unfreeze(context, app)) return;
+		unfreezeIfNeeded(context, app).thenAccept(unfrozen -> {
+			final Intent chooser = new Intent(Intent.ACTION_CHOOSER).putExtra(Intent.EXTRA_INTENT, target);
+			chooser.putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[] { new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+					Uri.fromParts("package", app.packageName, null)) });
+			Activities.startActivity(context, chooser);
+		});
+	}
 
-		final Intent chooser = new Intent(Intent.ACTION_CHOOSER).putExtra(Intent.EXTRA_INTENT, target);
-		chooser.putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[] { new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-				Uri.fromParts("package", app.packageName, null)) });
-		Activities.startActivity(context, chooser);
+	private static CompletionStage<Boolean> unfreezeIfNeeded(final Context context, final IslandAppInfo app) {
+		return app.isHidden() ? unfreeze(context, app) : CompletableFuture.completedFuture(true);
 	}
 
 	private void onShortcutRequested(final Context context) {
@@ -389,35 +408,22 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			Toast.makeText(context, R.string.toast_greenify_failed, Toast.LENGTH_LONG).show();
 	}
 
-	public void onBlockingRequested() {
-		if (mSelection.getValue() == null) return;
-		try {
-			controller(mSelection.getValue().info()).block(mSelection.getValue().info.packageName);
-		} catch (final RemoteException | SecurityException ignored) {}
-	}
-
-	public void onUnblockingRequested() {
-		if (mSelection.getValue() == null) return;
-		try {
-			controller(mSelection.getValue().info()).unblock(mSelection.getValue().info.packageName);
-		} catch (final RemoteException | SecurityException ignored) {}
-	}
-
 	private void onRemovalRequested(final Context context) {
 		if (mSelection.getValue() == null) return;
 		final IslandAppInfo app = mSelection.getValue().info();
 		Analytics.$().event("action_uninstall").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, "system").send();
-		if (app.isHidden()) if (! unfreeze(context, app)) return;	// Unfreeze it first, otherwise we cannot receive the package removal event.
-		if (app.isSystem()) {
-			Analytics.$().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send();
-			final Activity activity = Objects.requireNonNull(Activities.findActivityFrom(context));
-			if (app.isCritical()) {
-				Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
+		unfreezeIfNeeded(context, app).thenAccept(unfrozen -> {
+			if (app.isSystem()) {
+				Analytics.$().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send();
+				final Activity activity = requireNonNull(Activities.findActivityFrom(context));
+				if (app.isCritical()) {
+					Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
+							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
+				} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
-			} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
-					.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
-		} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
-				.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
+			} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
+					.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
+		});
 	}
 
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */
@@ -425,110 +431,107 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		IslandAppListProvider.getInstance(context).refreshPackage(pkg, Users.profile, false);
 	}
 
-	private boolean unfreeze(final Context context, final IslandAppInfo app) {
-		try {
-			controller(app).unfreezeApp(app.packageName);
-			return true;
-		} catch (final RemoteException | SecurityException e) {
-			reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, e);
+	private static CompletionStage<Boolean> unfreeze(final Context context, final IslandAppInfo app) {
+		final String pkg = app.packageName;
+		return Users.isOwner(app.user) ? CompletableFuture.completedFuture(ensureAppHiddenState(context, pkg, false))
+				: MethodShuttle.runInProfile(context, () -> ensureAppHiddenState(context, pkg, false)).exceptionally(t -> {
+			reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, t);
 			return false;
-		}
+		});
 	}
 
-	private void cloneApp(final Context context, final IslandAppInfo app) {
-		final int check_result;
+	private static void cloneApp(final Context context, final IslandAppInfo app) {
 		final String pkg = app.packageName;
-		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(app.packageName, Users.profile);
+		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(pkg, Users.profile);
 		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
 			launchSystemAppSettings(context, app_in_profile);
 			return;
 		}
 
 		if ((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-			try {
-				Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
-				if (mProfileController.enableSystemApp(app.packageName)) {
-					Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-				} else Toast.makeText(context, context.getString(R.string.toast_cannot_clone, app.getLabel()), Toast.LENGTH_SHORT).show();
-			} catch (final RemoteException | SecurityException e) {
-				reportAndShowToastForInternalException(context, "Error cloning system app: " + app.packageName, e);
+			Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
+			MethodShuttle.runInProfile(context, () -> new DevicePolicies(context).enableSystemApp(pkg)).thenAccept(enabled ->
+				Toast.makeText(context, context.getString(enabled ? R.string.toast_successfully_cloned : R.string.toast_cannot_clone, app.getLabel()),
+						enabled ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show()
+			).exceptionally(throwable -> {
+				reportAndShowToastForInternalException(context, "Error cloning system app: " + pkg, throwable);
+				return null;
+			});
+		}
+		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, app.sourceDir, false)).thenAccept(result -> {
+			switch (result) {
+			case IslandAppClones.CLONE_RESULT_ALREADY_CLONED:
+				if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
+					MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false)).thenAccept(unfrozen -> {
+						if (unfrozen) {
+							app.stopTreatingHiddenSysAppAsDisabled();
+							Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+						}
+					}).exceptionally(t -> {
+						reportAndShowToastForInternalException(context, "Error unfreezing app: " + pkg, t);
+						return null;
+					});
+				} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
+				break;
+			case IslandAppClones.CLONE_RESULT_NO_SYS_MARKET:
+				final Activity activity = Activities.findActivityFrom(context);
+				if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
+						.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
+						.setPositiveButton(android.R.string.cancel, null).show();
+				else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show();
+				break;
+			case IslandAppClones.CLONE_RESULT_OK_INSTALL:
+				Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
+				showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
+				break;
+			case IslandAppClones.CLONE_RESULT_OK_INSTALL_EXISTING:
+				Analytics.$().event("clone_install_existing").with(ITEM_ID, pkg).send();
+				doCloneUserApp(context, app);		// No explanation needed.
+				break;
+			case IslandAppClones.CLONE_RESULT_OK_GOOGLE_PLAY:
+				Analytics.$().event("clone_via_play").with(ITEM_ID, pkg).send();
+				showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
+				break;
+			case IslandAppClones.CLONE_RESULT_UNKNOWN_SYS_MARKET:
+				final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				final ActivityInfo market_info = market_intent.resolveActivityInfo(context.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
+				if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
+					Analytics.$().event("clone_via_market").with(ITEM_ID, pkg).with(ITEM_CATEGORY, market_info.packageName).send();
+				showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
+				break;
+			case IslandAppClones.CLONE_RESULT_NOT_FOUND:
+				Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
+				break;
 			}
-			return;
-		}
-		try {
-			check_result = mProfileController.cloneUserApp(pkg, app.sourceDir, false);	// Dry run to check prerequisites.
-		} catch (final RemoteException | SecurityException e) {
-			reportAndShowToastForInternalException(context, "Error checking user app for cloning: " + app.packageName, e);
-			return;
-		}
-		switch (check_result) {
-		case IslandManager.CLONE_RESULT_NOT_FOUND:
-			Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
-			return;
-		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
-			if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
-				try {
-					if (mProfileController.unfreezeApp(pkg)) {
-						app.stopTreatingHiddenSysAppAsDisabled();
-						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-					}
-				} catch (final RemoteException | SecurityException e) {
-					reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, e);
-				}
-			} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
-			return;
-		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
-			final Activity activity = Activities.findActivityFrom(context);
-			if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
-					.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
-					.setPositiveButton(android.R.string.cancel, null).show();
-			else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show();
-			return;
-		case IslandManager.CLONE_RESULT_OK_INSTALL:
-			Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
-			showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
-			break;
-		case IslandManager.CLONE_RESULT_OK_INSTALL_EXISTING:
-			Analytics.$().event("clone_install_existing").with(ITEM_ID, pkg).send();
-			doCloneUserApp(context, app);		// No explanation needed.
-			break;
-		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
-			Analytics.$().event("clone_via_play").with(ITEM_ID, pkg).send();
-			showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
-			break;
-		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
-			final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			final ActivityInfo market_info = market_intent.resolveActivityInfo(context.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
-			if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
-				Analytics.$().event("clone_via_market").with(ITEM_ID, pkg).with(ITEM_CATEGORY, market_info.packageName).send();
-			showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
-			break;
-		}
+		}).exceptionally(t -> {
+			reportAndShowToastForInternalException(context, "Error checking user app for cloning: " + pkg, t);
+			return null;
+		});	// Dry run to check prerequisites.
 	}
 
-	private void doCloneUserApp(final Context context, final IslandAppInfo app) {
-		final int result; try {
-			result = mProfileController.cloneUserApp(app.packageName, app.sourceDir, true);
-		} catch (final RemoteException | SecurityException e) {
-			reportAndShowToastForInternalException(context, "Error cloning user app: " + app.packageName, e);
-			return;
-		}
-		switch (result) {
-		case IslandManager.CLONE_RESULT_OK_INSTALL:
-		case IslandManager.CLONE_RESULT_OK_GOOGLE_PLAY:
-		case IslandManager.CLONE_RESULT_UNKNOWN_SYS_MARKET:
-			return;		// Expected result
-		case IslandManager.CLONE_RESULT_OK_INSTALL_EXISTING:		// Visual feedback for instant cloning.
-			Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-			return;
-		case IslandManager.CLONE_RESULT_NOT_FOUND:
-		case IslandManager.CLONE_RESULT_ALREADY_CLONED:
-		case IslandManager.CLONE_RESULT_NO_SYS_MARKET:
-			Log.e(TAG, "Unexpected cloning result: " + result);
-		}
+	private static void doCloneUserApp(final Context context, final IslandAppInfo app) {
+		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(app.packageName, app.sourceDir, true)).thenAccept(result -> {
+			switch (result) {
+			case IslandAppClones.CLONE_RESULT_OK_INSTALL_EXISTING:		// Visual feedback for instant cloning.
+				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+				break;
+			case IslandAppClones.CLONE_RESULT_OK_INSTALL:
+			case IslandAppClones.CLONE_RESULT_OK_GOOGLE_PLAY:
+			case IslandAppClones.CLONE_RESULT_UNKNOWN_SYS_MARKET:
+				break;		// Expected result
+			case IslandAppClones.CLONE_RESULT_NOT_FOUND:
+			case IslandAppClones.CLONE_RESULT_ALREADY_CLONED:
+			case IslandAppClones.CLONE_RESULT_NO_SYS_MARKET:
+				Log.e(TAG, "Unexpected cloning result: " + result);
+				break;
+			}
+		}).exceptionally(t -> {
+			reportAndShowToastForInternalException(context, "Error cloning user app: " + app.packageName, t);
+			return null;
+		});
 	}
 
-	private void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
+	private static void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
 		final Activity activity = Activities.findActivityFrom(context);
 		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
 			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
@@ -547,13 +550,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
 	}
 
-	private static void reportAndShowToastForInternalException(final Context context, final String log, final Exception e) {
-		Analytics.$().logAndReport(TAG, log, e);
-		Toast.makeText(context, "Internal error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-	}
-
-	private IIslandManager controller(final IslandAppInfo app) {
-		return Users.isOwner(app.user) ? mOwnerController : mProfileController;
+	private static void reportAndShowToastForInternalException(final Context context, final String log, final Throwable t) {
+		Analytics.$().logAndReport(TAG, log, t);
+		Toast.makeText(context, "Internal error: " + t.getMessage(), Toast.LENGTH_LONG).show();
 	}
 
 	/* Parcelable */
@@ -577,8 +576,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	/* Attachable fields */
 	private IslandAppListProvider mAppListProvider;
 	private Menu mActions;
-	private IIslandManager mOwnerController;
-	public IIslandManager mProfileController;
 	/* Parcelable fields */
 	public final MutableLiveData<Filter> mPrimaryFilter = new MutableLiveData<>();
 	private boolean mFilterIncludeHiddenSystemApps;

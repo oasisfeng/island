@@ -2,7 +2,6 @@
 <resources>
     <!-- Placeholders to be overridden by dependent module -->
     <string name="notification_channel_ongoing_task"> </string>
-    <string name="notification_channel_background_state"> </string>
     <string name="notification_channel_important"> </string>
     <string name="notification_channel_debug">Debug</string>
 

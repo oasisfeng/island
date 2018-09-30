@@ -16,7 +16,7 @@ import android.support.annotation.Nullable;
 import android.util.ArrayMap;
 import android.util.Log;
 
-import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.util.Builds;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
@@ -98,10 +98,9 @@ class ApiDispatcher {
 		if (action == null) return "No action";
 		switch (action) {
 		case Api.latest.ACTION_FREEZE:
-			final IslandManagerService island = new IslandManagerService(context);
-			return processPackageUri(intent, pkg -> island.freezeApp(pkg, "api"));
+			return processPackageUri(intent, pkg -> IslandManager.ensureAppHiddenState(context, pkg, true));
 		case Api.latest.ACTION_UNFREEZE:
-			return processPackageUri(intent, new IslandManagerService(context)::unfreezeApp);
+			return processPackageUri(intent, pkg -> IslandManager.ensureAppHiddenState(context, pkg, false));
 		case Api.latest.ACTION_LAUNCH:
 			return launchActivity(context, intent);
 		default: return "Unsupported action: " + action;
@@ -120,8 +119,12 @@ class ApiDispatcher {
 		if (uri == null) return "No data in Intent: " + intent;
 		final String scheme = uri.getScheme();
 
-		if ("package".equals(scheme))
-			return new IslandManagerService(context).launchApp(uri.getSchemeSpecificPart());
+		if ("package".equals(scheme)) {
+			final String pkg = uri.getSchemeSpecificPart();
+			final String free_to_launch = IslandManager.ensureAppFreeToLaunch(context, pkg);
+			if (free_to_launch != null) return free_to_launch;
+			return IslandManager.launchApp(context, pkg, Process.myUserHandle()) ? null : "no_launcher_activity";
+		}
 
 		if (! "intent".equals(scheme)) return "Unsupported intent data scheme: " + intent;
 		final Intent target;

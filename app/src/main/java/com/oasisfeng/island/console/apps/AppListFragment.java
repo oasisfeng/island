@@ -2,11 +2,9 @@ package com.oasisfeng.island.console.apps;
 
 import android.app.Activity;
 import android.arch.lifecycle.ViewModelProvider;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -17,19 +15,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
-import android.widget.Toast;
 
 import com.oasisfeng.android.app.LifecycleFragment;
 import com.oasisfeng.android.os.Loopers;
-import com.oasisfeng.android.service.Services;
 import com.oasisfeng.androidx.lifecycle.ViewModelProviders;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
-import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.engine.IIslandManager;
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.featured.FeaturedListViewModel;
 import com.oasisfeng.island.guide.UserGuide;
 import com.oasisfeng.island.mobile.BuildConfig;
@@ -38,10 +31,7 @@ import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.shuttle.ServiceShuttleContext;
-import com.oasisfeng.island.shuttle.ShuttleServiceConnection;
 import com.oasisfeng.island.tip.Tip;
-import com.oasisfeng.island.util.Modules;
-import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -49,8 +39,6 @@ import java.util.Objects;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import java9.util.Optional;
-
-import static android.content.Context.BIND_AUTO_CREATE;
 
 /** The main UI - App list */
 @ParametersAreNonnullByDefault
@@ -64,17 +52,9 @@ public class AppListFragment extends LifecycleFragment {
 		mServiceShuttleContext = new ServiceShuttleContext(activity);
 		final ViewModelProvider provider = ViewModelProviders.of(this);
 		mViewModel = provider.get(AppListViewModel.class);
-		mViewModel.mProfileController = IslandManager.NULL;
 		mViewModel.mFeatured = mFeaturedViewModel = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
-	}
-
-	@Override public void onStart() {
-		super.onStart();
-		if (Users.hasProfile())
-			if (! mServiceShuttleContext.bindService(new Intent(IIslandManager.class.getName()).setPackage(Modules.MODULE_ENGINE), mServiceConnection, BIND_AUTO_CREATE))
-				Toast.makeText(getActivity(), "Error connecting to Island", Toast.LENGTH_LONG).show();
 	}
 
 	@Override public void onResume() {
@@ -91,36 +71,14 @@ public class AppListFragment extends LifecycleFragment {
 	private long mTimeLastPaused;
 
 	@Override public void onStop() {
-		mViewModel.mProfileController = IslandManager.NULL;
-		if (Users.hasProfile()) try {
-			mServiceShuttleContext.unbindService(mServiceConnection);
-		} catch (final RuntimeException e) { Log.e(TAG, "Unexpected exception in unbinding", e); }
-		mViewModel.clearSelection();
 		super.onStop();
+		mViewModel.clearSelection();
 	}
 
 	@Override public void onDestroy() {
 		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(mAppChangeObserver);
 		super.onDestroy();
 	}
-
-	// Use ShuttleServiceConnection to connect to remote service in profile via ServiceShuttle (see also MainActivity.bindService)
-	private final ShuttleServiceConnection mServiceConnection = new ShuttleServiceConnection() {
-		@Override public void onServiceConnected(final IBinder service) {
-			mViewModel.mProfileController = IIslandManager.Stub.asInterface(service);
-			Log.v(TAG, "Service connected");
-		}
-
-		@Override public void onServiceDisconnected() {
-			mViewModel.mProfileController = IslandManager.NULL;
-		}
-
-		@Override public void onServiceFailed() {
-			Analytics.$().event("error_connecting_engine").send();
-			final Activity activity = getActivity();
-			if (activity != null) Toast.makeText(activity, "Error starting engine", Toast.LENGTH_LONG).show();
-		}
-	};
 
 	AppListProvider.PackageChangeObserver<IslandAppInfo> mAppChangeObserver = new AppListProvider.PackageChangeObserver<IslandAppInfo>() {
 
@@ -155,14 +113,6 @@ public class AppListFragment extends LifecycleFragment {
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
 		mViewModel.attach(activity, mBinding.appDetail.toolbar.getMenu(), mBinding.bottomNavigation, saved_state);
 		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
-
-		if (! Services.bind(activity, IIslandManager.class, mIslandManagerConnection = new ServiceConnection() {
-			@Override public void onServiceConnected(final ComponentName name, final IBinder service) {
-				mViewModel.setOwnerController(IIslandManager.Stub.asInterface(service));
-			}
-
-			@Override public void onServiceDisconnected(final ComponentName name) {}
-		})) throw new IllegalStateException("Module engine not installed");
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
 		return mBinding.getRoot();

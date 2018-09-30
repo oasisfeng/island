@@ -13,10 +13,11 @@ import com.oasisfeng.island.util.Users;
  *
  * Created by Oasis on 2017/7/20.
  */
-public abstract class AppUpdateReceiver extends BroadcastReceiver {
+public class AppUpdateReceiver extends BroadcastReceiver {
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		// Currently, just blindly start the device owner provisioning, since it is idempotent, at least at present.
-		if (Users.isOwner()) IslandProvisioning.startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
+		if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction()))
+			if (Users.isOwner()) IslandProvisioning.startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
 	}
 }

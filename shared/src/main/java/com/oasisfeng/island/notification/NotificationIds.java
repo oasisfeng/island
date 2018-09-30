@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
-import android.support.annotation.RequiresPermission;
 import android.support.annotation.StringRes;
 import android.support.v4.app.NotificationManagerCompat;
 
@@ -32,7 +31,6 @@ import static android.os.Build.VERSION_CODES.O;
  */
 public enum NotificationIds {
 
-	ShuttleKeeper(Channel.ReadyState),
 	Provisioning(Channel.OngoingTask),
 	UninstallHelper(Channel.Important),
 	Debug(Channel.Debug);
@@ -49,11 +47,7 @@ public enum NotificationIds {
 		NotificationManagerCompat.from(context).cancel(id());
 	}
 
-	public void cancel(final Context context, final String tag) {
-		NotificationManagerCompat.from(context).cancel(tag, id());
-	}
-
-	@RequiresPermission("android.permission.FOREGROUND_SERVICE") public void startForeground(final Service service, final Notification.Builder notification) {
+	public void startForeground(final Service service, final Notification.Builder notification) {
 		service.startForeground(id(), buildChannel(service, notification).build());
 	}
 
@@ -70,7 +64,6 @@ public enum NotificationIds {
 
 	@SuppressLint("InlinedApi") enum Channel {
 
-		ReadyState	("ReadyState",	R.string.notification_channel_background_state,	IMPORTANCE_MIN,  channel -> channel.setShowBadge(false)),
 		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(false)),
 		Important	("Important",	R.string.notification_channel_important,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(true)),
 		Debug		("Debug",		R.string.notification_channel_debug,			IMPORTANCE_MIN,  channel -> channel.setShowBadge(false));

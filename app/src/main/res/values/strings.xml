@@ -108,7 +108,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
 
-    <string name="toast_done">Done</string>
     <string name="toast_setup_in_progress">Island setup in progress, please wait…</string>
     <string name="toast_successfully_cloned">%1$s is successfully cloned.</string>
     <string name="toast_cannot_clone">Sorry, unable to clone %1$s.</string>
@@ -122,6 +121,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
     <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>
     <string name="toast_setup_mainland_root_failed">Error activating God mode with root.</string>
+    <string name="toast_enable_install_from_unknown_source">Please enable this setting for Island to clone apps.</string>
 
     <!-- General words -->
     <string name="open_settings">Open Settings</string>
@@ -161,7 +161,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_about_licenses_title">Licenses</string>
 
     <string name="notification_channel_ongoing_task">Ongoing task</string>
-    <string name="notification_channel_background_state">Background state</string>
     <string name="notification_channel_important">Important</string>
 
     <string name="notification_island_after_uninstall_title">Remove Island completely</string>

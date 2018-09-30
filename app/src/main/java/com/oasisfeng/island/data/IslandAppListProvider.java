@@ -19,7 +19,6 @@ import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.provisioning.CriticalAppsManager;
 import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
@@ -152,15 +151,15 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 	}
 
-	/** Synchronous on Android 6+, asynchronous otherwise
-	 *  @param callback will be invoked with the result, or null for failure (including {@link PackageManager.NameNotFoundException}. */
+	/** @param callback will be invoked with the result, or null for failure (including {@link PackageManager.NameNotFoundException}. */
 	private void queryApplicationInfoInProfile(final String pkg, final Consumer<ApplicationInfo> callback) {
 		final UserHandle profile = Users.profile;
 		if (profile == null) {
 			callback.accept(null);
 			return;
 		}
-		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context(), INTERACT_ACROSS_USERS)) try {
+		final Context context = context();
+		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context, INTERACT_ACROSS_USERS)) try {
 			final ApplicationInfo info = mProfilePackageManager.get().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(info);
 			return;
@@ -176,10 +175,17 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
 		} else if (! (activities = mLauncherApps.get().getActivityList(pkg, profile)).isEmpty()) {	// In case it has launcher activity and not frozen
 			callback.accept(activities.get(0).getApplicationInfo());
-		} else if (! IslandManager.useServiceInProfile(mShuttleContext.get(), service -> {
-			final ApplicationInfo info = service.getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
-			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
-		})) callback.accept(null);
+		} else MethodShuttle.runInProfile(context, () -> {
+			try {
+				final ApplicationInfo info = context.getPackageManager().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
+				return info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null;
+			} catch (PackageManager.NameNotFoundException e) {
+				return null;
+			}
+		}).thenAccept(callback).exceptionally(t -> {
+			callback.accept(null);
+			return null;
+		});
 	}
 
 	@RequiresApi(N) ApplicationInfo getApplicationInfo(final String pkg, final UserHandle user) {

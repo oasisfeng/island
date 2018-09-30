@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.widget.Toast;
 
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.engine.IslandManagerService;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.Cryptography;
 
@@ -45,7 +45,7 @@ public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 
 	@Override protected boolean prepareToLaunchApp(final String pkg) {
 		try {	// Skip all checks and unfreeze it straightforward, to eliminate as much cost as possible in the most common case. (app is frozen)
-			return new IslandManagerService(this).unfreezeApp(pkg);
+			return IslandManager.ensureAppHiddenState(this, pkg, false);
 		} catch (final SecurityException e) { return false; }	// If not profile owner or profile owner.
 	}
 

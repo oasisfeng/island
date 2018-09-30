@@ -8,6 +8,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <provider android:authorities="${applicationId}.internal.E0" android:name="com.oasisfeng.island.InternalProvider$_0" android:enabled="false"/>
+        <provider android:authorities="${applicationId}.AIP" android:name="com.oasisfeng.island.provisioning.AutoIncrementalProvision" android:enabled="false"/>
     </application>
 </manifest>

@@ -46,7 +46,7 @@
             android:drawableEnd="@{apps.mSelection == app &amp;&amp; app.info.launchable &amp;&amp; (app.state == State.Alive || app.state == State.Frozen) ? @drawable/ic_launch_24dp : null}"
             android:onViewAttachedToWindow="@{app::onViewAttached}"
             android:onClick="@{v -> apps.onItemClick(app)}"
-            bind:onDrawableEndClick="@{apps::onItemLaunchIconClick}"/>
+            bind:onDrawableEndClick="@{v -> apps.onItemLaunchIconClick(context, app.info())}"/>
 
     </FrameLayout>
 

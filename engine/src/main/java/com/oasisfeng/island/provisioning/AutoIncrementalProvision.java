@@ -15,7 +15,7 @@ import java9.util.Optional;
  *
  * Created by Oasis on 2017/11/21.
  */
-public abstract class AutoIncrementalProvision extends PseudoContentProvider {
+public class AutoIncrementalProvision extends PseudoContentProvider {
 
 	@Override public boolean onCreate() {
 		final Stopwatch stopwatch = Performances.startUptimeStopwatch();

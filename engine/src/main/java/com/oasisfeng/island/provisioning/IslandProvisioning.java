@@ -1,10 +1,10 @@
 package com.oasisfeng.island.provisioning;
 
+import android.app.IntentService;
 import android.app.Notification;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -12,8 +12,6 @@ import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
@@ -27,9 +25,10 @@ import android.widget.Toast;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
-import com.oasisfeng.island.InternalService;
+import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
@@ -58,7 +57,6 @@ import static android.content.Intent.CATEGORY_BROWSABLE;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
@@ -70,7 +68,7 @@ import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
  *
  * Created by Oasis on 2016/4/26.
  */
-public abstract class IslandProvisioning extends InternalService.InternalIntentService {
+public class IslandProvisioning extends IntentService {
 
 	/**
 	 * Provision state:
@@ -88,7 +86,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	private static final String CATEGORY_MAIN_ACTIVITY = "com.oasisfeng.island.category.MAIN_ACTIVITY";
 
 	public static void start(final Context context, final @Nullable String action) {
-		final Intent intent = new Intent(action).setComponent(getComponent(context, IslandProvisioning.class));
+		final Intent intent = new Intent(action).setComponent(new ComponentName(context, IslandProvisioning.class));
 		if (SDK_INT >= O) context.startForegroundService(intent);
 		else context.startService(intent);
 	}
@@ -102,13 +100,25 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 	@ProfileUser @WorkerThread @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
-		final DevicePolicies policies = new DevicePolicies(this);
+		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE.equals(intent.getAction())) {
+			Log.d(TAG, "Re-provisioning Mainland.");
+			if (! Users.isOwner()) throw new IllegalStateException("Not running in owner user");
+			startDeviceOwnerPostProvisioning(this, new DevicePolicies(this));
+			Toasts.show(this, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
+			return;
+		}
+		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE.equals(intent.getAction())) {		// Borrow this activity intent for re-provision.
+			Log.d(TAG, "Re-provisioning Island.");
+			reprovisionManagedProfile(this);
+			Toasts.show(this, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
+			return;
+		}
 		// Grant essential permissions early, since they may be required in the following provision procedure.
 		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(this);
 
 		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
-			startDeviceOwnerPostProvisioning(this, policies);
+			startDeviceOwnerPostProvisioning(this, new DevicePolicies(this));
 			return;
 		}
 
@@ -118,6 +128,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).putInt(PREF_KEY_PROFILE_PROVISION_TYPE, is_manual_setup ? 1 : 0).apply();
+		final DevicePolicies policies = new DevicePolicies(this);
 		if (is_manual_setup) {		// Do the similar job of ManagedProvisioning here.
 			Log.d(TAG, "Manual provisioning");
 			Analytics.$().event("profile_post_provision_manual_start").send();
@@ -148,7 +159,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		if (! launchMainActivityAsUser(this, Users.owner)) {
 			Analytics.$().event("error_launch_main_ui").send();
 			Log.e(TAG, "Failed to launch main activity in owner user.");
-			new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(this, R.string.toast_setup_complete, Toast.LENGTH_LONG).show());
+			Toasts.show(this, R.string.toast_setup_complete, Toast.LENGTH_LONG);
 		}
 	}
 
@@ -209,25 +220,16 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		} catch (final IllegalArgumentException ignored) {}		// Ignore non-existent packages.
 	}
 
-	/** Re-provisioning triggered by user */
-	@ProfileUser @WorkerThread public static void reprovision(final Context context) {
-		Log.d(TAG, "Start re-provisioning.");
-
-		final DevicePolicies policies = new DevicePolicies(context);
-		if (Users.isOwner()) {
-			startDeviceOwnerPostProvisioning(context, policies);
-			return;
-		}
-
+	@ProfileUser @WorkerThread public static void reprovisionManagedProfile(final Context context) {
 		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 		// This is also required for manual provision via ADB shell.
+		final DevicePolicies policies = new DevicePolicies(context);
 		policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);
 
 		final int provision_type = PreferenceManager.getDefaultSharedPreferences(context).getInt(PREF_KEY_PROFILE_PROVISION_TYPE, 0);
 		if (provision_type == 1) ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
 
 		startProfileOwnerPostProvisioning(context, policies);
-
 		disableLauncherActivity(context);
 	}
 
@@ -269,7 +271,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
-		ensureInstallNonMarketAppAllowed(context, policies);
+		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
 		disableRedundantPackageInstaller(context, policies);	// To fix unexpectedly enabled package installer due to historical mistake in SystemAppsManager.
 
 		enableAdditionalForwarding(policies);
@@ -293,20 +295,6 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
 		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
 		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
-	}
-
-	public static boolean ensureInstallNonMarketAppAllowed(final Context context, final DevicePolicies policies) {
-		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
-		if (SDK_INT >= O) return true;		// INSTALL_NON_MARKET_APPS is no longer supported since Android O.
-
-		final ContentResolver resolver = context.getContentResolver();
-		@SuppressWarnings("deprecation") final String INSTALL_NON_MARKET_APPS = Settings.Secure.INSTALL_NON_MARKET_APPS;
-		if (Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0) return true;
-		if (SDK_INT < LOLLIPOP_MR1) {		// INSTALL_NON_MARKET_APPS is not whitelisted by DPM.setSecureSetting() until Android 5.1.
-			if (! Permissions.has(context, WRITE_SECURE_SETTINGS)) return false;
-			Settings.Secure.putInt(resolver, INSTALL_NON_MARKET_APPS, 1);
-		} else policies.execute(DevicePolicyManager::setSecureSetting, INSTALL_NON_MARKET_APPS, "1");
-		return Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
 	private static void disableRedundantPackageInstaller(final Context context, final DevicePolicies policies) {
@@ -336,7 +324,7 @@ public abstract class IslandProvisioning extends InternalService.InternalIntentS
 	}
 
 	public IslandProvisioning() {
-		super(IslandProvisioning.class);
+		super(TAG);
 		setIntentRedelivery(true);
 	}
 

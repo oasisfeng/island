@@ -22,7 +22,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  *
  * Created by Oasis on 2017/4/8.
  */
-public abstract class ManualProvisioningReceiver extends BroadcastReceiver {
+public class ManualProvisioningReceiver extends BroadcastReceiver {
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		final String action = intent.getAction();

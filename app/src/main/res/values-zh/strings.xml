@@ -106,7 +106,6 @@
 
     <string name="prompt_disable_sys_app_as_removal">系统应用（或组件）只能被停用，与卸载安装的应用效果相似。\n\n由于没有权限直接停用应用，接下来即将打开系统的应用设置界面，届时请点击“停用”按钮。</string>
 
-    <string name="toast_done">已完成</string>
     <string name="toast_setup_in_progress">正在创建壶中界，请稍候…</string>
     <string name="toast_successfully_cloned">%1$s 已完成分身</string>
     <string name="toast_cannot_clone">抱歉，无法为 %1$s 分身。</string>
@@ -120,6 +119,7 @@
     <string name="toast_failed_to_launch_app">抱歉，启动应用时出现了异常。</string>
     <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>
     <string name="toast_setup_mainland_root_failed">通过 ROOT 权限启用“黄帝之名”时出现了异常。</string>
+    <string name="toast_enable_install_from_unknown_source">请授予安装权限以创造应用分身</string>
 
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>
@@ -159,7 +159,6 @@
     <string name="pref_about_licenses_title">授权</string>
 
     <string name="notification_channel_ongoing_task">执行中的任务</string>
-    <string name="notification_channel_background_state">后台状态</string>
     <string name="notification_channel_important">重要事项</string>
 
     <string name="notification_island_after_uninstall_title">壶中界已失去控制</string>

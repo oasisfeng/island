@@ -15,5 +15,5 @@
 
     <string name="toast_shortcut_invalid">快捷方式已失效，请检查壶中界的状态或重新创建此快捷方式。</string>
     <string name="toast_setup_complete">壶中界已完成创建。</string>
-    <string name="toast_enable_install_from_unknown_source">请授予安装权限以创造应用分身</string>
+    <string name="toast_reprovision_done">已完成回炉修整</string>
 </resources>

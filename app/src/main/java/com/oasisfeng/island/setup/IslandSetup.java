@@ -16,7 +16,6 @@ import android.os.DeadObjectException;
 import android.os.Process;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.oasisfeng.android.ui.Dialogs;
@@ -27,7 +26,6 @@ import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shuttle.MethodShuttle;
@@ -199,24 +197,28 @@ public class IslandSetup {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_deactivate_message)
 				.setPositiveButton(android.R.string.no, null)
 				.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> {
-					final List<String> frozen_pkgs = IslandAppListProvider.getInstance(activity).installedApps().filter(app -> app.isHidden())
-							.map(app -> app.packageName).collect(Collectors.toList());
-					if (! frozen_pkgs.isEmpty()) {
-						if (IslandManager.useServiceInOwner(activity, island -> {
-							try {
-								for (final String pkg : frozen_pkgs) island.unfreezeApp(pkg);
-							} finally {
-								deactivateDeviceOwner(activity);
-							}
-						})) return;		// Invoke deactivateNow() in the async procedure after all apps are unfrozen.
-						Log.e(TAG, "Failed to connect to engine in owner user");
+					try {
+						final List<String> frozen_pkgs = IslandAppListProvider.getInstance(activity).installedApps().filter(app -> app.isHidden())
+								.map(app -> app.packageName).collect(Collectors.toList());
+						if (! frozen_pkgs.isEmpty()) {
+							final DevicePolicies policies = new DevicePolicies(activity);
+							for (final String pkg : frozen_pkgs)
+								policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false);
+						}
+					} finally {
+						deactivateDeviceOwner(activity);
 					}
-					deactivateDeviceOwner(activity);
 				}).show();
 	}
 
 	private static void deactivateDeviceOwner(final Activity activity) {
-		new IslandManager(activity).deactivateDeviceOwner();
+		Analytics.$().event("action_deactivate").send();
+		final DevicePolicies policies = new DevicePolicies(activity);
+		policies.getManager().clearDeviceOwnerApp(activity.getPackageName());
+		try {	// Since Android 7.1, clearDeviceOwnerApp() itself does remove active device-admin,
+			policies.execute(DevicePolicyManager::removeActiveAdmin);
+		} catch (final SecurityException ignored) {}		//   thus SecurityException will be thrown here.
+
 		activity.finishAffinity();	// Finish the whole activity stack.
 		System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
 	}

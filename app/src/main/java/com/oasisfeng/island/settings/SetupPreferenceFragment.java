@@ -2,13 +2,11 @@ package com.oasisfeng.island.settings;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.preference.Preference;
 import android.provider.Settings;
 import android.widget.Toast;
@@ -22,6 +20,7 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.IslandSetup;
 import com.oasisfeng.island.setup.SetupActivity;
 import com.oasisfeng.island.setup.SetupViewModel;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
@@ -32,6 +31,8 @@ import java.util.List;
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 
@@ -58,10 +59,9 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 
 			pref_mainland_reprovisioning.setEnabled(true);
 			pref_mainland_reprovisioning.setOnPreferenceClickListener(p -> {
-				if (! IslandManager.useServiceInOwner(activity, island -> {
-					island.provision();
-					Toast.makeText(activity, R.string.toast_done, Toast.LENGTH_SHORT).show();
-				})) Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+				final Context context = getActivity();		// ACTION_PROVISION_MANAGED_DEVICE is handled by IslandProvisioning.
+				if (context != null && null == context.startService(new Intent(ACTION_PROVISION_MANAGED_DEVICE).setPackage(Modules.MODULE_ENGINE)))
+					Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
 				return true;
 			});
 		} else {
@@ -86,18 +86,12 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 				final Preference pref_island_reprovisioning = findPreference(getString(R.string.key_setup_island_reprovision));
 				pref_island_reprovisioning.setEnabled(true);
 				pref_island_reprovisioning.setOnPreferenceClickListener(p -> {
-					if (! IslandManager.useServiceInProfile(activity, island -> {
-						final ProgressDialog progress_dialog = ProgressDialog.show(activity, null, getString(R.string.dialog_provision_in_progress));
-						progress_dialog.show();
-						try {
-							island.provision();
-							Toast.makeText(activity, R.string.toast_done, Toast.LENGTH_SHORT).show();
-						} catch (final RemoteException e) {
-							Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
-						} finally {
-							progress_dialog.dismiss();
-						}
-					})) Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+					final Context context = getActivity();
+					if (context != null) MethodShuttle.runInProfile(context, () ->	// ACTION_PROVISION_MANAGED_PROFILE is handled by IslandProvisioning.
+							context.startService(new Intent(ACTION_PROVISION_MANAGED_PROFILE).setPackage(Modules.MODULE_ENGINE))
+					).exceptionally(t -> null).thenAccept(component -> {	// Toast for success will be shown by IslandProvisioning.
+						if (component == null) Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+					});
 					return true;
 				});
 			} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed_other,

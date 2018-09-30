@@ -103,14 +103,11 @@
             </intent-filter>
         </service>
 
-        <!-- IslandProvisioning -->
-        <service android:name="com.oasisfeng.island.InternalService$_1" android:directBootAware="true" tools:targetApi="n" />
-
-        <service android:name="com.oasisfeng.island.shuttle.ShuttleKeeper" />
-
-        <service android:name=".IslandManagerService$AidlService" android:exported="false">
+        <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" android:exported="false"
+                 android:directBootAware="true" tools:targetApi="n">
             <intent-filter>
-                <action android:name="com.oasisfeng.island.engine.IIslandManager" />
+                <action android:name="android.app.action.PROVISION_MANAGED_PROFILE" />
+                <action android:name="android.app.action.PROVISION_MANAGED_DEVICE" />
             </intent-filter>
         </service>
 
@@ -123,26 +120,22 @@
             </intent-filter>
         </receiver>
 
-        <!-- ManualProvisioningReceiver -->
-        <receiver android:name="com.oasisfeng.island.InternalReceiver$_1" android:exported="false" android:directBootAware="true" tools:targetApi="n">
+        <receiver android:name="com.oasisfeng.island.provisioning.ManualProvisioningReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="n">
             <intent-filter android:priority="9999"> <!-- High priority to ensure being executed as early as possible -->
                 <action android:name="android.intent.action.USER_INITIALIZE" />
                 <action android:name="android.app.action.DEVICE_OWNER_CHANGED" />
             </intent-filter>
         </receiver>
 
-        <!-- AutoIncrementalProvision, authority must be consistent with code in MainActivity. -->
-        <provider android:authorities="${applicationId}.internal.E0" android:name="com.oasisfeng.island.InternalProvider$_0" android:exported="false"/>
+        <provider android:name="com.oasisfeng.island.provisioning.AutoIncrementalProvision" android:authorities="${applicationId}.AIP" android:exported="false"/>
 
-        <!-- AppUpdateReceiver -->
-        <receiver android:name="com.oasisfeng.island.InternalReceiver$_2" android:exported="false" android:directBootAware="true" tools:targetApi="n">
+        <receiver android:name="com.oasisfeng.island.AppUpdateReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="n">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
-        <!-- ShortcutShuttle -->
-        <receiver android:name="com.oasisfeng.island.InternalReceiver$_3" tools:ignore="ExportedReceiver"> <!-- Exported without permission requirement, for wider compatibility -->
+        <receiver android:name="com.oasisfeng.island.shuttle.ShortcutShuttle" tools:ignore="ExportedReceiver"> <!-- Exported without permission requirement, for wider compatibility -->
             <intent-filter>
                 <action android:name="com.android.launcher.action.INSTALL_SHORTCUT"/>
             </intent-filter>

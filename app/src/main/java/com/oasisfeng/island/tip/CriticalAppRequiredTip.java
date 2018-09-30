@@ -8,14 +8,14 @@ import android.content.pm.PackageManager;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.CardView;
 
-import com.oasisfeng.android.service.Services;
 import com.oasisfeng.android.util.Apps;
+import com.oasisfeng.island.controller.IslandAppClones;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.engine.IIslandManager;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.provisioning.CriticalAppsManager;
-import com.oasisfeng.island.shuttle.ServiceShuttleContext;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.ui.card.CardViewModel;
 
@@ -70,11 +70,9 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 					try {
 						app_info = context.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 					} catch (final PackageManager.NameNotFoundException e) { return; }	// Should never happen.
-					Services.use(new ServiceShuttleContext(context), IIslandManager.class, IIslandManager.Stub::asInterface,
-							service -> service.cloneUserApp(pkg, app_info.sourceDir, true));
+					MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, app_info.sourceDir, true));
 				} else if (app.isHidden()) {
-					Services.use(new ServiceShuttleContext(context), IIslandManager.class, IIslandManager.Stub::asInterface,
-							service -> service.unfreezeApp(pkg));
+					MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false));
 				} else Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
 						.startAppDetailsActivity(new ComponentName(pkg, ""), Users.profile, null, null);
 			}
