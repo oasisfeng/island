@@ -2,6 +2,7 @@ package com.oasisfeng.island.shuttle;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.DeadObjectException;
 import android.os.Parcel;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -69,9 +70,12 @@ public class MethodShuttle {
 		invocation.clazz = clazz.getName();
 		invocation.args = args;
 		final CompletableFuture<Result> future = new CompletableFuture<>();
-		if (! Services.use(new ServiceShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, shuttle -> {
+		final Services.ServiceReadyThrows<IMethodShuttle, DeadObjectException> procedure = shuttle -> {
+			sCachedShuttle = shuttle;
 			try {
 				shuttle.invoke(invocation);
+			} catch (final DeadObjectException e) {
+				throw e;		// Required by sCachedShuttle to identify dead binder (isBinderAlive() is not reliable)
 			} catch (final Exception e) {
 				Log.w(TAG, "Error executing " + invocation.clazz, e);
 				future.completeExceptionally(e);
@@ -79,11 +83,20 @@ public class MethodShuttle {
 			}
 			if (invocation.throwable != null) future.completeExceptionally(invocation.throwable);
 			else future.complete(invocation.result);
-		})) return CompletableFuture.failedFuture(new IllegalStateException("Error connecting " + Service.class.getCanonicalName()));
-		return future;
+		};
+
+		if (sCachedShuttle != null && sCachedShuttle.asBinder().isBinderAlive()) try {
+			procedure.onServiceReady(sCachedShuttle);
+			return future;
+		} catch (final DeadObjectException ignored) {}    // Fall-through to reconnect
+
+		if (Services.use(new ServiceShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, procedure)) return future;
+		return CompletableFuture.failedFuture(new IllegalStateException("Error connecting " + Service.class.getCanonicalName()));
 	}
 
 	private MethodShuttle() {}
+
+	private static volatile IMethodShuttle sCachedShuttle;
 
 	@SuppressLint("Registered")		// Actually declared in the AndroidManifest.xml of module "engine".
 	public static class Service extends AidlService<IMethodShuttle.Stub> {
