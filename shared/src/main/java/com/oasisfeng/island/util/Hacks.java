@@ -47,8 +47,9 @@ public class Hacks {
 	}
 
 	private static final int MATCH_ANY_USER = 0x00400000;		// Requires INTERACT_ACROSS_USERS since Android P.
-	// When used in @ApplicationInfoFlags in @PackageInfoFlags:
-	//   For owner user, GET_UNINSTALLED_PACKAGES implicitly set MATCH_ANY_USER. For managed profile, MATCH_ANY_USER requires permission INTERACT_ACROSS_USERS.
+	// When used in @ApplicationInfoFlags or @PackageInfoFlags:
+	//   For owner user, GET_UNINSTALLED_PACKAGES implicitly set MATCH_ANY_USER.
+	//   For managed profile, MATCH_ANY_USER requires permission INTERACT_ACROSS_USERS.
 	// Otherwise no permission required.
 	// See PackageManagerService.updateFlagsForPackage()
 	public static final int MATCH_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | MATCH_ANY_USER;

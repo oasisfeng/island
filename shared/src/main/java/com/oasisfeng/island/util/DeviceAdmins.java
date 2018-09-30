@@ -12,12 +12,12 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
 
 import java.util.List;
-import java.util.Objects;
 
 import static android.content.Context.DEVICE_POLICY_SERVICE;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utility class for device-admin related functions
@@ -32,8 +32,7 @@ public class DeviceAdmins {
 	}
 
 	private static ComponentName queryComponentName(final Context context) {
-		final List<ComponentName> active_admins = Objects.requireNonNull((DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE))
-				.getActiveAdmins();
+		final List<ComponentName> active_admins = requireNonNull((DevicePolicyManager) context.getSystemService(DEVICE_POLICY_SERVICE)).getActiveAdmins();
 		if (active_admins != null && ! active_admins.isEmpty()) for (final ComponentName active_admin : active_admins)
 			if (Modules.MODULE_ENGINE.equals(active_admin.getPackageName())) return active_admin;
 
