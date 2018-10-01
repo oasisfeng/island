@@ -16,6 +16,8 @@ import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
 
+import java.util.concurrent.RejectedExecutionException;
+
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -66,20 +68,23 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	@UiThread private void loadIcon(final @Nullable IconFilter filter, final IconConsumer consumer, final boolean need_badge) {
-		if (mCachedIcon != null) consumer.accept(mCachedIcon);
-		else new AsyncTask<Void, Void, Drawable>() {
+		if (mCachedIcon == null) try {
+			new AsyncTask<Void, Void, Drawable>() {
 
-			@Override protected Drawable doInBackground(final Void... params) {
-				return need_badge ? loadIcon(context().getPackageManager()) : loadUnbadgedIconCompat(context().getPackageManager());
-			}
+				@Override protected Drawable doInBackground(final Void... params) {
+					return need_badge ? loadIcon(context().getPackageManager()) : loadUnbadgedIconCompat(context().getPackageManager());
+				}
 
-			@Override protected void onPostExecute(final Drawable drawable) {
-				if (drawable == null) return;		// Might be null if app is currently being removed.
-				final Drawable icon = (filter != null ? filter.process(drawable) : drawable);
-				mCachedIcon = icon;
-				consumer.accept(icon);
-			}
-		}.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				@Override protected void onPostExecute(final Drawable drawable) {
+					if (drawable == null) return;        // Might be null if app is currently being removed.
+					final Drawable icon = (filter != null ? filter.process(drawable) : drawable);
+					mCachedIcon = icon;
+					consumer.accept(icon);
+				}
+			}.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		} catch (final RejectedExecutionException e) {
+			Analytics.$().report(e);        // For statistics purpose
+		} else consumer.accept(mCachedIcon);
 	}
 
 	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory when UI is hidden */
