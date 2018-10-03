@@ -17,7 +17,6 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import com.oasisfeng.island.engine.IslandManager;
-import com.oasisfeng.island.util.Builds;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
@@ -34,8 +33,10 @@ import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
 import static android.content.pm.PackageManager.GET_SIGNATURES;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.P;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
@@ -77,12 +78,12 @@ class ApiDispatcher {
 		final int signature_hash = value;
 		if (signature_hash == 0) return null;	// 0 means already verified (cached)
 
-		if (Builds.isAndroidPIncludingPreviews() && ! Users.isOwner() && ! Permissions.has(context, INTERACT_ACROSS_USERS))
-			return "Permission denied";		// Legacy verification is not supported on Android P+, due to MATCH_ANY_USER being restricted.
+		// Legacy verification is not supported inside Island without INTERACT_ACROSS_USERS on Android P+, due to MATCH_ANY_USER being restricted.
 		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
-			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, GET_SIGNATURES | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, GET_SIGNATURES
+				| (SDK_INT < P || Permissions.has(context, INTERACT_ACROSS_USERS) ? Hacks.MATCH_ANY_USER_AND_UNINSTALLED : GET_UNINSTALLED_PACKAGES));
 			return verifySignature(pkg, signature_hash, pkg_info);
-		} catch (final PackageManager.NameNotFoundException e) { return "Client package not found: " + pkg; }		// Should hardly happen
+		} catch (final PackageManager.NameNotFoundException e) { return "Permission denied or client package not found: " + pkg; }
 	}
 
 	@Nullable private static String verifySignature(final String pkg, final int signature_hash, final PackageInfo pkg_info) {
