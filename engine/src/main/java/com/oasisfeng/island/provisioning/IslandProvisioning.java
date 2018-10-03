@@ -12,7 +12,6 @@ import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.UserHandle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -156,7 +155,7 @@ public class IslandProvisioning extends IntentService {
 		disableLauncherActivity(this);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
-		if (! launchMainActivityAsUser(this, Users.owner)) {
+		if (! launchMainActivityInOwnerUser(this)) {
 			Analytics.$().event("error_launch_main_ui").send();
 			Log.e(TAG, "Failed to launch main activity in owner user.");
 			Toasts.show(this, R.string.toast_setup_complete, Toast.LENGTH_LONG);
@@ -185,26 +184,26 @@ public class IslandProvisioning extends IntentService {
 		super.onDestroy();
 	}
 
-	private static boolean launchMainActivityAsUser(final Context context, final UserHandle user) {
+	@ProfileUser private static boolean launchMainActivityInOwnerUser(final Context context) {
 		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		if (apps == null) return false;
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		if (apps.isActivityEnabled(activity, user)) {
-			apps.startMainActivity(activity, user, null, null);
+		if (apps.isActivityEnabled(activity, Users.owner)) {
+			apps.startMainActivity(activity, Users.owner, null, null);
 			return true;
 		}
 		// Since Android O, activities in owner user is invisible to managed profile, use special forward rule to launch it in owner user.
 		new DevicePolicies(context).execute(DevicePolicyManager::addCrossProfileIntentFilter,
 				IntentFilters.forAction(Intent.ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
 		try {
-			context.startActivity(new Intent(Intent.ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY));
+			context.startActivity(new Intent(Intent.ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			return true;
 		} catch (final ActivityNotFoundException e) {
 			return false;
 		}
 	}
 
-	private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning
+	@ProfileUser private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning
 		try {
 			context.getPackageManager().setComponentEnabledSetting(Modules.getMainLaunchActivity(context), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 		} catch (final SecurityException e) {
