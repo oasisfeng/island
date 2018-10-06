@@ -257,7 +257,9 @@ public class IslandProvisioning extends IntentService {
 		try {
 			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
 				policies.setBackupServiceEnabled(true);
-		} catch (final SecurityException | IllegalStateException e) {	// "SecurityException: There should only be one user, managed by Device Owner" if more than 1 user exists. (only on N_MR1)
+		} catch (final SecurityException e) {
+			if (SDK_INT != N_MR1 || ! e.getMessage().equals("There should only be one user, managed by Device Owner")) Analytics.$().report(e);
+		} catch (final IllegalStateException e) {
 			Analytics.$().report(e);
 		}
 	}

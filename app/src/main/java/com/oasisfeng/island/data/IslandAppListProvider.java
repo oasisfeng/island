@@ -279,7 +279,6 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		return apps;
 	});
 
-	private final Supplier<ServiceShuttleContext> mShuttleContext = Suppliers.memoize(() -> new ServiceShuttleContext(context()));
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
 	@RequiresPermission(INTERACT_ACROSS_USERS) private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() ->
 			ContextShuttle.getPackageManagerAsUser(context(), Users.profile));
