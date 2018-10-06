@@ -3,7 +3,7 @@
     <uses-feature android:name="android.software.device_admin" android:required="true" />
     <uses-feature android:name="android.software.managed_users" android:required="true" />
 
-    <permission-group android:name="{$applicationId}.permission-group.PACKAGE_ACCESS"
+    <permission-group android:name="${applicationId}.permission-group.PACKAGE_ACCESS"
                       android:label="@string/permission_group_control_island_apps_label"
                       android:description="@string/permission_group_control_island_apps_description" />
 
