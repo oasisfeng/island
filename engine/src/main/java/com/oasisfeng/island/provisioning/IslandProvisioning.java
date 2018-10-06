@@ -247,7 +247,11 @@ public class IslandProvisioning extends IntentService {
 
 		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
 		if (SDK_INT >= O) {
-			policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
+			final Set<String> ids = Collections.singleton(AFFILIATION_ID);
+			final Set<String> current_ids = policies.invoke(DevicePolicyManager::getAffiliationIds);
+			if (! ids.equals(current_ids)) try {
+				policies.execute(DevicePolicyManager::setAffiliationIds, ids);
+			} catch (final SecurityException ignored) {}	// SecurityException will be thrown if profile is not managed by Island.
 			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
 		}
 		try {
