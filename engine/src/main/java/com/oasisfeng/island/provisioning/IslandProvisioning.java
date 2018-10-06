@@ -102,7 +102,7 @@ public class IslandProvisioning extends IntentService {
 		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE.equals(intent.getAction())) {
 			Log.d(TAG, "Re-provisioning Mainland.");
 			if (! Users.isOwner()) throw new IllegalStateException("Not running in owner user");
-			startDeviceOwnerPostProvisioning(this, new DevicePolicies(this));
+			startDeviceOwnerPostProvisioning(this);
 			Toasts.show(this, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
 		}
@@ -115,9 +115,9 @@ public class IslandProvisioning extends IntentService {
 		// Grant essential permissions early, since they may be required in the following provision procedure.
 		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(this);
 
-		if (DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
+		if (Users.isOwner() && DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
-			startDeviceOwnerPostProvisioning(this, new DevicePolicies(this));
+			startDeviceOwnerPostProvisioning(this);
 			return;
 		}
 
@@ -240,7 +240,8 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
-	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
+	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context) {
+		final DevicePolicies policies = new DevicePolicies(context);
 		if (! policies.isActiveDeviceOwner()) return;
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 

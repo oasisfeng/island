@@ -1,5 +1,6 @@
 package com.oasisfeng.island.provisioning;
 
+import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.island.engine.BuildConfig;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.ProfileUser;
@@ -19,9 +20,8 @@ public class AutoIncrementalProvision extends PseudoContentProvider {
 
 	@Override public boolean onCreate() {
 		final Stopwatch stopwatch = Performances.startUptimeStopwatch();
-		final DevicePolicies policies = new DevicePolicies(context());
 		if (Users.isOwner()) {
-			IslandProvisioning.startDeviceOwnerPostProvisioning(context(), policies);		// isDeviceOwner() is checked inside.
+			Loopers.addIdleTask(() -> IslandProvisioning.startDeviceOwnerPostProvisioning(context()));	// isDeviceOwner() is checked inside.
 		} else if (Users.isProfile()) {
 			final Optional<Boolean> result = DevicePolicies.isOwnerOfEnabledProfile(context());
 			if (result == null || ! result.isPresent() || ! result.get()) return false;		// Including the case that profile is not enabled yet. (during the broadcast ACTION_PROFILE_PROVISIONING_COMPLETE)
