@@ -1,5 +1,7 @@
 package com.oasisfeng.island.analytics;
 
+import android.os.Process;
+
 import com.crashlytics.android.core.CrashlyticsCore;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
@@ -26,7 +28,9 @@ public abstract class CrashReport {
 	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
 		Fabric.with(new Fabric.Builder(FirebaseWrapper.init()).debuggable(BuildConfig.DEBUG)
 				.kits(new CrashlyticsCore.Builder().disabled(DISABLED).build()).build());
-		return CrashlyticsCore.getInstance();
+		final CrashlyticsCore instance = CrashlyticsCore.getInstance();
+		instance.setInt("user", Process.myUserHandle().hashCode());			// Attach the current (Android) user ID to crash report.
+		return instance;
 	});
 
 	public static void initCrashHandler() {
