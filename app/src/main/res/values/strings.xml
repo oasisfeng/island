@@ -90,7 +90,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_destroy_exclusives_message">Since exclusively installed in Island, the following %1$d app(s) will be UNINSTALLED effectively from your device if Island is destroyed.\n\n%2$s\n\nAre you sure you want to proceed?</string>
     <string name="dialog_deactivate_message">Are you sure to deactivate God mode?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
-    <string name="dialog_provision_in_progress">Preparing Island…</string>
     <string name="dialog_critical_app_warning">This app is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
     <string name="dialog_mainland_device_admin">Device Admin privilege is required to activate God mode.</string>
     <string name="dialog_mainland_setup_done">God mode is now enabled. It will be activated after device reboot.</string>
@@ -159,9 +158,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_about_header">About</string>
     <string name="pref_about_version_title">Version</string>
     <string name="pref_about_licenses_title">Licenses</string>
-
-    <string name="notification_channel_ongoing_task">Ongoing task</string>
-    <string name="notification_channel_important">Important</string>
 
     <string name="notification_island_after_uninstall_title">Remove Island completely</string>
     <string name="notification_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>

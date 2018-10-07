@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" tools:ignore="ProtectedPermissions" /> <!-- EventReceiver -->
 
-    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
+    <application android:label="Island - File Shuttle" tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
         <!-- ShuttleProvider to proxy the content requests across profile. -->
         <provider android:authorities="com.oasisfeng.island.files.shuttle"

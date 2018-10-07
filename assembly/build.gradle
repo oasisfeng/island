@@ -25,6 +25,9 @@ android {
     flavorDimensions "packaging"
 
     productFlavors {
+        complete {
+            dimension "packaging"
+        }
         engine {    // Use the same application ID to retain the profile / device ownership between "engine" and "full" build.
             dimension "packaging"
             matchingFallbacks = ['full']
@@ -39,14 +42,7 @@ android {
             dimension "packaging"
             matchingFallbacks = ['full']
         }
-        full {
-            dimension "packaging"
-        }
     }
-
-    // Use the release signing certificate (altered to align with normal Android debug keystore) for debug build
-    // to retain the profile / device ownership between "debug" and "release" build.
-    signingConfigs.debug.storeFile file("../island.debug.keystore")
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -68,16 +64,16 @@ android {
 }
 
 dependencies {
+    // Complete
+    completeImplementation project(':engine')
+    completeImplementation project(':mobile')
+    completeImplementation project(':fileprovider')
     // Engine only
     engineImplementation project(':engine')
     // Mobile only
     mobileImplementation project(':mobile')
     // File Provider only
     fileproviderImplementation project(':fileprovider')
-    // Full
-    fullImplementation project(':engine')
-    fullImplementation project(':mobile')
-    fullImplementation project(':fileprovider')
 
     // To workaround the dependency conflicts caused by "com.android.databinding:library"
     implementation 'com.android.support:support-core-ui:28.0.0'

@@ -88,7 +88,6 @@
     <string name="dialog_destroy_exclusives_message">以下 %1$d 个应用仅存与壶中界，因此将随着壶中界的毁灭而被完全卸载。\n\n%2$s\n\n确定要继续毁灭壶中界？</string>
     <string name="dialog_deactivate_message">确定希望解除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壶中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
-    <string name="dialog_provision_in_progress">正在准备壶中界…</string>
     <string name="dialog_critical_app_warning">这个应用（或组件）可能对于 Android 系统或其它应用的正常运作至关重要。如果继续此操作，部分应用甚至整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
     <string name="dialog_mainland_device_admin">启用“黄帝之名”需要授予设备管理权限。</string>
     <string name="dialog_mainland_setup_done">“黄帝之名”已启用，将在设备重启后生效。</string>
@@ -157,9 +156,6 @@
     <string name="pref_about_header">关于</string>
     <string name="pref_about_version_title">版本</string>
     <string name="pref_about_licenses_title">授权</string>
-
-    <string name="notification_channel_ongoing_task">执行中的任务</string>
-    <string name="notification_channel_important">重要事项</string>
 
     <string name="notification_island_after_uninstall_title">壶中界已失去控制</string>
     <string name="notification_island_after_uninstall_text">让其毁灭（连同其中的所有应用和数据）还是重生？</string>

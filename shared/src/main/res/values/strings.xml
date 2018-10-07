@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Placeholders to be overridden by dependent module -->
-    <string name="notification_channel_ongoing_task"> </string>
-    <string name="notification_channel_important"> </string>
+    <string name="notification_channel_ongoing_task">Ongoing task</string>
+    <string name="notification_channel_important">Important</string>
     <string name="notification_channel_debug">Debug</string>
 
     <string name="device_admin_support_message_short">To disable this restriction, please refer to corresponding setting in Island.</string>

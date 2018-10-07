@@ -9,7 +9,6 @@
     <string name="permission_launch_app_label">启动炼妖壶管理的应用</string>
     <string name="permission_launch_app_description">这个应用被授权可启动炼妖壶管理的任何应用，冻结的应用将在启动前解冻。</string>
 
-    <string name="notification_standby_text">就绪</string>
     <string name="notification_provisioning_title">正在准备 壶中界…</string>
     <string name="notification_provisioning_text">可能需要数分钟之久</string>
 

@@ -9,7 +9,6 @@
     <string name="permission_launch_app_label">Launch Island apps</string>
     <string name="permission_launch_app_description">This app can launch any app managed by Island, which will be unfrozen if needed.</string>
 
-    <string name="notification_standby_text">Standby</string>
     <string name="notification_provisioning_title">Provisioning Island…</string>
     <string name="notification_provisioning_text">It may take several minutes.</string>
 

@@ -1,6 +1,0 @@
-<resources>
-    <dimen name="horizontal_page_margin">@dimen/margin_huge</dimen>
-    <dimen name="vertical_page_margin">@dimen/margin_medium</dimen>
-    <dimen name="fab_margin">24dp</dimen>
-    <dimen name="setup_header_height">234dp</dimen>
-</resources>

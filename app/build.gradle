@@ -10,9 +10,6 @@ android {
 
     baseFeature true
 
-    flavorDimensions "packaging"
-    productFlavors { full.dimension "packaging" }
-
     dataBinding.enabled true
 
     compileOptions {

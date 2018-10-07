@@ -1,24 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Define standard dimensions to comply with Holo-style grids and rhythm. -->
-    <dimen name="margin_tiny">4dp</dimen>
     <dimen name="margin_small">8dp</dimen>
     <dimen name="margin_medium">16dp</dimen>
     <dimen name="margin_large">32dp</dimen>
-    <dimen name="margin_huge">64dp</dimen>
     <dimen name="elevation_card_resting">2dp</dimen>
-    <dimen name="elevation_card_pop_up">4dp</dimen>
     <dimen name="elevation_card_raised">8dp</dimen>
 
     <!-- Semantic definitions -->
-    <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="horizontal_page_margin">@dimen/margin_medium</dimen>
-    <dimen name="vertical_page_margin">@dimen/margin_medium</dimen>
-    <dimen name="activity_horizontal_margin">@dimen/horizontal_page_margin</dimen>
-    <dimen name="activity_vertical_margin">@dimen/vertical_page_margin</dimen>
-
-    <dimen name="setup_header_height">234dp</dimen>
-    <dimen name="suw_decor_padding_top">100dp</dimen>
 
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="fab_elevation">12dp</dimen>
@@ -26,6 +15,10 @@
 
     <dimen name="app_icon_size">36dp</dimen>
     <dimen name="card_content_padding">12dp</dimen>
+
+    <!-- Adjust for setup wizard -->
+    <dimen name="setup_header_height">234dp</dimen>
+    <dimen name="suw_decor_padding_top">100dp</dimen>
 
     <!-- Dimens used for the content inside the setup wizard layout. -->
     <dimen name="content_padding_bottom">24dp</dimen>

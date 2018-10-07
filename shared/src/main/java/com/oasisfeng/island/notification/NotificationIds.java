@@ -6,13 +6,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
-import android.content.res.Resources;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.support.v4.app.NotificationManagerCompat;
 
-import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shared.R;
 
 import java.util.Objects;
@@ -74,10 +72,7 @@ public enum NotificationIds {
 
 		@RequiresApi(O) String createAndGetId(final Context context) {
 			if (! created) {
-				final CharSequence title_text = context.getString(title);
-				if (BuildConfig.DEBUG && title_text.toString().trim().isEmpty())
-					throw new Resources.NotFoundException("Placeholder text resource not overridden: " + title);
-				final NotificationChannel channel = new NotificationChannel(name, title_text, importance);
+				final NotificationChannel channel = new NotificationChannel(name, context.getString(title), importance);
 				if (tweaks != null) tweaks.accept(channel);
 				Objects.requireNonNull(context.getSystemService(NotificationManager.class)).createNotificationChannel(channel);
 				created = true;
