@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.island" android:sharedUserId="com.oasisfeng.island" android:versionCode="29100" android:versionName="2.9.1" >
+          package="com.oasisfeng.island" android:sharedUserId="com.oasisfeng.island" android:versionCode="29200" android:versionName="2.9.2" >
 
     <application android:label="@string/app_name" tools:replace="label" android:icon="@mipmap/ic_launcher"
                  android:allowBackup="true" android:fullBackupContent="@xml/backup" tools:ignore="GoogleAppIndexingWarning">
