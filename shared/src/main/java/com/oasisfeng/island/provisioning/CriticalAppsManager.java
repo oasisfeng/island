@@ -24,8 +24,8 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class CriticalAppsManager {
 
-	@ProfileUser static Set<String> detectCriticalPackages(final PackageManager pm, final int flags) {
-		final Set<String> pkgs = SystemAppsManager.detectCriticalSystemPackages(pm, flags);
+	@ProfileUser static Set<String> detectCriticalPackages(final PackageManager pm) {
+		final Set<String> pkgs = SystemAppsManager.detectCriticalSystemPackages(pm);
 
 		if (SDK_INT >= N) {		// Chrome web-view is supported on Android 7+.
 			final String webview_pkg = getCurrentWebViewPackageName();

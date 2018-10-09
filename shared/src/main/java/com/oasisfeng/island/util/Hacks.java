@@ -55,7 +55,8 @@ public class Hacks {
 	 *
 	 * See PackageManagerService.updateFlagsForPackage()
 	 */
-	public static final int MATCH_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | (Users.isOwner() ? 0 : MATCH_ANY_USER);
+	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | (Users.isOwner() ? 0 : MATCH_ANY_USER);
+	public static final int RESOLVE_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer>
 			ApplicationInfo_privateFlags = Hack.onlyIf(SDK_INT >= M).into(ApplicationInfo.class).field("privateFlags").fallbackTo(null);

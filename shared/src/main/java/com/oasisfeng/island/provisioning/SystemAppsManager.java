@@ -129,15 +129,14 @@ import static android.os.Build.VERSION_CODES.N;
 		} catch (final PackageManager.NameNotFoundException ignored) { return null; }
 	}
 
-	/** @param flags intersection of {@code PackageManager.ComponentInfoFlags} and {@code PackageManager.ResolveInfoFlags}. */
-	@OwnerUser @ProfileUser public static Set<String> detectCriticalSystemPackages(final PackageManager pm, final int flags) {
+	@OwnerUser @ProfileUser public static Set<String> detectCriticalSystemPackages(final PackageManager pm) {
 		final Stopwatch stopwatch = Performances.startUptimeStopwatch();
 
 		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
 
 		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
-		for (final Intent intent : sCriticalActivityIntents) {
-			@SuppressLint("WrongConstant") final ResolveInfo info = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+		for (final Intent intent : sCriticalActivityIntents) { @SuppressLint("WrongConstant")
+			final ResolveInfo info = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY | Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
 			if (info == null || (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;
 			final String pkg = info.activityInfo.packageName;
 			Log.i(TAG, "Critical package for " + intent + ": " + pkg);
@@ -148,7 +147,7 @@ import static android.os.Build.VERSION_CODES.N;
 		// Detect package names for critical content providers, as an addition to the white-list of well-known ones.
 		for (final String authority : sCriticalContentAuthorities) {
 			if (authority == null) continue;		// Nullable for version-specific authorities
-			final ProviderInfo provider = pm.resolveContentProvider(authority, flags);
+			@SuppressLint("WrongConstant") final ProviderInfo provider = pm.resolveContentProvider(authority, Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
 			if (provider == null || (provider.applicationInfo.flags & FLAG_SYSTEM) == 0 || (provider.flags & FLAG_SINGLE_USER) != 0) continue;
 			Log.i(TAG, "Critical package for authority \"" + authority + "\": " + provider.packageName);
 			critical_sys_pkgs.add(provider.packageName);

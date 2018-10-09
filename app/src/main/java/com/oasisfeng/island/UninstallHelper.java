@@ -83,7 +83,7 @@ public class UninstallHelper extends PseudoContentProvider {
 	private static void check(final Context context) {
 		final PackageManager owner_pm;
 		if (Permissions.has(context, INTERACT_ACROSS_USERS) && (owner_pm = ContextShuttle.getPackageManagerAsUser(context, Users.owner)) != null) try { @SuppressLint("WrongConstant")
-			final ApplicationInfo owner_island = owner_pm.getApplicationInfo(context.getPackageName(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+			final ApplicationInfo owner_island = owner_pm.getApplicationInfo(context.getPackageName(), Hacks.GET_ANY_USER_AND_UNINSTALLED);
 			if ((owner_island.flags & ApplicationInfo.FLAG_INSTALLED) == 0)
 				onIslandRemovedInOwnerUser(context);
 			return;
@@ -130,8 +130,7 @@ public class UninstallHelper extends PseudoContentProvider {
 		final Uri uri = Objects.requireNonNull(intent.getData());
 		new DevicePolicies(context).addCrossProfileIntentFilter(IntentFilters.forAction(intent.getAction())
 				.withData(uri.getScheme(), uri.getSchemeSpecificPart(), PatternMatcher.PATTERN_LITERAL), FLAG_PARENT_CAN_ACCESS_MANAGED);
-		@SuppressLint("WrongConstant") final List<ResolveInfo> resolves
-				= context.getPackageManager().queryIntentActivities(intent, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(intent, 0);
 		for (final ResolveInfo resolve : resolves) if ("android".equals(resolve.activityInfo.packageName)) {		// IntentForwarder
 			context.startActivity(intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name)));
 			return true;

@@ -61,7 +61,7 @@ public class Modules {
 
 	private static ComponentName resolveActivity(final Context context, final Intent intent) {
 		@SuppressLint("WrongConstant") final ResolveInfo resolved = context.getPackageManager().resolveActivity(intent,
-				MATCH_DEFAULT_ONLY | GET_DISABLED_COMPONENTS | Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+				MATCH_DEFAULT_ONLY | GET_DISABLED_COMPONENTS | Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
 		return resolved == null ? null : new ComponentName(resolved.activityInfo.packageName, resolved.activityInfo.name);
 	}
 

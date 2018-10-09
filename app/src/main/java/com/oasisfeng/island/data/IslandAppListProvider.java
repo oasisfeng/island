@@ -285,7 +285,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(() ->
 			new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));
 	private final Supplier<Set<String>> mCriticalSystemPackages = Suppliers.memoize(() ->
-			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED));
+			SystemAppsManager.detectCriticalSystemPackages(context().getPackageManager()));
 
 	private static final String TAG = "Island.AppListProv";
 }

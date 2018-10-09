@@ -48,9 +48,9 @@ public class AppInfo extends ApplicationInfo {
 	public boolean isLaunchable() { return mIsLaunchable.get(); }
 	private final Supplier<Boolean> mIsLaunchable = lazyLessMutable(() -> checkLaunchable(0));
 
-	protected boolean checkLaunchable(final int flags) {
+	protected boolean checkLaunchable(final int flags_for_resolve) {
 		final Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName);
-		final ResolveInfo resolved = context().getPackageManager().resolveActivity(intent, flags);
+		final ResolveInfo resolved = context().getPackageManager().resolveActivity(intent, flags_for_resolve);
 		return resolved != null;
 	}
 

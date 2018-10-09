@@ -82,16 +82,16 @@ public class IslandAppInfo extends AppInfo {
 
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
-	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() -> checkLaunchable(Hacks.MATCH_ANY_USER_AND_UNINSTALLED), 1, SECONDS);
+	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED), 1, SECONDS);
 
-	@Override protected boolean checkLaunchable(final int flags) {
+	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
 		if (sLaunchableAppsCache != null) return sLaunchableAppsCache.contains(packageName);
-		return super.checkLaunchable(flags);
+		return super.checkLaunchable(flags_for_resolve);
 	}
 
 	public static void cacheLaunchableApps(final Context context) {
 		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager()
-				.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+				.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
 		sLaunchableAppsCache = StreamSupport.stream(activities).map(resolve -> resolve.activityInfo.packageName).collect(Collectors.toSet());
 	}
 

@@ -25,7 +25,7 @@ public class ApiActivity extends Activity {
 			String result;
 			final ComponentName caller = getCallingActivity();
 			if (caller != null) try { @SuppressLint("WrongConstant")		// Invoked with startActivityForResult()
-				final ActivityInfo info = getPackageManager().getActivityInfo(caller, Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+				final ActivityInfo info = getPackageManager().getActivityInfo(caller, Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
 				int uid = info.applicationInfo.uid;
 				if (UserHandles.getUserId(uid) != 0) {
 					final String[] potential_pkgs = getPackageManager().getPackagesForUid(uid);

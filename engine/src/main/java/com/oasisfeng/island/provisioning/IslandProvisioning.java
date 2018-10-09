@@ -33,7 +33,6 @@ import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
-import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.Permissions;
@@ -212,7 +211,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static void enableCriticalAppsIfNeeded(final Context context, final DevicePolicies policies) {
-		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager(), Hacks.MATCH_ANY_USER_AND_UNINSTALLED);
+		final Set<String> pkgs = CriticalAppsManager.detectCriticalPackages(context.getPackageManager());
 		for (final String pkg : pkgs) try {
 			policies.enableSystemApp(pkg);        // FIXME: Don't re-enable explicitly cloned system apps. (see ClonedHiddenSystemApps)
 			policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false);

@@ -81,7 +81,7 @@ class ApiDispatcher {
 		// Legacy verification is not supported inside Island without INTERACT_ACROSS_USERS on Android P+, due to MATCH_ANY_USER being restricted.
 		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
 			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, GET_SIGNATURES
-				| (SDK_INT < P || Permissions.has(context, INTERACT_ACROSS_USERS) ? Hacks.MATCH_ANY_USER_AND_UNINSTALLED : GET_UNINSTALLED_PACKAGES));
+				| (SDK_INT < P || Permissions.has(context, INTERACT_ACROSS_USERS) ? Hacks.GET_ANY_USER_AND_UNINSTALLED : GET_UNINSTALLED_PACKAGES));
 			return verifySignature(pkg, signature_hash, pkg_info);
 		} catch (final PackageManager.NameNotFoundException e) { return "Permission denied or client package not found: " + pkg; }
 	}
