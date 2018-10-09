@@ -5,13 +5,13 @@
     <string name="tab_island">壶中界</string>
     <string name="tab_discovery">天书</string>
 
-    <string name="status_alive">自由</string>
+    <string name="status_alive">正常</string>
     <string name="status_frozen">冻结</string>
     <string name="status_disabled">停用</string>
     <string name="status_appendix_system">系统</string>
     <string name="status_appendix_critical">关键</string>
     <string name="status_appendix_cloned">有分身</string>
-    <string name="status_appendix_exclusive">仅存</string>
+    <string name="status_appendix_exclusive">仅存于此界</string>
 
     <string name="featured_button_enable">启用</string>
     <string name="featured_button_disable">禁用</string>

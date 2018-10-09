@@ -5,13 +5,13 @@
     <string name="tab_island">Island</string>
     <string name="tab_discovery">Discovery</string>
 
-    <string name="status_alive">Active</string>
+    <string name="status_alive">Alive</string>
     <string name="status_frozen">Frozen</string>
     <string name="status_disabled">Disabled</string>
-    <string name="status_appendix_system">System</string>
-    <string name="status_appendix_critical">Critical</string>
-    <string name="status_appendix_cloned">Cloned</string>
-    <string name="status_appendix_exclusive">Exclusive</string>
+    <string name="status_appendix_system">system</string>
+    <string name="status_appendix_critical">critical</string>
+    <string name="status_appendix_cloned">cloned</string>
+    <string name="status_appendix_exclusive">only in Island</string>
 
     <string name="featured_button_enable">Enable</string>
     <string name="featured_button_disable">Disable</string>
