@@ -5,7 +5,8 @@
 
     <permission-group android:name="${applicationId}.permission-group.PACKAGE_ACCESS"
                       android:label="@string/permission_group_control_island_apps_label"
-                      android:description="@string/permission_group_control_island_apps_description" />
+                      android:description="@string/permission_group_control_island_apps_description"
+                      android:icon="@drawable/ic_landscape_black_24dp" />
 
     <permission android:name="${applicationId}.permission.FREEZE_PACKAGE"
                 android:permissionGroup="com.oasisfeng.island.permission-group.PACKAGE_ACCESS"
