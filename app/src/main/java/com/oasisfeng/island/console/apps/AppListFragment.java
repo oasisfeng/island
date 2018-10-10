@@ -111,7 +111,7 @@ public class AppListFragment extends LifecycleFragment {
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
-		mViewModel.attach(activity, mBinding.appDetail.toolbar.getMenu(), mBinding.bottomNavigation, saved_state);
+		mViewModel.attach(activity, mBinding.toolbar.getMenu(), mBinding.bottomNavigation, saved_state);
 		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored

@@ -8,6 +8,8 @@
     <data>
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="android.view.View" />
+        <import type="android.support.design.widget.BottomSheetBehavior" />
+        <import type="com.oasisfeng.island.mobile.BuildConfig" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="featured" type="com.oasisfeng.island.featured.FeaturedListViewModel" />
         <variable name="card" type="com.oasisfeng.ui.card.CardViewModel" />
@@ -91,7 +93,64 @@
             app:menu="@menu/bottom_navigation"
             bind:onNavigationItemSelected="@{menu -> apps.onTabSwitched(context, menu)}" />
 
-        <include android:id="@+id/app_detail" layout="@layout/app_detail" bind:apps="@{apps}" bind:guide="@{guide}" />
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="16dp"
+            android:theme="@style/AppTheme.Dark"
+            android:background="?android:attr/colorPrimaryDark"
+            android:elevation="@dimen/elevation_card_raised"
+            app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="80dp"
+            bind:behavior_state="@{apps.mSelection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
+            bind:behavior_bottomSheetCallback="@{apps.bottom_sheet_callback}"
+            android:onClick="@{apps::onBottomSheetClick}">
+
+            <Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?android:attr/actionBarSize"
+                android:background="?android:attr/colorPrimaryDark"
+                android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
+                android:popupTheme="@style/AppThemeOverlay.Dark.Popup"
+                android:title="@{apps.mSelection.info.label}" tools:title="Island"
+                bind:menu="@{apps.actions_menu}"
+                android:onMenuItemClick="@{item -> apps.onActionClick(context, item)}"
+                android:prompt="@{guide.prompt_action}"/>
+
+            <TextView
+                android:id="@+id/summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/margin_medium"
+                android:paddingEnd="@dimen/margin_medium"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@{apps.mSelection.getStatusText(context)}" tools:text="Frozen"/>
+
+            <TextView
+                android:id="@+id/package_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/margin_medium"
+                android:paddingEnd="@dimen/margin_medium"
+                android:paddingTop="@dimen/margin_small"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@{@string/field_app_id(apps.mSelection.info.packageName)}" tools:text="APP ID: com.oasisfeng.island"/>
+
+            <TextView
+                android:id="@+id/debug_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/margin_medium"
+                android:paddingEnd="@dimen/margin_medium"
+                android:paddingTop="@dimen/margin_small"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@{apps.mSelection.debugInfo}" tools:text="DEBUG INFORMATION"
+                bind:shown="@{BuildConfig.DEBUG}" />
+
+        </LinearLayout>
 
     </android.support.design.widget.CoordinatorLayout>
 
