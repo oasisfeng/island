@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_installer_label">炼妖壶（静默安装）</string>
+    <string name="dialog_install_failure_title">安装失败</string>
+    <string name="dialog_install_unknown_failure_message">Android 系统的应用安装过程发生了内部错误</string>
+    <string name="progress_dialog_installing">%1$s 正在安装应用</string>
+    <string name="notification_app_installed">已安装 %s</string>
+    <string name="notification_app_installed_by">来自 %s</string>
+    <string name="dialog_install_comfirmation">%s 正在请求安装应用。\n\n是否继续？</string>
+    <string name="dialog_install_checkbox_always_allow">始终允许此来源安装应用</string>
+</resources>

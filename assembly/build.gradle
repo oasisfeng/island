@@ -68,6 +68,7 @@ dependencies {
     completeImplementation project(':engine')
     completeImplementation project(':mobile')
     completeImplementation project(':fileprovider')
+    completeImplementation project(':installer')
     // Engine only
     engineImplementation project(':engine')
     // Mobile only

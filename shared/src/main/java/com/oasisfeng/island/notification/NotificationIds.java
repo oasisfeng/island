@@ -31,7 +31,8 @@ public enum NotificationIds {
 
 	Provisioning(Channel.OngoingTask),
 	UninstallHelper(Channel.Important),
-	Debug(Channel.Debug);
+	AppInstallation(Channel.Important),
+	Debug(Channel.Debug, 999);
 
 	public void post(final Context context, final Notification.Builder notification) {
 		NotificationManagerCompat.from(context).notify(id(), buildChannel(context, notification).build());
@@ -54,11 +55,13 @@ public enum NotificationIds {
 		return notification.setChannelId(channel.createAndGetId(context));
 	}
 
-	private int id() { return ordinal() + 1; }		// 0 is reserved
+	private int id() { return id != 0 ? id : ordinal() + 1; }		// 0 is reserved
 
-	NotificationIds(final Channel channel) { this.channel = channel; }
+	NotificationIds(final Channel channel) { this(channel, 0); }
+	NotificationIds(final Channel channel, final int id) { this.channel = channel; this.id = id; }
 
 	private final Channel channel;
+	private final int id;
 
 	@SuppressLint("InlinedApi") enum Channel {
 

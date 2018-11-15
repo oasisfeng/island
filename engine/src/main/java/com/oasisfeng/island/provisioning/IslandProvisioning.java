@@ -5,13 +5,12 @@ import android.app.Notification;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.LauncherApps;
-import android.content.pm.ResolveInfo;
-import android.net.Uri;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -40,14 +39,13 @@ import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
+import static android.content.Intent.ACTION_INSTALL_PACKAGE;
 import static android.content.Intent.ACTION_SEND;
 import static android.content.Intent.ACTION_SEND_MULTIPLE;
 import static android.content.Intent.ACTION_VIEW;
@@ -277,7 +275,6 @@ public class IslandProvisioning extends IntentService {
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
-		disableRedundantPackageInstaller(context, policies);	// To fix unexpectedly enabled package installer due to historical mistake in SystemAppsManager.
 
 		enableAdditionalForwarding(policies);
 
@@ -302,19 +299,6 @@ public class IslandProvisioning extends IntentService {
 		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
 	}
 
-	private static void disableRedundantPackageInstaller(final Context context, final DevicePolicies policies) {
-		final List<ResolveInfo> installers = context.getPackageManager().queryIntentActivities(
-				new Intent(Intent.ACTION_INSTALL_PACKAGE).setData(Uri.fromParts("file", "dummy.apk", null)), 0);
-		if (installers.size() <= 1) return;
-		final LauncherApps launcher_apps = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
-		for (final ResolveInfo installer : installers) {
-			final String installer_pkg = installer.activityInfo.packageName;
-			if (launcher_apps.isPackageEnabled(installer_pkg, Users.owner)) continue;
-			policies.invoke(DevicePolicyManager::setApplicationHidden, installer_pkg, true);
-			Log.i(TAG, "Disabled redundant package installer: " + installer_pkg);
-		}
-	}
-
 	private static void enableAdditionalForwarding(final DevicePolicies policies) {
 		final int FLAGS_BIDIRECTIONAL = FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED;
 		// For sharing across Island (bidirectional)
@@ -326,6 +310,12 @@ public class IslandProvisioning extends IntentService {
 		// For web browser
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withCategory(CATEGORY_BROWSABLE).withDataSchemes("http", "https", "ftp"),
 				FLAG_PARENT_CAN_ACCESS_MANAGED);
+		try {	// For Package Installer
+			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_VIEW, ACTION_INSTALL_PACKAGE)
+					.withDataScheme(ContentResolver.SCHEME_CONTENT).withDataType("application/vnd.android.package-archive"), FLAGS_BIDIRECTIONAL);
+			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE)
+					.withDataScheme(ContentResolver.SCHEME_CONTENT), FLAGS_BIDIRECTIONAL);
+		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
 	}
 
 	public IslandProvisioning() {
