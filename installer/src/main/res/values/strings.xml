@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_installer_label">App Installer</string>
+    <string name="dialog_install_confirmation">%s is requesting app installation.\n\nAre you sure you want to continue?</string>
+    <string name="dialog_install_checkbox_always_allow">Always allow app installation from this source.</string>
     <string name="dialog_install_failure_title">Failed to install</string>
     <string name="dialog_install_unknown_failure_message">Internal error occurred during the installation performed by Android system</string>
     <string name="progress_dialog_installing">%s is performing app installation</string>
-    <string name="notification_app_installed">Installed %s</string>
-    <string name="notification_app_installed_by">initiated by %s</string>
-    <string name="dialog_install_comfirmation">%s is requesting app installation.\n\nAre you sure you want to continue?</string>
-    <string name="dialog_install_checkbox_always_allow">Always allow app installation from this source.</string>
+
+    <string name="notification_caller_installed_app">%1$s installed %2$s</string>
+    <string name="notification_app_with_permissions">with permissions granted: %s</string>
+    <string name="notification_app_target_api">targeting Android %s</string>
+    <string name="notification_app_target_pre_m">targeting Android %s with no sensitive permissions</string>
+    <string name="action_show_app_settings">App Settings (sys)</string>
+    <string name="action_show_app_info">App Info (external)</string>
 </resources>

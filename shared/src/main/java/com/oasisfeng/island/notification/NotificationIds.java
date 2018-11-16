@@ -31,7 +31,7 @@ public enum NotificationIds {
 
 	Provisioning(Channel.OngoingTask),
 	UninstallHelper(Channel.Important),
-	AppInstallation(Channel.Important),
+	AppInstallation(Channel.AppInstall),
 	Debug(Channel.Debug, 999);
 
 	public void post(final Context context, final Notification.Builder notification) {
@@ -67,6 +67,7 @@ public enum NotificationIds {
 
 		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(false)),
 		Important	("Important",	R.string.notification_channel_important,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(true)),
+		AppInstall	("AppInstall",	R.string.notification_channel_app_install,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(true)),
 		Debug		("Debug",		R.string.notification_channel_debug,			IMPORTANCE_MIN,  channel -> channel.setShowBadge(false));
 
 		Channel(final String name, final @StringRes int title, final int importance, final @Nullable Consumer<NotificationChannel> tweaks) {

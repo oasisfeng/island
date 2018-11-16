@@ -2,7 +2,6 @@ package com.oasisfeng.island.installer;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -30,7 +29,8 @@ import android.widget.CheckBox;
 
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.island.notification.NotificationIds;
+import com.oasisfeng.android.util.Supplier;
+import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
@@ -48,6 +48,7 @@ import java.util.Set;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageInstaller.EXTRA_PACKAGE_NAME;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
@@ -55,6 +56,7 @@ import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * App installer with following capabilities:
@@ -77,13 +79,13 @@ public class AppInstallerActivity extends Activity {
 			finish();
 			return;
 		}
-		mCallingPackage = getCallingPackage();
-		if (mCallingPackage == null) {
+		mCallerPackage = getCallingPackage();
+		if (mCallerPackage == null) {
 			Log.w(TAG, "Caller is unknown, redirect to default package installer.");
 			fallbackToSystemPackageInstaller();
 			return;
 		}
-		if (SDK_INT >= O && ! isCallerQualified(mCallingPackage)) {
+		if (SDK_INT >= O && ! isCallerQualified(mCallerPackage)) {
 			finish();
 			return;
 		}
@@ -107,20 +109,19 @@ public class AppInstallerActivity extends Activity {
 	private void startInstall(final InputStream stream) {
 		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		final Set<String> allowed_callers = preferences.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet());
-		if (! allowed_callers.contains(mCallingPackage)) {
-			mCallingAppLabel = Apps.of(this).getAppName(mCallingPackage);
-			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, getString(R.string.dialog_install_comfirmation, mCallingAppLabel));
+		if (! allowed_callers.contains(mCallerPackage)) {
+			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, getString(R.string.dialog_install_confirmation, mCallerAppLabel.get()));
 			final View view = View.inflate(dialog.getContext()/* For consistent styling */, R.layout.dialog_checkbox, null);
 			final CheckBox checkbox = view.findViewById(R.id.checkbox);
 			checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
 			dialog.withCancelButton().withOkButton(() -> {
-				if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallingPackage);
-				performInstall(mCallingPackage, stream);
+				if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
+				performInstall(mCallerPackage, stream);
 			}).setOnDismissListener(d -> {
 				IoUtils.closeQuietly(stream);
 				finish();
 			}).setView(view).setCancelable(false).show();
-		} else performInstall(mCallingPackage, stream);		// Whitelisted caller to perform installation without confirmation
+		} else performInstall(mCallerPackage, stream);		// Whitelisted caller to perform installation without confirmation
 	}
 
 	private void addAlwaysAllowedCallerPackage(final String pkg) {
@@ -147,7 +148,6 @@ public class AppInstallerActivity extends Activity {
 			IoUtils.closeQuietly(input);
 		}
 
-		final CharSequence caller_app_name = mCallingAppLabel != null ? mCallingAppLabel : Apps.of(this).getAppName(caller);
 		mStatusCallback = new BroadcastReceiver() {
 			@Override public void onReceive(final Context context, final Intent intent) {
 				final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
@@ -155,7 +155,7 @@ public class AppInstallerActivity extends Activity {
 				switch (status) {
 				case PackageInstaller.STATUS_SUCCESS:
 					unregisterReceiver(this);
-					showInstallationNotification(context, intent, caller_app_name);
+					AppInstallationNotifier.onPackageInstalled(context, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
 					finish();
 					break;
 				case PackageInstaller.STATUS_PENDING_USER_ACTION:
@@ -173,18 +173,6 @@ public class AppInstallerActivity extends Activity {
 							.setOnDismissListener(d -> finish()).show();
 				}
 			}
-
-			private void showInstallationNotification(final Context context, final Intent intent, final CharSequence caller_app_name) {
-				final String pkg = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME);
-				ApplicationInfo app_info = null;
-				if (pkg != null) try {
-					app_info = getPackageManager().getApplicationInfo(pkg, GET_UNINSTALLED_PACKAGES);
-				} catch (final PackageManager.NameNotFoundException ignored) {}
-				if (app_info != null) NotificationIds.AppInstallation.post(context, new Notification.Builder(context)
-						.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(getResources().getColor(R.color.accent))
-						.setContentTitle(getString(R.string.notification_app_installed, Apps.of(context).getAppName(pkg)))
-						.setContentText(getString(R.string.notification_app_installed_by, caller_app_name)));
-			}
 		};
 		registerReceiver(mStatusCallback, new IntentFilter("test"));
 
@@ -193,7 +181,7 @@ public class AppInstallerActivity extends Activity {
 		mSession.commit(status_callback.getIntentSender());
 
 		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setMessage(getString(R.string.progress_dialog_installing, caller_app_name));
+		mProgressDialog.setMessage(getString(R.string.progress_dialog_installing, mCallerAppLabel.get()));
 		mProgressDialog.setIndeterminate(true);
 		mProgressDialog.setCancelable(false);
 		mProgressDialog.show();
@@ -285,8 +273,9 @@ public class AppInstallerActivity extends Activity {
 		return false;
 	}
 
-	private String mCallingPackage;
-	private CharSequence mCallingAppLabel;
+	private String mCallerPackage;
+	private final Supplier<CharSequence> mCallerAppLabel = Suppliers.memoizeWithExpiration(() ->
+			Apps.of(this).getAppName(mCallerPackage), 3, SECONDS);
 	private PackageInstaller.Session mSession;
 	private BroadcastReceiver mStatusCallback;
 	private ProgressDialog mProgressDialog;
