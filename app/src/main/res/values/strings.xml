@@ -23,7 +23,7 @@
     <string name="featured_fx_description">File Shuttle of Island provides cross-border file access via Android \"Storage Access Framework\". But not all apps in the wild (even some popular file manage apps) support SAF.\n\nFX File Explorer has full support for SAF, just clone and launch it inside Island, select \"Connect to Storage\" in drop-down menu. The File Shuttle of Island is in the side menu.</string>
     <string name="featured_adb_secure_title">ADB Secure</string>
     <string name="featured_adb_secure_island_title">ADB Secure (for Island space only)</string>
-    <string name="featured_adb_secure_description">Restrict ADB (Android Debugging Bridge) shell from executing dangerous commands (install APK, change settings and etc.).\nIf "God mode" is activated, this could protect the whole device (including sneaky app installation via USB cable).</string>
+    <string name="featured_adb_secure_description">Restrict ADB (Android Debugging Bridge) shell from executing dangerous commands (install APK, change settings and etc.).\nIf "God mode" is activated, this could protect the whole device (including data sniffing or sneaky app installation via USB cable from physically connected external device).</string>
     <string name="featured_god_mode_title">God Mode</string>
     <string name="featured_god_mode_description">\"God mode\" is a special mode of Island for advanced users, to help you take control of ALL apps (in both island and mainland). So you can freeze unwanted apps without root.</string>
     <string name="featured_greenify_title">Greenify</string>

@@ -23,7 +23,7 @@
     <string name="featured_fx_description">“文件传送门”提供的穿越结界的文件访问能力基于 Android 的“存储访问框架”。但并非所有的应用都支持“存储访问框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支持“存储访问框架”，只需在壶中界启动它，选择下拉菜单中的“Connect to Storage”，然后从侧栏选择相应传送门即可访问外部文件。</string>
     <string name="featured_adb_secure_title">ADB 安全结界</string>
     <string name="featured_adb_secure_island_title">ADB 安全结界（仅限壶中界）</string>
-    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n如果启用“黄帝之名”，还可以在整个设备层面限制 ADB 终端权限（包括阻止连接的设备通过 USB 连接隐秘的安装应用）。</string>
+    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n如果启用“黄帝之名”，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
     <string name="featured_god_mode_title">黄帝之名</string>
     <string name="featured_god_mode_description">“黄帝之名”可召唤黄帝当年创造山海界的上古神器“东皇钟”，赋予在壶中界之外同时驾驭山海界的力量。以“黄帝之名”，不仅可以冻结山海界中的应用，还能召唤其它神器相助。</string>
     <string name="featured_greenify_title">绿色守护</string>
