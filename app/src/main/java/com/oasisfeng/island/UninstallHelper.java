@@ -46,7 +46,6 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * Prompt user for full removal if Island is uninstalled in owner user without removing managed profile first.
@@ -82,7 +81,7 @@ public class UninstallHelper extends PseudoContentProvider {
 
 	private static void check(final Context context) {
 		final PackageManager owner_pm;
-		if (Permissions.has(context, INTERACT_ACROSS_USERS) && (owner_pm = ContextShuttle.getPackageManagerAsUser(context, Users.owner)) != null) try { @SuppressLint("WrongConstant")
+		if (Permissions.has(context, Permissions.INTERACT_ACROSS_USERS) && (owner_pm = ContextShuttle.getPackageManagerAsUser(context, Users.owner)) != null) try { @SuppressLint("WrongConstant")
 			final ApplicationInfo owner_island = owner_pm.getApplicationInfo(context.getPackageName(), Hacks.GET_ANY_USER_AND_UNINSTALLED);
 			if ((owner_island.flags & ApplicationInfo.FLAG_INSTALLED) == 0)
 				onIslandRemovedInOwnerUser(context);

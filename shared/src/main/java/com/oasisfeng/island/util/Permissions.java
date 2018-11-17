@@ -21,7 +21,6 @@ import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.O;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * Permission-related helpers

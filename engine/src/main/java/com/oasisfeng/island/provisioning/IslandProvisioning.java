@@ -57,7 +57,6 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * The one-time provisioning for newly created managed profile of Island
@@ -160,7 +159,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@RequiresApi(M) private static void grantEssentialDebugPermissionsIfPossible(final Context context) {
-		if (Permissions.ensure(context, INTERACT_ACROSS_USERS)) Permissions.ensure(context, WRITE_SECURE_SETTINGS);
+		if (Permissions.ensure(context, Permissions.INTERACT_ACROSS_USERS)) Permissions.ensure(context, WRITE_SECURE_SETTINGS);
 	}
 
 	@WorkerThread public static void performIncrementalProfileOwnerProvisioningIfNeeded(final Context context) {

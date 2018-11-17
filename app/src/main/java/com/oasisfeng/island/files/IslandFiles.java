@@ -20,7 +20,6 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * Created by Oasis on 2018-6-8.
@@ -31,12 +30,12 @@ public class IslandFiles {
 		return Users.hasProfile() && getProfilePackageManager(context) != null;
 	}
 
-	@RequiresPermission(INTERACT_ACROSS_USERS) public static boolean isFileShuttleEnabled(final Context context) {
+	@RequiresPermission(Permissions.INTERACT_ACROSS_USERS) public static boolean isFileShuttleEnabled(final Context context) {
 		final ComponentName component = Modules.getFileProviderComponent(context);
 		return component != null && getProfilePackageManager(context).getComponentEnabledSetting(component) == COMPONENT_ENABLED_STATE_ENABLED;
 	}
 
-	@RequiresPermission(INTERACT_ACROSS_USERS) public static void enableFileShuttle(final Activity activity) {
+	@RequiresPermission(Permissions.INTERACT_ACROSS_USERS) public static void enableFileShuttle(final Activity activity) {
 		if (Modules.getFileProviderComponent(activity) == null) {
 			Toast.makeText(activity, "Module \"File Provider\" not installed.", Toast.LENGTH_LONG).show();
 			return;

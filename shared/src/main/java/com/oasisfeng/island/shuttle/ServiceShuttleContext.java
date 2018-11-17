@@ -16,8 +16,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
-
 /**
  * Context wrapper for service shuttle
  *
@@ -32,7 +30,7 @@ public class ServiceShuttleContext extends ContextWrapper {
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
 		final UserHandle profile = Users.profile;
 		if (profile == null) return false;
-		if (! ALWAYS_USE_SHUTTLE && Permissions.ensure(this, INTERACT_ACROSS_USERS)) try {
+		if (! ALWAYS_USE_SHUTTLE && Permissions.ensure(this, Permissions.INTERACT_ACROSS_USERS)) try {
 			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, profile).on(getBaseContext())) {
 				Log.d(TAG, "Connecting to service in profile: " + service);
 				return true;
@@ -59,7 +57,7 @@ public class ServiceShuttleContext extends ContextWrapper {
 
 	@Override public void unbindService(final ServiceConnection connection) {
 		if (Users.profile == null) return;
-		if (! ALWAYS_USE_SHUTTLE && Permissions.has(this, INTERACT_ACROSS_USERS)) {
+		if (! ALWAYS_USE_SHUTTLE && Permissions.has(this, Permissions.INTERACT_ACROSS_USERS)) {
 			getBaseContext().unbindService(connection);
 			return;
 		}

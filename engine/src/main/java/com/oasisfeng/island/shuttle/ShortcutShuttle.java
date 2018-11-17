@@ -30,7 +30,6 @@ import com.oasisfeng.island.util.Users;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 
@@ -51,7 +50,7 @@ public class ShortcutShuttle extends BroadcastReceiver {
 		final String shortcut_name = intent.getStringExtra(Intent.EXTRA_SHORTCUT_NAME);
 
 		if (! Users.isOwner()) {
-			if (! Permissions.has(context, INTERACT_ACROSS_USERS)) return;        // TODO: Support Android O+ & 5.x.
+			if (! Permissions.has(context, Permissions.INTERACT_ACROSS_USERS)) return;        // TODO: Support Android O+ & 5.x.
 			final String target_intent_uri = target_intent.toUri(0);
 			try {
 				final String signature = Cryptography.sign(context, target_intent_uri);

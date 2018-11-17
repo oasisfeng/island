@@ -45,7 +45,6 @@ import java9.util.stream.StreamSupport;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * Island-specific {@link AppListProvider}
@@ -159,7 +158,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			return;
 		}
 		final Context context = context();
-		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context, INTERACT_ACROSS_USERS)) try {
+		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context, Permissions.INTERACT_ACROSS_USERS)) try {
 			final ApplicationInfo info = mProfilePackageManager.get().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(info);
 			return;
@@ -280,7 +279,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	});
 
 	private final Supplier<LauncherApps> mLauncherApps = Suppliers.memoize(() -> (LauncherApps) context().getSystemService(Context.LAUNCHER_APPS_SERVICE));
-	@RequiresPermission(INTERACT_ACROSS_USERS) private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() ->
+	@RequiresPermission(Permissions.INTERACT_ACROSS_USERS) private final Supplier<PackageManager> mProfilePackageManager = Suppliers.memoize(() ->
 			ContextShuttle.getPackageManagerAsUser(context(), Users.profile));
 	private final Supplier<ClonedHiddenSystemApps> mClonedHiddenSystemApps = Suppliers.memoize(() ->
 			new ClonedHiddenSystemApps(context(), Users.profile, pkg -> refreshPackage(pkg, Users.profile, false)));

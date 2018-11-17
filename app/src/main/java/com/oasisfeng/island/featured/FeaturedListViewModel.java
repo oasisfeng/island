@@ -43,7 +43,6 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
 import static android.support.v7.widget.helper.ItemTouchHelper.END;
 import static android.support.v7.widget.helper.ItemTouchHelper.START;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 
 /**
  * View-model for featured list
@@ -87,7 +86,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 		final boolean file_shuttle_compatible = IslandFiles.isCompatible(context);
 		if (SHOW_ALL || file_shuttle_compatible) {
-			final boolean has_across_users_permission = Permissions.has(context, INTERACT_ACROSS_USERS);
+			final boolean has_across_users_permission = Permissions.has(context, Permissions.INTERACT_ACROSS_USERS);
 			if (! has_across_users_permission)
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
 						R.string.dialog_button_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
