@@ -15,6 +15,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
@@ -26,14 +27,12 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.Toast;
 
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
-import com.oasisfeng.island.util.Hacks;
-import com.oasisfeng.island.util.Permissions;
-import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
 
 import java.io.FileNotFoundException;
@@ -45,17 +44,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageInstaller.EXTRA_PACKAGE_NAME;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
-import static com.oasisfeng.android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -70,6 +70,7 @@ public class AppInstallerActivity extends Activity {
 
 	private static final int STREAM_BUFFER_SIZE = 65536;
 	private static final String PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS = "direct_install_allowed_callers";
+	private static final String EXTRA_ORIGINATING_UID = "android.intent.extra.ORIGINATING_UID";		// Intent.EXTRA_ORIGINATING_UID
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -85,7 +86,8 @@ public class AppInstallerActivity extends Activity {
 			fallbackToSystemPackageInstaller();
 			return;
 		}
-		if (SDK_INT >= O && ! isCallerQualified(mCallerPackage)) {
+		mCallerAppInfo = Apps.of(this).getAppInfo(mCallerPackage);	// Null if caller is not in the same user and has no launcher activity
+		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) {
 			finish();
 			return;
 		}
@@ -211,28 +213,29 @@ public class AppInstallerActivity extends Activity {
 		finish();
 	}
 
-	@RequiresApi(O) private boolean isCallerQualified(final String caller_pkg) {
-		ApplicationInfo caller_info = null;
-		final boolean has_iau_permission = Permissions.has(this, INTERACT_ACROSS_USERS);
-		final int flags = has_iau_permission ? Hacks.GET_ANY_USER_AND_UNINSTALLED : GET_UNINSTALLED_PACKAGES;
-		try { @SuppressLint("WrongConstant") @SuppressWarnings("unused")
-			final ApplicationInfo unused = caller_info = getPackageManager().getApplicationInfo(caller_pkg, flags);
-		} catch (final PackageManager.NameNotFoundException e) {	// It happens in managed profile if caller is owner-user-exclusive
-			if (Users.isProfile() && ! has_iau_permission) return true;	// No way to check, just let it pass as this qualification is not a big deal.
-		}
-		if (caller_info == null) {
-			Log.e(TAG, "Requesting package not found: " + caller_pkg);
+	@RequiresApi(O) private boolean isCallerQualified(final ApplicationInfo caller_app_info) {
+		if (Apps.isPrivileged(caller_app_info) && getIntent().getBooleanExtra(EXTRA_NOT_UNKNOWN_SOURCE, false))
+			return true;	// From trusted source declared by privileged caller, skip checking.
+		int target_api = 0;
+		final int source_uid = getOriginatingUid(caller_app_info);
+		if (source_uid < 0) return true;		// From trusted caller (download provider, documents UI and etc.)
+		if (source_uid != caller_app_info.uid) {		// Originating source is not the caller
+			final String[] pkgs = getPackageManager().getPackagesForUid(source_uid);
+			if (pkgs != null) for (final String pkg : pkgs) {	// We only know its UID, use the max target API among UID-shared packages.
+				final ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
+				if (info != null) target_api = Math.max(target_api, info.targetSdkVersion);
+			}
+			if (target_api == 0) {
+				Log.w(TAG, "Cannot get target sdk version for UID " + source_uid);
+				return false;
+			}
+		} else target_api = caller_app_info.targetSdkVersion;
+
+		final String caller_pkg = caller_app_info.packageName;
+		if (target_api >= O && ! declaresPermission(caller_pkg, REQUEST_INSTALL_PACKAGES)) {
+			Toast.makeText(this, caller_pkg + " does not declare " + REQUEST_INSTALL_PACKAGES, Toast.LENGTH_LONG).show();
 			return false;
-		}
-		if (caller_info.targetSdkVersion < 0) {
-			Log.w(TAG, "Cannot get target sdk version for " + caller_pkg);
-			return false;
-		}
-		if (caller_info.targetSdkVersion >= O && ! declaresPermission(caller_info.packageName, REQUEST_INSTALL_PACKAGES, flags)) {
-			Log.e(TAG, "Requesting package " + caller_pkg + " needs to declare permission " + REQUEST_INSTALL_PACKAGES);
-			return false;
-		}
-		return true;
+		} else return true;
 	}
 
 	@Nullable @Override public String getCallingPackage() {
@@ -263,19 +266,32 @@ public class AppInstallerActivity extends Activity {
 		return null;
 	}
 
-	private boolean declaresPermission(final String pkg, final String permission, final int flags) {
-		try {
-			final PackageInfo pkg_info = getPackageManager().getPackageInfo(pkg, GET_PERMISSIONS | flags);
-			if (pkg_info.requestedPermissions == null) return false;
-			for (final String requested_permission : pkg_info.requestedPermissions)
-				if (permission.equals(requested_permission)) return true;
-		} catch (final PackageManager.NameNotFoundException ignored) {}		// Should hardly happen
+	private int getOriginatingUid(final ApplicationInfo caller_info) {
+		if (isSystemDownloadsProvider(caller_info.uid) || checkPermission(MANAGE_DOCUMENTS, 0, caller_info.uid) == PERMISSION_GRANTED)
+			return getIntent().getIntExtra(EXTRA_ORIGINATING_UID, -1);	// The originating uid provided in the intent from trusted source.
+		return caller_info.uid;
+	}
+
+	private boolean isSystemDownloadsProvider(final int uid) {
+		final ProviderInfo provider = getPackageManager().resolveContentProvider("downloads", Apps.getFlagsMatchKnownPackages(this));
+		if (provider == null) return false;
+		final ApplicationInfo app_info = provider.applicationInfo;
+		return (app_info.flags & FLAG_SYSTEM) != 0 && uid == app_info.uid;
+	}
+
+	private boolean declaresPermission(final String pkg, final String permission) {
+		final PackageInfo pkg_info = Apps.of(this).getPackageInfo(pkg, GET_PERMISSIONS);
+		if (pkg_info == null) return true;		// Unable to detect its declared permissions, just let it pass.
+		if (pkg_info.requestedPermissions == null) return false;
+		for (final String requested_permission : pkg_info.requestedPermissions)
+			if (permission.equals(requested_permission)) return true;
 		return false;
 	}
 
 	private String mCallerPackage;
+	private @Nullable ApplicationInfo mCallerAppInfo;
 	private final Supplier<CharSequence> mCallerAppLabel = Suppliers.memoizeWithExpiration(() ->
-			Apps.of(this).getAppName(mCallerPackage), 3, SECONDS);
+			mCallerAppInfo != null ? Apps.of(this).getAppName(mCallerAppInfo) : mCallerPackage, 3, SECONDS);
 	private PackageInstaller.Session mSession;
 	private BroadcastReceiver mStatusCallback;
 	private ProgressDialog mProgressDialog;
