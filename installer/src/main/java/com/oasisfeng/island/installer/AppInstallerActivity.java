@@ -33,9 +33,7 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
-import com.oasisfeng.java.utils.IoUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,9 +72,7 @@ public class AppInstallerActivity extends Activity {
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		final Intent intent = getIntent();
-		final Uri uri = intent.getData();
-		if (uri == null) {
+		if (getIntent().getData() == null) {
 			finish();
 			return;
 		}
@@ -92,23 +88,6 @@ public class AppInstallerActivity extends Activity {
 			return;
 		}
 
-		try {
-			startInstall(getContentResolver().openInputStream(uri));
-		} catch (final FileNotFoundException | SecurityException e) {	// May be thrown by ContentResolver.openInputStream().
-			Log.w(TAG, "Error opening " + uri + " for reading.\nTo launch Island app installer, " +
-					"please ensure data URI is accessible by Island, either exposed by content provider or world-readable (on pre-N)", e);
-			fallbackToSystemPackageInstaller();		// Default system package installer may have privilege to access the content that we can't.
-		}
-	}
-
-	@Override protected void onDestroy() {
-		super.onDestroy();
-		try { unregisterReceiver(mStatusCallback); } catch (final RuntimeException ignored) {}
-		if (mProgressDialog != null) mProgressDialog.dismiss();
-		if (mSession != null) mSession.abandon();
-	}
-
-	private void startInstall(final InputStream stream) {
 		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		final Set<String> allowed_callers = preferences.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet());
 		if (! allowed_callers.contains(mCallerPackage)) {
@@ -118,12 +97,16 @@ public class AppInstallerActivity extends Activity {
 			checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
 			dialog.withCancelButton().withOkButton(() -> {
 				if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
-				performInstall(mCallerPackage, stream);
-			}).setOnDismissListener(d -> {
-				IoUtils.closeQuietly(stream);
-				finish();
-			}).setView(view).setCancelable(false).show();
-		} else performInstall(mCallerPackage, stream);		// Whitelisted caller to perform installation without confirmation
+				performInstall();
+			}).setOnDismissListener(d -> finish()).setView(view).setCancelable(false).show();
+		} else performInstall();		// Whitelisted caller to perform installation without confirmation
+	}
+
+	@Override protected void onDestroy() {
+		super.onDestroy();
+		try { unregisterReceiver(mStatusCallback); } catch (final RuntimeException ignored) {}
+		if (mProgressDialog != null) mProgressDialog.dismiss();
+		if (mSession != null) mSession.abandon();
 	}
 
 	private void addAlwaysAllowedCallerPackage(final String pkg) {
@@ -133,49 +116,53 @@ public class AppInstallerActivity extends Activity {
 		preferences.edit().putStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, pkgs).apply();
 	}
 
-	private void performInstall(final String caller, final InputStream input) {
-		final PackageInstaller installer = getPackageManager().getPackageInstaller();
-		final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-		final String name = "Island[" + caller + "]";
-		try (final OutputStream out = (mSession = installer.openSession(installer.createSession(params))).openWrite(name, 0, -1)) {
-			final byte[] buffer = new byte[STREAM_BUFFER_SIZE];
-			int count;
-			while ((count = input.read(buffer)) != -1) out.write(buffer, 0, count);
-			mSession.fsync(out);
-		} catch (final IOException e) {
-			Log.e(TAG, "Error preparing installation", e);
-			finish();
+	private void performInstall() {
+		final Uri uri = getIntent().getData();
+		try (final InputStream input = getContentResolver().openInputStream(uri)) {
+			final PackageInstaller installer = getPackageManager().getPackageInstaller();
+			final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+			final String name = "Island[" + mCallerPackage + "]";
+			try (final OutputStream out = (mSession = installer.openSession(installer.createSession(params))).openWrite(name, 0, -1)) {
+				final byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+				int count;
+				while ((count = input.read(buffer)) != -1) out.write(buffer, 0, count);
+				mSession.fsync(out);
+			} catch (final IOException e) {
+				Log.e(TAG, "Error preparing installation", e);
+				finish();
+				return;
+			}
+		} catch (final IOException | SecurityException e) {		// May be thrown by ContentResolver.openInputStream().
+			Log.w(TAG, "Error opening " + uri + " for reading.\nTo launch Island app installer, " +
+					"please ensure data URI is accessible by Island, either exposed by content provider or world-readable (on pre-N)", e);
+			fallbackToSystemPackageInstaller();		// Default system package installer may have privilege to access the content that we can't.
 			return;
-		} finally {
-			IoUtils.closeQuietly(input);
 		}
 
-		mStatusCallback = new BroadcastReceiver() {
-			@Override public void onReceive(final Context context, final Intent intent) {
-				final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
-				if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
-				switch (status) {
-				case PackageInstaller.STATUS_SUCCESS:
-					unregisterReceiver(this);
-					AppInstallationNotifier.onPackageInstalled(context, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
-					finish();
-					break;
-				case PackageInstaller.STATUS_PENDING_USER_ACTION:
-					final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-					if (action == null) finish();	// Should never happen
-					else startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
-					break;
-				case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
-					finish();
-					break;
-				default:
-					String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-					if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
-					Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message)
-							.setOnDismissListener(d -> finish()).show();
-				}
+		mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+			final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
+			if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
+			switch (status) {
+			case PackageInstaller.STATUS_SUCCESS:
+				unregisterReceiver(this);
+				AppInstallationNotifier.onPackageInstalled(context, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
+				finish();
+				break;
+			case PackageInstaller.STATUS_PENDING_USER_ACTION:
+				final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+				if (action == null) finish();	// Should never happen
+				else startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
+				break;
+			case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
+				finish();
+				break;
+			default:
+				String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+				if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
+				Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message)
+						.setOnDismissListener(d -> finish()).show();
 			}
-		};
+		}};
 		registerReceiver(mStatusCallback, new IntentFilter("test"));
 
 		final PendingIntent status_callback = PendingIntent.getBroadcast(this, 0,
