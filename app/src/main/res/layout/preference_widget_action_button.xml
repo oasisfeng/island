@@ -7,11 +7,11 @@
 
     <ImageView
         android:id="@+id/preference_action_button"
+        android:tint="?android:attr/colorControlNormal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:padding="8dip"
-        android:background="?android:attr/selectableItemBackground"
-        android:contentDescription="@string/dialog_button_destroy" />
+        android:background="?android:attr/selectableItemBackground" />
 
 </LinearLayout>
