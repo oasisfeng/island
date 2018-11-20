@@ -96,9 +96,8 @@ public class AppInstallerActivity extends Activity {
 			return;
 		}
 
-		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		if (! mCallerPackage.equals(getPackageName())
-				&& ! preferences.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet()).contains(mCallerPackage)) {
+		if (! mCallerPackage.equals(getPackageName()) && ! PreferenceManager.getDefaultSharedPreferences(this)
+				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet()).contains(mCallerPackage)) {
 			final String message = getString(SCHEME_PACKAGE.equals(getIntent().getData().getScheme()) ? R.string.dialog_clone_confirmation
 					: R.string.dialog_install_confirmation, mCallerAppLabel.get());
 			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, message);
