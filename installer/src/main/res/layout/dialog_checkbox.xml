@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="fill_parent"
-             android:layout_height="wrap_content" >
+             android:layout_height="wrap_content">
 
     <CheckBox android:id="@+id/checkbox"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content"
-              android:paddingTop="18dp"
+              android:layout_marginTop="18dp"
               android:layout_marginStart="20dp"
               android:layout_marginEnd="20dp"
+              tools:text="@string/dialog_install_checkbox_always_allow"
               style="@android:style/TextAppearance.Material.Widget" /> <!-- android:paddingStart="?attr/dialogPreferredPadding" -->
 
 </FrameLayout>

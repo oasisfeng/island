@@ -70,8 +70,7 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 					try {
 						app_info = context.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
 					} catch (final PackageManager.NameNotFoundException e) { return; }	// Should never happen.
-					final String source_dir = app_info.sourceDir;	// Reduce the cost of IPC for the shuttled method below
-					MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, source_dir, true));
+					MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, app_info, true));
 				} else if (app.isHidden()) {
 					MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false));
 				} else Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))

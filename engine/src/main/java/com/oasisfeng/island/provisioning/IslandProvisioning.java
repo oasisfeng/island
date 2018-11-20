@@ -275,7 +275,7 @@ public class IslandProvisioning extends IntentService {
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
 
-		enableAdditionalForwarding(policies);
+		enableAdditionalForwarding(context, policies);
 
 		// Prepare AppLaunchShortcut
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")
@@ -298,7 +298,7 @@ public class IslandProvisioning extends IntentService {
 		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
 	}
 
-	private static void enableAdditionalForwarding(final DevicePolicies policies) {
+	private static void enableAdditionalForwarding(final Context context, final DevicePolicies policies) {
 		final int FLAGS_BIDIRECTIONAL = FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED;
 		// For sharing across Island (bidirectional)
 		policies.addCrossProfileIntentFilter(new IntentFilter(ACTION_SEND), FLAGS_BIDIRECTIONAL);		// Keep for historical compatibility reason
@@ -312,8 +312,8 @@ public class IslandProvisioning extends IntentService {
 		try {	// For Package Installer
 			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_VIEW, ACTION_INSTALL_PACKAGE)
 					.withDataScheme(ContentResolver.SCHEME_CONTENT).withDataType("application/vnd.android.package-archive"), FLAGS_BIDIRECTIONAL);
-			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE)
-					.withDataScheme(ContentResolver.SCHEME_CONTENT), FLAGS_BIDIRECTIONAL);
+			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE).withCategory(context.getPackageName())	// Additional category to bypass system package installer
+					.withDataSchemes(ContentResolver.SCHEME_CONTENT, SCHEME_PACKAGE), FLAG_MANAGED_CAN_ACCESS_PARENT);	// One-way only
 		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
 	}
 
@@ -328,4 +328,5 @@ public class IslandProvisioning extends IntentService {
 					.setContentText(getText(R.string.notification_provisioning_text)));
 
 	private static final String TAG = "Island.Provision";
+	public static final String SCHEME_PACKAGE = "package";
 }

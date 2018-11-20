@@ -458,8 +458,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				return null;
 			});
 		}
-		final String source_dir = app.sourceDir;	// Reduce the IPC cost for the shuttled method below
-		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, source_dir, false)).thenAccept(result -> {
+		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(app.packageName, app, false)).thenAccept(result -> {
 			switch (result) {
 			case IslandAppClones.CLONE_RESULT_ALREADY_CLONED:
 				if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
@@ -511,8 +510,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private static void doCloneUserApp(final Context context, final IslandAppInfo app) {
-		final String pkg = app.packageName, source_dir = app.sourceDir;		// Reduce the cost of IPC for the shuttled method below
-		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, source_dir, true)).thenAccept(result -> {
+		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(app.packageName, app, true)).thenAccept(result -> {
 			switch (result) {
 			case IslandAppClones.CLONE_RESULT_OK_INSTALL_EXISTING:		// Visual feedback for instant cloning.
 				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
@@ -528,7 +526,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				break;
 			}
 		}).exceptionally(t -> {
-			reportAndShowToastForInternalException(context, "Error cloning user app: " + pkg, t);
+			reportAndShowToastForInternalException(context, "Error cloning user app: " + app.packageName, t);
 			return null;
 		});
 	}

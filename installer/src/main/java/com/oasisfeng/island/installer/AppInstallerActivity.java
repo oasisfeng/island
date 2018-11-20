@@ -14,6 +14,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
@@ -33,13 +34,17 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
+import com.oasisfeng.java.utils.IoUtils;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
@@ -54,6 +59,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
+import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -68,6 +74,7 @@ public class AppInstallerActivity extends Activity {
 
 	private static final int STREAM_BUFFER_SIZE = 65536;
 	private static final String PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS = "direct_install_allowed_callers";
+	private static final String SCHEME_PACKAGE = "package";
 	private static final String EXTRA_ORIGINATING_UID = "android.intent.extra.ORIGINATING_UID";		// Intent.EXTRA_ORIGINATING_UID
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
@@ -89,9 +96,11 @@ public class AppInstallerActivity extends Activity {
 		}
 
 		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		final Set<String> allowed_callers = preferences.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet());
-		if (! allowed_callers.contains(mCallerPackage)) {
-			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, getString(R.string.dialog_install_confirmation, mCallerAppLabel.get()));
+		if (! mCallerPackage.equals(getPackageName())
+				&& ! preferences.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet()).contains(mCallerPackage)) {
+			final String message = getString(SCHEME_PACKAGE.equals(getIntent().getData().getScheme()) ? R.string.dialog_clone_confirmation
+					: R.string.dialog_install_confirmation, mCallerAppLabel.get());
+			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, message);
 			final View view = View.inflate(dialog.getContext()/* For consistent styling */, R.layout.dialog_checkbox, null);
 			final CheckBox checkbox = view.findViewById(R.id.checkbox);
 			checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
@@ -118,25 +127,51 @@ public class AppInstallerActivity extends Activity {
 
 	private void performInstall() {
 		final Uri uri = getIntent().getData();
-		try (final InputStream input = getContentResolver().openInputStream(uri)) {
-			final PackageInstaller installer = getPackageManager().getPackageInstaller();
-			final PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-			final String name = "Island[" + mCallerPackage + "]";
-			try (final OutputStream out = (mSession = installer.openSession(installer.createSession(params))).openWrite(name, 0, -1)) {
-				final byte[] buffer = new byte[STREAM_BUFFER_SIZE];
-				int count;
-				while ((count = input.read(buffer)) != -1) out.write(buffer, 0, count);
-				mSession.fsync(out);
-			} catch (final IOException e) {
-				Log.e(TAG, "Error preparing installation", e);
-				finish();
-				return;
-			}
-		} catch (final IOException | SecurityException e) {		// May be thrown by ContentResolver.openInputStream().
+		final Map<String, InputStream> input_streams = new LinkedHashMap<>();
+		final String base_name = "Island[" + mCallerPackage + "]";
+		try {
+			if (SCHEME_PACKAGE.equals(uri.getScheme())) {
+				final String pkg = uri.getSchemeSpecificPart();
+				ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
+				if (info == null && (info = getIntent().getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
+					Log.e(TAG, "Cannot read app info of " + pkg);
+					finish();	// Do not fall-back to default package installer, since it will fail too.
+					return;
+				}
+				// TODO: Reject forward-locked package
+				input_streams.put(base_name, new FileInputStream(info.publicSourceDir));
+				if (info.splitPublicSourceDirs != null)
+					for (int i = 0, num_splits = info.splitPublicSourceDirs.length; i < num_splits; i ++) {
+						final String split = info.splitPublicSourceDirs[i];
+						input_streams.put(SDK_INT >= O ? info.splitNames[i] : "split" + i, new FileInputStream(split));
+					}
+			} else input_streams.put(base_name, getContentResolver().openInputStream(uri));
+		} catch(final IOException | SecurityException e) {		// May be thrown by ContentResolver.openInputStream().
 			Log.w(TAG, "Error opening " + uri + " for reading.\nTo launch Island app installer, " +
 					"please ensure data URI is accessible by Island, either exposed by content provider or world-readable (on pre-N)", e);
 			fallbackToSystemPackageInstaller();		// Default system package installer may have privilege to access the content that we can't.
+			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 			return;
+		}
+
+		final PackageInstaller installer = getPackageManager().getPackageInstaller();
+		final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+		try {
+			mSession = installer.openSession(installer.createSession(params));
+			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet())
+				try (final OutputStream out = mSession.openWrite(entry.getKey(), 0, - 1)) {
+					final byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+					final InputStream input = entry.getValue();
+					int count;
+					while ((count = input.read(buffer)) != - 1) out.write(buffer, 0, count);
+					mSession.fsync(out);
+				}
+		} catch (final IOException e) {
+			Log.e(TAG, "Error preparing installation", e);
+			finish();
+			return;
+		} finally {
+			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 		}
 
 		mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
@@ -169,11 +204,8 @@ public class AppInstallerActivity extends Activity {
 				new Intent("test").setPackage(getPackageName()), FLAG_UPDATE_CURRENT);
 		mSession.commit(status_callback.getIntentSender());
 
-		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setMessage(getString(R.string.progress_dialog_installing, mCallerAppLabel.get()));
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.setCancelable(false);
-		mProgressDialog.show();
+		mProgressDialog = Dialogs.buildProgress(this, getString(R.string.progress_dialog_installing, mCallerAppLabel.get()))
+				.indeterminate().nonCancelable().start();
 	}
 
 	private void fallbackToSystemPackageInstaller() {
@@ -186,9 +218,15 @@ public class AppInstallerActivity extends Activity {
 			final ComponentName component = new ComponentName(activity.packageName, activity.name);
 			Log.i(TAG, "Redirect to system package installer: " + component.flattenToShortString());
 
+			final PackageManager pm = getPackageManager();
 			final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();
 			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());		// Workaround to suppress FileUriExposedException.
 			try {
+				if (SDK_INT >= O && ! pm.canRequestPackageInstalls()) {
+					final Intent uas_settings = new Intent(ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts(SCHEME_PACKAGE, getPackageName(), null));
+					if (uas_settings.resolveActivity(pm) != null) startActivities(new Intent[] { intent, uas_settings });
+					else startActivity(intent);
+				} else startActivity(intent);
 				startActivity(intent.setComponent(component).setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
 			} finally {
 				StrictMode.setVmPolicy(vm_policy);
