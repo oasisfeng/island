@@ -9,12 +9,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
+import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.Config;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.IslandSetup;
@@ -88,9 +91,11 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 				pref_island_reprovisioning.setOnPreferenceClickListener(p -> {
 					final Context context = getActivity();
 					if (context != null) MethodShuttle.runInProfile(context, () ->	// ACTION_PROVISION_MANAGED_PROFILE is handled by IslandProvisioning.
-							context.startService(new Intent(ACTION_PROVISION_MANAGED_PROFILE).setPackage(Modules.MODULE_ENGINE))
-					).exceptionally(t -> null).thenAccept(component -> {	// Toast for success will be shown by IslandProvisioning.
-						if (component == null) Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+						ContextCompat.startForegroundService(context, new Intent(ACTION_PROVISION_MANAGED_PROFILE).setPackage(Modules.MODULE_ENGINE))
+					).exceptionally(t -> {	// Toast for success will be shown by IslandProvisioning.
+						Toasts.show(activity, R.string.toast_internal_error, Toast.LENGTH_LONG);
+						Analytics.$().logAndReport(TAG, "Error reprovisioning Island", t);
+						return null;
 					});
 					return true;
 				});
@@ -141,4 +146,6 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 	}
 
 	public SetupPreferenceFragment() { super(R.xml.pref_setup); }
+
+	static final String TAG = "Island.SPF";
 }
