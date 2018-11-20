@@ -34,6 +34,7 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
+import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.java.utils.IoUtils;
 
 import java.io.FileInputStream;
@@ -241,26 +242,25 @@ public class AppInstallerActivity extends Activity {
 	@RequiresApi(O) private boolean isCallerQualified(final ApplicationInfo caller_app_info) {
 		if (Apps.isPrivileged(caller_app_info) && getIntent().getBooleanExtra(EXTRA_NOT_UNKNOWN_SOURCE, false))
 			return true;	// From trusted source declared by privileged caller, skip checking.
-		int target_api = 0;
 		final int source_uid = getOriginatingUid(caller_app_info);
 		if (source_uid < 0) return true;		// From trusted caller (download provider, documents UI and etc.)
+		final PackageManager pm = getPackageManager();
+		final CharSequence source_label;
 		if (source_uid != caller_app_info.uid) {		// Originating source is not the caller
-			final String[] pkgs = getPackageManager().getPackagesForUid(source_uid);
-			if (pkgs != null) for (final String pkg : pkgs) {	// We only know its UID, use the max target API among UID-shared packages.
-				final ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
-				if (info != null) target_api = Math.max(target_api, info.targetSdkVersion);
-			}
-			if (target_api == 0) {
-				Log.w(TAG, "Cannot get target sdk version for UID " + source_uid);
-				return false;
-			}
-		} else target_api = caller_app_info.targetSdkVersion;
+			final String[] pkgs = pm.getPackagesForUid(source_uid);
+			if (pkgs != null) for (final String pkg : pkgs)
+				if (isSourceQualified(Apps.of(this).getAppInfo(pkg))) return true;
+			source_label = pm.getNameForUid(source_uid);
+		} else {
+			if (isSourceQualified(caller_app_info)) return true;
+			source_label = caller_app_info.loadLabel(pm);
+		}
+		Toasts.show(this, source_label + " does not declare " + REQUEST_INSTALL_PACKAGES, Toast.LENGTH_LONG);
+		return false;
+	}
 
-		final String caller_pkg = caller_app_info.packageName;
-		if (target_api >= O && ! declaresPermission(caller_pkg, REQUEST_INSTALL_PACKAGES)) {
-			Toast.makeText(this, caller_pkg + " does not declare " + REQUEST_INSTALL_PACKAGES, Toast.LENGTH_LONG).show();
-			return false;
-		} else return true;
+	@RequiresApi(O) private boolean isSourceQualified(final @Nullable ApplicationInfo info) {
+		return info != null && (info.targetSdkVersion < O || declaresPermission(info.packageName, REQUEST_INSTALL_PACKAGES));
 	}
 
 	@Nullable @Override public String getCallingPackage() {
@@ -281,7 +281,8 @@ public class AppInstallerActivity extends Activity {
 			} finally {
 				if (original_intent != null) setIntent(original_intent);
 			}
-		} else try {	// Only for Android 5.0
+		}
+		try {
 			@SuppressLint("PrivateApi") final Object am = Class.forName("android.app.ActivityManagerNative").getMethod("getDefault").invoke(null);
 			@SuppressWarnings("JavaReflectionMemberAccess") final Object token = Activity.class.getMethod("getActivityToken").invoke(this);
 			return (String) am.getClass().getMethod("getLaunchedFromPackage", IBinder.class).invoke(am, (IBinder) token);
