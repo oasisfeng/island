@@ -1,5 +1,6 @@
 package com.oasisfeng.common.app;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -16,7 +17,10 @@ import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
@@ -67,6 +71,7 @@ public class AppInfo extends ApplicationInfo {
 		loadIcon(filter, consumer, true);
 	}
 
+	@SuppressLint("StaticFieldLeak")	// The outer class has no direct reference to Context
 	@UiThread private void loadIcon(final @Nullable IconFilter filter, final IconConsumer consumer, final boolean need_badge) {
 		if (mCachedIcon == null) try {
 			new AsyncTask<Void, Void, Drawable>() {
@@ -81,19 +86,19 @@ public class AppInfo extends ApplicationInfo {
 					mCachedIcon = icon;
 					consumer.accept(icon);
 				}
-			}.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			}.executeOnExecutor(TASK_THREAD_POOL);
 		} catch (final RejectedExecutionException e) {
 			Analytics.$().report(e);        // For statistics purpose
 		} else consumer.accept(mCachedIcon);
 	}
 
 	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory when UI is hidden */
-	@CallSuper protected void trimMemoryOnUiHidden() {
+	@CallSuper void trimMemoryOnUiHidden() {
 		mCachedIcon = null;
 	}
 
 	/** Called by {@link AppListProvider#onTrimMemory(int)} to trim memory in memory-critical situation */
-	@CallSuper protected void trimMemoryOnCritical() {
+	@CallSuper void trimMemoryOnCritical() {
 		mCachedIcon = null;
 		mLastInfo = null;
 		// mLabel is not worth trimming and kept for performance
@@ -131,6 +136,10 @@ public class AppInfo extends ApplicationInfo {
 	private Drawable mCachedIcon;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;
+	// Global Thread-pool for app label & icon loading
+	static final ThreadPoolExecutor TASK_THREAD_POOL = new ThreadPoolExecutor(0, 16, 1, SECONDS,
+			new LinkedBlockingQueue<>(1024), r -> new Thread(r, "AppInfo.AsyncTask"), new CallerRunsPolicy()/* In worst case */);
+	static { TASK_THREAD_POOL.allowCoreThreadTimeOut(true); }
 
 	private static final String TAG = "AppInfo";
 }

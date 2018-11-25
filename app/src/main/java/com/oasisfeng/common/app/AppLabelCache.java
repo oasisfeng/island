@@ -65,7 +65,7 @@ class AppLabelCache implements ComponentCallbacks {
 				Log.v(TAG, "Loaded: " + info.packageName + " = " + label);
 				mCallback.onLabelUpdate(pkg);
 			}
-		}.execute();
+		}.executeOnExecutor(AppInfo.TASK_THREAD_POOL);
 		return null;
 	}
 
