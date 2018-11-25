@@ -21,6 +21,7 @@ import android.provider.Telephony.Carriers;
 import android.provider.UserDictionary;
 import android.util.Log;
 
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.OwnerUser;
@@ -135,12 +136,14 @@ import static android.os.Build.VERSION_CODES.N;
 		final Set<String> critical_sys_pkgs = new HashSet<>(sCriticalSystemPkgs);
 
 		// Detect package names for critical intent actions, as an addition to the white-list of well-known ones.
-		for (final Intent intent : sCriticalActivityIntents) { @SuppressLint("WrongConstant")
+		for (final Intent intent : sCriticalActivityIntents) try { @SuppressLint("WrongConstant")
 			final ResolveInfo info = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY | Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
 			if (info == null || (info.activityInfo.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;
 			final String pkg = info.activityInfo.packageName;
 			Log.i(TAG, "Critical package for " + intent + ": " + pkg);
 			critical_sys_pkgs.add(pkg);
+		} catch (final RuntimeException e) {	// NPE on Android 6 for some ASUS devices (e.g. ZenFone 2)
+			Analytics.$().report(e);
 		}
 		Performances.check(stopwatch, 1, "CriticalActivities");
 
