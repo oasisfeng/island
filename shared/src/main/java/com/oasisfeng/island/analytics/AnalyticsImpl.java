@@ -57,6 +57,11 @@ class AnalyticsImpl implements Analytics {
 		CrashReport.logException(t);
 	}
 
+	@Override public void report(final String message, final Throwable t) {
+		CrashReport.log(message);
+		CrashReport.logException(t);
+	}
+
 	@Override public void reportEvent(final String event, final Bundle params) {
 		Log.d(TAG, params.isEmpty() ? "Event: " + event : "Event: " + event + " " + params);
 

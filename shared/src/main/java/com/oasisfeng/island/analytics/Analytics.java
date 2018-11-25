@@ -44,9 +44,10 @@ public interface Analytics {
 	Analytics trace(String key, int value);
 	Analytics trace(String key, boolean value);
 	void report(Throwable t);
+	void report(String message, Throwable t);
 	default void logAndReport(final String tag, final String message, final Throwable t) {
 		Log.e(tag, message, t);
-		report(t);
+		report(message, t);
 	}
 
 	interface Trace {
