@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.support.v7.widget.CardView;
 
 import com.oasisfeng.android.util.Apps;
@@ -34,7 +35,7 @@ import static android.os.Build.VERSION_CODES.N;
  */
 public class CriticalAppRequiredTip extends IgnorableTip {
 
-	@Override protected @Nullable CardViewModel buildCardIfNotIgnored(final Context context) {
+	@WorkerThread @Override protected @Nullable CardViewModel buildCardIfNotIgnored(final Context context) {
 		final String webview_pkg;
 		if (SDK_INT >= N && Users.hasProfile() && (webview_pkg = CriticalAppsManager.getCurrentWebViewPackageName()) != null) {
 			final IslandAppInfo app = IslandAppListProvider.getInstance(context).get(webview_pkg, Users.profile);
@@ -53,7 +54,7 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 		return null;
 	}
 
-	private CardViewModel buildCardIfActionRequired(final Context context, final String pkg, final @Nullable IslandAppInfo app) {
+	@WorkerThread private CardViewModel buildCardIfActionRequired(final Context context, final String pkg, final @Nullable IslandAppInfo app) {
 		if (app != null && app.enabled && ! app.isHidden()) return null;		// No action required for this app.
 		final CardViewModel card = new CardViewModel(context, R.string.tip_critical_package_required, 0,
 				getIgnoreActionLabel(), app == null ? R.string.action_clone : app.isHidden() ? R.string.action_unfreeze : R.string.action_app_settings) {

@@ -3,6 +3,7 @@ package com.oasisfeng.island.tip;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.annotation.WorkerThread;
 
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.mobile.R;
@@ -17,11 +18,11 @@ import com.oasisfeng.ui.card.CardViewModel;
  */
 abstract class IgnorableTip extends Tip {
 
-	@Override protected @Nullable CardViewModel buildCardIfNeeded(final Context context) {
+	@WorkerThread @Override protected @Nullable CardViewModel buildCardIfNeeded(final Context context) {
 		return Scopes.app(context).isMarked(mMark) ? null : buildCardIfNotIgnored(context);
 	}
 
-	protected abstract @Nullable CardViewModel buildCardIfNotIgnored(final Context context);
+	@WorkerThread protected abstract @Nullable CardViewModel buildCardIfNotIgnored(final Context context);
 
 	boolean shouldIgnoreTip(final Context context, final String extra_mark) {
 		return Scopes.app(context).isMarked(getMarkWithExtra(extra_mark));
@@ -39,7 +40,7 @@ abstract class IgnorableTip extends Tip {
 		mMark = mark;
 	}
 
-	@StringRes int getIgnoreActionLabel() {
+	@StringRes static int getIgnoreActionLabel() {
 		return R.string.tip_action_ignore;
 	}
 

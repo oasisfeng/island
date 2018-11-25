@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.arch.lifecycle.ViewModelProvider;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
@@ -61,7 +62,7 @@ public class AppListFragment extends LifecycleFragment {
 		super.onResume();
 		if (SystemClock.uptimeMillis() - mTimeLastPaused < 1_000) return;	// Avoid updating for brief pausing caused by cross-profile functionality.
 		if (mFeaturedViewModel.visible.getValue()) mFeaturedViewModel.update(getActivity());
-		Loopers.addIdleTask(() -> Optional.ofNullable(getActivity()).map(Tip::next).ifPresent(mBinding::setCard));
+		Loopers.addIdleTask(() -> AsyncTask.execute(() -> Optional.ofNullable(getActivity()).map(Tip::next).ifPresent(mBinding::setCard)));
 	}
 
 	@Override public void onPause() {

@@ -2,6 +2,7 @@ package com.oasisfeng.island.tip;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.oasisfeng.ui.card.CardViewModel;
@@ -13,11 +14,11 @@ import com.oasisfeng.ui.card.CardViewModel;
  */
 public abstract class Tip {
 
-	protected abstract @Nullable CardViewModel buildCardIfNeeded(final Context context);
+	@WorkerThread protected abstract @Nullable CardViewModel buildCardIfNeeded(final Context context);
 
 	@SuppressWarnings("unchecked") private static final Class<? extends Tip>[] TIPS = new Class[] { CriticalAppRequiredTip.class };
 
-	public static @Nullable CardViewModel next(final Context context) {
+	@WorkerThread public static @Nullable CardViewModel next(final Context context) {
 		for (final Class<? extends Tip> tip_class : TIPS) try {
 			final Tip tip;
 			tip = tip_class.newInstance();
