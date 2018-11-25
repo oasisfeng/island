@@ -77,6 +77,10 @@ public class AppInstallerActivity extends Activity {
 	private static final String PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS = "direct_install_allowed_callers";
 	private static final String SCHEME_PACKAGE = "package";
 	private static final String EXTRA_ORIGINATING_UID = "android.intent.extra.ORIGINATING_UID";		// Intent.EXTRA_ORIGINATING_UID
+	private static final String EXTRA_INSTALL_RESULT = "android.intent.extra.INSTALL_RESULT";		// Intent.EXTRA_INSTALL_RESULT
+	private static final int INSTALL_SUCCEEDED = 1;													// PackageManager.INSTALL_SUCCEEDED
+	private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;									// PackageManager.INSTALL_FAILED_INTERNAL_ERROR
+	private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";		// PackageInstall.EXTRA_LEGACY_STATUS
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -126,14 +130,15 @@ public class AppInstallerActivity extends Activity {
 	}
 
 	private void performInstall() {
-		final Uri uri = getIntent().getData();
+		final Intent intent = getIntent();
+		final Uri uri = intent.getData();
 		final Map<String, InputStream> input_streams = new LinkedHashMap<>();
 		final String base_name = "Island[" + mCallerPackage + "]";
 		try {
 			if (SCHEME_PACKAGE.equals(uri.getScheme())) {
 				final String pkg = uri.getSchemeSpecificPart();
 				ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
-				if (info == null && (info = getIntent().getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
+				if (info == null && (info = intent.getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
 					Log.e(TAG, "Cannot read app info of " + pkg);
 					finish();	// Do not fall-back to default package installer, since it will fail too.
 					return;
@@ -156,8 +161,9 @@ public class AppInstallerActivity extends Activity {
 
 		final PackageInstaller installer = getPackageManager().getPackageInstaller();
 		final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+		final int session_id;
 		try {
-			mSession = installer.openSession(installer.createSession(params));
+			mSession = installer.openSession(session_id = installer.createSession(params));
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet())
 				try (final OutputStream out = mSession.openWrite(entry.getKey(), 0, - 1)) {
 					final byte[] buffer = new byte[STREAM_BUFFER_SIZE];
@@ -174,35 +180,41 @@ public class AppInstallerActivity extends Activity {
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 		}
 
+		final boolean should_return_result = intent.getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false);
 		mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 			final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
 			if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
 			switch (status) {
 			case PackageInstaller.STATUS_SUCCESS:
 				unregisterReceiver(this);
+				if (should_return_result)		// Implement the exact same result data as InstallSuccess in PackageInstaller
+					AppInstallerActivity.this.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
 				AppInstallationNotifier.onPackageInstalled(context, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
 				finish();
 				break;
 			case PackageInstaller.STATUS_PENDING_USER_ACTION:
 				final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-				if (action == null) finish();	// Should never happen
-				else startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
+				if (action != null) startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
+				else finish();    // Should never happen
 				break;
 			case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
+				if (should_return_result) AppInstallerActivity.this.setResult(Activity.RESULT_CANCELED);
 				finish();
 				break;
 			default:
-				String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-				if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
-				Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message)
-						.setOnDismissListener(d -> finish()).show();
+				if (! should_return_result) {
+					String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+					if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
+					Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message)
+							.setOnDismissListener(d -> finish()).show();
+				} else AppInstallerActivity.this.setResult(Activity.RESULT_FIRST_USER,	// The exact same result data as InstallFailed in PackageInstaller
+						new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
 			}
 		}};
-		registerReceiver(mStatusCallback, new IntentFilter("test"));
+		final Intent callback = new Intent("INSTALL_STATUS").setPackage(getPackageName());
+		registerReceiver(mStatusCallback, new IntentFilter(callback.getAction()));
 
-		final PendingIntent status_callback = PendingIntent.getBroadcast(this, 0,
-				new Intent("test").setPackage(getPackageName()), FLAG_UPDATE_CURRENT);
-		mSession.commit(status_callback.getIntentSender());
+		mSession.commit(PendingIntent.getBroadcast(this, session_id, callback, FLAG_UPDATE_CURRENT).getIntentSender());
 
 		mProgressDialog = Dialogs.buildProgress(this, getString(R.string.progress_dialog_installing, mCallerAppLabel.get()))
 				.indeterminate().nonCancelable().start();
