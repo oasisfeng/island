@@ -111,7 +111,7 @@ public class AppInstallerActivity extends Activity {
 			dialog.withCancelButton().withOkButton(() -> {
 				if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
 				performInstall();
-			}).setOnDismissListener(d -> finish()).setView(view).setCancelable(false).show();
+			}).setOnCancelListener(d -> finish()).setView(view).setCancelable(false).show();
 		} else performInstall();		// Whitelisted caller to perform installation without confirmation
 	}
 
