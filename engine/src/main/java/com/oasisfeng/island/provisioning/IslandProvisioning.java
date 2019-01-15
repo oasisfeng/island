@@ -233,6 +233,10 @@ public class IslandProvisioning extends IntentService {
 			policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
 			policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
 		}
+		// As reported by user, some account types are strangely unable to remove. Just make sure all account types are allowed.
+		final String[] restricted_account_types = policies.getManager().getAccountTypesWithManagementDisabled();
+		if (restricted_account_types != null && restricted_account_types.length > 0) for (final String account_type : restricted_account_types)
+			policies.execute(DevicePolicyManager::setAccountManagementDisabled, account_type, false);
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
