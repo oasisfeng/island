@@ -23,13 +23,15 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		Alive(1),
 		Frozen(2),
 		Disabled(3),	// System app only
-		Unknown(4);
+		Uninstalled(4),	// System app only
+		Unknown(5);
 
 		State(final int order) { this.order = order; }
 		final int order;
 	}
 
 	private State checkState() {
+		if (! info().isInstalled()) return State.Uninstalled;
 		if (! info().shouldShowAsEnabled()) return State.Disabled;
 		if (info().isHidden()) return State.Frozen;
 		return State.Alive;
@@ -37,7 +39,8 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 
 	public CharSequence getStatusText(final Context context) {
 		final StringBuilder status = new StringBuilder();
-		if (! info().enabled) status.append(context.getString(R.string.status_disabled));
+		if (! info().isInstalled()) status.append(context.getString(R.string.status_uninstalled));
+		else if (! info().enabled) status.append(context.getString(R.string.status_disabled));
 		else if (info().isHidden()) status.append(context.getString(R.string.status_frozen));
 		else status.append(context.getString(R.string.status_alive));
 		final boolean exclusive = IslandAppListProvider.getInstance(context).isExclusive(info());

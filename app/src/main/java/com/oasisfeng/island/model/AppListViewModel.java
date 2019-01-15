@@ -38,7 +38,6 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
-import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
@@ -90,8 +89,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
 	@SuppressWarnings("WeakerAccess") public enum Filter {
-		Island		(Users::hasProfile,  app -> Users.isProfile(app.user) && app.shouldShowAsEnabled()),
-		Mainland	(() -> true,         app -> Users.isOwner(app.user)),
+		// Name		Visibility			Filter
+		Island		(Users::hasProfile,	app -> Users.isProfile(app.user) && app.shouldShowAsEnabled() && app.isInstalled()),
+		Mainland	(() -> true,		app -> Users.isOwner(app.user) && (app.isSystem() || app.isInstalled())),	// Including uninstalled system app
 		;
 		boolean available() { return mVisibility.getAsBoolean(); }
 		Filter(final BooleanSupplier visibility, final Predicate<IslandAppInfo> filter) { mVisibility = visibility; mFilter = filter; }
@@ -132,7 +132,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (primary_filter == null) return;
 		Log.d(TAG, "Primary filter: " + primary_filter);
 		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
-		if (! mFilterIncludeHiddenSystemApps) combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isLaunchable());
+		if (! mFilterIncludeHiddenSystemApps) combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
 		if (! TextUtils.isEmpty(mFilterText)) combined_filter = combined_filter.and(this::matchQueryText);
 		mActiveFilters = combined_filter;
 
@@ -179,7 +179,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
 		mActions = actions;
-		mFilterShared = IslandAppListProvider.excludeSelf(context).and(AppInfo::isInstalled);
+		mFilterShared = IslandAppListProvider.excludeSelf(context);
 		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
 
 		if (! Filter.Island.available()) {		// Island is unavailable
@@ -219,16 +219,16 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final UserHandle profile = Users.profile;
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 
-		final boolean in_owner = Users.isOwner(app.user), is_managed = mDeviceOwner || ! in_owner;
-		mActions.findItem(R.id.menu_freeze).setVisible(is_managed && ! app.isHidden() && app.enabled);
-		mActions.findItem(R.id.menu_unfreeze).setVisible(is_managed && app.isHidden());
+		final boolean system = app.isSystem(), installed = app.isInstalled(), in_owner = Users.isOwner(app.user), is_managed = mDeviceOwner || ! in_owner;
+		mActions.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
+		mActions.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(in_owner && profile != null && exclusive);
 		mActions.findItem(R.id.menu_clone_back).setVisible(! in_owner && exclusive);
-		final boolean system = app.isSystem();
-		mActions.findItem(R.id.menu_remove).setVisible(exclusive ? system : (! system || app.shouldShowAsEnabled()));	// Disabled system app is treated as "removed".
-		mActions.findItem(R.id.menu_uninstall).setVisible(exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
-		mActions.findItem(R.id.menu_shortcut).setVisible(is_managed && app.isLaunchable() && app.enabled);
-		mActions.findItem(R.id.menu_greenify).setVisible(is_managed && app.enabled);
+		mActions.findItem(R.id.menu_reinstall).setVisible(! installed);
+		mActions.findItem(R.id.menu_remove).setVisible(installed && (exclusive ? system : (! system || app.shouldShowAsEnabled())));	// Disabled system app is treated as "removed".
+		mActions.findItem(R.id.menu_uninstall).setVisible(installed && exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
+		mActions.findItem(R.id.menu_shortcut).setVisible(installed && is_managed && app.isLaunchable() && app.enabled);
+		mActions.findItem(R.id.menu_greenify).setVisible(installed && is_managed && app.enabled);
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
@@ -306,6 +306,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			launchExternalAppSettings(context, app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
 			onRemovalRequested(context);
+		} else if (id == R.id.menu_reinstall) {
+			onReinstallRequested(context);
 		} else if (id == R.id.menu_shortcut) {
 			onShortcutRequested(context);
 		} else if (id == R.id.menu_greenify) {
@@ -424,6 +426,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
 					.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
 		});
+	}
+
+	private void onReinstallRequested(final Context context) {
+		if (mSelection.getValue() == null) return;
+		final IslandAppInfo app = mSelection.getValue().info();
+		final Activity activity = Activities.findActivityFrom(context);
+		if (activity == null) reinstallSystemApp(context, app);
+		else Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_reinstall_system_app_warning)
+				.withCancelButton().setPositiveButton(R.string.dialog_button_continue, (d, w) -> reinstallSystemApp(context, app)).show();
+	}
+
+	private static void reinstallSystemApp(final Context context, final IslandAppInfo app) {
+		final DevicePolicies policies = new DevicePolicies(context);
+		policies.execute(DevicePolicyManager::enableSystemApp, app.packageName);
 	}
 
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */

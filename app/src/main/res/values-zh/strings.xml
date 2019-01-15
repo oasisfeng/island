@@ -8,6 +8,7 @@
     <string name="status_alive">正常</string>
     <string name="status_frozen">冻结</string>
     <string name="status_disabled">停用</string>
+    <string name="status_uninstalled">未安装</string>
     <string name="status_appendix_system">系统</string>
     <string name="status_appendix_critical">关键</string>
     <string name="status_appendix_cloned">有分身</string>
@@ -67,6 +68,7 @@
     <string name="action_app_settings">应用设置</string>
     <string name="action_remove">移除分身</string>
     <string name="action_uninstall">卸载</string>
+    <string name="action_reinstall">恢复安装</string>
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜索</string>
@@ -89,6 +91,7 @@
     <string name="dialog_deactivate_message">确定希望解除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壶中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
     <string name="dialog_critical_app_warning">这个应用（或组件）可能对于 Android 系统或其它应用的正常运作至关重要。如果继续此操作，部分应用甚至整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
+    <string name="dialog_reinstall_system_app_warning">这个系统应用（或组件）因为某些原因并未安装。如果继续此操作，整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
     <string name="dialog_mainland_device_admin">启用“黄帝之名”需要授予设备管理权限。</string>
     <string name="dialog_mainland_setup_done">“黄帝之名”已启用，将在设备重启后生效。</string>
     <string name="dialog_island_setup_failed">抱歉，创建壶中界时出现了异常。（阶段 %1$d）</string>
