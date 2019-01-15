@@ -38,6 +38,7 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
+import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
@@ -58,9 +59,11 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 import java9.util.concurrent.CompletableFuture;
 import java9.util.concurrent.CompletionStage;
@@ -69,9 +72,12 @@ import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 
 /**
  * View model for apps
@@ -491,7 +497,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
 				break;
 			case IslandAppClones.CLONE_RESULT_NO_SYS_MARKET:
-				final Activity activity = Activities.findActivityFrom(context);
+				Activity activity = Activities.findActivityFrom(context);
 				if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
 						.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
 						.setPositiveButton(android.R.string.cancel, null).show();
@@ -499,7 +505,31 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				break;
 			case IslandAppClones.CLONE_RESULT_OK_INSTALL:
 				Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
-				showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
+				activity = Activities.findActivityFrom(context);
+				final UserHandle profile = Users.profile;
+				if (SDK_INT >= O && activity != null && profile != null) {
+					final String cmd = "cmd package install-existing --user " + Users.toId(profile) + " " + pkg;
+					new SafeAsyncTask<Void, Void, List<String>>(activity) {
+						@Override protected List<String> doInBackground(final Void[] params) {
+							return Shell.SU.run(cmd);
+						}
+
+						@Override protected void onPostExecute(final Activity activity, final List<String> result) {
+							try {
+								final ApplicationInfo app_info = activity.getSystemService(LauncherApps.class).getApplicationInfo(pkg, 0, Users.profile);
+								if (app_info != null && (app_info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {
+									Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+									return;
+								}
+							} catch (final PackageManager.NameNotFoundException e) {
+								Log.w(TAG, "Failed to clone app via root: " + pkg);
+								if (result != null && ! result.isEmpty()) Analytics.$().logAndReport(TAG, "Error executing: " + cmd,
+										new ExecutionException("ROOT: " + cmd + ", result: " + result.stream().collect(joining(" \\n ")), null));
+							}
+							showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
+						}
+					}.execute();
+				}
 				break;
 			case IslandAppClones.CLONE_RESULT_OK_INSTALL_EXISTING:
 				Analytics.$().event("clone_install_existing").with(ITEM_ID, pkg).send();
