@@ -1,12 +1,13 @@
 package com.oasisfeng.perf;
 
 import android.os.SystemClock;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.deagle.BuildConfig;
 
 import java.util.concurrent.TimeUnit;
+
+import androidx.annotation.Nullable;
 
 /**
  * Utility class for performance related stuffs

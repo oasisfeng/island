@@ -2,7 +2,6 @@ package com.oasisfeng.island.util;
 
 import android.content.Context;
 import android.security.KeyPairGeneratorSpec;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.util.Supplier;
@@ -22,6 +21,8 @@ import java.security.cert.Certificate;
 import java.util.Date;
 
 import javax.security.auth.x500.X500Principal;
+
+import androidx.annotation.Nullable;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 

@@ -3,14 +3,10 @@ package com.oasisfeng.island.featured;
 import android.app.Activity;
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
-import android.arch.lifecycle.AndroidViewModel;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.StringRes;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
@@ -19,6 +15,7 @@ import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.google.GooglePlayStore;
+import com.oasisfeng.android.ui.Snackbars;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Consumer;
@@ -39,10 +36,16 @@ import com.oasisfeng.island.util.Users;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
+
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
-import static android.support.v7.widget.helper.ItemTouchHelper.END;
-import static android.support.v7.widget.helper.ItemTouchHelper.START;
+import static androidx.recyclerview.widget.ItemTouchHelper.END;
+import static androidx.recyclerview.widget.ItemTouchHelper.START;
 
 /**
  * View-model for featured list

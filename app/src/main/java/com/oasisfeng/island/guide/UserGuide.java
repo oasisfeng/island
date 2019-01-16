@@ -1,11 +1,6 @@
 package com.oasisfeng.island.guide;
 
 import android.app.Activity;
-import android.arch.lifecycle.LifecycleOwner;
-import android.databinding.BindingAdapter;
-import android.databinding.ObservableField;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +19,11 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.databinding.BindingAdapter;
+import androidx.databinding.ObservableField;
+import androidx.lifecycle.LifecycleOwner;
 import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt;
 
 /**

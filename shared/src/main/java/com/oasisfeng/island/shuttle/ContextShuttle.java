@@ -4,11 +4,12 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.UserHandle;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresPermission;
 
 import com.oasisfeng.android.content.pm.Permissions;
 import com.oasisfeng.island.util.Hacks;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 
 /**
  * Utility class for cross-user context related stuffs.

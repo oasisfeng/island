@@ -6,7 +6,7 @@ android {
     defaultConfig {
         minSdkVersion 21
 
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     compileOptions {
@@ -25,11 +25,8 @@ android {
 
 dependencies {
     implementation project(':shared')
-    implementation 'com.android.support:support-compat:28.0.0'      // ShortcutShuttle
+    implementation 'androidx.core:core:1.0.1'      // ShortcutShuttle
 
-    androidTestImplementation('com.android.support.test:runner:1.0.2') { exclude group: 'com.android.support' }
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
-    // To workaround the dependency conflicts caused by "com.android.databinding:library"
-    androidTestImplementation 'com.android.support:support-core-utils:28.0.0'
-    androidTestImplementation 'com.android.support:support-fragment:28.0.0'
+    androidTestImplementation 'androidx.test:runner:1.1.1'
+    androidTestImplementation 'androidx.test:rules:1.1.1'
 }

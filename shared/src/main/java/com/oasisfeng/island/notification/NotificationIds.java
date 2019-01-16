@@ -6,15 +6,15 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.annotation.StringRes;
-import android.support.v4.app.NotificationManagerCompat;
 
 import com.oasisfeng.island.shared.R;
 
 import java.util.Objects;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.StringRes;
+import androidx.core.app.NotificationManagerCompat;
 import java9.util.function.Consumer;
 
 import static android.app.NotificationManager.IMPORTANCE_HIGH;

@@ -75,10 +75,6 @@ dependencies {
     mobileImplementation project(':mobile')
     // File Provider only
     fileproviderImplementation project(':fileprovider')
-
-    // To workaround the dependency conflicts caused by "com.android.databinding:library"
-    implementation 'com.android.support:support-core-ui:28.0.0'
-    implementation 'com.android.support:support-fragment:28.0.0'
 }
 
 // Firebase plug-in

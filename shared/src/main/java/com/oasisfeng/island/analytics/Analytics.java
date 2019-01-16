@@ -1,9 +1,6 @@
 package com.oasisfeng.island.analytics;
 
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
-import android.support.annotation.Nullable;
-import android.support.annotation.Size;
 import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -11,6 +8,10 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.intellij.lang.annotations.Pattern;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import androidx.annotation.CheckResult;
+import androidx.annotation.Nullable;
+import androidx.annotation.Size;
 
 /**
  * Abstraction for analytics service

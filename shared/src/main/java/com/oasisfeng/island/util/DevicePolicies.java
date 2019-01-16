@@ -10,12 +10,12 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.util.Objects;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import java9.util.Optional;
 import java9.util.function.BiConsumer;
 import java9.util.function.BiFunction;

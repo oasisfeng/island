@@ -1,7 +1,7 @@
 package com.oasisfeng.island.util;
 
 import android.os.AsyncTask;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.WorkerThread;
 
 /**
  * Simplified {@link AsyncTask} without parameters and result.

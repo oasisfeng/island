@@ -15,7 +15,6 @@ import android.net.Uri;
 import android.os.DeadObjectException;
 import android.os.Process;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
 import android.widget.Toast;
 
 import com.oasisfeng.android.ui.Dialogs;
@@ -40,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import androidx.annotation.Nullable;
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 import java9.util.stream.Collectors;

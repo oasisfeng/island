@@ -6,13 +6,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
-import android.support.annotation.RequiresApi;
-import android.support.annotation.StringDef;
 
 import com.oasisfeng.island.analytics.Analytics;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import androidx.annotation.RequiresApi;
+import androidx.annotation.StringDef;
 import java9.util.Optional;
 
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;

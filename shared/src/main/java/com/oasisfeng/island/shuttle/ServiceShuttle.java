@@ -11,7 +11,6 @@ import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.oasisfeng.android.app.Activities;
@@ -21,6 +20,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import java9.util.stream.StreamSupport;
 
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;

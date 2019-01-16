@@ -16,8 +16,6 @@ import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.print.PrintManager;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.oasisfeng.hack.Hack;
@@ -26,6 +24,9 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
 
 import java.io.File;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;

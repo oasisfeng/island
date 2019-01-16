@@ -14,9 +14,6 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.TwoStatePreference;
-import android.support.annotation.StringRes;
-import android.support.annotation.XmlRes;
-import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
 import com.oasisfeng.android.app.Activities;
@@ -26,6 +23,10 @@ import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 
 import java.util.List;
+
+import androidx.annotation.StringRes;
+import androidx.annotation.XmlRes;
+import androidx.core.app.NavUtils;
 
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;

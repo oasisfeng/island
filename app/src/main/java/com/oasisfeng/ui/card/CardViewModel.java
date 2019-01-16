@@ -1,13 +1,14 @@
 package com.oasisfeng.ui.card;
 
 import android.content.Context;
-import android.support.annotation.ColorInt;
-import android.support.annotation.StringRes;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.CardView;
 import android.view.View;
 
 import com.oasisfeng.island.mobile.R;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.StringRes;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 
 /**
  * View-model for card

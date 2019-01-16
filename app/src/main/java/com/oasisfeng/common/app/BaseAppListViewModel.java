@@ -1,8 +1,5 @@
 package com.oasisfeng.common.app;
 
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
-import android.databinding.ObservableList;
 import android.util.Log;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
@@ -11,6 +8,10 @@ import com.oasisfeng.island.model.AppViewModel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.databinding.ObservableList;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 /**
  * View-model of basic entry-selectable (single-choice) app-list.

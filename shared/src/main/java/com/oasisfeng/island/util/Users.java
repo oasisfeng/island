@@ -4,10 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.os.Process;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
@@ -17,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import androidx.annotation.Nullable;
 
 import static android.content.Context.USER_SERVICE;
 
@@ -85,15 +86,4 @@ public abstract class Users extends PseudoContentProvider {
 	private static final int PER_USER_RANGE = 100000;
 	private static List<UserHandle> sProfiles = Collections.emptyList();
 	private static final String TAG = "Users";
-
-	public static UserHandle fromId(final int user) {
-		final android.os.Parcel parcel = android.os.Parcel.obtain();
-		try {
-			parcel.writeInt(user);
-			parcel.setDataPosition(0);
-			return UserHandle.CREATOR.createFromParcel(parcel);
-		} finally {
-			parcel.recycle();
-		}
-	}
 }

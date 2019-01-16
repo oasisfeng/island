@@ -2,13 +2,14 @@ package com.oasisfeng.island.api;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.annotation.RequiresPermission;
-import android.support.annotation.RestrictTo;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import static android.support.annotation.RestrictTo.Scope.LIBRARY;
+import androidx.annotation.RequiresPermission;
+import androidx.annotation.RestrictTo;
+
+import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 /**
  * The API protocol

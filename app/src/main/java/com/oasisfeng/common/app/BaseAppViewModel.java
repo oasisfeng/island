@@ -1,7 +1,5 @@
 package com.oasisfeng.common.app;
 
-import android.arch.lifecycle.ViewModel;
-import android.databinding.ObservableField;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.View;
@@ -10,6 +8,9 @@ import com.oasisfeng.android.ui.IconResizer;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.IslandApplication;
 import com.oasisfeng.island.mobile.R;
+
+import androidx.databinding.ObservableField;
+import androidx.lifecycle.ViewModel;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 

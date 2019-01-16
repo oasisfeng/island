@@ -5,9 +5,6 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
-import android.support.v7.widget.CardView;
 
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.controller.IslandAppClones;
@@ -23,6 +20,9 @@ import com.oasisfeng.ui.card.CardViewModel;
 import java.util.List;
 import java.util.Objects;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
+import androidx.cardview.widget.CardView;
 import java9.util.stream.Collectors;
 
 import static android.os.Build.VERSION.SDK_INT;

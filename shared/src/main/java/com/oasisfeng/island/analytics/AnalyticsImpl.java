@@ -2,8 +2,6 @@ package com.oasisfeng.island.analytics;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
@@ -18,6 +16,9 @@ import com.oasisfeng.island.shared.R;
 import org.intellij.lang.annotations.Pattern;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import androidx.annotation.CheckResult;
+import androidx.annotation.Nullable;
 
 /**
  * The analytics implementation in local process

@@ -9,13 +9,14 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.android.ui.IconResizer;
 import com.oasisfeng.island.analytics.Analytics;
 
 import java.util.Objects;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;

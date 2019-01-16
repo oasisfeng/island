@@ -14,9 +14,6 @@ import android.content.pm.LauncherApps;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -40,6 +37,10 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
 import java.util.Set;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.Notification.PRIORITY_HIGH;

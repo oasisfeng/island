@@ -2,7 +2,6 @@ package com.oasisfeng.island.setup;
 
 import android.app.Fragment;
 import android.content.Intent;
-import android.databinding.Observable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +13,8 @@ import com.android.setupwizardlib.view.NavigationBar;
 import com.oasisfeng.android.os.Bundles;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.SetupWizardBinding;
+
+import androidx.databinding.Observable;
 
 /**
  * Setup wizard

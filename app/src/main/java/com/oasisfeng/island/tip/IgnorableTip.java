@@ -1,13 +1,14 @@
 package com.oasisfeng.island.tip;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.annotation.WorkerThread;
 
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.ui.card.CardViewModel;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.annotation.WorkerThread;
 
 /**
  * Tip with action to be ignored in the future.

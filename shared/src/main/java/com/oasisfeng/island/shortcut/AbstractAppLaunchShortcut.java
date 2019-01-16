@@ -19,8 +19,6 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 
 import com.oasisfeng.island.analytics.Analytics;
@@ -29,6 +27,9 @@ import com.oasisfeng.island.util.Users;
 import java.net.URISyntaxException;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import androidx.annotation.DrawableRes;
+import androidx.annotation.Nullable;
 
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;

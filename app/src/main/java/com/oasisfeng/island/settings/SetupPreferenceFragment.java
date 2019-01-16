@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.provider.Settings;
-import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
@@ -31,6 +30,7 @@ import com.oasisfeng.settings.ActionButtonPreference;
 
 import java.util.List;
 
+import androidx.core.content.ContextCompat;
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 

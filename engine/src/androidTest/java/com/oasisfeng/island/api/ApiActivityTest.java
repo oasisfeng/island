@@ -7,9 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.GrantPermissionRule;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,10 +14,13 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.ExecutionException;
 
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.runner.AndroidJUnit4;
 import java9.util.concurrent.CompletableFuture;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
-import static android.support.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getContext;
 import static org.junit.Assert.assertEquals;
 
 /**

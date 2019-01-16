@@ -10,7 +10,6 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -23,6 +22,8 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import androidx.annotation.RequiresApi;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.os.Build.VERSION.SDK_INT;

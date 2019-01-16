@@ -4,8 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
@@ -13,6 +11,9 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.ProfileUser;
 
 import java.util.Set;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;

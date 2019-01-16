@@ -10,15 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.databinding.ObservableInt;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.annotation.StringRes;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -37,6 +31,12 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.StringRes;
+import androidx.databinding.ObservableInt;
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 

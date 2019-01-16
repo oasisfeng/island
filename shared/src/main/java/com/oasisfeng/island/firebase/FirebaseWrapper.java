@@ -5,7 +5,6 @@ import android.app.Notification;
 import android.app.NotificationManagerExtender;
 import android.content.Context;
 import android.os.PowerManager;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -22,6 +21,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import androidx.annotation.NonNull;
 
 /**
  * Wrapper for Firebase with tweaks.

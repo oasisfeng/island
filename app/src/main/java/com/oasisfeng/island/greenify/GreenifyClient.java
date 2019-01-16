@@ -10,11 +10,12 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.support.annotation.Nullable;
 
 import com.oasisfeng.android.app.Activities;
 
 import java.util.Objects;
+
+import androidx.annotation.Nullable;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Context.USER_SERVICE;

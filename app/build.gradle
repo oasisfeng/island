@@ -5,7 +5,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     baseFeature true
@@ -36,16 +36,16 @@ dependencies {
     implementation project(':shared')
     implementation project(':deagle')
 
-    implementation 'android.arch.lifecycle:extensions:1.1.0'
-    implementation 'android.arch.lifecycle:viewmodel:1.1.0'
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.android.support:recyclerview-v7:28.0.0'
-    implementation 'com.android.support:cardview-v7:28.0.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.0.0'
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     implementation 'uk.co.samuelwall:material-tap-target-prompt:2.0.1'
     implementation(name: 'setup-wizard-lib-platform-release', ext: 'aar')
 
     androidTestImplementation 'org.mockito:mockito-android:2.8.9'
-    androidTestImplementation('com.android.support.test:runner:1.0.2') { exclude group: 'com.android.support', module: 'support-annotations' }
+    androidTestImplementation 'androidx.test:runner:1.1.1'
 }

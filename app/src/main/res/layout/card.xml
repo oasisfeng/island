@@ -8,7 +8,7 @@
         <variable name="vm" type="com.oasisfeng.ui.card.CardViewModel" />
     </data>
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:id="@+id/tip"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
@@ -82,6 +82,6 @@
 
         </RelativeLayout>
 
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
 </layout>

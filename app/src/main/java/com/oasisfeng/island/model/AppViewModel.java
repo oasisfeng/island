@@ -1,7 +1,6 @@
 package com.oasisfeng.island.model;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
@@ -11,6 +10,8 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.util.Comparator;
 import com.oasisfeng.java.util.Comparators;
+
+import androidx.annotation.NonNull;
 
 /**
  * View-model for app entry

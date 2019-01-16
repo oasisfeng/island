@@ -1,13 +1,11 @@
 package com.oasisfeng.island.console.apps;
 
 import android.app.Activity;
-import android.arch.lifecycle.ViewModelProvider;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -38,6 +36,9 @@ import java.util.Collection;
 import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 
 import java9.util.Optional;
 

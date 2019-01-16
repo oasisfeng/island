@@ -12,7 +12,6 @@ import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Process;
 import android.os.UserHandle;
-import android.support.annotation.Nullable;
 import android.util.ArrayMap;
 import android.util.Log;
 
@@ -26,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.Nullable;
 import java9.util.Objects;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;

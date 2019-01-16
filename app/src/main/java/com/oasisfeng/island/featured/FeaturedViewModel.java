@@ -1,17 +1,18 @@
 package com.oasisfeng.island.featured;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.util.Consumer;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 
 import java.util.Objects;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.lifecycle.AndroidViewModel;
 
 /**
  * Created by Oasis on 2018/5/18.

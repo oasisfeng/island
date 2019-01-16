@@ -4,8 +4,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.preference.Preference;
-import android.support.annotation.StringRes;
 import android.util.AttributeSet;
+
+import androidx.annotation.StringRes;
 
 /**
  * Improved {@link Preference}

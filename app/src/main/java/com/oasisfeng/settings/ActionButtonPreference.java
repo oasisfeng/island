@@ -1,13 +1,14 @@
 package com.oasisfeng.settings;
 
 import android.content.Context;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.StringRes;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.oasisfeng.island.mobile.R;
+
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
 
 /** A preference with a clickable action icon on the side */
 public class ActionButtonPreference extends AdvancedPreference implements View.OnClickListener {

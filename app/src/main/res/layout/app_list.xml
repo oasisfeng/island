@@ -8,7 +8,7 @@
     <data>
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="android.view.View" />
-        <import type="android.support.design.widget.BottomSheetBehavior" />
+        <import type="com.google.android.material.bottomsheet.BottomSheetBehavior" />
         <import type="com.oasisfeng.island.mobile.BuildConfig" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="featured" type="com.oasisfeng.island.featured.FeaturedListViewModel" />
@@ -16,7 +16,7 @@
         <variable name="guide" type="com.oasisfeng.island.guide.UserGuide" />
     </data>
 
-    <android.support.design.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
+    <androidx.coordinatorlayout.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
 
         <Toolbar
             android:id="@+id/actionbar"
@@ -27,7 +27,7 @@
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
             android:popupTheme="@style/AppThemeOverlay.Dark.Popup" />
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/app_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -37,14 +37,14 @@
             android:paddingEnd="-16dp"
             android:clipToPadding="false"
             android:background="@color/background"
-            app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             bind:shown="@{! safeUnbox(featured.visible)}"
             bind:items="@{apps.items}"
             bind:item_binder="@{apps.item_binder}"
             bind:item_layout="@{@layout/app_entry}"
             tools:listitem="@layout/app_entry" /> <!-- "paddingBottom" should be no less than "behavior_peekHeight" of bottom sheet. -->
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/featured_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -53,7 +53,7 @@
             android:paddingBottom="88dp"
             android:clipToPadding="false"
             android:background="@color/background"
-            app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             bind:items="@{featured.features}"
             bind:item_binder="@{featured.item_binder}"
             bind:item_layout="@{@layout/featured_entry}"
@@ -79,7 +79,7 @@
             android:visibility="@{card != null ? View.VISIBLE : View.GONE}"
             bind:vm="@{card}" />
 
-        <android.support.design.widget.BottomNavigationView
+        <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -101,7 +101,7 @@
             android:theme="@style/AppTheme.Dark"
             android:background="?android:attr/colorPrimaryDark"
             android:elevation="@dimen/elevation_card_raised"
-            app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
             app:behavior_hideable="true"
             app:behavior_peekHeight="80dp"
             bind:behavior_state="@{apps.mSelection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
@@ -152,6 +152,6 @@
 
         </LinearLayout>
 
-    </android.support.design.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </layout>

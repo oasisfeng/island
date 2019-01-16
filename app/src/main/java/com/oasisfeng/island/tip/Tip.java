@@ -1,11 +1,12 @@
 package com.oasisfeng.island.tip;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.oasisfeng.ui.card.CardViewModel;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 /**
  * The interface and controller for all tips.

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.DeadObjectException;
 import android.os.Parcel;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.oasisfeng.android.service.AidlService;
@@ -15,6 +14,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
+import androidx.annotation.Nullable;
 import java9.util.concurrent.CompletableFuture;
 import java9.util.concurrent.CompletionStage;
 

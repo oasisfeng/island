@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.annotation.RequiresPermission;
 import android.widget.Toast;
 
 import com.oasisfeng.island.analytics.Analytics;
@@ -13,6 +12,8 @@ import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
+
+import androidx.annotation.RequiresPermission;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
