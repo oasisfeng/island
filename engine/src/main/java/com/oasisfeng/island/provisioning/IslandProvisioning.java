@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.CrossProfileApps;
 import android.content.pm.LauncherApps;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
@@ -58,6 +59,7 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
 
 /**
  * The one-time provisioning for newly created managed profile of Island
@@ -182,9 +184,16 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static boolean launchMainActivityInOwnerUser(final Context context) {
+		final ComponentName activity = Modules.getMainLaunchActivity(context);
+		if (SDK_INT >= P) try {
+			context.getSystemService(CrossProfileApps.class).startMainActivity(activity, Users.owner);
+			return true;
+		} catch (final RuntimeException e) {
+			Log.e(TAG, "Error launching main activity in owner user directly.", e);	// Fall-through
+		}
+
 		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		if (apps == null) return false;
-		final ComponentName activity = Modules.getMainLaunchActivity(context);
 		if (apps.isActivityEnabled(activity, Users.owner)) {
 			apps.startMainActivity(activity, Users.owner, null, null);
 			return true;
