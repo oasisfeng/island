@@ -11,8 +11,8 @@ import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 
 /**
  * Created by Oasis on 2018/5/18.
@@ -23,7 +23,7 @@ public class FeaturedViewModel extends AndroidViewModel implements ObservableSor
 	public final String title;
 	public final CharSequence description;
 	public final @Nullable Drawable icon;
-	public final NonNullMutableLiveData<Integer> button;
+	public final LiveData<Integer> button;
 	public final @Nullable Consumer<FeaturedViewModel> function;
 	public final NonNullMutableLiveData<Boolean> dismissed;
 
@@ -42,14 +42,15 @@ public class FeaturedViewModel extends AndroidViewModel implements ObservableSor
 	}
 
 	FeaturedViewModel(final Application app, final int order, final String tag, final String title, final CharSequence description,
-			final @Nullable Drawable icon, final @StringRes int button, final @Nullable Consumer<FeaturedViewModel> function, final boolean dismissed) {
+					  final @Nullable Drawable icon, final LiveData</* @StringRes */Integer> button,
+					  final @Nullable Consumer<FeaturedViewModel> function, final boolean dismissed) {
 		super(app);
 		this.order = order;
 		this.tag = tag;
 		this.title = title;
 		this.description = description;
 		this.icon = icon;
-		this.button = new NonNullMutableLiveData<>(button);
+		this.button = button;
 		this.function = function;
 		this.dismissed = new NonNullMutableLiveData<>(dismissed);
 	}

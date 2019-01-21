@@ -1,15 +1,13 @@
 package com.oasisfeng.island.featured;
 
-import android.app.Activity;
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.os.UserManager;
 import android.provider.Settings;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
@@ -26,6 +24,7 @@ import com.oasisfeng.island.files.IslandFiles;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.FeaturedEntryBinding;
+import com.oasisfeng.island.security.SecurityPrompt;
 import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.settings.SetupPreferenceFragment;
 import com.oasisfeng.island.shuttle.MethodShuttle;
@@ -36,14 +35,22 @@ import com.oasisfeng.island.util.Users;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import androidx.annotation.DrawableRes;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+import static androidx.lifecycle.Transformations.map;
 import static androidx.recyclerview.widget.ItemTouchHelper.END;
 import static androidx.recyclerview.widget.ItemTouchHelper.START;
 
@@ -52,9 +59,12 @@ import static androidx.recyclerview.widget.ItemTouchHelper.START;
  *
  * Created by Oasis on 2018/5/18.
  */
+@ParametersAreNonnullByDefault
 public class FeaturedListViewModel extends AndroidViewModel {
 
 	private static final String SCOPE_TAG_PREFIX_FEATURED = "featured_";
+	private static final String PREF_KEY_ADB_SECURE_PROTECTED = "adb_secure_protected";
+	private static final String PACKAGE_COOLAPK = "com.coolapk.market";
 	private static final boolean SHOW_ALL = false;		// For debugging purpose
 
 	public NonNullMutableLiveData<Boolean> visible = new NonNullMutableLiveData<>(Boolean.FALSE);
@@ -81,7 +91,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 	public void update(final Context context) {
 		final Apps apps = Apps.of(context);
-		final Activity activity = Objects.requireNonNull(Activities.findActivityFrom(context));
+		final LifecycleActivity activity = (LifecycleActivity) Objects.requireNonNull(Activities.findActivityFrom(context));
 		final Application app = getApplication();
 		final boolean is_device_owner = new DevicePolicies(context).isActiveDeviceOwner(), has_profile = Users.hasProfile();
 		features.beginBatchedUpdates();
@@ -94,7 +104,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
 						R.string.dialog_button_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
 			else if (! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(context))
-				addFeatureRaw(activity.getApplication(), "file_shuttle", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
+				addFeatureRaw(app, "file_shuttle", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
 						0, R.string.dialog_button_activate, vm -> IslandFiles.enableFileShuttle(activity));
 			else {
 				Analytics.$().setProperty(Analytics.Property.FileShuttleEnabled, "1");
@@ -102,20 +112,20 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					addFeature(app, "fx", R.string.featured_fx_title, R.string.featured_fx_description, R.drawable.ic_launcher_fx,
 							R.string.featured_button_install, c -> showInMarket(c, "nextapp.fx"));
 			}
-
 		}
 
 		if (SHOW_ALL || ! is_device_owner)
 			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
 					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(c, SetupPreferenceFragment.class));
 
-		final UserManager um = Objects.requireNonNull((UserManager) app.getSystemService(Context.USER_SERVICE));
-		final boolean adb_secure_enabled = (is_device_owner && um.getUserRestrictions(Users.owner).containsKey(DISALLOW_DEBUGGING_FEATURES)
-				|| has_profile && um.getUserRestrictions(Users.profile).containsKey(DISALLOW_DEBUGGING_FEATURES));
-		if (SHOW_ALL || adb_secure_enabled || "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.ADB_ENABLED)))
+		final boolean adb_enabled = "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.ADB_ENABLED));
+		final LiveUserRestriction adb_secure = ! is_device_owner && ! has_profile ? null
+				: new LiveUserRestriction(app, DISALLOW_DEBUGGING_FEATURES, is_device_owner ? Users.owner : Users.profile);
+		if (adb_secure != null && (SHOW_ALL || adb_enabled || adb_secure.query(activity))) {	// ADB is disabled so long as ADB secure is enabled.
 			addFeatureRaw(app, "adb_secure", is_device_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
-					R.string.featured_adb_secure_description, 0, adb_secure_enabled ? R.string.featured_button_disable : R.string.featured_button_enable,
-					FeaturedListViewModel::toggleAdbSecure);
+					R.string.featured_adb_secure_description,0, map(adb_secure, enabled -> enabled ? R.string.action_disable : R.string.action_enable),
+					vm -> toggleAdbSecure(activity, vm, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
+		}
 
 		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("com.oasisfeng.greenify"))
 			addFeature(app, "greenify", R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify,
@@ -132,47 +142,85 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		if (SHOW_ALL || ! apps.isInstalledBy(GooglePlayStore.PACKAGE_NAME)) {
 			final boolean installed = Apps.of(context).isInstalledOnDevice(PACKAGE_COOLAPK);
 			addFeature(app, "coolapk", R.string.featured_coolapk_title, R.string.featured_coolapk_description, R.drawable.ic_launcher_coolapk,
-					installed ? 0 : R.string.featured_button_install, installed ? null : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
+					installed ? 0 : R.string.featured_button_install, installed ? c -> Apps.of(c).launch(PACKAGE_COOLAPK) : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
 		}
 
 		features.endBatchedUpdates();
 	}
 
-	private static void toggleAdbSecure(final FeaturedViewModel vm) {
-		final Context context = vm.getApplication();
-		final boolean enabling = vm.button.getValue() == R.string.featured_button_enable;
-		final DevicePolicies policies = new DevicePolicies(context);
+	private void toggleAdbSecure(final LifecycleActivity activity, final FeaturedViewModel vm, final boolean enabling, final boolean security_confirmed) {
+		if (! enabling && ! security_confirmed && SDK_INT >= M && isAdbSecureProtected(activity)) {
+			requestSecurityConfirmationBeforeDisablingAdbSecure(activity, vm);
+			return;
+		}
+
+		final DevicePolicies policies = new DevicePolicies(activity);
 		if (policies.isActiveDeviceOwner()) {
 			if (! enabling) {
 				policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 				policies.execute(DevicePolicyManager::setGlobalSetting, Settings.Global.ADB_ENABLED, "1");	// DISALLOW_DEBUGGING_FEATURES also disables ADB.
 			} else policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 		}
-		if (! Users.hasProfile()) {		// No managed profile, all done.
-			vm.button.setValue(enabling ? R.string.featured_button_disable : R.string.featured_button_enable);
-			return;
+		if (! Users.hasProfile()) {
+			showPromptForAdbSecureProtection(activity, enabling);
+			return;		// No managed profile, all done.
 		}
 
-		MethodShuttle.runInProfile(context, () -> {
-			final DevicePolicies device_policies = new DevicePolicies(context);		// The "policies" instance can not be passed into profile.
+		final Context app_context = getApplication();
+		MethodShuttle.runInProfile(app_context, () -> {
+			final DevicePolicies device_policies = new DevicePolicies(app_context);	// The "policies" instance can not be passed into profile.
 			if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 			else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 			return enabling;
-		}).whenComplete((result, e) -> {
+		}).whenComplete((enabled, e) -> {
+			final Context context = getApplication();
 			if (e != null) {
 				Analytics.$().logAndReport(TAG, "Error setting featured button", e);
 				Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+			} else {
+				LiveUserRestriction.requestUpdate(context);	// Request explicit update, since observer does not work across users.
+				showPromptForAdbSecureProtection(activity, enabled);
 			}
-			vm.button.setValue(result ? R.string.featured_button_disable : R.string.featured_button_enable);
 		});
+	}
+
+	private void showPromptForAdbSecureProtection(final LifecycleActivity activity, final boolean enabled) {
+		if (SDK_INT < M || ! enabled || activity.isDestroyed()) return;
+		if (isAdbSecureProtected(activity)) Snackbars.make(activity, R.string.prompt_security_confirmation_activated)
+				.setAction(R.string.action_deactivate, v -> disableSecurityConfirmationForAdbSecure(activity)).show();
+		else Snackbars.make(activity, R.string.prompt_security_confirmation_suggestion)
+				.setAction(R.string.action_activate, v -> enableSecurityConfirmationForAdbSecure(activity)).show();
+	}
+
+	private static boolean isAdbSecureProtected(final Context context) {
+		return getDefaultSharedPreferences(context).getBoolean(PREF_KEY_ADB_SECURE_PROTECTED, false);
+	}
+
+	@RequiresApi(M) private void enableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
+		if (activity.isDestroyed()) return;
+		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_activating, () -> {
+			getDefaultSharedPreferences(getApplication()).edit().putBoolean(PREF_KEY_ADB_SECURE_PROTECTED, true).apply();
+			Toast.makeText(getApplication(), R.string.toast_security_confirmation_activated, Toast.LENGTH_SHORT).show();
+		});
+	}
+
+	@RequiresApi(M) private void disableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
+		if (activity.isDestroyed()) return;
+		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_deactivating, () -> {
+			getDefaultSharedPreferences(getApplication()).edit().putBoolean(PREF_KEY_ADB_SECURE_PROTECTED, false).apply();
+			Toast.makeText(getApplication(), R.string.toast_security_confirmation_deactivated, Toast.LENGTH_SHORT).show();
+		});
+	}
+
+	@RequiresApi(M) private void requestSecurityConfirmationBeforeDisablingAdbSecure(final LifecycleActivity activity, final FeaturedViewModel vm) {
+		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_to_disable,
+				() -> toggleAdbSecure(activity, vm, false, true));
 	}
 
 	private static void showInMarket(final Context context, final String pkg) {
 		Analytics.$().event("featured_install").with(Analytics.Param.ITEM_ID, pkg).send();
 		Apps.of(context).showInMarket(pkg, "island", "featured");
 	}
-
-	private static final String PACKAGE_COOLAPK = "com.coolapk.market";
 
 	private void addFeature(final Application app, final String tag, final @StringRes int title, final @StringRes int description,
 							final @DrawableRes int icon, final @StringRes int button, final Consumer<Context> function) {
@@ -181,6 +229,11 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 	private void addFeatureRaw(final Application app, final String tag, final @StringRes int title, final @StringRes int description,
 							   final @DrawableRes int icon, final @StringRes int button, final Consumer<FeaturedViewModel> function) {
+		addFeatureRaw(app, tag, title, description, icon, new NonNullMutableLiveData<>(button), function);
+	}
+
+	private void addFeatureRaw(final Application app, final String tag, final @StringRes int title, final @StringRes int description,
+							   final @DrawableRes int icon, final LiveData<Integer> button, final Consumer<FeaturedViewModel> function) {
 		features.add(new FeaturedViewModel(app, sOrderGenerator.incrementAndGet(), tag, app.getString(title), app.getText(description),
 				icon != 0 ? app.getDrawable(icon) : null, button, function, Scopes.app(app).isMarked(SCOPE_TAG_PREFIX_FEATURED + tag)));
 	}

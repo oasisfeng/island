@@ -14,8 +14,6 @@
     <string name="status_appendix_cloned">cloned</string>
     <string name="status_appendix_exclusive">only in Island</string>
 
-    <string name="featured_button_enable">Enable</string>
-    <string name="featured_button_disable">Disable</string>
     <string name="featured_button_setup">Setup</string>
     <string name="featured_button_install">Install</string>
     <string name="featured_file_shuttle_title">File Shuttle</string>
@@ -24,7 +22,7 @@
     <string name="featured_fx_description">File Shuttle of Island provides cross-border file access via Android \"Storage Access Framework\". But not all apps in the wild (even some popular file manage apps) support SAF.\n\nFX File Explorer has full support for SAF, just clone and launch it inside Island, select \"Connect to Storage\" in drop-down menu. The File Shuttle of Island is in the side menu.</string>
     <string name="featured_adb_secure_title">ADB Secure</string>
     <string name="featured_adb_secure_island_title">ADB Secure (for Island space only)</string>
-    <string name="featured_adb_secure_description">Restrict ADB (Android Debugging Bridge) shell from executing dangerous commands (install APK, change settings and etc.).\nIf "God mode" is activated, this could protect the whole device (including data sniffing or sneaky app installation via USB cable from physically connected external device).</string>
+    <string name="featured_adb_secure_description">Restrict ADB (Android Debugging Bridge) shell from executing dangerous commands (install APK, change settings and etc.).\n\nIf "God mode" is activated, this could protect the whole device (including data sniffing or sneaky app installation via USB cable from physically connected external device).</string>
     <string name="featured_god_mode_title">God Mode</string>
     <string name="featured_god_mode_description">\"God mode\" is a special mode of Island for advanced users, to help you take control of ALL apps (in both island and mainland). So you can freeze unwanted apps without root.</string>
     <string name="featured_greenify_title">Greenify</string>
@@ -71,6 +69,10 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_remove">Remove</string>
     <string name="action_uninstall">Uninstall</string>
     <string name="action_reinstall">Reinstall</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_disable">Disable</string>
+    <string name="action_activate">Activate</string>
+    <string name="action_deactivate">Deactivate</string>
 
     <string name="menu_tip">Tip…</string>
     <string name="menu_search">Search</string>
@@ -165,6 +167,17 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="notification_island_after_uninstall_title">Remove Island completely</string>
     <string name="notification_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
     <string name="notification_action_restore">Restore</string>
+
+    <!-- Security Confirmation -->
+
+    <string name="prompt_security_confirmation_suggestion">Ask for security confirmation before disabling?</string>
+    <string name="prompt_security_confirmation_activated">Security confirmation is required to disable.</string>
+    <string name="prompt_security_confirmation_to_disable">Do you want to disable this feature?</string>
+    <string name="prompt_security_confirmation_activating">Activating security confirmation?</string>
+    <string name="prompt_security_confirmation_deactivating">Deactivating security confirmation?</string>
+    <string name="toast_security_confirmation_activated">Security confirmation is activated</string>
+    <string name="toast_security_confirmation_deactivated">Security confirmation is deactivated</string>
+    <string name="toast_security_confirmation_failure">Failed to verify, please try again.</string>
 
     <!-- New User Guide -->
 
