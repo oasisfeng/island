@@ -30,6 +30,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
+import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
@@ -89,7 +90,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
-	private static final String ACTION_SHOW_APP_INFO = "android.intent.action.SHOW_APP_INFO";	// clone of Intent.ACTION_SHOW_APP_INFO
 	private static final String EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME";		// clone of Intent.EXTRA_PACKAGE_NAME
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
@@ -359,7 +359,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private static void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
-		final Intent target = new Intent(ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, app.packageName);
+		final Intent target = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, app.packageName);
 		if (! Users.isOwner(app.user) || context.getPackageManager().queryIntentActivities(target, 0).isEmpty()) {
 			launchSystemAppSettings(context, app);
 			return;
