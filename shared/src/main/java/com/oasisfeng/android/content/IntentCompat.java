@@ -5,5 +5,6 @@ package com.oasisfeng.android.content;
  */
 public class IntentCompat {
 
-	public static final String ACTION_SHOW_APP_INFO = "android.intent.action.SHOW_APP_INFO";	// Intent.ACTION_SHOW_APP_INFO
+	public static final String ACTION_SHOW_APP_INFO = "android.intent.action.SHOW_APP_INFO";
+	public static final String EXTRA_AUTO_LAUNCH_SINGLE_CHOICE = "android.intent.extra.AUTO_LAUNCH_SINGLE_CHOICE";
 }

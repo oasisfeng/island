@@ -73,6 +73,7 @@ import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
+import static android.content.Intent.EXTRA_USER;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
@@ -359,15 +360,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private static void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
-		final Intent target = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, app.packageName);
-		if (! Users.isOwner(app.user) || context.getPackageManager().queryIntentActivities(target, 0).isEmpty()) {
+		final Intent target = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, app.packageName).putExtra(EXTRA_USER, app.user);
+		if (context.getPackageManager().queryIntentActivities(target, 0).isEmpty()) {
 			launchSystemAppSettings(context, app);
 			return;
 		}
 		unfreezeIfNeeded(context, app).thenAccept(unfrozen -> {
-			final Intent chooser = new Intent(Intent.ACTION_CHOOSER).putExtra(Intent.EXTRA_INTENT, target);
-			chooser.putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[] { new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-					Uri.fromParts("package", app.packageName, null)) });
+			final Intent chooser = Intent.createChooser(target, null).putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[]
+					{ new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", app.packageName, null)) });
 			Activities.startActivity(context, chooser);
 		});
 	}
@@ -430,7 +430,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 			} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
-					.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
+					.setData(Uri.fromParts("package", app.packageName, null)).putExtra(EXTRA_USER, app.user));
 		});
 	}
 

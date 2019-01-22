@@ -16,5 +16,5 @@
     <string name="action_show_app_settings">App Settings (sys)</string>
     <string name="action_show_app_info">App Info (external)</string>
 
-    <string name="app_info_forwarder_title">Select a target to show information about this app in</string>
+    <string name="app_info_forwarder_title">Select a target to show information about this app</string>
 </resources>

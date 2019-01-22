@@ -18,6 +18,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
@@ -329,6 +330,7 @@ public class IslandProvisioning extends IntentService {
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE).withCategory(context.getPackageName())	// Additional category to bypass system package installer
 					.withDataSchemes(ContentResolver.SCHEME_CONTENT, SCHEME_PACKAGE), FLAG_MANAGED_CAN_ACCESS_PARENT);	// One-way only
 		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
+		policies.addCrossProfileIntentFilter(IntentFilters.forActions(IntentCompat.ACTION_SHOW_APP_INFO), FLAG_PARENT_CAN_ACCESS_MANAGED);
 	}
 
 	public IslandProvisioning() {
@@ -336,10 +338,9 @@ public class IslandProvisioning extends IntentService {
 		setIntentRedelivery(true);
 	}
 
-	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() ->
-			new Notification.Builder(this).setSmallIcon(android.R.drawable.stat_notify_sync).setPriority(PRIORITY_HIGH).setUsesChronometer(true)
-					.setContentTitle(getText(R.string.notification_provisioning_title))
-					.setContentText(getText(R.string.notification_provisioning_text)));
+	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> new Notification.Builder(this)
+			.setSmallIcon(android.R.drawable.stat_notify_sync).setPriority(PRIORITY_HIGH).setUsesChronometer(true)
+			.setContentTitle(getText(R.string.notification_provisioning_title)) .setContentText(getText(R.string.notification_provisioning_text)));
 
 	private static final String TAG = "Island.Provision";
 	public static final String SCHEME_PACKAGE = "package";
