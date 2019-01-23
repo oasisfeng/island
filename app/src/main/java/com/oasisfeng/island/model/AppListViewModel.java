@@ -41,6 +41,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.controller.IslandAppClones;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
+import com.oasisfeng.island.data.helper.AppStateTrackingHelper;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.featured.FeaturedListViewModel;
 import com.oasisfeng.island.greenify.GreenifyClient;
@@ -429,8 +430,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 				} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
-			} else Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
-					.setData(Uri.fromParts("package", app.packageName, null)).putExtra(EXTRA_USER, app.user));
+			} else {
+				Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
+						.setData(Uri.fromParts("package", app.packageName, null)).putExtra(EXTRA_USER, app.user));
+				if (! Users.isProfileRunning(context, app.user)) {	// App clone can actually be removed in quiet mode, without callback triggered.
+					final Activity activity = Activities.findActivityFrom(context);
+					if (activity != null) AppStateTrackingHelper.requestSyncWhenResumed(activity, app.packageName, app.user);
+				}
+			}
 		});
 	}
 

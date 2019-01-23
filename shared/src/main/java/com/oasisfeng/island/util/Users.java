@@ -15,11 +15,14 @@ import com.oasisfeng.pattern.PseudoContentProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import androidx.annotation.Nullable;
 
 import static android.content.Context.USER_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.N_MR1;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utility class for user-related helpers.
@@ -49,7 +52,7 @@ public abstract class Users extends PseudoContentProvider {
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
 		profile = null;
-		final List<UserHandle> user_and_profiles = Objects.requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
+		final List<UserHandle> user_and_profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
 		for (final UserHandle user_or_profile : user_and_profiles) {
 			if (toId(user_or_profile) > 100) continue;				// Exclude special profiles (e.g. XSpace in MIUI in user ID 999)
 			if (! isOwner(user_or_profile)) {
@@ -60,6 +63,18 @@ public abstract class Users extends PseudoContentProvider {
 		profiles.remove(owner);
 		sProfiles = profiles;
 		Log.i(TAG, "Profiles: " + sProfiles);
+	}
+
+	public static boolean isProfileRunning(final Context context, final UserHandle user) {
+		if (CURRENT.equals(user)) return true;
+		if (SDK_INT < N) return true;		// TODO: Alternative for pre-N ?
+		final UserManager um = requireNonNull(context.getSystemService(UserManager.class));
+		if (SDK_INT >= N_MR1) try {
+			return um.isUserRunning(user);
+		} catch (final RuntimeException e) {
+			Log.w(TAG, "Error checking running state for user " + toId(user));
+		}
+		return um.isQuietModeEnabled(user);
 	}
 
 	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user

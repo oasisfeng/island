@@ -45,6 +45,7 @@ import java9.util.stream.StreamSupport;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.O;
 
 /**
  * Island-specific {@link AppListProvider}
@@ -121,7 +122,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private void refresh(final Map<String, IslandAppInfo> output_apps) {
 		if (Users.profile != null) {		// Collect Island-specific apps
-			if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && Hacks.LauncherApps_getApplicationInfo != null) {    // Since Android N, we can query ApplicationInfo directly
+			if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && (SDK_INT >= O || Hacks.LauncherApps_getApplicationInfo != null)) {
 				super.installedApps().map(app -> getApplicationInfo(app.packageName, Users.profile))
 						.filter(info -> info != null && (info.flags & FLAG_INSTALLED) != 0)
 						.forEach(info -> output_apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
@@ -150,17 +151,15 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		}
 	}
 
-	/** @param callback will be invoked with the result, or null for failure (including {@link PackageManager.NameNotFoundException}. */
+	/** @param callback will be invoked with the result, or null if not installed in profile.
+	 *                  In case of error or non-existent profile, callback will NOT be invoked. */
 	private void queryApplicationInfoInProfile(final String pkg, final Consumer<ApplicationInfo> callback) {
 		final UserHandle profile = Users.profile;
-		if (profile == null) {
-			callback.accept(null);
-			return;
-		}
+		if (profile == null) return;
 		final Context context = context();
 		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context, Permissions.INTERACT_ACROSS_USERS)) try {
 			final ApplicationInfo info = mProfilePackageManager.get().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
-			callback.accept(info);
+			callback.accept(nullIfNotInstalled(info));
 			return;
 		} catch (final PackageManager.NameNotFoundException ignored) {
 			callback.accept(null);
@@ -168,10 +167,10 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		} catch (final SecurityException ignored) {}	// Fall-through. This should hardly happen as permission is checked.
 
 		final List<LauncherActivityInfo> activities;
-		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && Hacks.LauncherApps_getApplicationInfo != null) {
+		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && (SDK_INT >= O || Hacks.LauncherApps_getApplicationInfo != null)) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
 			final ApplicationInfo info = getApplicationInfo(pkg, Users.profile);
-			callback.accept(info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null);
+			callback.accept(nullIfNotInstalled(info));
 		} else if (! (activities = mLauncherApps.get().getActivityList(pkg, profile)).isEmpty()) {	// In case it has launcher activity and not frozen
 			callback.accept(activities.get(0).getApplicationInfo());
 		} else MethodShuttle.runInProfile(context, () -> {
@@ -181,13 +180,19 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			} catch (PackageManager.NameNotFoundException e) {
 				return null;
 			}
-		}).thenAccept(callback).exceptionally(t -> {
-			callback.accept(null);
-			return null;
-		});
+		}).thenAccept(callback);
+	}
+
+	private @Nullable static ApplicationInfo nullIfNotInstalled(final ApplicationInfo info) {
+		return info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null;
 	}
 
 	@RequiresApi(N) ApplicationInfo getApplicationInfo(final String pkg, final UserHandle user) {
+		if (SDK_INT >= O) try {
+			return mLauncherApps.get().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO, user);
+		} catch (final PackageManager.NameNotFoundException e) {
+			return null;
+		}
 		try {
 			return Objects.requireNonNull(Hacks.LauncherApps_getApplicationInfo).invoke(pkg, PM_FLAGS_GET_APP_INFO, user).on(mLauncherApps.get());
 		} catch (final Exception e) {	// NameNotFoundException will be thrown since Android O instead of retuning null on Android N.
@@ -200,8 +205,13 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		if (! Objects.equals(user, Users.profile)) return;
 		Log.d(TAG, "Update: " + pkg + (add ? " for pkg add" : " for pkg change"));
 		queryApplicationInfoInProfile(pkg, info -> {
-			if (info == null) return;
-			final IslandAppInfo app = new IslandAppInfo(this, user, info, mIslandAppMap.get().get(pkg));
+			if (info == null) {
+				final IslandAppInfo last = mIslandAppMap.get().remove(pkg);
+				if (last != null) notifyRemoval(Collections.singleton(last));
+				return;
+			}
+			final IslandAppInfo last = mIslandAppMap.get().get(pkg);
+			final IslandAppInfo app = new IslandAppInfo(this, user, info, last);
 			if (add && app.isHidden()) {
 				Log.w(TAG, "Correct the flag for unhidden package: " + pkg);
 				app.setHidden(false);
