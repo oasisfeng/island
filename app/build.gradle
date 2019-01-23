@@ -32,6 +32,7 @@ dependencies {
     application project(':assembly')
     feature project(':engine')
     feature project(':fileprovider')
+    feature project(':installer')
 
     implementation project(':shared')
     implementation project(':deagle')
