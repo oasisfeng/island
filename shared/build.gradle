@@ -45,7 +45,6 @@ dependencies {
     api 'com.google.code.findbugs:jsr305:3.0.2'
     api 'net.sourceforge.streamsupport:android-retrostreams:1.7.0'
     api 'net.sourceforge.streamsupport:android-retrofuture:1.7.0'
-    api 'androidx.annotation:annotation:1.0.1'
     implementation 'org.jetbrains:annotations:15.0'
     implementation 'com.google.android.gms:play-services-analytics:16.0.6'
     implementation 'com.google.firebase:firebase-core:16.0.6'
