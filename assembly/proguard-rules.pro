@@ -16,6 +16,9 @@
 #   public *;
 #}
 
+# Shrink only
+-dontobfuscate
+
 # For AOSP internal disclosure in module "fileprovider"
 -keepclassmembers class * extends android.content.ContentResolver { *; }
 -dontwarn android.content.ContentResolver
@@ -32,20 +35,11 @@
 -dontwarn sun.misc.Unsafe
 -dontwarn com.google.common.**
 
-# For Services
--keepnames interface ** extends android.os.IInterface
-
-# For Crashlytics (optional, just to speed up release build a little)
--keep class com.crashlytics.** { *; }
-
-# Remove logging
+# Remove verbose and debug logging
 -assumenosideeffects class android.util.Log {
 	public static boolean isLoggable(java.lang.String, int);
 	public static int v(...);
 	public static int d(...);
-#	public static int i(...);
-#	public static int w(...);
-#	public static int e(...);
 }
 
 # For @Keep to work
@@ -61,7 +55,3 @@
 # More debugging info (line number)
 -renamesourcefileattribute SourceFile
 -keepattributes SourceFile,LineNumberTable
-
-# Strong obfuscation
--repackageclasses
--allowaccessmodification
