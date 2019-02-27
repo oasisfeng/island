@@ -49,7 +49,7 @@ class ApiDispatcher {
 	 * Verify the qualification of this API invocation, mainly the permission of API caller.
 	 *
 	 * @param pkg the package name of API caller, if known.
-	 * @param uid the UID of API caller, not used if caller_pkg is null.
+	 * @param uid the UID of API caller, not used if caller_pkg is null. (negative if unavailable)
 	 * @return null if verified, or error message for debugging purpose (NOT part of the API protocol).
 	 */
 	static String verifyCaller(final Context context, final Intent intent, @Nullable String pkg, int uid) {
@@ -60,13 +60,13 @@ class ApiDispatcher {
 			uid = id.getCreatorUid();
 			if (pkg == null) return "No creator information in " + id;
 		}
-		if (Users.isSameApp(uid, Process.myUid())) return null;		// From myself (possibly in other user).
+		if (uid > 0 && Users.isSameApp(uid, Process.myUid())) return null;		// From myself (possibly in other user).
 		// This log should generally be placed in the caller site, do it after same app check to skip this for internal API caller with component set.
 		if (intent.getPackage() == null && intent.getComponent() != null)
 			Log.w(TAG, "Never use implicit intent or explicit intent with component name for API request, use Intent.setPackage() instead.");
 
 		Log.d(TAG, "API invoked by " + pkg);
-		if (SDK_INT >= M) {
+		if (SDK_INT >= M && uid >= 0) {
 			final int permission_result = context.checkPermission(Api.latest.PERMISSION_FREEZE_PACKAGE, 0, uid);
 			if (permission_result == PackageManager.PERMISSION_GRANTED) return null;
 		}

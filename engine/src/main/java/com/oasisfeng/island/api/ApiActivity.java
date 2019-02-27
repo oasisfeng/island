@@ -10,14 +10,18 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.oasisfeng.android.os.UserHandles;
+import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.Hacks;
+
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * API via activity (better for crossing the user border)
  *
  * Created by Oasis on 2016/6/16.
  */
-public class ApiActivity extends Activity {
+public class ApiActivity extends CallerAwareActivity {
 
 	private void onIntent(final Intent intent) {
 		Log.i(TAG, "API request: " + intent.toUri(0));
@@ -29,12 +33,19 @@ public class ApiActivity extends Activity {
 				int uid = info.applicationInfo.uid;
 				if (UserHandles.getUserId(uid) != 0) {
 					final String[] potential_pkgs = getPackageManager().getPackagesForUid(uid);
-					if (potential_pkgs == null) uid = UserHandles.getAppId(uid);	// Fix the incorrect UID when MATCH_ANY_USER is used.
+					if (potential_pkgs == null) uid = UserHandles.getAppId(uid);	// Caller is not in this user, just assume it is from the owner user.
 				}
 				result = ApiDispatcher.verifyCaller(this, intent, caller.getPackageName(), uid);
 			} catch (final PackageManager.NameNotFoundException e) {
 				result = "Unverifiable caller activity: " + caller.flattenToShortString();
-			} else result = ApiDispatcher.verifyCaller(this, intent, null, - 1);
+			} else {
+				final String caller_pkg = getCallingPackage();
+				int caller_uid = -1;
+				if (SDK_INT >= N) try {
+					caller_uid = getPackageManager().getPackageUid(caller_pkg, 0);
+				} catch (final PackageManager.NameNotFoundException ignored) {}
+				result = ApiDispatcher.verifyCaller(this, intent, caller_pkg, caller_uid);
+			}
 
 			if (result == null) {
 				result = ApiDispatcher.dispatch(this, intent);

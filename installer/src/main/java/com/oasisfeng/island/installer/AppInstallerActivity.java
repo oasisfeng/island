@@ -1,6 +1,5 @@
 package com.oasisfeng.island.installer;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
@@ -20,7 +19,6 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -33,6 +31,7 @@ import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
+import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.java.utils.IoUtils;
 
 import java.io.FileInputStream;
@@ -58,7 +57,6 @@ import static android.content.pm.PackageInstaller.EXTRA_PACKAGE_NAME;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
@@ -72,7 +70,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * </ul>
  * Created by Oasis on 2018-11-12.
  */
-public class AppInstallerActivity extends Activity {
+public class AppInstallerActivity extends CallerAwareActivity {
 
 	private static final int STREAM_BUFFER_SIZE = 65536;
 	private static final String PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS = "direct_install_allowed_callers";
@@ -273,35 +271,6 @@ public class AppInstallerActivity extends Activity {
 
 	@RequiresApi(O) private boolean isSourceQualified(final @Nullable ApplicationInfo info) {
 		return info != null && (info.targetSdkVersion < O || declaresPermission(info.packageName, REQUEST_INSTALL_PACKAGES));
-	}
-
-	@Nullable @Override public String getCallingPackage() {
-		final String caller = super.getCallingPackage();
-		if (caller != null) return caller;
-
-		if (SDK_INT >= LOLLIPOP_MR1) {
-			Intent original_intent = null;
-			final Intent intent = getIntent();
-			if (intent.hasExtra(Intent.EXTRA_REFERRER) || intent.hasExtra(Intent.EXTRA_REFERRER_NAME)) {
-				original_intent = new Intent(getIntent());
-				intent.removeExtra(Intent.EXTRA_REFERRER);
-				intent.removeExtra(Intent.EXTRA_REFERRER_NAME);
-			}
-			try {
-				final Uri referrer = getReferrer();		// getReferrer() returns real calling package if no referrer extras
-				if (referrer != null) return referrer.getAuthority();        // Referrer URI: android-app://<package name>
-			} finally {
-				if (original_intent != null) setIntent(original_intent);
-			}
-		}
-		try {
-			@SuppressLint("PrivateApi") final Object am = Class.forName("android.app.ActivityManagerNative").getMethod("getDefault").invoke(null);
-			@SuppressWarnings("JavaReflectionMemberAccess") final Object token = Activity.class.getMethod("getActivityToken").invoke(this);
-			return (String) am.getClass().getMethod("getLaunchedFromPackage", IBinder.class).invoke(am, (IBinder) token);
-		} catch (final Exception e) {
-			Log.e(TAG, "Error detecting caller", e);
-		}
-		return null;
 	}
 
 	private int getOriginatingUid(final ApplicationInfo caller_info) {
