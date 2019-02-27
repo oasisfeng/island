@@ -11,8 +11,11 @@
         <meta-data android:name="io.fabric.ApiKey" android:value="2fa85ef2740d3e29a2ed203a3af1db3513507ddb" /> <!-- Still required for project migrated from Fabric Crashlytics -->
 
         <!-- Users -->
-        <provider android:name="com.oasisfeng.island.InternalContentProviders$_1" android:initOrder="1000"
-                  android:authorities="${applicationId}.internal.1" android:exported="false" />
+        <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
+                  android:initOrder="1000"
+                  android:authorities="${applicationId}.internal.1"
+                  android:directBootAware="true" tools:targetApi="N"
+                  android:exported="false" />
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"

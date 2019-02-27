@@ -13,7 +13,6 @@ import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import androidx.annotation.Nullable;
@@ -25,7 +24,7 @@ import static android.os.Build.VERSION_CODES.N_MR1;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Utility class for user-related helpers.
+ * Utility class for user-related helpers. Only works within the process where this provider is declared to be running.
  *
  * Created by Oasis on 2016/9/25.
  */
@@ -99,6 +98,6 @@ public abstract class Users extends PseudoContentProvider {
 	}};
 
 	private static final int PER_USER_RANGE = 100000;
-	private static List<UserHandle> sProfiles = Collections.emptyList();
+	private static List<UserHandle> sProfiles = null;	// Intentionally left null to fail early if this class is accidentally used in non-default process.
 	private static final String TAG = "Users";
 }

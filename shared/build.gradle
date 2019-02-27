@@ -1,7 +1,7 @@
 apply plugin: 'com.android.feature'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 27        // Not raised to 28 due to NotificationManagerExtender
 
     defaultConfig {
         minSdkVersion 21
