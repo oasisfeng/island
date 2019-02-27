@@ -91,7 +91,7 @@ public class MethodShuttle {
 		} catch (final DeadObjectException ignored) {}    // Fall-through to reconnect
 
 		if (Services.use(new ServiceShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, procedure)) return future;
-		return CompletableFuture.failedFuture(new IllegalStateException("Error connecting " + Service.class.getCanonicalName()));
+		return CompletableFuture.failedFuture(new IllegalStateException("Error connecting " + MethodShuttleService.class.getCanonicalName()));
 	}
 
 	private MethodShuttle() {}
@@ -99,7 +99,7 @@ public class MethodShuttle {
 	private static volatile IMethodShuttle sCachedShuttle;
 
 	@SuppressLint("Registered")		// Actually declared in the AndroidManifest.xml of module "engine".
-	public static class Service extends AidlService<IMethodShuttle.Stub> {
+	public static class MethodShuttleService extends AidlService<IMethodShuttle.Stub> {
 
 		@Nullable @Override protected IMethodShuttle.Stub createBinder() {
 			return new IMethodShuttle.Stub() { @Override public void invoke(final MethodInvocation invocation) {
@@ -109,7 +109,7 @@ public class MethodShuttle {
 					constructor.setAccessible(true);
 					final Object[] args = invocation.args;
 					final Class<?>[] arg_types = constructor.getParameterTypes();
-					for (int i = 0; i < arg_types.length; i++) if (arg_types[i] == Context.class) args[i] = Service.this;	// Fill in context
+					for (int i = 0; i < arg_types.length; i++) if (arg_types[i] == Context.class) args[i] = MethodShuttleService.this;	// Fill in context
 					final Object instance = constructor.newInstance(args);
 					if (instance instanceof GeneralVoidMethod)
 						((GeneralVoidMethod) instance).invoke();

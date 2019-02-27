@@ -99,7 +99,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.oasisfeng.island.shuttle.MethodShuttle$Service" android:exported="false">
+        <service android:name="com.oasisfeng.island.shuttle.MethodShuttle$MethodShuttleService" android:exported="false">
             <intent-filter android:priority="-1">
                 <action android:name="com.oasisfeng.island.shuttle.IMethodShuttle" />
             </intent-filter>
