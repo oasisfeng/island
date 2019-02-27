@@ -6,10 +6,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
+import android.provider.Settings;
 
 import com.oasisfeng.island.shared.R;
-
-import java.util.Objects;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -21,6 +21,7 @@ import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_MIN;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Central definition for all notification IDs, to avoid conflicts.
@@ -46,6 +47,17 @@ public enum NotificationIds {
 		NotificationManagerCompat.from(context).cancel(id());
 	}
 
+	public void cancel(final Context context, final String tag) {
+		NotificationManagerCompat.from(context).cancel(tag, id());
+	}
+
+	@RequiresApi(O) public boolean isBlocked(final Context context) {
+		final NotificationManager nm = requireNonNull((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE));
+		if (! nm.areNotificationsEnabled()) return true;
+		final NotificationChannel actual_channel = nm.getNotificationChannel(channel.name);
+		return actual_channel != null && actual_channel.getImportance() == NotificationManager.IMPORTANCE_NONE;
+	}
+
 	public void startForeground(final Service service, final Notification.Builder notification) {
 		service.startForeground(id(), buildChannel(service, notification).build());
 	}
@@ -57,6 +69,11 @@ public enum NotificationIds {
 
 	private int id() { return id != 0 ? id : ordinal() + 1; }		// 0 is reserved
 
+	@RequiresApi(O) public Intent buildChannelSettingsIntent(final Context context) {
+		return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName())
+				.putExtra(Settings.EXTRA_CHANNEL_ID, channel.name);
+	}
+
 	NotificationIds(final Channel channel) { this(channel, 0); }
 	NotificationIds(final Channel channel, final int id) { this.channel = channel; this.id = id; }
 
@@ -65,20 +82,21 @@ public enum NotificationIds {
 
 	@SuppressLint("InlinedApi") enum Channel {
 
-		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(false)),
-		Important	("Important",	R.string.notification_channel_important,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(true)),
-		AppInstall	("AppInstall",	R.string.notification_channel_app_install,		IMPORTANCE_HIGH, channel -> channel.setShowBadge(true)),
-		Debug		("Debug",		R.string.notification_channel_debug,			IMPORTANCE_MIN,  channel -> channel.setShowBadge(false));
+		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(false)),
+		Important	("Important",	R.string.notification_channel_important,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
+		AppInstall	("AppInstall",	R.string.notification_channel_app_install,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
+		Debug		("Debug",		R.string.notification_channel_debug,		IMPORTANCE_MIN,  	channel -> channel.setShowBadge(false));
 
-		Channel(final String name, final @StringRes int title, final int importance, final @Nullable Consumer<NotificationChannel> tweaks) {
+		@SafeVarargs Channel(final String name, final @StringRes int title, final int importance, final @Nullable Consumer<NotificationChannel>... tweaks) {
 			this.name = name; this.title = title; this.importance = importance; this.tweaks = tweaks;
 		}
 
 		@RequiresApi(O) String createAndGetId(final Context context) {
 			if (! created) {
 				final NotificationChannel channel = new NotificationChannel(name, context.getString(title), importance);
-				if (tweaks != null) tweaks.accept(channel);
-				Objects.requireNonNull(context.getSystemService(NotificationManager.class)).createNotificationChannel(channel);
+				if (tweaks != null) for (final Consumer<NotificationChannel> tweak : tweaks)
+					tweak.accept(channel);
+				requireNonNull(context.getSystemService(NotificationManager.class)).createNotificationChannel(channel);
 				created = true;
 			}
 			return name;
@@ -87,7 +105,7 @@ public enum NotificationIds {
 		private final String name;
 		private final @StringRes int title;
 		private final int importance;
-		private final @Nullable Consumer<NotificationChannel> tweaks;
+		private final @Nullable Consumer<NotificationChannel>[] tweaks;
 		private boolean created;
 	}
 }
