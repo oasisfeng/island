@@ -2,6 +2,9 @@
 <resources>
     <string name="notification_channel_ongoing_task">执行中的任务</string>
     <string name="notification_channel_important">重要事项</string>
+    <string name="notification_channel_app_install">应用安装</string>
+    <string name="notification_channel_watcher">诸界 守望者</string>
+    <string name="notification_channel_app_watcher">应用 守望者</string>
     <string name="notification_channel_debug">调试</string>
 
     <string name="device_admin_support_message_short">如需取消此限制，请至应用中调整相应的设置。</string>

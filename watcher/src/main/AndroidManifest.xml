@@ -1,0 +1,39 @@
+<manifest package="com.oasisfeng.island.watcher" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- IslandWatcher -->
+
+    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
+
+        <receiver android:name=".IslandWatcher" android:enabled="@bool/since_api_28">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <service android:name=".IslandWatcher$IslandDeactivationService" />
+
+        <receiver android:name=".IslandAppWatcher"
+                  android:enabled="@bool/since_api_26">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+        <provider android:name=".IslandAppWatcher$AppStateTracker"
+                  android:authorities="com.oasisfeng.island.watcher"
+                  android:exported="false"
+                  android:enabled="@bool/since_api_26" />
+
+        <activity android:name=".IslandWatcher$DummyHomeActivity"
+                  android:theme="@android:style/Theme.NoDisplay"
+                  android:hardwareAccelerated="false"
+                  android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>

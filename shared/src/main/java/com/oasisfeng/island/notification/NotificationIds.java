@@ -17,6 +17,7 @@ import androidx.annotation.StringRes;
 import androidx.core.app.NotificationManagerCompat;
 import java9.util.function.Consumer;
 
+import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_MIN;
 import static android.os.Build.VERSION.SDK_INT;
@@ -33,6 +34,8 @@ public enum NotificationIds {
 	Provisioning(Channel.OngoingTask),
 	UninstallHelper(Channel.Important),
 	AppInstallation(Channel.AppInstall),
+	IslandWatcher(Channel.Watcher),
+	IslandAppWatcher(Channel.AppWatcher),
 	Debug(Channel.Debug, 999);
 
 	public void post(final Context context, final Notification.Builder notification) {
@@ -71,7 +74,7 @@ public enum NotificationIds {
 
 	@RequiresApi(O) public Intent buildChannelSettingsIntent(final Context context) {
 		return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName())
-				.putExtra(Settings.EXTRA_CHANNEL_ID, channel.name);
+				.putExtra(Settings.EXTRA_CHANNEL_ID, channel.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 	}
 
 	NotificationIds(final Channel channel) { this(channel, 0); }
@@ -85,6 +88,8 @@ public enum NotificationIds {
 		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(false)),
 		Important	("Important",	R.string.notification_channel_important,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
 		AppInstall	("AppInstall",	R.string.notification_channel_app_install,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
+		Watcher		("Watcher",		R.string.notification_channel_watcher,		IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
+		AppWatcher	("AppWatcher",	R.string.notification_channel_app_watcher,	IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
 		Debug		("Debug",		R.string.notification_channel_debug,		IMPORTANCE_MIN,  	channel -> channel.setShowBadge(false));
 
 		@SafeVarargs Channel(final String name, final @StringRes int title, final int importance, final @Nullable Consumer<NotificationChannel>... tweaks) {

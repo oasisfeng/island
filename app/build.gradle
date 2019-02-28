@@ -33,6 +33,7 @@ dependencies {
     feature project(':engine')
     feature project(':fileprovider')
     feature project(':installer')
+    feature project(":watcher")
 
     implementation project(':shared')
     implementation project(':deagle')

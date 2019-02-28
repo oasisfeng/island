@@ -3,6 +3,8 @@
     <string name="notification_channel_ongoing_task">Ongoing task</string>
     <string name="notification_channel_important">Important</string>
     <string name="notification_channel_app_install">App Installation</string>
+    <string name="notification_channel_watcher">Watcher</string>
+    <string name="notification_channel_app_watcher">App Watcher</string>
     <string name="notification_channel_debug">Debug</string>
 
     <string name="device_admin_support_message_short">To disable this restriction, please refer to corresponding setting in Island.</string>
