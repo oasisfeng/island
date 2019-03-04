@@ -12,6 +12,8 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
+import com.oasisfeng.island.appops.AppOpsHelper;
+
 import java.util.Objects;
 
 import androidx.annotation.Nullable;
@@ -24,6 +26,8 @@ import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
+import static android.os.Build.VERSION_CODES.O_MR1;
+import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
@@ -150,7 +154,23 @@ public class DevicePolicies {
 		if (sCachedComponent == null) sCachedComponent = DeviceAdmins.getComponentName(context);
 	}
 
+	public boolean setApplicationHidden(final String pkg, final boolean state) {
+		if (SDK_INT > O_MR1) try {
+			if (state && Permissions.has(mAppContext, GET_APP_OPS_STATS)) AppOpsHelper.saveAppOps(mAppContext, pkg);
+		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
+			Log.e(TAG, "Error saving app ops settings for " + pkg, e);
+		}
+		final boolean result = mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, state);
+		if (SDK_INT > O_MR1 && ! state) try {
+			AppOpsHelper.restoreAppOps(mAppContext, pkg);
+		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
+			Log.e(TAG, "Error restoring app ops settings for " + pkg, e);
+		}
+		return result;
+	}
+
 	public DevicePolicies(final Context context) {
+		mAppContext = context.getApplicationContext();
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
 		cacheDeviceAdminComponent(context);
 	}
@@ -181,6 +201,7 @@ public class DevicePolicies {
 		return callee.apply(mDevicePolicyManager, sCachedComponent, a, b);
 	}
 
+	private final Context mAppContext;
 	private final DevicePolicyManager mDevicePolicyManager;
 
 	private static ComponentName sCachedComponent;

@@ -55,7 +55,7 @@ public class IslandManager {
 
 	@OwnerUser @ProfileUser public static boolean ensureAppHiddenState(final Context context, final String pkg, final boolean state) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		if (policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, state)) return true;
+		if (policies.setApplicationHidden(pkg, state)) return true;
 		// Since setApplicationHidden() return false if already in that state, also check the current state.
 		final boolean hidden = policies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
 		return state == hidden;
@@ -64,7 +64,7 @@ public class IslandManager {
 	@OwnerUser @ProfileUser public static String ensureAppFreeToLaunch(final Context context, final String pkg) {
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (policies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) {		// Hidden or not installed
-			if (! policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false))
+			if (! policies.setApplicationHidden(pkg, false))
 				if (! Apps.of(context).isInstalledInCurrentUser(pkg)) return "not_installed";	// Not installed in profile, just give up.
 		}
 		if (SDK_INT >= N) try {

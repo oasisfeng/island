@@ -260,7 +260,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		updateActions();
 	}
 
-	public final void onItemLaunchIconClick(@SuppressWarnings("UnusedParameters") final Context context, final IslandAppInfo app) {
+	public final void onItemLaunchIconClick(final Context context, final IslandAppInfo app) {
 		if (mSelection.getValue() == null) return;
 		final String pkg = app.packageName;
 		Analytics.$().event("action_launch").with(ITEM_ID, pkg).send();
@@ -346,7 +346,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	@OwnerUser @ProfileUser private static boolean ensureAppHiddenState(final Context context, final String pkg, final boolean state) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		if (policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, state)) return true;
+		if (policies.setApplicationHidden(pkg, state)) return true;
 		// Since setApplicationHidden() return false if already in that state, also check the current state.
 		final boolean hidden = policies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
 		return state == hidden;

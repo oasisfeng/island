@@ -203,7 +203,7 @@ public class IslandSetup {
 						if (! frozen_pkgs.isEmpty()) {
 							final DevicePolicies policies = new DevicePolicies(activity);
 							for (final String pkg : frozen_pkgs)
-								policies.invoke(DevicePolicyManager::setApplicationHidden, pkg, false);
+								policies.setApplicationHidden(pkg, false);
 						}
 					} finally {
 						deactivateDeviceOwner(activity);

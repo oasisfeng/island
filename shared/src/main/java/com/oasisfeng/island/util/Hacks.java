@@ -1,5 +1,6 @@
 package com.oasisfeng.island.util;
 
+import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -24,6 +25,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
 
 import java.io.File;
+import java.util.List;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -68,6 +70,8 @@ public class Hacks {
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
+	public static final Hack.HackedTargetField<int[]>
+			AppOpsManager_sOpDefaultMode = Hack.into(AppOpsManager.class).staticField("sOpDefaultMode").fallbackTo(null);
 
 	public static final Hack.HackedMethod2<Boolean, Void, Unchecked, Unchecked, Unchecked, String, Boolean>
 			SystemProperties_getBoolean = Hack.into("android.os.SystemProperties").staticMethod("getBoolean")
@@ -107,5 +111,10 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked>
 			Environment_getDataSystemDirectory = Hack.into(Environment.class)
 			.staticMethod(SDK_INT < N ? "getSystemSecureDirectory" : "getDataSystemDirectory").returning(File.class).withoutParams();
-
+	public static final Hack.HackedMethod3<List, AppOpsManager, Unchecked, Unchecked, Unchecked, Integer, String, int[]>
+			AppOpsManager_getOpsForPackage = Hack.into(AppOpsManager.class).method("getOpsForPackage")
+			.returning(List/*<PackageOps>*/.class).fallbackReturning(null).withParams(int.class, String.class, int[].class);
+	public static final Hack.HackedMethod4<Void, AppOpsManager, Unchecked, Unchecked, Unchecked, Integer, Integer, String, Integer>
+			AppOpsManager_setMode = Hack.into(AppOpsManager.class).method("setMode").fallbackReturning(null)
+			.withParams(int.class, int.class, String.class, int.class);
 }
