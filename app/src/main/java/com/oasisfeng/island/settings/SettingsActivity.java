@@ -158,10 +158,6 @@ public class SettingsActivity extends PreferenceActivity {
 		}
 	}
 
-	public static class PrivacyPreferenceFragment extends SubPreferenceFragment {
-		public PrivacyPreferenceFragment() { super(R.xml.pref_privacy); }
-	}
-
 	public static class AboutFragment extends SubPreferenceFragment {
 
 		@Override public void onCreate(final Bundle savedInstanceState) {

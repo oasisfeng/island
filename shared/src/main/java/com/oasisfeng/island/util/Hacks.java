@@ -97,9 +97,9 @@ public class Hacks {
 	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle>
 			Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
 			.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(String.class, int.class, UserHandle.class);
-	public static final @Nullable Hack.HackedMethodN<IBinder, Void, Unchecked, Unchecked, Unchecked>
+	public static final @Nullable Hack.HackedMethod1<IBinder, Void, Unchecked, Unchecked, Unchecked, String>
 			ServiceManager_getService = Hack.into("android.os.ServiceManager").staticMethod("getService")
-			.returning(IBinder.class).withParams(String.class);
+			.returning(IBinder.class).withParam(String.class);
 	private static final String IWebViewUpdateService = "android.webkit.IWebViewUpdateService";
 	public static final @Nullable Hack.HackedMethod1<?, Void, Unchecked, Unchecked, Unchecked, IBinder>
 			IWebViewUpdateService$Stub_asInterface = Hack.into(IWebViewUpdateService + "$Stub").staticMethod("asInterface")

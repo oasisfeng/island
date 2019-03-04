@@ -141,12 +141,16 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 				Analytics.$().event("invalid_shortcut_uri").with(Analytics.Param.LOCATION, intent_uri).send();
 				return false;
 			}
-			if (! validateIncomingIntent(target_intent, intent)) return false;
+			if (! validateIncomingIntent(target_intent, intent)) {
+				Analytics.$().event("invalid_shortcut_signature").with(Analytics.Param.LOCATION, intent_uri).send();
+				return false;
+			}
 			final String pkg = target_intent.getComponent() != null ? target_intent.getComponent().getPackageName() : target_intent.getPackage();
 			if (pkg != null) prepareToLaunchApp(pkg);
 			try {
 				startActivity(target_intent);
 			} catch (final ActivityNotFoundException e) {
+				Analytics.$().event("invalid_shortcut_uri").with(Analytics.Param.LOCATION, intent_uri).send();
 				return false;
 			}
 			return true;

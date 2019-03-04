@@ -275,7 +275,7 @@ public class IslandProvisioning extends IntentService {
 		}
 	}
 
-	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual provisioning. */
+	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual and incremental provisioning. */
 	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		if (SDK_INT >= O) {
 			policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
