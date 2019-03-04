@@ -36,7 +36,7 @@ class AppInstallationNotifier {
 
 	private static final String EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME";		// Intent.EXTRA_PACKAGE_NAME
 
-	static void onPackageInstalled(final Context context, final CharSequence caller_app_label, final String pkg) {
+	static void onPackageInstalled(final Context context, final String caller_pkg, final CharSequence caller_app_label, final String pkg) {
 		final PackageManager pm = context.getPackageManager();
 		PackageInfo installed_pkg_info = null;
 		if (pkg != null) try {
@@ -68,7 +68,7 @@ class AppInstallationNotifier {
 		NotificationIds.AppInstallation.post(context, pkg, new Notification.Builder(context)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getResources().getColor(R.color.accent))
 				.setContentTitle(context.getString(is_update ? R.string.notification_caller_updated_app : R.string.notification_caller_installed_app,
-						caller_app_label, Apps.of(context).getAppName(pkg)))
+						caller_app_label, pkg.equals(caller_pkg) ? caller_app_label : Apps.of(context).getAppName(pkg)))
 				.setContentText(text).setStyle(big_text == null ? null : new Notification.BigTextStyle().bigText(big_text))
 				.setContentIntent(app_settings).addAction(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_settings), app_settings)
 				.addAction(pm.resolveActivity(app_info_intent, 0) == null ? null

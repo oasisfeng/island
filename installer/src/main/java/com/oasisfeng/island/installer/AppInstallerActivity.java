@@ -188,7 +188,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				unregisterReceiver(this);
 				if (should_return_result)		// Implement the exact same result data as InstallSuccess in PackageInstaller
 					AppInstallerActivity.this.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
-				AppInstallationNotifier.onPackageInstalled(context, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
+				AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
 				finish();
 				break;
 			case PackageInstaller.STATUS_PENDING_USER_ACTION:
@@ -297,8 +297,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 	private String mCallerPackage;
 	private @Nullable ApplicationInfo mCallerAppInfo;
-	private final Supplier<CharSequence> mCallerAppLabel = Suppliers.memoizeWithExpiration(() ->
-			mCallerAppInfo != null ? Apps.of(this).getAppName(mCallerAppInfo) : mCallerPackage, 3, SECONDS);
+	private final Supplier<CharSequence> mCallerAppLabel = Suppliers.memoizeWithExpiration(() ->	// Long cache time to workaround temporarily unavailable-
+			mCallerAppInfo != null ? Apps.of(this).getAppName(mCallerAppInfo) : mCallerPackage, 30, SECONDS);	// label of self-updated app
 	private PackageInstaller.Session mSession;
 	private BroadcastReceiver mStatusCallback;
 	private ProgressDialog mProgressDialog;
