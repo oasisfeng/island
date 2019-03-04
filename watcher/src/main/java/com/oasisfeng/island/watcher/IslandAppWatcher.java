@@ -62,6 +62,7 @@ import static android.os.Build.VERSION_CODES.O;
 			NotificationIds.IslandAppWatcher.cancel(context, pkg);
 			break;
 		case Intent.ACTION_PACKAGE_ADDED:
+			if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return;
 			if (NotificationIds.IslandAppWatcher.isBlocked(context)) return;
 			if (! context.getSystemService(UserManager.class).getUserProfiles().contains(Process.myUserHandle())) {	// Still during provisioning
 				Log.i(TAG, "Island is not ready yet, skip " + pkg);
