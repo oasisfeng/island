@@ -5,10 +5,12 @@ import android.os.Parcelable;
 
 import java.util.List;
 
+import androidx.annotation.Keep;
+
 /**
  * Created by Oasis on 2019-3-3.
  */
-public class AppOpsManager$PackageOps implements Parcelable {
+@Keep public class AppOpsManager$PackageOps implements Parcelable {
 	private final String mPackageName;
 	private final int mUid;
 	private final List<AppOpsManager$OpEntry> mEntries;

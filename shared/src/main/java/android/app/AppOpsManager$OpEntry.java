@@ -3,12 +3,14 @@ package android.app;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.Keep;
+
 /**
  * Class holding the information about one unique operation of an application.
  *
  * (Stub class for AppOpsManager.OpEntry)
  */
-public class AppOpsManager$OpEntry implements Parcelable {
+@Keep public class AppOpsManager$OpEntry implements Parcelable {
 	private final int mOp;
 	private final int mMode;
 	private final long[] mTimes;
