@@ -35,7 +35,7 @@ import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 		final String flat_pkg_ops = list == null || list.isEmpty() ? null : list.stream().filter(ops -> pkg.equals(ops.getPackageName()))
 				.flatMap(ops -> ops.getOps().stream()).filter(entry -> ! isDefaultMode(entry)).map(entry -> entry.getOp() + ":" + entry.getMode())
 				.collect(Collectors.joining(","));
-		if (flat_pkg_ops == null) store.remove(pkg).apply();
+		if (flat_pkg_ops == null || flat_pkg_ops.isEmpty()) store.remove(pkg).apply();
 		else store.putString(pkg, flat_pkg_ops).apply();
 		Log.d(TAG, "App ops saved for " + pkg + ": " + flat_pkg_ops);
 		return true;
