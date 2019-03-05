@@ -5,9 +5,11 @@
     <string name="permission_group_control_island_apps_label">炼妖壶管理的应用</string>
     <string name="permission_group_control_island_apps_description">控制炼妖壶管理的应用</string>
     <string name="permission_freeze_app_label">冻结炼妖壶管理的应用</string>
-    <string name="permission_freeze_app_description">这个应用被授权可随时冻结炼妖壶管理的任意应用</string>
+    <string name="permission_freeze_app_description">这个应用被授权可随时冻结及解冻炼妖壶管理的任意应用</string>
     <string name="permission_launch_app_label">启动炼妖壶管理的应用</string>
     <string name="permission_launch_app_description">这个应用被授权可启动炼妖壶管理的任何应用，冻结的应用将在启动前解冻。</string>
+    <string name="permission_suspend_app_label">暂停炼妖壶管理的应用</string>
+    <string name="permission_suspend_app_description">这个应用被授权可随时暂停及恢复炼妖壶管理的任意应用</string>
 
     <string name="notification_provisioning_title">正在准备 壶中界…</string>
     <string name="notification_provisioning_text">可能需要数分钟之久</string>

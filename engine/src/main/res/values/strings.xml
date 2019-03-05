@@ -4,10 +4,12 @@
 
     <string name="permission_group_control_island_apps_label">Control Island apps</string>
     <string name="permission_group_control_island_apps_description">control apps managed by Island</string>
-    <string name="permission_freeze_app_label">Freeze Island apps</string>
-    <string name="permission_freeze_app_description">This app can freeze and unfreeze any app managed by Island.</string>
-    <string name="permission_launch_app_label">Launch Island apps</string>
+    <string name="permission_freeze_app_label">Freeze Island-managed apps</string>
+    <string name="permission_freeze_app_description">This app can freeze and unfreeze any app managed by Island at any time.</string>
+    <string name="permission_launch_app_label">Launch Island-managed apps</string>
     <string name="permission_launch_app_description">This app can launch any app managed by Island, which will be unfrozen if needed.</string>
+    <string name="permission_suspend_app_label">Suspend Island-managed apps</string>
+    <string name="permission_suspend_app_description">This app can suspend and unsuspend any app managed by Island at any time.</string>
 
     <string name="notification_provisioning_title">Provisioning Island…</string>
     <string name="notification_provisioning_text">It may take several minutes.</string>

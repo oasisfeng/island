@@ -3,6 +3,7 @@ package com.oasisfeng.island.api;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import com.oasisfeng.island.engine.IslandManager;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
@@ -26,7 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import java9.util.Objects;
+import java9.util.function.Function;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 import java9.util.stream.Stream;
@@ -36,6 +40,7 @@ import static android.content.pm.PackageManager.GET_SIGNATURES;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.P;
 
 /**
@@ -66,10 +71,7 @@ class ApiDispatcher {
 			Log.w(TAG, "Never use implicit intent or explicit intent with component name for API request, use Intent.setPackage() instead.");
 
 		Log.d(TAG, "API invoked by " + pkg);
-		if (SDK_INT >= M && uid >= 0) {
-			final int permission_result = context.checkPermission(Api.latest.PERMISSION_FREEZE_PACKAGE, 0, uid);
-			if (permission_result == PackageManager.PERMISSION_GRANTED) return null;
-		}
+		if (SDK_INT >= M && uid >= 0 && verifyRuntimePermission(context, uid, intent.getAction())) return null;
 
 		// Fallback verification for API v1 clients.
 		final Integer value = sVerifiedCallers.get(pkg);
@@ -92,17 +94,40 @@ class ApiDispatcher {
 		return null;
 	}
 
+	private static boolean verifyRuntimePermission(final Context context, final int uid, final String action) {
+		if (action == null) return false;
+		final String permission;
+		switch (action) {
+		case Api.latest.ACTION_FREEZE:
+		case Api.latest.ACTION_UNFREEZE:
+			permission = Api.latest.PERMISSION_FREEZE_PACKAGE;	break;
+		case Api.latest.ACTION_LAUNCH:
+			permission = Api.latest.PERMISSION_LAUNCH_PACKAGE;	break;
+		case Api.latest.ACTION_SUSPEND:
+		case Api.latest.ACTION_UNSUSPEND:
+			permission = Api.latest.PERMISSION_SUSPEND_PACKAGE;	break;
+		default: return false;
+		}
+		return context.checkPermission(permission, 0, uid) == PackageManager.PERMISSION_GRANTED;
+	}
+
 	/** @return null for success, or error message for debugging purpose (NOT part of the API protocol). */
 	static String dispatch(final Context context, final Intent intent) {
 		final String action = intent.getAction();
 		if (action == null) return "No action";
+		boolean positive = false;
 		switch (action) {
-		case Api.latest.ACTION_FREEZE:
-			return processPackageUri(intent, pkg -> IslandManager.ensureAppHiddenState(context, pkg, true));
+		case Api.latest.ACTION_FREEZE: positive = true;
 		case Api.latest.ACTION_UNFREEZE:
-			return processPackageUri(intent, pkg -> IslandManager.ensureAppHiddenState(context, pkg, false));
+			final boolean hidden = positive;
+			return processPackageUri(intent, null, pkg -> IslandManager.ensureAppHiddenState(context, pkg, hidden));
 		case Api.latest.ACTION_LAUNCH:
 			return launchActivity(context, intent);
+		case Api.latest.ACTION_SUSPEND: positive = true;
+		case Api.latest.ACTION_UNSUSPEND:
+			if (SDK_INT < N) return "Requires Android N+: " + action;
+			final boolean suspended = positive;
+			return processPackageUri(intent, pkgs -> setPackageSuspended(context, pkgs, suspended), null);
 		default: return "Unsupported action: " + action;
 		}
 	}
@@ -142,7 +167,12 @@ class ApiDispatcher {
 		return null;
 	}
 
-	private static String processPackageUri(final Intent intent, final Predicate<String> dealer) {
+	@RequiresApi(N) private static String setPackageSuspended(final Context context, final Stream<String> pkgs, final boolean suspended) {
+		final String[] failed = new DevicePolicies(context).invoke(DevicePolicyManager::setPackagesSuspended, pkgs.toArray(String[]::new), suspended);
+		return failed.length == 0 ? null : "Failed packages: " + Arrays.toString(failed);
+	}
+
+	private static String processPackageUri(final Intent intent, final Function<Stream<String>, String> batch_dealer, final Predicate<String> dealer) {
 		final Uri uri = intent.getData();
 		final String ssp;
 		if (uri == null || (ssp = uri.getSchemeSpecificPart()) == null) return "Invalid data in Intent: " + intent;
@@ -154,11 +184,13 @@ class ApiDispatcher {
 		else return "Unsupported intent data scheme: " + intent;	// Should never happen
 
 		try {
+			if (batch_dealer != null) return batch_dealer.apply(pkgs);
+
 			final List<String> failed_pkgs = pkgs.filter(t -> ! dealer.test(t)).collect(Collectors.toList());
 			if (failed_pkgs.isEmpty()) return null;
 			if (single) return "Failed: " + ssp;
 			return "Failed: " + failed_pkgs;
-		} catch (final SecurityException e) {
+		} catch (final RuntimeException e) {
 			return "Internal exception: " + e;		// Island might be have been deactivated or not set up yet.
 		}
 	}

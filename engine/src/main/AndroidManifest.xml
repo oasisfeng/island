@@ -21,6 +21,12 @@
                 android:label="@string/permission_launch_app_label"
                 android:description="@string/permission_launch_app_description" />
 
+    <permission android:name="${applicationId}.permission.SUSPEND_PACKAGE"
+                android:permissionGroup="com.oasisfeng.island.permission-group.PACKAGE_ACCESS"
+                android:protectionLevel="dangerous"
+                android:label="@string/permission_suspend_app_label"
+                android:description="@string/permission_suspend_app_description" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- IslandProvisioning & ShuttleKeeper, required if targeting API 28+ -->
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
@@ -68,6 +74,8 @@
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
                 <action android:name="com.oasisfeng.island.action.LAUNCH" />
+                <action android:name="com.oasisfeng.island.action.SUSPEND" />
+                <action android:name="com.oasisfeng.island.action.UNSUSPEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
@@ -79,6 +87,8 @@
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
                 <action android:name="com.oasisfeng.island.action.LAUNCH" />
+                <action android:name="com.oasisfeng.island.action.SUSPEND" />
+                <action android:name="com.oasisfeng.island.action.UNSUSPEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
                 <data android:scheme="packages" /> <!-- ssp: comma-separated package names -->
