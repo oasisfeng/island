@@ -72,7 +72,7 @@ import static android.os.Build.VERSION_CODES.O;
 			}
 			try {
 				final PackageInfo info = context.getPackageManager().getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
-				if (System.currentTimeMillis() - info.firstInstallTime < MAX_DELAY_AFTER_INSTALL) return;    // Exclude newly installed app
+				if (System.currentTimeMillis() - info.lastUpdateTime < MAX_DELAY_AFTER_INSTALL) return;    // Exclude newly installed app
 				Log.i(TAG, "App is available: " + pkg);
 				startWatching(context, info);
 			} catch (final PackageManager.NameNotFoundException e) {
