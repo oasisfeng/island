@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Process;
-import android.os.UserManager;
 import android.util.Log;
 
 import com.oasisfeng.android.content.IntentFilters;
@@ -47,7 +45,6 @@ import static android.os.Build.VERSION_CODES.O;
 	private static final String ACTION_REFREEZE = "REFREEZE";
 	private static final String ACTION_DISMISS = "DISMISS";
 	private static final String EXTRA_WATCHING_PERMISSIONS = "permissions";
-	private static final long MAX_DELAY_AFTER_INSTALL = 10_000;
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		final Uri data = intent.getData(); final String pkg = data != null ? data.getSchemeSpecificPart() : null;
@@ -62,21 +59,14 @@ import static android.os.Build.VERSION_CODES.O;
 		case Intent.ACTION_PACKAGE_FULLY_REMOVED:	// Declared in AndroidManifest
 			NotificationIds.IslandAppWatcher.cancel(context, pkg);
 			break;
-		case Intent.ACTION_PACKAGE_ADDED:
-			if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return;
+		case DevicePolicies.ACTION_PACKAGE_UNFROZEN:
 			if (NotificationIds.IslandAppWatcher.isBlocked(context)) return;
-			if (! new DevicePolicies(context).isActiveDeviceOrProfileOwner()) return;
-			if (! context.getSystemService(UserManager.class).getUserProfiles().contains(Process.myUserHandle())) {	// Still during provisioning
-				Log.i(TAG, "Island is not ready yet, skip " + pkg);
-				return;
-			}
 			try {
 				final PackageInfo info = context.getPackageManager().getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
-				if (System.currentTimeMillis() - info.lastUpdateTime < MAX_DELAY_AFTER_INSTALL) return;    // Exclude newly installed app
 				Log.i(TAG, "App is available: " + pkg);
 				startWatching(context, info);
 			} catch (final PackageManager.NameNotFoundException e) {
-				Log.i(TAG, "App is unavailable: " + pkg);
+				Log.w(TAG, "App is unavailable: " + pkg);
 				NotificationIds.IslandAppWatcher.cancel(context, pkg);
 			}
 			break;
@@ -121,7 +111,7 @@ import static android.os.Build.VERSION_CODES.O;
 
 		@Override public boolean onCreate() {
 			context().registerReceiver(new IslandAppWatcher(),
-					IntentFilters.forActions(Intent.ACTION_PACKAGE_ADDED, Intent.ACTION_PACKAGE_REMOVED).withDataScheme("package"));
+					IntentFilters.forActions(DevicePolicies.ACTION_PACKAGE_UNFROZEN, Intent.ACTION_PACKAGE_REMOVED).withDataScheme("package"));
 			return false;
 		}
 	}

@@ -7,11 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsHelper;
 
 import java.util.Objects;
@@ -35,6 +37,8 @@ import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
  * Created by Oasis on 2016/6/14.
  */
 public class DevicePolicies {
+
+	public static final String ACTION_PACKAGE_UNFROZEN = "com.oasisfeng.island.action.PACKAGE_UNFROZEN";
 
 	/** @return whether Island is the profile owner, absent if no enabled profile or profile has no owner, or null for failure. */
 	public static @Nullable Optional<Boolean> isOwnerOfEnabledProfile(final Context context) {
@@ -154,19 +158,23 @@ public class DevicePolicies {
 		if (sCachedComponent == null) sCachedComponent = DeviceAdmins.getComponentName(context);
 	}
 
-	public boolean setApplicationHidden(final String pkg, final boolean state) {
-		if (SDK_INT > O_MR1) try {
-			if (state && Permissions.has(mAppContext, GET_APP_OPS_STATS)) AppOpsHelper.saveAppOps(mAppContext, pkg);
+	public boolean setApplicationHidden(final String pkg, final boolean hidden) {
+		if (SDK_INT > O_MR1 && hidden && Permissions.has(mAppContext, GET_APP_OPS_STATS)) try {
+			AppOpsHelper.saveAppOps(mAppContext, pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
-			Log.e(TAG, "Error saving app ops settings for " + pkg, e);
+			Analytics.$().logAndReport(TAG, "Error saving app ops settings for " + pkg, e);
 		}
-		final boolean result = mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, state);
-		if (SDK_INT > O_MR1 && ! state) try {
-			AppOpsHelper.restoreAppOps(mAppContext, pkg);
-		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
-			Log.e(TAG, "Error restoring app ops settings for " + pkg, e);
+		final boolean changed = mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, hidden);
+
+		if (changed && ! hidden) {
+			Modules.broadcast(mAppContext, new Intent(ACTION_PACKAGE_UNFROZEN, Uri.fromParts("package", pkg, null)));
+			if (SDK_INT > O_MR1) try {
+				AppOpsHelper.restoreAppOps(mAppContext, pkg);
+			} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
+				Analytics.$().logAndReport(TAG, "Error restoring app ops settings for " + pkg, e);
+			}
 		}
-		return result;
+		return changed;
 	}
 
 	public DevicePolicies(final Context context) {

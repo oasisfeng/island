@@ -31,6 +31,14 @@ public class Modules {
 	// Engine is singleton across the device.
 	public static final String MODULE_ENGINE = "com.oasisfeng.island";
 
+	public static void broadcast(final Context context, final Intent intent) {
+		if (intent.getComponent() != null || intent.getPackage() != null) throw new IllegalArgumentException("Explicit " + intent);
+		final String[] pkgs = context.getPackageManager().getPackagesForUid(Process.myUid());
+		if (pkgs == null) return;
+		for (final String pkg : pkgs) context.sendBroadcast(intent.setPackage(pkg));
+		intent.setPackage(null);
+	}
+
 	public static @Nullable ComponentName getFileProviderComponent(final Context context) {
 		if (sFileProviderComponent != null) return sFileProviderComponent.getPackageName().isEmpty() ? null : sFileProviderComponent;
 		final String my_pkg = context.getPackageName();
