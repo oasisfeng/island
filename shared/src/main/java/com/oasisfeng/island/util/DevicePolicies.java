@@ -64,12 +64,7 @@ public class DevicePolicies {
 	}
 
 	public boolean isActiveDeviceOwner() {
-		return mDevicePolicyManager.isAdminActive(sCachedComponent) && isDeviceOwner();
-	}
-
-	/** @see DevicePolicyManager#isDeviceOwnerApp(String) */
-	public boolean isDeviceOwner() {
-		return mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
+		return mDevicePolicyManager.isAdminActive(sCachedComponent) && mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
 	}
 
 	/** @return the package name of current device owner, null if none or empty string if unknown. */

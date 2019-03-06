@@ -14,6 +14,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.common.WellKnownPackages;
 import com.oasisfeng.island.installer.InstallerExtras;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.ProfileUser;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
@@ -39,7 +40,7 @@ public class IslandAppClones {
 	private static final String SCHEME_PACKAGE = "package";
 
 	/** Two-stage operation, because of pre-cloning user interaction, depending on the situation in managed profile. */
-	public int cloneUserApp(final String pkg, final ApplicationInfo app_info, final boolean do_it) {
+	@ProfileUser public int cloneUserApp(final String pkg, final ApplicationInfo app_info, final boolean do_it) {
 		// Blindly clear these restrictions
 		mDevicePolicies.clearUserRestrictionsIfNeeded(mContext, UserManager.DISALLOW_INSTALL_APPS);
 

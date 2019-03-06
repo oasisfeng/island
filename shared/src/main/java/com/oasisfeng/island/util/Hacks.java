@@ -71,7 +71,7 @@ public class Hacks {
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
 	public static final Hack.HackedTargetField<int[]>
-			AppOpsManager_sOpDefaultMode = Hack.into(AppOpsManager.class).staticField("sOpDefaultMode").fallbackTo(null);
+			/* Dark grey */ AppOpsManager_sOpDefaultMode = Hack.into(AppOpsManager.class).staticField("sOpDefaultMode").fallbackTo(null);
 
 	public static final Hack.HackedMethod2<Boolean, Void, Unchecked, Unchecked, Unchecked, String, Boolean>
 			SystemProperties_getBoolean = Hack.into("android.os.SystemProperties").staticMethod("getBoolean")
