@@ -15,6 +15,7 @@ import android.util.Log;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.island.api.Api;
 import com.oasisfeng.island.notification.NotificationIds;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.ArrayList;
@@ -64,6 +65,7 @@ import static android.os.Build.VERSION_CODES.O;
 		case Intent.ACTION_PACKAGE_ADDED:
 			if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return;
 			if (NotificationIds.IslandAppWatcher.isBlocked(context)) return;
+			if (! new DevicePolicies(context).isActiveDeviceOrProfileOwner()) return;
 			if (! context.getSystemService(UserManager.class).getUserProfiles().contains(Process.myUserHandle())) {	// Still during provisioning
 				Log.i(TAG, "Island is not ready yet, skip " + pkg);
 				return;
