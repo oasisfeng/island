@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import java9.util.function.Consumer;
 
@@ -80,24 +81,27 @@ import static android.os.Build.VERSION_CODES.O;
 	}
 
 	private static void startWatching(final Context context, final PackageInfo info) {
-		final ArrayList<String> watching_permissions = new ArrayList<>();
-		for (int i = 0; i < info.requestedPermissions.length; i++)
-			if ((info.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0) {
-				final String permission = info.requestedPermissions[i];
-				if (CONCERNED_PERMISSIONS.contains(permission)) watching_permissions.add(permission);
-			}
+		final ArrayList<String> watching_permissions;
+		if (info.requestedPermissions != null) {
+			watching_permissions = new ArrayList<>();
+			for (int i = 0; i < info.requestedPermissions.length; i++)
+				if ((info.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0) {
+					final String permission = info.requestedPermissions[i];
+					if (CONCERNED_PERMISSIONS.contains(permission)) watching_permissions.add(permission);
+				}
+		} else watching_permissions = null;
 		final CharSequence app_label = info.applicationInfo.loadLabel(context.getPackageManager());
 		NotificationIds.IslandAppWatcher.post(context, info.packageName, new Notification.Builder(context).setOngoing(true).setGroup(IslandWatcher.GROUP)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getResources().getColor(R.color.primary))
 				.setContentTitle(app_label + " is active").setContentText("Pending re-freeze")
 				.addAction(new Notification.Action(0, "Freeze", makePendingIntent(context, ACTION_REFREEZE, info.packageName,
-						intent -> intent.putStringArrayListExtra(EXTRA_WATCHING_PERMISSIONS, watching_permissions))))
+						watching_permissions == null ? null : intent -> intent.putStringArrayListExtra(EXTRA_WATCHING_PERMISSIONS, watching_permissions))))
 				.addAction(new Notification.Action(0, "Settings", PendingIntent.getActivity(context, 0,
 						NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)))
 				.addAction(new Notification.Action(0, "Dismiss", makePendingIntent(context, ACTION_DISMISS, info.packageName, null))));
 	}
 
-	private static PendingIntent makePendingIntent(final Context context, final String action, final String pkg, final Consumer<Intent> extras) {
+	private static PendingIntent makePendingIntent(final Context context, final String action, final String pkg, final @Nullable Consumer<Intent> extras) {
 		final Intent intent = new Intent(action).setClass(context, IslandAppWatcher.class);
 		if (pkg != null) intent.setData(Uri.fromParts("package", pkg, null));
 		if (extras != null) extras.accept(intent);
