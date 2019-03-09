@@ -111,6 +111,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_button_reboot">Reboot</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
+    <string name="toast_enable_disabled_system_app">Please re-enable this clone.</string>
 
     <string name="toast_setup_in_progress">Island setup in progress, please wait…</string>
     <string name="toast_successfully_cloned">%1$s is successfully cloned.</string>
@@ -121,6 +122,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_greenify_failed">Failed to greenify</string>
     <string name="toast_internal_error">Sorry, an internal error occurred, please restart this app and try again.</string>
     <string name="toast_error_freeze_failure">Failed to freeze</string>
+    <string name="toast_error_freezing_active_admin">Cannot freeze active device-admin</string>
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
     <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
     <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>

@@ -7,7 +7,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.LabeledIntent;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
@@ -36,11 +35,8 @@ import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.Dialogs;
-import com.oasisfeng.android.ui.WebContent;
-import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.common.app.BaseAppListViewModel;
-import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.controller.IslandAppClones;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -61,16 +57,13 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 import androidx.lifecycle.MutableLiveData;
-import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 import java9.util.concurrent.CompletableFuture;
 import java9.util.concurrent.CompletionStage;
@@ -81,8 +74,6 @@ import java9.util.stream.StreamSupport;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static android.content.Intent.EXTRA_USER;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static java.util.Objects.requireNonNull;
@@ -294,7 +285,18 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 		final int id = item.getItemId();
 		if (id == R.id.menu_clone) {
-			cloneApp(context, app);
+			final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(pkg, Users.profile);
+			if (app_in_profile != null && app_in_profile.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
+				MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false)).thenAccept(unfrozen -> {
+					if (unfrozen) {
+						app.stopTreatingHiddenSysAppAsDisabled();
+						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+					}
+				}).exceptionally(t -> { reportAndShowToastForInternalException(context, "Error unfreezing app: " + pkg, t); return null; });
+			} else if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {	// Disabled system app is shown as "removed" (not cloned)
+				launchSystemAppSettings(context, app_in_profile);
+				Toast.makeText(context, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show();
+			} else IslandAppClones.cloneApp(context, app);
 			clearSelection();
 		} else if (id == R.id.menu_clone_back) {
 			Activities.startActivity(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
@@ -491,133 +493,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, t);
 			return false;
 		});
-	}
-
-	private static void cloneApp(final Context context, final IslandAppInfo app) {
-		final String pkg = app.packageName;
-		final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(pkg, Users.profile);
-		if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {
-			launchSystemAppSettings(context, app_in_profile);
-			return;
-		}
-
-		if ((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-			Analytics.$().event("clone_sys").with(ITEM_ID, pkg).send();
-			MethodShuttle.runInProfile(context, () -> new DevicePolicies(context).enableSystemApp(pkg)).thenAccept(enabled ->
-				Toast.makeText(context, context.getString(enabled ? R.string.toast_successfully_cloned : R.string.toast_cannot_clone, app.getLabel()),
-						enabled ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show()
-			).exceptionally(throwable -> {
-				reportAndShowToastForInternalException(context, "Error cloning system app: " + pkg, throwable);
-				return null;
-			});
-		}
-		@SuppressWarnings("UnnecessaryLocalVariable") final ApplicationInfo info = app;	// To keep type consistency in the following method shuttle
-		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(info.packageName, info, false)).thenAccept(result -> {
-			switch (result) {
-			case IslandAppClones.CLONE_RESULT_ALREADY_CLONED:
-				if (app_in_profile != null && ! app_in_profile.shouldShowAsEnabled()) {	// Actually frozen system app shown as disabled, just unfreeze it.
-					MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false)).thenAccept(unfrozen -> {
-						if (unfrozen) {
-							app.stopTreatingHiddenSysAppAsDisabled();
-							Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-						}
-					}).exceptionally(t -> {
-						reportAndShowToastForInternalException(context, "Error unfreezing app: " + pkg, t);
-						return null;
-					});
-				} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
-				break;
-			case IslandAppClones.CLONE_RESULT_NO_SYS_MARKET:
-				Activity activity = Activities.findActivityFrom(context);
-				if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
-						.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
-						.setPositiveButton(android.R.string.cancel, null).show();
-				else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show();
-				break;
-			case IslandAppClones.CLONE_RESULT_OK_INSTALL:
-				Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
-				activity = Activities.findActivityFrom(context);
-				final UserHandle profile = Users.profile;
-				if (SDK_INT >= O && activity != null && profile != null) {
-					final String cmd = "cmd package install-existing --user " + Users.toId(profile) + " " + pkg;
-					new SafeAsyncTask<Void, Void, List<String>>(activity) {
-						@Override protected List<String> doInBackground(final Void[] params) {
-							return Shell.SU.run(cmd);
-						}
-
-						@Override protected void onPostExecute(final Activity activity, final List<String> result) {
-							try {
-								final ApplicationInfo app_info = activity.getSystemService(LauncherApps.class).getApplicationInfo(pkg, 0, Users.profile);
-								if (app_info != null && (app_info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {
-									Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-									return;
-								}
-							} catch (final PackageManager.NameNotFoundException e) {
-								Log.w(TAG, "Failed to clone app via root: " + pkg);
-								if (result != null && ! result.isEmpty()) Analytics.$().logAndReport(TAG, "Error executing: " + cmd,
-										new ExecutionException("ROOT: " + cmd + ", result: " + String.join(" \\n ", result), null));
-							}
-							showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, app);
-						}
-					}.execute();
-				}
-				break;
-			case IslandAppClones.CLONE_RESULT_OK_INSTALL_EXISTING:
-				Analytics.$().event("clone_install_existing").with(ITEM_ID, pkg).send();
-				doCloneUserApp(context, app);		// No explanation needed.
-				break;
-			case IslandAppClones.CLONE_RESULT_OK_GOOGLE_PLAY:
-				Analytics.$().event("clone_via_play").with(ITEM_ID, pkg).send();
-				showExplanationBeforeCloning("clone-via-google-play-explained", context, R.string.dialog_clone_via_google_play_explanation, app);
-				break;
-			case IslandAppClones.CLONE_RESULT_UNKNOWN_SYS_MARKET:
-				final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				final ActivityInfo market_info = market_intent.resolveActivityInfo(context.getPackageManager(), PackageManager.MATCH_DEFAULT_ONLY);
-				if (market_info != null && (market_info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
-					Analytics.$().event("clone_via_market").with(ITEM_ID, pkg).with(ITEM_CATEGORY, market_info.packageName).send();
-				showExplanationBeforeCloning("clone-via-sys-market-explained", context, R.string.dialog_clone_via_sys_market_explanation, app);
-				break;
-			case IslandAppClones.CLONE_RESULT_NOT_FOUND:
-				Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_SHORT).show();
-				break;
-			}
-		}).exceptionally(t -> {
-			reportAndShowToastForInternalException(context, "Error checking user app for cloning: " + pkg, t);
-			return null;
-		});	// Dry run to check prerequisites.
-	}
-
-	private static void doCloneUserApp(final Context context, final IslandAppInfo app) {
-		@SuppressWarnings("UnnecessaryLocalVariable") final ApplicationInfo info = app;	// To keep type consistency in the following method shuttle
-		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(info.packageName, info, true)).thenAccept(result -> {
-			switch (result) {
-			case IslandAppClones.CLONE_RESULT_OK_INSTALL_EXISTING:		// Visual feedback for instant cloning.
-				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-				break;
-			case IslandAppClones.CLONE_RESULT_OK_INSTALL:
-			case IslandAppClones.CLONE_RESULT_OK_GOOGLE_PLAY:
-			case IslandAppClones.CLONE_RESULT_UNKNOWN_SYS_MARKET:
-				break;		// Expected result
-			case IslandAppClones.CLONE_RESULT_NOT_FOUND:
-			case IslandAppClones.CLONE_RESULT_ALREADY_CLONED:
-			case IslandAppClones.CLONE_RESULT_NO_SYS_MARKET:
-				Log.e(TAG, "Unexpected cloning result: " + result);
-				break;
-			}
-		}).exceptionally(t -> {
-			reportAndShowToastForInternalException(context, "Error cloning user app: " + app.packageName, t);
-			return null;
-		});
-	}
-
-	private static void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
-		final Activity activity = Activities.findActivityFrom(context);
-		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
-			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
-				Scopes.app(context).markOnly(mark);
-				doCloneUserApp(context, app);
-			}).show();
-		} else doCloneUserApp(context, app);
 	}
 
 	public final void onItemClick(final AppViewModel clicked) {

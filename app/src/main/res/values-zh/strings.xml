@@ -109,6 +109,7 @@
     <string name="dialog_button_reboot">重启</string>
 
     <string name="prompt_disable_sys_app_as_removal">系统应用（或组件）只能被停用，与卸载安装的应用效果相似。\n\n由于没有权限直接停用应用，接下来即将打开系统的应用设置界面，届时请点击“停用”按钮。</string>
+    <string name="toast_enable_disabled_system_app">请重新启用此分身</string>
 
     <string name="toast_setup_in_progress">正在创建壶中界，请稍候…</string>
     <string name="toast_successfully_cloned">%1$s 已完成分身</string>
@@ -119,6 +120,7 @@
     <string name="toast_greenify_failed">绿色化失败</string>
     <string name="toast_internal_error">抱歉，出现了内部异常，请退出后重新尝试。</string>
     <string name="toast_error_freeze_failure">冻结失败</string>
+    <string name="toast_error_freezing_active_admin">无法冻结已激活设备管理器的应用</string>
     <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
     <string name="toast_failed_to_launch_app">抱歉，启动应用时出现了异常。</string>
     <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>

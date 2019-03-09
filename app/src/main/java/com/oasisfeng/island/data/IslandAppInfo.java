@@ -48,7 +48,11 @@ public class IslandAppInfo extends AppInfo {
 
 	/** Some system apps are hidden by post-provisioning, they should be treated as "disabled". */
 	public boolean shouldShowAsEnabled() {
-		return enabled && (Users.isOwner(user) || ! isSystem() || ! isHidden() || ! shouldTreatHiddenSysAppAsDisabled());
+		return enabled && ! isHiddenSysIslandAppTreatedAsDisabled();
+	}
+
+	public boolean isHiddenSysIslandAppTreatedAsDisabled() {	// Users.isProfile() is not checked
+		return Users.isProfile(user) && isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
 	}
 
 	private boolean shouldTreatHiddenSysAppAsDisabled() {
