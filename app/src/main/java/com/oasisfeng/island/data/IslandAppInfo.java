@@ -22,6 +22,9 @@ import java9.util.stream.Collectors;
 import java9.util.stream.StreamSupport;
 
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_LAUNCHER;
+import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Process.myUserHandle;
@@ -86,7 +89,8 @@ public class IslandAppInfo extends AppInfo {
 
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
-	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED), 1, SECONDS);
+	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(	// Use GET_DISABLED_COMPONENTS in case mainland sibling is disabled.
+			() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | GET_DISABLED_COMPONENTS), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
 		if (sLaunchableAppsCache != null) return sLaunchableAppsCache.contains(packageName);
@@ -94,8 +98,8 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	public static void cacheLaunchableApps(final Context context) {
-		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager()
-				.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
+		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager().queryIntentActivities(
+				new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | GET_DISABLED_COMPONENTS);
 		sLaunchableAppsCache = StreamSupport.stream(activities).map(resolve -> resolve.activityInfo.packageName).collect(Collectors.toSet());
 	}
 
