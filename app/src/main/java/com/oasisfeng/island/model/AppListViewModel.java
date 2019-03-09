@@ -38,6 +38,7 @@ import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
+import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
@@ -76,6 +77,7 @@ import java9.util.concurrent.CompletionStage;
 import java9.util.function.BooleanSupplier;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
+import java9.util.stream.StreamSupport;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static android.content.Intent.EXTRA_USER;
@@ -342,17 +344,22 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				final AppViewModel next;
 				if (next_index < size() && (next = getAppAt(next_index)).state == AppViewModel.State.Alive) setSelection(next);
 				else clearSelection();
-			} else Toast.makeText(context, R.string.toast_error_freeze_failure, Toast.LENGTH_LONG).show();
+			}
 			refreshAppStateAsSysBugWorkaround(context, pkg);
 		});
 	}
 
-	@OwnerUser @ProfileUser private static boolean ensureAppHiddenState(final Context context, final String pkg, final boolean state) {
+	@OwnerUser @ProfileUser private static boolean ensureAppHiddenState(final Context context, final String pkg, final boolean hidden) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		if (policies.setApplicationHidden(pkg, state)) return true;
+		if (policies.setApplicationHidden(pkg, hidden)) return true;
 		// Since setApplicationHidden() return false if already in that state, also check the current state.
-		final boolean hidden = policies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
-		return state == hidden;
+		final boolean state = policies.invoke(DevicePolicyManager::isApplicationHidden, pkg);
+		if (hidden == state) return true;
+		final List<ComponentName> active_admins = policies.getManager().getActiveAdmins();
+		if (active_admins != null && StreamSupport.stream(active_admins).anyMatch(admin -> pkg.equals(admin.getPackageName())))
+			Toasts.showLong(context, R.string.toast_error_freezing_active_admin);		// TODO: Action to open device-admin settings.
+		else Toasts.showLong(context, R.string.toast_error_freeze_failure);
+		return false;
 	}
 
 	private static void launchSystemAppSettings(final Context context, final IslandAppInfo app) {
