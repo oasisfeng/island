@@ -11,7 +11,8 @@
     <string name="permission_suspend_app_label">Suspend Island-managed apps</string>
     <string name="permission_suspend_app_description">This app can suspend and unsuspend any app managed by Island at any time.</string>
 
-    <string name="notification_provisioning_title">Provisioning Island…</string>
+    <string name="notification_provisioning_island_title">Provisioning Island…</string>
+    <string name="notification_provisioning_mainland_title">Provisioning Mainland…</string>
     <string name="notification_provisioning_text">It may take several minutes.</string>
 
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>

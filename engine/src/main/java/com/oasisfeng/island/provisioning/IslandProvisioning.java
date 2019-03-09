@@ -340,7 +340,8 @@ public class IslandProvisioning extends IntentService {
 
 	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> new Notification.Builder(this)
 			.setSmallIcon(android.R.drawable.stat_notify_sync).setPriority(PRIORITY_HIGH).setUsesChronometer(true)
-			.setContentTitle(getText(R.string.notification_provisioning_title)).setContentText(getText(R.string.notification_provisioning_text)));
+			.setContentTitle(getText(Users.isOwner() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
+			.setContentText(getText(R.string.notification_provisioning_text)));
 
 	private static final String TAG = "Island.Provision";
 	public static final String SCHEME_PACKAGE = "package";
