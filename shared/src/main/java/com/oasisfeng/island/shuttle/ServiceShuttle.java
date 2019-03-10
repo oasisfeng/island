@@ -61,15 +61,19 @@ public class ServiceShuttle {
 		final Intent intent = new Intent(ACTION_BIND_SERVICE).addFlags(SHUTTLE_ACTIVITY_START_FLAGS).putExtras(extras)
 				.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags);
 		Log.d(TAG, "Connecting to service in profile (via shuttle): " + service + " from " + conn);
-		if (sForwarderComponent == null) {
+		if (sForwarderComponent == null) try {
 			sForwarderComponent = StreamSupport.stream(pm.queryIntentActivities(intent, 0))
 					.filter((@NonNull ResolveInfo r) -> (r.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
 					.map((@NonNull ResolveInfo r) -> new ComponentName(r.activityInfo.packageName, r.activityInfo.name)).findFirst().orElse(null);
 			if (sForwarderComponent == null) {
 				Analytics.$().event("shuttle_service_forwarder_unavailable").send();
-				return false;
+				return false;	// DO NOT fallback to default component assumed, due to cross-profile intent filter may not properly created.
 			}
+		} catch (final RuntimeException e) {
+			Analytics.$().logAndReport(TAG, "Error querying " + intent, e);
 		}
+		if (sForwarderComponent == null)	// Last resort, assuming the default component unaltered.
+			sForwarderComponent = new ComponentName("android", "com.android.internal.app.IntentForwarderActivity");
 
 		intent.setComponent(sForwarderComponent);
 		final Activity activity = Activities.findActivityFrom(context);
@@ -80,7 +84,7 @@ public class ServiceShuttle {
 			} else context.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK));
 			return true;
 		} catch (final ActivityNotFoundException e) {
-			Analytics.$().event("shuttle_service_forwarder_not_found").send();
+			Analytics.$().logAndReport(TAG, "Error starting " + intent, e);
 			return false;		// ServiceShuttle not ready in managed profile
 		}
 	}
