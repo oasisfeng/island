@@ -3,6 +3,7 @@ package com.oasisfeng.island.featured;
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.os.Handler;
 import android.provider.Settings;
 import android.widget.Toast;
 
@@ -20,6 +21,9 @@ import com.oasisfeng.android.util.Consumer;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.controller.IslandAppClones;
+import com.oasisfeng.island.data.IslandAppInfo;
+import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.files.IslandFiles;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
@@ -41,6 +45,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -65,6 +70,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 	private static final String SCOPE_TAG_PREFIX_FEATURED = "featured_";
 	private static final String PREF_KEY_ADB_SECURE_PROTECTED = "adb_secure_protected";
 	private static final String PACKAGE_COOLAPK = "com.coolapk.market";
+	private static final String PACKAGE_ICEBOX = "com.catchingnow.icebox";
 	private static final boolean SHOW_ALL = false;		// For debugging purpose
 
 	public NonNullMutableLiveData<Boolean> visible = new NonNullMutableLiveData<>(Boolean.FALSE);
@@ -131,9 +137,19 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			addFeature(app, "greenify", R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify,
 					R.string.featured_button_install, c -> showInMarket(c, "com.oasisfeng.greenify"));
 
-		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("com.catchingnow.icebox") && is_device_owner)
+		if (SHOW_ALL || ! apps.isInstalledInCurrentUser(PACKAGE_ICEBOX)) {
 			addFeature(app, "icebox", R.string.featured_icebox_title, R.string.featured_icebox_description, R.drawable.ic_launcher_icebox,
-					R.string.featured_button_install, c -> showInMarket(c, "com.catchingnow.icebox"));
+					R.string.featured_button_install, c -> showInMarket(c, PACKAGE_ICEBOX));
+		} else if (Users.hasProfile() && IslandAppListProvider.getInstance(context).get(PACKAGE_ICEBOX, Users.profile) == null) {
+			new Handler().postDelayed(() -> {	// Dirty workaround due to IslandAppListProvider updated after onResume()
+				if (activity.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)
+						&& IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.profile) != null)
+					update(context);
+			}, 1_000);
+			final IslandAppInfo icebox_in_mainland = IslandAppListProvider.getInstance(context).get(PACKAGE_ICEBOX, Users.owner);
+			if (icebox_in_mainland != null) addFeature(app, "icebox", R.string.featured_icebox_title, R.string.featured_icebox_description,
+					R.drawable.ic_launcher_icebox, R.string.action_clone, c -> IslandAppClones.cloneApp(context/* must be activity */, icebox_in_mainland));
+		}
 
 		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("rikka.appops") && ! apps.isInstalledInCurrentUser("rikka.appops.pro"))
 			addFeature(app, "appops", R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,

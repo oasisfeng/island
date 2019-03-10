@@ -28,7 +28,7 @@
     <string name="featured_greenify_title">Greenify</string>
     <string name="featured_greenify_description">Automatically freeze selected apps if not in active use, after screen goes off.</string>
     <string name="featured_icebox_title">Ice Box</string>
-    <string name="featured_icebox_description">Easy and pleasant app launching experience for frozen apps in mainland. (Launching Island apps are not yet supported by Ice Box)</string>
+    <string name="featured_icebox_description">Easy and pleasant app launching experience for frozen apps. Be sure to select \"Island\" in the \"More\" section of Work Mode setup. To manage apps in Island, clone Ice Box and launch it in Island.</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">Island is incapable to block apps from accessing device-level data (e.g. IMEI, SMS). AppOps is a powerful tool to selectively block such accesses gracefully from specified apps.</string>
     <string name="featured_coolapk_title">CoolApk</string>
