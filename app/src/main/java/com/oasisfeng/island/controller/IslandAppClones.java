@@ -10,6 +10,7 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -19,7 +20,6 @@ import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
-import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -29,12 +29,16 @@ import com.oasisfeng.island.installer.InstallerExtras;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import eu.chainfire.libsuperuser.Shell;
 
@@ -77,7 +81,7 @@ public class IslandAppClones {
 			});
 		}
 		@SuppressWarnings("UnnecessaryLocalVariable") final ApplicationInfo info = source;	// cloneUserApp() accepts ApplicationInfo, not IslandAppInfo.
-		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(info.packageName, info, false)).thenAccept(result -> {
+		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).performUserAppCloning(info.packageName, info, false)).thenAccept(result -> {
 			switch (result) {
 			case CLONE_RESULT_ALREADY_CLONED:
 				Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show();
@@ -91,31 +95,9 @@ public class IslandAppClones {
 				break;
 			case CLONE_RESULT_OK_INSTALL:
 				Analytics.$().event("clone_install").with(ITEM_ID, pkg).send();
-				activity = Activities.findActivityFrom(context);
-				final UserHandle profile = Users.profile;
-				if (SDK_INT >= O && activity != null && profile != null) {
-					final String cmd = "cmd package install-existing --user " + Users.toId(profile) + " " + pkg;
-					new SafeAsyncTask<Void, Void, List<String>>(activity) {
-						@Override protected List<String> doInBackground(final Void[] params) {
-							return Shell.SU.run(cmd);
-						}
-
-						@Override protected void onPostExecute(final Activity activity, final List<String> result) {
-							try {
-								final ApplicationInfo app_info = activity.getSystemService(LauncherApps.class).getApplicationInfo(pkg, 0, Users.profile);
-								if (app_info != null && (app_info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {
-									Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, source.getLabel()), Toast.LENGTH_SHORT).show();
-									return;
-								}
-							} catch (final PackageManager.NameNotFoundException e) {
-								Log.w(TAG, "Failed to clone app via root: " + pkg);
-								if (result != null && ! result.isEmpty()) Analytics.$().logAndReport(TAG, "Error executing: " + cmd,
-										new ExecutionException("ROOT: " + cmd + ", result: " + String.join(" \\n ", result), null));
-							}
-							showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, source);
-						}
-					}.execute();
-				}
+				final UserHandle profile = Objects.requireNonNull(Users.profile);
+				if (SDK_INT >= O) cloneAppViaRootWithFallback(context, source, profile, IslandAppClones::cloneAppViaInstaller);
+				else cloneAppViaInstaller(context, source);
 				break;
 			case CLONE_RESULT_OK_INSTALL_EXISTING:
 				Analytics.$().event("clone_install_existing").with(ITEM_ID, pkg).send();
@@ -142,12 +124,41 @@ public class IslandAppClones {
 		});	// Dry run to check prerequisites.
 	}
 
-	private static void doCloneUserApp(final Context context, final IslandAppInfo app) {
-		@SuppressWarnings("UnnecessaryLocalVariable") final ApplicationInfo info = app;	// To keep type consistency in the following method shuttle
-		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(info.packageName, info, true)).thenAccept(result -> {
+	private static void cloneAppViaInstaller(final Context context, final IslandAppInfo source) {
+		showExplanationBeforeCloning("clone-via-install-explained", context, R.string.dialog_clone_via_install_explanation, source);
+	}
+
+	private static void cloneAppViaRootWithFallback(final Context context, final IslandAppInfo source, final UserHandle profile, final BiConsumer<Context, IslandAppInfo> fallback) {
+		final String pkg = source.packageName;
+		final String cmd = "cmd package install-existing --user " + Users.toId(profile) + " " + pkg;	// Try root approach first
+		new AsyncTask<Void, Void, List<String>>() {
+			@Override protected List<String> doInBackground(final Void[] params) {
+				return Shell.SU.run(cmd);
+			}
+
+			@RequiresApi(O) @Override protected void onPostExecute(final List<String> result) {
+				try {
+					final ApplicationInfo app_info = context.getSystemService(LauncherApps.class).getApplicationInfo(pkg, 0, profile);
+					if (app_info != null && (app_info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {
+						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, source.getLabel()), Toast.LENGTH_SHORT).show();
+						return;
+					}
+				} catch (final PackageManager.NameNotFoundException e) {
+					Log.w(TAG, "Failed to clone app via root: " + pkg);
+					if (result != null && ! result.isEmpty()) Analytics.$().logAndReport(TAG, "Error executing: " + cmd,
+							new ExecutionException("ROOT: " + cmd + ", result: " + String.join(" \\n ", result), null));
+				}
+				fallback.accept(context, source);
+			}
+		}.execute();
+	}
+
+	@OwnerUser private static void doCloneUserApp(final Context context, final IslandAppInfo source) {
+		@SuppressWarnings("UnnecessaryLocalVariable") final ApplicationInfo info = source;	// To keep type consistency in the following method shuttle
+		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).performUserAppCloning(info.packageName, info, true)).thenAccept(result -> {
 			switch (result) {
 			case CLONE_RESULT_OK_INSTALL_EXISTING:		// Visual feedback for instant cloning.
-				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, source.getLabel()), Toast.LENGTH_SHORT).show();
 				break;
 			case CLONE_RESULT_OK_INSTALL:
 			case CLONE_RESULT_OK_GOOGLE_PLAY:
@@ -160,23 +171,23 @@ public class IslandAppClones {
 				break;
 			}
 		}).exceptionally(t -> {
-			reportAndShowToastForInternalException(context, "Error cloning user app: " + app.packageName, t);
+			reportAndShowToastForInternalException(context, "Error cloning user app: " + source.packageName, t);
 			return null;
 		});
 	}
 
-	private static void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo app) {
+	private static void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo source) {
 		final Activity activity = Activities.findActivityFrom(context);
 		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
 			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 				Scopes.app(context).markOnly(mark);
-				doCloneUserApp(context, app);
+				doCloneUserApp(context, source);
 			}).show();
-		} else doCloneUserApp(context, app);
+		} else doCloneUserApp(context, source);
 	}
 
 	/** Two-stage operation, because of pre-cloning user interaction, depending on the situation in managed profile. */
-	@ProfileUser public int cloneUserApp(final String pkg, final ApplicationInfo app_info, final boolean do_it) {
+	@ProfileUser private int performUserAppCloning(final String pkg, final ApplicationInfo app_info, final boolean do_it) {
 		// Blindly clear these restrictions
 		mDevicePolicies.clearUserRestrictionsIfNeeded(mContext, UserManager.DISALLOW_INSTALL_APPS);
 
@@ -228,7 +239,7 @@ public class IslandAppClones {
 		Toast.makeText(context, "Internal error: " + t.getMessage(), Toast.LENGTH_LONG).show();
 	}
 
-	public IslandAppClones(final Context context) {
+	private IslandAppClones(final Context context) {
 		mContext = context;
 		mDevicePolicies = new DevicePolicies(context);
 	}

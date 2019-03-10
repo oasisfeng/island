@@ -2,9 +2,7 @@ package com.oasisfeng.island.tip;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageManager;
 
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.controller.IslandAppClones;
@@ -67,11 +65,7 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 			@Override public void onButtonEndClick(final Context context, final CardView card) {
 				dismiss(card);
 				if (app == null) {
-					final ApplicationInfo app_info;
-					try {
-						app_info = context.getPackageManager().getApplicationInfo(pkg, PackageManager.GET_UNINSTALLED_PACKAGES);
-					} catch (final PackageManager.NameNotFoundException e) { return; }	// Should never happen.
-					MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).cloneUserApp(pkg, app_info, true));
+					IslandAppClones.cloneApp(context, IslandAppListProvider.getInstance(context).get(pkg));
 				} else if (app.isHidden()) {
 					MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false));
 				} else Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
