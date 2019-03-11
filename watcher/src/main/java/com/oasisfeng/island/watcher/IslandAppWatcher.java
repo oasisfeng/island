@@ -84,7 +84,7 @@ import static android.os.Build.VERSION_CODES.O;
 		final ArrayList<String> watching_permissions;
 		if (info.requestedPermissions != null) {
 			watching_permissions = new ArrayList<>();
-			for (int i = 0; i < info.requestedPermissions.length; i++)
+			for (int i = 0; i < info.requestedPermissions.length; i ++)
 				if ((info.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0) {
 					final String permission = info.requestedPermissions[i];
 					if (CONCERNED_PERMISSIONS.contains(permission)) watching_permissions.add(permission);

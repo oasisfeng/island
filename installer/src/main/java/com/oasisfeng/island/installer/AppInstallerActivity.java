@@ -31,6 +31,7 @@ import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.java.utils.IoUtils;
 
@@ -60,6 +61,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -99,8 +101,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			return;
 		}
 
-		if (! mCallerPackage.equals(getPackageName()) && ! PreferenceManager.getDefaultSharedPreferences(this)
-				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet()).contains(mCallerPackage)) {
+		if (! mCallerPackage.equals(getPackageName()) && ! requireNonNull(PreferenceManager.getDefaultSharedPreferences(this)
+				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet())).contains(mCallerPackage)) {
 			final String message = getString(SCHEME_PACKAGE.equals(getIntent().getData().getScheme()) ? R.string.dialog_clone_confirmation
 					: R.string.dialog_install_confirmation, mCallerAppLabel.get());
 			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, message);
@@ -130,7 +132,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 	private void performInstall() {
 		final Intent intent = getIntent();
-		final Uri uri = intent.getData();
+		final Uri uri = requireNonNull(intent.getData());
 		final Map<String, InputStream> input_streams = new LinkedHashMap<>();
 		final String base_name = "Island[" + mCallerPackage + "]";
 		try {
@@ -149,10 +151,11 @@ public class AppInstallerActivity extends CallerAwareActivity {
 						final String split = info.splitPublicSourceDirs[i];
 						input_streams.put(SDK_INT >= O ? info.splitNames[i] : "split" + i, new FileInputStream(split));
 					}
-			} else input_streams.put(base_name, getContentResolver().openInputStream(uri));
-		} catch(final IOException | SecurityException e) {		// May be thrown by ContentResolver.openInputStream().
+			} else input_streams.put(base_name, requireNonNull(getContentResolver().openInputStream(uri)));
+		} catch(final IOException | RuntimeException e) {		// SecurityException may be thrown by ContentResolver.openInputStream().
 			Log.w(TAG, "Error opening " + uri + " for reading.\nTo launch Island app installer, " +
 					"please ensure data URI is accessible by Island, either exposed by content provider or world-readable (on pre-N)", e);
+			Analytics.$().report("Error opening " + uri + " for app installation", e);
 			fallbackToSystemPackageInstaller();		// Default system package installer may have privilege to access the content that we can't.
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 			return;
@@ -270,7 +273,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	}
 
 	@RequiresApi(O) private boolean isSourceQualified(final @Nullable ApplicationInfo info) {
-		return info != null && (info.targetSdkVersion < O || declaresPermission(info.packageName, REQUEST_INSTALL_PACKAGES));
+		return info != null && (info.targetSdkVersion < O || declaresRequestInstallPermission(info.packageName));
 	}
 
 	private int getOriginatingUid(final ApplicationInfo caller_info) {
@@ -286,12 +289,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		return (app_info.flags & FLAG_SYSTEM) != 0 && uid == app_info.uid;
 	}
 
-	private boolean declaresPermission(final String pkg, final String permission) {
+	private boolean declaresRequestInstallPermission(final String pkg) {
 		final PackageInfo pkg_info = Apps.of(this).getPackageInfo(pkg, GET_PERMISSIONS);
 		if (pkg_info == null) return true;		// Unable to detect its declared permissions, just let it pass.
 		if (pkg_info.requestedPermissions == null) return false;
 		for (final String requested_permission : pkg_info.requestedPermissions)
-			if (permission.equals(requested_permission)) return true;
+			if (REQUEST_INSTALL_PACKAGES.equals(requested_permission)) return true;
 		return false;
 	}
 
