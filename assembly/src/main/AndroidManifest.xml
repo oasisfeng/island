@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" android:sharedUserId="com.oasisfeng.island"
-          package="com.oasisfeng.island" android:versionCode="35200" android:versionName="3.5.2">
+          package="com.oasisfeng.island" android:versionCode="35300" android:versionName="3.5.3">
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
