@@ -223,7 +223,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	}
 
 	private void fallbackToSystemPackageInstaller() {
-		final Intent intent = new Intent(getIntent()).setPackage(null).setComponent(null).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		final Intent intent = new Intent(getIntent()).setPackage(null).setComponent(null);
 		final int flags = PackageManager.MATCH_DEFAULT_ONLY | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);
 		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent, flags);
 		for (final ResolveInfo candidate : candidates) {
