@@ -24,8 +24,8 @@ import com.oasisfeng.island.util.Cryptography;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
-import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.ProviderException;
 
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
@@ -56,7 +56,7 @@ public class ShortcutShuttle extends BroadcastReceiver {
 			try {
 				final String signature = Cryptography.sign(context, target_intent_uri);
 				intent.putExtra(AppLaunchShortcut.EXTRA_SIGNATURE, signature);
-			} catch (final GeneralSecurityException | IOException e) {
+			} catch (final GeneralSecurityException | ProviderException e) {
 				Analytics.$().event("intent_sign_error").with(ITEM_ID, target_intent_uri).with(ITEM_CATEGORY, e.getClass().getCanonicalName()).send();
 				Analytics.$().report(e);
 			}

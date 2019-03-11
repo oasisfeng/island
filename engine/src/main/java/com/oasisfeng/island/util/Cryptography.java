@@ -33,10 +33,10 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
  */
 public class Cryptography {
 
-	public static String sign(final Context context, final String data) throws GeneralSecurityException, IOException {
+	public static String sign(final Context context, final String data) throws GeneralSecurityException {
 		final KeyStore keystore = getAndroidKeyStore();
 		final KeyStore.Entry entry = keystore.getEntry(KEYPAIR_ALIAS, null);
-		final PrivateKey private_key = (entry != null && entry instanceof KeyStore.PrivateKeyEntry) ? ((KeyStore.PrivateKeyEntry) entry).getPrivateKey()
+		final PrivateKey private_key = (entry instanceof KeyStore.PrivateKeyEntry) ? ((KeyStore.PrivateKeyEntry) entry).getPrivateKey()
 				: generateCertificate(context).getPrivate();
 		final Signature signer = Signature.getInstance("SHA512withRSA");
 		signer.initSign(private_key);
@@ -57,7 +57,7 @@ public class Cryptography {
 		return signature != null && verifier.verify(signature.getBytes(ISO_8859_1));
 	}
 
-	private static KeyPair generateCertificate(final Context context) throws GeneralSecurityException, IOException {
+	private static KeyPair generateCertificate(final Context context) throws GeneralSecurityException {
 		final KeyPairGenerator keypair_generator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
 		keypair_generator.initialize(new KeyPairGeneratorSpec.Builder(context).setAlias(KEYPAIR_ALIAS)//.setKeySize(1024)
 				.setSubject(new X500Principal("CN=Island")).setSerialNumber(new BigInteger("123456789"))
