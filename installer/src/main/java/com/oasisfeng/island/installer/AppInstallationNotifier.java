@@ -48,7 +48,7 @@ class AppInstallationNotifier {
 		}
 		String text = null, big_text = null;
 		final int target_api = installed_pkg_info.applicationInfo.targetSdkVersion;
-		if (target_api < M) {
+		if (target_api < M && installed_pkg_info.requestedPermissions != null) {
 			final List<CharSequence> dangerous_permissions = new ArrayList<>();
 			for (final String requested_permission : installed_pkg_info.requestedPermissions) try {
 				final PermissionInfo permission_info = pm.getPermissionInfo(requested_permission, 0);
