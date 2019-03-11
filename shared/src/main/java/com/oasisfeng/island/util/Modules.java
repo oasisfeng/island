@@ -10,8 +10,9 @@ import android.content.pm.ResolveInfo;
 import android.os.Process;
 import android.provider.DocumentsContract;
 
+import com.oasisfeng.island.shared.BuildConfig;
+
 import java.util.List;
-import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -63,9 +64,9 @@ public class Modules {
 	public static @NonNull ComponentName getMainLaunchActivity(final Context context) {
 		final Intent intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(context.getPackageName());
 		final ComponentName launcher_activity = resolveActivity(context, intent);
-		//if (BuildConfig.DEBUG && launcher_activity == null)
-			// TODO: Find launcher activity across all packages with the same UID.
-		return Objects.requireNonNull(launcher_activity, "UI module not installed");
+		if (launcher_activity != null) return launcher_activity;
+		if (BuildConfig.DEBUG) throw new IllegalStateException("UI module not installed");
+		return new ComponentName(MODULE_ENGINE, "com.oasisfeng.island.MainActivity");		// Hard-coded activity name as fallback.
 	}
 
 	private static ComponentName resolveActivity(final Context context, final Intent intent) {
