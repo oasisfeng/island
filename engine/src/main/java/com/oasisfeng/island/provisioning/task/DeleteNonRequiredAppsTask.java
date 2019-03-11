@@ -31,6 +31,7 @@ import android.util.Xml;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.PackageManagerWrapper;
@@ -466,7 +467,12 @@ public class DeleteNonRequiredAppsTask {
                     final String entry_name = self_resources.getResourceEntryName(id);
                     final int target_res_id = target_resources.getIdentifier(entry_name, "array", target_context.getPackageName());
                     if (target_res_id == 0) return new String[0];       // Return empty array instead of throwing NotFoundException.
-                    return target_resources.getStringArray(target_res_id);
+                    try {
+                        return target_resources.getStringArray(target_res_id);
+                    } catch (Resources.NotFoundException e) {
+                        Analytics.$().report("No string array " + entry_name + " in " + target_context.getPackageName(), e);
+                        return new String[]{};
+                    }
                 }
             };
         } catch (final NameNotFoundException e) {
