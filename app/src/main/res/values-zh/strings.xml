@@ -28,7 +28,7 @@
     <string name="featured_greenify_title">绿色守护</string>
     <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_icebox_title">冰箱</string>
-    <string name="featured_icebox_description">轻松愉悦的应用冻结和启动体验。（仅限山海界的应用，尚不支持壶中界的应用）</string>
+    <string name="featured_icebox_description">轻松愉悦的应用冻结和启动体验。请确保在冰箱的工作模式设置中选择“炼妖壶”。将其克隆至壶中界即可管理和启动壶中界的应用。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">壶中界的应用并没有被剥夺窥测山海界与壶中界共同基石（如 IMEI、短信）的能力。而 App Ops 则拥有选择性剥夺指定应用各种窥测能力的法力。</string>
     <string name="featured_coolapk_title">酷安</string>

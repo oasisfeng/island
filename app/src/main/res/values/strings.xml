@@ -28,7 +28,7 @@
     <string name="featured_greenify_title">Greenify</string>
     <string name="featured_greenify_description">Automatically freeze selected apps if not in active use, after screen goes off.</string>
     <string name="featured_icebox_title">Ice Box</string>
-    <string name="featured_icebox_description">Easy and pleasant app launching experience for frozen apps. Be sure to select \"Island\" in the \"More\" section of Work Mode setup. To manage apps in Island, clone Ice Box and launch it in Island.</string>
+    <string name="featured_icebox_description">Easy and pleasant app launching experience for frozen apps. Be sure to select \"Island\" as Work Mode in the settings of Ice Box. To manage apps in Island, clone Ice Box and launch it in Island.</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">Island is incapable to block apps from accessing device-level data (e.g. IMEI, SMS). AppOps is a powerful tool to selectively block such accesses gracefully from specified apps.</string>
     <string name="featured_coolapk_title">CoolApk</string>
@@ -193,5 +193,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="tip_action_ignore">Ignore</string>
     <string name="tip_critical_package_required">Critical app (or component) required</string>
     <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
+
+    <string name="pref_privacy_active_island_notification_title">Notification for active Island space</string>
+    <string name="pref_privacy_active_island_notification_summary">with action to quickly deactivate, to prevent all background behaviors within the Island space.</string>
 
 </resources>
