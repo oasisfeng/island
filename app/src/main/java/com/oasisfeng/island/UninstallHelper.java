@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
@@ -42,6 +43,7 @@ import java.util.Objects;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.app.PendingIntent.getBroadcast;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
@@ -125,16 +127,17 @@ public class UninstallHelper extends PseudoContentProvider {
 		startActivityByCrossProfileIntentFilter(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.parse("package:" + context.getPackageName())));
 	}
 
-	private static boolean startActivityByCrossProfileIntentFilter(final Context context, final Intent intent) {
+	private static void startActivityByCrossProfileIntentFilter(final Context context, final Intent intent) {
 		final Uri uri = Objects.requireNonNull(intent.getData());
 		new DevicePolicies(context).addCrossProfileIntentFilter(IntentFilters.forAction(intent.getAction())
 				.withData(uri.getScheme(), uri.getSchemeSpecificPart(), PatternMatcher.PATTERN_LITERAL), FLAG_PARENT_CAN_ACCESS_MANAGED);
 		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(intent, 0);
-		for (final ResolveInfo resolve : resolves) if ("android".equals(resolve.activityInfo.packageName)) {		// IntentForwarder
-			context.startActivity(intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name)));
-			return true;
+		for (final ResolveInfo resolve : resolves) {		// Look for IntentForwarder
+			final ActivityInfo activity = resolve.activityInfo;
+			if (! "android".equals(activity.packageName)) continue;
+			context.startActivity(intent.setComponent(new ComponentName(activity.packageName, activity.name)).addFlags(FLAG_ACTIVITY_NEW_TASK));
+			return;
 		}
-		return false;
 	}
 
 	public static class UninstallReceiver extends BroadcastReceiver {
