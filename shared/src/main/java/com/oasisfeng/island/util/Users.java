@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.Nullable;
+import java9.util.Optional;
 
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
@@ -30,7 +31,7 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class Users extends PseudoContentProvider {
 
-	public static @Nullable UserHandle profile;		// The first profile (semi-immutable, until profile is created or destroyed)
+	public static @Nullable UserHandle profile;		// The profile in use (semi-immutable, until profile is created or destroyed)
 	public static UserHandle owner;
 
 	public static boolean hasProfile() { return profile != null; }
@@ -53,15 +54,29 @@ public abstract class Users extends PseudoContentProvider {
 		profile = null;
 		final List<UserHandle> user_and_profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
 		for (final UserHandle user_or_profile : user_and_profiles) {
-			if (toId(user_or_profile) > 100) continue;				// Exclude special profiles (e.g. XSpace in MIUI in user ID 999)
-			if (! isOwner(user_or_profile)) {
-				if (profile == null) profile = user_or_profile;		// Only one managed profile is supported by Android framework at present.
-			} else owner = user_or_profile;
+			if (isOwner(user_or_profile)) {
+				owner = user_or_profile;
+				continue;
+			}
+			profile = user_or_profile;
+			final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(context, user_or_profile);
+			if (is_profile_owner == null) {
+				Log.e(TAG, "Cannot detect profile owner: " + toId(user_or_profile));
+				break;	// Best bet: this profile is actually managed by Island
+			} else if (! is_profile_owner.isPresent()) {	// Profile has no owner, accept this profile for now and look for other profile managed by Island
+				Log.i(TAG, "Profile without owner: " + toId(user_or_profile));
+			} else if (! is_profile_owner.get()) {
+				Log.i(TAG, "Profile not managed by Island: " + toId(user_or_profile));
+			} else {
+				Log.i(TAG, "Profile managed by Island: " + toId(user_or_profile));
+				break;
+			}
 		}
+
 		final List<UserHandle> profiles = new ArrayList<>(user_and_profiles);
 		profiles.remove(owner);
 		sProfiles = profiles;
-		Log.i(TAG, "Profiles: " + sProfiles);
+		Log.i(TAG, "All profiles: " + profiles);
 	}
 
 	public static boolean isProfileRunning(final Context context, final UserHandle user) {
@@ -78,6 +93,7 @@ public abstract class Users extends PseudoContentProvider {
 
 	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user
 	public static boolean isOwner(final UserHandle user) { return toId(user) == 0; }
+	public static boolean isOwner(final int user_id) { return user_id == 0; }
 
 	public static boolean isProfile() { return sProfiles.contains(CURRENT); }
 	public static boolean isProfile(final UserHandle user) { return sProfiles.contains(user); }

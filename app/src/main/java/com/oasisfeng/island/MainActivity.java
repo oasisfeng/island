@@ -50,14 +50,17 @@ public class MainActivity extends LifecycleActivity {
 		}
 		final UserHandle profile = Users.profile;
 		if (profile == null) {					// Nothing setup yet
+			Log.i(TAG, "Profile not setup yet");
 			startSetupWizard();
 			return;
 		}
 
 		final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(this, profile);
 		if (is_profile_owner == null) { 	// Profile owner cannot be detected, the best bet is to continue to the main UI.
+			Log.w(TAG, "Not profile owner");
 			startMainUi(savedInstanceState);
 		} else if (! is_profile_owner.isPresent()) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
+			Log.w(TAG, "Profile without owner");
 			if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
 			else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
 		} else if (! is_profile_owner.get()) {			// Profile is not owned by us, show setup wizard.
@@ -124,5 +127,5 @@ public class MainActivity extends LifecycleActivity {
 
 	private boolean mIsDeviceOwner;
 
-	private static final String TAG = MainActivity.class.getSimpleName();
+	private static final String TAG = "Island.Main";
 }

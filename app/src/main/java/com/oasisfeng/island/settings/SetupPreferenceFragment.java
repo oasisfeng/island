@@ -76,7 +76,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 		}
 
 		final ActionButtonPreference pref_island = (ActionButtonPreference) findPreference(getString(R.string.key_setup_island));
-		final int disabled_profile;
+		final int[] profile_ids;
 		if (Users.profile != null) {
 			final Optional<Boolean> is_enabled_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
 			if (is_enabled_profile_owner == null || ! is_enabled_profile_owner.isPresent()) {
@@ -101,12 +101,18 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 				});
 			} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed_other,
 					R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
-		} else if (SDK_INT >= N && (disabled_profile = IslandManager.getManagedProfileIdIncludingDisabled(activity)) != 0) {
-			final Optional<ComponentName> profile_owner_result = DevicePolicies.getProfileOwnerAsUser(activity, disabled_profile);
-			if (profile_owner_result != null && profile_owner_result.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner_result.get().getPackageName()))
-				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete,
-						R.drawable.ic_build_black_24dp, preference -> startSetupActivityCleanly());
 		} else {
+			if (SDK_INT >= N && (profile_ids = IslandManager.getProfileIdsIncludingDisabled(activity)).length > 1) {
+				for (final int profile_id : profile_ids) {
+					if (Users.isOwner(profile_id)) continue;
+					final Optional<ComponentName> profile_owner = DevicePolicies.getProfileOwnerAsUser(activity, profile_id);
+					if (profile_owner == null || ! profile_owner.isPresent() || ! Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName()))
+						continue;	// Managed by other app. It may be coexistent with Island. (e.g. Secure Folder on Samsung devices with Android P)
+					pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete, R.drawable.ic_build_black_24dp,
+							preference -> startSetupActivityCleanly());
+					return;
+				}
+			}
 			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup, R.drawable.ic_build_black_24dp, preference -> {
 				if (SetupViewModel.checkManagedProvisioningPrerequisites(activity, true) == null)
 					return startSetupActivityCleanly();		// Prefer ManagedProvision, which could also fallback to root routine.

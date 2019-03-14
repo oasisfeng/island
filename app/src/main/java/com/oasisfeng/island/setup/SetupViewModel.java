@@ -47,6 +47,7 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_NAME;
 
 /**
  * View model for setup fragment
@@ -119,20 +120,18 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
 		// Check for incomplete provisioning, before DPM.isProvisioningAllowed() check which returns true in this case.
-		if (SDK_INT >= N && Users.profile == null) {
-			final int profile_id = IslandManager.getManagedProfileIdIncludingDisabled(context);
-			final Optional<ComponentName> profile_owner_result;
-			if (profile_id != 0 && (profile_owner_result = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) != null && profile_owner_result.isPresent()) {
-				final ComponentName profile_owner = profile_owner_result.get();
-				if (! context.getPackageName().equals(profile_owner.getPackageName())) {
-					final CharSequence owner_label = readOwnerLabel(context, profile_owner);
-					final Analytics.Event reason = reason("existent_work_profile").with(ITEM_ID, profile_owner.getPackageName())
-							.with(Analytics.Param.ITEM_NAME, owner_label != null ? owner_label.toString() : null);
-					return buildErrorVM(R.string.setup_error_other_work_profile, reason).withExtraAction(R.string.button_account_settings);
-				} else if (! ignore_incomplete_setup) {
-					return buildErrorVM(R.string.setup_error_provisioning_incomplete, reason("provisioning_incomplete")).withExtraAction(R.string.button_have_checked);
-				}
+		Optional<ComponentName> owner;
+		if (SDK_INT >= N && Users.profile == null) for (final int profile_id : IslandManager.getProfileIdsIncludingDisabled(context)) {
+			if (Users.isOwner(profile_id) || (owner = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) == null || ! owner.isPresent())
+				continue;
+			final ComponentName profile_owner = owner.get();
+			if (! Modules.MODULE_ENGINE.equals(profile_owner.getPackageName())) {
+				final CharSequence label = readOwnerLabel(context, profile_owner);
+				reason("existent_work_profile").with(ITEM_ID, profile_owner.getPackageName()).with(ITEM_NAME, label != null ? label.toString() : null).send();
+				continue;
 			}
+			if (ignore_incomplete_setup) continue;
+			return buildErrorVM(R.string.setup_error_provisioning_incomplete, reason("provisioning_incomplete")).withExtraAction(R.string.button_have_checked);
 		}
 
 		// DPM.isProvisioningAllowed() is the one-stop prerequisites checking.

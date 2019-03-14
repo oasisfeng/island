@@ -6,20 +6,20 @@ import android.content.Context;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
 
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.ProfileUser;
+import com.oasisfeng.island.util.Users;
 
 import java.util.List;
-import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -30,6 +30,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utilities of shared basic functionality for modules
@@ -75,28 +76,16 @@ public class IslandManager {
 	}
 
 	@OwnerUser public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
-		final LauncherApps launcher_apps = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
+		final LauncherApps launcher_apps = requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 		final List<LauncherActivityInfo> activities = launcher_apps.getActivityList(pkg, profile);
 		if (activities == null || activities.isEmpty()) return false;
 		launcher_apps.startMainActivity(activities.get(0).getComponentName(), profile, null, null);
 		return true;
 	}
 
-	/** @return profile ID, or 0 if none */
-	@RequiresApi(N) public static int getManagedProfileIdIncludingDisabled(final Context context) {
-		if (Hacks.UserManager_getProfileIds != null) {
-			final int[] profiles = Hacks.UserManager_getProfileIds.invoke(Process.myUserHandle().hashCode(), false)
-					.on(Objects.requireNonNull(context.getSystemService(UserManager.class)));
-			final int current_user = Process.myUserHandle().hashCode();
-			for (final int profile : profiles)
-				if (profile != current_user) return profile;            		// Only one managed profile is supported by Android at present.
-			return 0;
-		} else {	// Fallback to profiles without disabled.
-			final List<UserHandle> profiles = Objects.requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles();
-			final UserHandle current_user = Process.myUserHandle();
-			for (final UserHandle profile : profiles)
-				if (! profile.equals(current_user)) return profile.hashCode();	// Only one managed profile is supported by Android at present.
-			return 0;
-		}
+	@RequiresApi(N) public static int[] getProfileIdsIncludingDisabled(final Context context) {
+		if (Hacks.UserManager_getProfileIds != null)
+			return Hacks.UserManager_getProfileIds.invoke(UserHandles.MY_USER_ID, false).on(requireNonNull(context.getSystemService(UserManager.class)));
+		else return requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles().stream().mapToInt(Users::toId).toArray();	// Fallback to profiles without disabled.
 	}
 }
