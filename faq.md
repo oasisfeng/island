@@ -3,7 +3,9 @@ Frequently Asked Questions
 
 - Error in setup: **"Oops! Couldn't set up your work profile. Contact your IT department or try again later."**
 
-  Your device is probably incompatible with Android for Work. At present, you can only [setup Island manually](/setup.md).
+  If your device has "Dual Apps", "App Twin" or similar feature, it may be implemented by the same "Android for Work" infrastructure as Island. This leads to a conflict, thus you can not use both Island and these features.
+
+  Otherwise, your device is probably incompatible with Android for Work. At present, you can only [setup Island manually](/setup.md).
 
 - Error in setup: **"Custom OS installed" (Samsung-specific)**
 
