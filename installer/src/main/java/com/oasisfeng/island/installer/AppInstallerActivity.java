@@ -33,8 +33,10 @@ import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.CallerAwareActivity;
+import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +50,7 @@ import java.util.Set;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import java9.util.Optional;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
@@ -61,6 +64,9 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
+import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
+import static com.oasisfeng.island.analytics.Analytics.Param.LOCATION;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -91,8 +97,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		}
 		mCallerPackage = getCallingPackage();
 		if (mCallerPackage == null) {
-			Log.w(TAG, "Caller is unknown, redirect to default package installer.");
-			fallbackToSystemPackageInstaller();
+			Log.w(TAG, "Caller is unknown, fallback to default package installer.");
+			fallbackToSystemPackageInstaller("unknown_caller", null);
 			return;
 		}
 		mCallerAppInfo = Apps.of(this).getAppInfo(mCallerPackage);	// Null if caller is not in the same user and has no launcher activity
@@ -155,8 +161,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		} catch(final IOException | RuntimeException e) {		// SecurityException may be thrown by ContentResolver.openInputStream().
 			Log.w(TAG, "Error opening " + uri + " for reading.\nTo launch Island app installer, " +
 					"please ensure data URI is accessible by Island, either exposed by content provider or world-readable (on pre-N)", e);
-			Analytics.$().report("Error opening " + uri + " for app installation", e);
-			fallbackToSystemPackageInstaller();		// Default system package installer may have privilege to access the content that we can't.
+			fallbackToSystemPackageInstaller("stream_error", e);	// Default system package installer may have privilege to access the content that we can't.
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 			return;
 		}
@@ -207,7 +212,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				if (! should_return_result) {
 					String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
 					if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
-					Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message)
+					Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
+					Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message).withOkButton(() -> finish())
+							.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null))
 							.setOnDismissListener(d -> finish()).show();
 				} else AppInstallerActivity.this.setResult(Activity.RESULT_FIRST_USER,	// The exact same result data as InstallFailed in PackageInstaller
 						new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
@@ -222,32 +229,44 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				.indeterminate().nonCancelable().start();
 	}
 
-	private void fallbackToSystemPackageInstaller() {
+	private void fallbackToSystemPackageInstaller(final String reason, final @Nullable Exception e) {
 		final Intent intent = new Intent(getIntent()).setPackage(null).setComponent(null);
+		Analytics.$().event("installer_fallback").with(LOCATION, intent.getDataString()).with(ITEM_CATEGORY, reason).with(CONTENT, e != null ? e.toString() : null).send();
+		for (final String category : Optional.ofNullable(intent.getCategories()).orElse(Collections.emptySet())) intent.removeCategory(category);
+
+		if (SDK_INT >= O && ! Users.isOwner() && SCHEME_PACKAGE.equals(intent.getScheme())) {	// Scheme "package" is no go in managed profile since Android O.
+			final String pkg = requireNonNull(intent.getData()).getSchemeSpecificPart();
+			ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
+			if (info == null) info = intent.getParcelableExtra(InstallerExtras.EXTRA_APP_INFO);
+			if (info != null && (info.splitPublicSourceDirs == null || info.splitPublicSourceDirs.length == 0))
+				intent.setData(Uri.fromFile(new File(info.publicSourceDir)));
+		}
+
 		final int flags = PackageManager.MATCH_DEFAULT_ONLY | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);
 		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent, flags);
 		for (final ResolveInfo candidate : candidates) {
 			final ActivityInfo activity = candidate.activityInfo;
 			if ((activity.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;
 			final ComponentName component = new ComponentName(activity.packageName, activity.name);
+			intent.setComponent(component).setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
 			Log.i(TAG, "Redirect to system package installer: " + component.flattenToShortString());
 
 			final PackageManager pm = getPackageManager();
 			final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();
 			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());		// Workaround to suppress FileUriExposedException.
 			try {
-				if (SDK_INT >= O && ! pm.canRequestPackageInstalls()) {
-					final Intent uas_settings = new Intent(ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts(SCHEME_PACKAGE, getPackageName(), null));
-					if (uas_settings.resolveActivity(pm) != null) startActivities(new Intent[] { intent, uas_settings });
-					else startActivity(intent);
-				} else startActivity(intent);
-				startActivity(intent.setComponent(component).setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
+				final Intent uas_settings;
+				if (SDK_INT >= O && ! pm.canRequestPackageInstalls() && (uas_settings = new Intent(ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+						Uri.fromParts(SCHEME_PACKAGE, getPackageName(), null))).resolveActivity(pm) != null)
+					startActivities(new Intent[] { intent, uas_settings });
+				else startActivity(intent);
 			} finally {
 				StrictMode.setVmPolicy(vm_policy);
 			}
 			finish();	// No need to setResult() if default installer is started, since FLAG_ACTIVITY_FORWARD_RESULT is used.
 			return;
 		}
+		Log.e(TAG, "Default system package installer is missing");
 		setResult(RESULT_CANCELED);
 		finish();
 	}

@@ -17,4 +17,5 @@
     <string name="action_show_app_info">应用信息 (外部)</string>
 
     <string name="app_info_forwarder_title">选择一个目标以显示此应用的相关信息：</string>
+    <string name="fallback_to_sys_installer">尝试传统安装方式</string>
 </resources>
