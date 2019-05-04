@@ -17,7 +17,6 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -70,6 +69,7 @@ dependencies {
     completeImplementation project(':fileprovider')
     completeImplementation project(':installer')
     completeImplementation project(':watcher')
+    completeImplementation project(':open')
     // Engine only
     engineImplementation project(':engine')
     // Mobile only
