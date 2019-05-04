@@ -1,0 +1,15 @@
+<manifest package="com.oasisfeng.island.open" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:dist="http://schemas.android.com/apk/distribution" xmlns:tools="http://schemas.android.com/tools">
+
+    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
+
+        <service android:name="com.oasisfeng.island.ContainerService" android:process=":isolated" android:isolatedProcess="true" />
+
+        <service android:name="com.oasisfeng.island.ContainerService$Launcher" android:enabled="false"> <!-- Disabled during internal testing -->
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.BIND_DELEGATED_SERVICE" />
+            </intent-filter>
+        </service>
+
+    </application>
+</manifest>
+

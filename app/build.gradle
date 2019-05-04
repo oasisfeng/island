@@ -34,6 +34,7 @@ dependencies {
     feature project(':fileprovider')
     feature project(':installer')
     feature project(":watcher")
+    feature project(":open")
 
     implementation project(':shared')
     implementation project(':deagle')
