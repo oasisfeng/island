@@ -13,7 +13,7 @@
     <string name="notification_caller_updated_self">\"%1$s\"已更新自己</string>
     <string name="notification_app_with_permissions">已获取的权限：%s</string>
     <string name="notification_app_target_api">适配至 Android %s</string>
-    <string name="notification_app_target_pre_m">适配至 Android %s (无敏感权限)</string>
+    <string name="notification_app_target_pre_m_wo_sensitive_permissions">适配至 Android %s (无敏感权限)</string>
     <string name="action_show_app_settings">应用设置 (系统)</string>
     <string name="action_show_app_info">应用信息 (外部)</string>
 

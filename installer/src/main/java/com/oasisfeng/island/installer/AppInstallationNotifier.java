@@ -24,6 +24,7 @@ import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.EXTRA_USER;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.android.content.IntentCompat.ACTION_SHOW_APP_INFO;
 
@@ -46,31 +47,33 @@ class AppInstallationNotifier {
 			Log.e(TAG, "Unknown installed package: " + pkg);
 			return;
 		}
-		String text = null, big_text = null;
+		final boolean is_update = installed_pkg_info.lastUpdateTime != installed_pkg_info.firstInstallTime, is_self_update = pkg.equals(caller_pkg);
+		final String title = context.getString(! is_update ? R.string.notification_caller_installed_app
+						: is_self_update ? R.string.notification_caller_updated_self : R.string.notification_caller_updated_app,
+				caller_app_label, is_self_update ? null/* unused */ : Apps.of(context).getAppName(pkg));
+
 		final int target_api = installed_pkg_info.applicationInfo.targetSdkVersion;
-		if (target_api < M && installed_pkg_info.requestedPermissions != null) {
-			final List<CharSequence> dangerous_permissions = new ArrayList<>();
+		List<CharSequence> dangerous_permissions = null;
+		if (! is_update && SDK_INT >= M && target_api < M && installed_pkg_info.requestedPermissions != null) {
+			dangerous_permissions = new ArrayList<>();
 			for (final String requested_permission : installed_pkg_info.requestedPermissions) try {
 				final PermissionInfo permission_info = pm.getPermissionInfo(requested_permission, 0);
 				if ((permission_info.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) != 0)
 					dangerous_permissions.add(permission_info.loadLabel(pm));
 			} catch (final PackageManager.NameNotFoundException ignored) {}
-			if (! dangerous_permissions.isEmpty())
-				text = big_text = context.getString(R.string.notification_app_with_permissions, TextUtils.join(", ", dangerous_permissions));
 		}
-		if (text == null) text = context.getString(target_api >= M ? R.string.notification_app_target_api : R.string.notification_app_target_pre_m,
-				Versions.getAndroidVersionNumber(target_api));
+		String big_text = null;
+		final String target_version = Versions.getAndroidVersionNumber(target_api);
+		final String text = dangerous_permissions == null ? context.getString(R.string.notification_app_target_api, target_version)
+				: dangerous_permissions.isEmpty() ? context.getString(R.string.notification_app_target_pre_m_wo_sensitive_permissions, target_version)
+				: (big_text = context.getString(R.string.notification_app_with_permissions, TextUtils.join(", ", dangerous_permissions)));
 
 		final Intent app_info_intent = new Intent(ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, pkg).putExtra(EXTRA_USER, Process.myUserHandle());
 		final PendingIntent app_settings = PendingIntent.getActivity(context, 0, new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
 				Uri.fromParts("package", pkg, null)), FLAG_UPDATE_CURRENT);
-		final boolean is_update = installed_pkg_info.lastUpdateTime != installed_pkg_info.firstInstallTime, is_self_update = pkg.equals(caller_pkg);
 		NotificationIds.AppInstallation.post(context, pkg, new Notification.Builder(context)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getResources().getColor(R.color.accent))
-				.setContentTitle(context.getString(! is_update ? R.string.notification_caller_installed_app
-								: is_self_update ? R.string.notification_caller_updated_self : R.string.notification_caller_updated_app,
-						caller_app_label, is_self_update ? null/* unused */: Apps.of(context).getAppName(pkg)))
-				.setContentText(text).setStyle(big_text == null ? null : new Notification.BigTextStyle().bigText(big_text))
+				.setContentTitle(title).setContentText(text).setStyle(big_text != null ? new Notification.BigTextStyle().bigText(big_text) : null)
 				.setContentIntent(app_settings).addAction(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_settings), app_settings)
 				.addAction(pm.resolveActivity(app_info_intent, 0) == null ? null
 						: new Notification.Action(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_info),

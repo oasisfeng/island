@@ -13,7 +13,7 @@
     <string name="notification_caller_updated_self">\"%1$s\" updated itself"</string>
     <string name="notification_app_with_permissions">with permissions granted: %s</string>
     <string name="notification_app_target_api">targeting Android %s</string>
-    <string name="notification_app_target_pre_m">targeting Android %s with no sensitive permissions</string>
+    <string name="notification_app_target_pre_m_wo_sensitive_permissions">targeting Android %s with no sensitive permissions</string>
     <string name="action_show_app_settings">App Settings (sys)</string>
     <string name="action_show_app_info">App Info (external)</string>
 
