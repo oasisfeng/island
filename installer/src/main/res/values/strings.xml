@@ -10,6 +10,7 @@
 
     <string name="notification_caller_installed_app">\"%1$s\" installed \"%2$s\"</string>
     <string name="notification_caller_updated_app">\"%1$s\" updated \"%2$s\"</string>
+    <string name="notification_caller_updated_self">\"%1$s\" updated itself"</string>
     <string name="notification_app_with_permissions">with permissions granted: %s</string>
     <string name="notification_app_target_api">targeting Android %s</string>
     <string name="notification_app_target_pre_m">targeting Android %s with no sensitive permissions</string>

@@ -64,11 +64,12 @@ class AppInstallationNotifier {
 		final Intent app_info_intent = new Intent(ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, pkg).putExtra(EXTRA_USER, Process.myUserHandle());
 		final PendingIntent app_settings = PendingIntent.getActivity(context, 0, new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
 				Uri.fromParts("package", pkg, null)), FLAG_UPDATE_CURRENT);
-		final boolean is_update = installed_pkg_info.lastUpdateTime != installed_pkg_info.firstInstallTime;
+		final boolean is_update = installed_pkg_info.lastUpdateTime != installed_pkg_info.firstInstallTime, is_self_update = pkg.equals(caller_pkg);
 		NotificationIds.AppInstallation.post(context, pkg, new Notification.Builder(context)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getResources().getColor(R.color.accent))
-				.setContentTitle(context.getString(is_update ? R.string.notification_caller_updated_app : R.string.notification_caller_installed_app,
-						caller_app_label, pkg.equals(caller_pkg) ? caller_app_label : Apps.of(context).getAppName(pkg)))
+				.setContentTitle(context.getString(! is_update ? R.string.notification_caller_installed_app
+								: is_self_update ? R.string.notification_caller_updated_self : R.string.notification_caller_updated_app,
+						caller_app_label, is_self_update ? null/* unused */: Apps.of(context).getAppName(pkg)))
 				.setContentText(text).setStyle(big_text == null ? null : new Notification.BigTextStyle().bigText(big_text))
 				.setContentIntent(app_settings).addAction(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_settings), app_settings)
 				.addAction(pm.resolveActivity(app_info_intent, 0) == null ? null

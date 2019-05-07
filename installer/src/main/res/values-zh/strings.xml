@@ -10,6 +10,7 @@
 
     <string name="notification_caller_installed_app">“%1$s”已安装“%2$s”</string>
     <string name="notification_caller_updated_app">“%1$s”已更新“%2$s”</string>
+    <string name="notification_caller_updated_self">\"%1$s\"已更新自己</string>
     <string name="notification_app_with_permissions">已获取的权限：%s</string>
     <string name="notification_app_target_api">适配至 Android %s</string>
     <string name="notification_app_target_pre_m">适配至 Android %s (无敏感权限)</string>
