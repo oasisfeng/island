@@ -41,7 +41,6 @@ import java.util.Objects;
 
 import androidx.annotation.Nullable;
 import eu.chainfire.libsuperuser.Shell;
-import java9.util.Optional;
 import java9.util.stream.Collectors;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -146,9 +145,8 @@ public class IslandSetup {
 		final Activity activity = fragment.getActivity();
 		if (activity == null) return;
 		String content = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?><device-owner package=\"" + Modules.MODULE_ENGINE + "\" />";
-		final Optional<Boolean> is_profile_owner;
 		final String admin_component = DeviceAdmins.getComponentName(activity).flattenToString();
-		if (Users.profile != null && (is_profile_owner = DevicePolicies.isProfileOwner(activity, Users.profile)) != null && is_profile_owner.orElse(false))
+		if (Users.profile != null && DevicePolicies.isProfileOwner(activity, Users.profile))
 			content += "<profile-owner package=\"" + Modules.MODULE_ENGINE + "\" name=\"Island\" userId=\"" + Users.toId(Users.profile)
 					+ "\" component=\"" + admin_component + "\" />";
 		content = content.replace("\"", "\\\"").replace("'", "\\'")
@@ -224,8 +222,7 @@ public class IslandSetup {
 	}
 
 	public static void requestProfileRemoval(final Activity activity) {
-		final Optional<Boolean> is_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
-		if (is_profile_owner == null || ! is_profile_owner.orElse(Boolean.FALSE)) {
+		if (Users.profile == null || ! DevicePolicies.isProfileOwner(activity, Users.profile)) {
 			showPromptForProfileManualRemoval(activity);
 			return;
 		}

@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.Nullable;
-import java9.util.Optional;
 
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
@@ -59,18 +58,8 @@ public abstract class Users extends PseudoContentProvider {
 				continue;
 			}
 			profile = user_or_profile;
-			final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(context, user_or_profile);
-			if (is_profile_owner == null) {
-				Log.e(TAG, "Cannot detect profile owner: " + toId(user_or_profile));
-				break;	// Best bet: this profile is actually managed by Island
-			} else if (! is_profile_owner.isPresent()) {	// Profile has no owner, accept this profile for now and look for other profile managed by Island
-				Log.i(TAG, "Profile without owner: " + toId(user_or_profile));
-			} else if (! is_profile_owner.get()) {
-				Log.i(TAG, "Profile not managed by Island: " + toId(user_or_profile));
-			} else {
-				Log.i(TAG, "Profile managed by Island: " + toId(user_or_profile));
-				break;
-			}
+			if (DevicePolicies.isProfileOwner(context, user_or_profile)) break;
+			Log.i(TAG, "Profile not managed by Island: " + toId(user_or_profile));
 		}
 
 		final List<UserHandle> profiles = new ArrayList<>(user_and_profiles);

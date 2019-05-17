@@ -13,7 +13,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringDef;
-import java9.util.Optional;
 
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
@@ -53,10 +52,7 @@ public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 		if (sp.contains("2018") || sp.contains("2017-11") || sp.contains("2017-12")) return false;	// No longer works after 2017.11 security patch. (CVE-2017-0830)
 
 		if (Users.isOwner() && ! new DevicePolicies(context).isActiveDeviceOwner()) return false;
-		if (Users.isProfile()) {
-			final Optional<Boolean> is_owner = DevicePolicies.isOwnerOfEnabledProfile(context);
-			if (is_owner == null || ! is_owner.orElse(false)) return false;
-		}
+		if (Users.isProfile() && ! new DevicePolicies(context).isProfileOwner()) return false;
 		final boolean result = new DevicePolicies(context).invoke((dpm, admin) ->
 				dpm.setPermissionGrantState(admin, context.getPackageName(), permission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED));
 		if (! result) Analytics.$().event("permission_failure").withRaw("permission", permission).withRaw("SP", sp).send();

@@ -30,9 +30,11 @@ import java.util.List;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.O_MR1;
 
 /**
  * All reflection-based hacks should be defined here
@@ -66,7 +68,7 @@ public class Hacks {
 	public static final Hack.HackedField<ApplicationInfo, Integer>
 			ApplicationInfo_versionCode = Hack.into(ApplicationInfo.class).field("versionCode").fallbackTo(0);
 	public static final Hack.HackedTargetField<String>
-			PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT >= N && ! Builds.isAndroidPIncludingPreviews()).into(PrintManager.class)
+			PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT >= N && SDK_INT <= O_MR1).into(PrintManager.class)
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
@@ -79,8 +81,11 @@ public class Hacks {
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer>
 			SystemProperties_getInt = Hack.into("android.os.SystemProperties").staticMethod("getInt")
 			.returning(int.class).fallbackReturning(null).withParams(String.class, int.class);
+	static final Hack.HackedMethod0<ComponentName, DevicePolicyManager, IllegalArgumentException, Unchecked, Unchecked>
+			DevicePolicyManager_getProfileOwner = Hack.into(DevicePolicyManager.class).method("getProfileOwner")
+			.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withoutParams();
 	static final Hack.HackedMethod1<ComponentName, DevicePolicyManager, IllegalArgumentException, Unchecked, Unchecked, Integer>
-			DevicePolicyManager_getProfileOwnerAsUser = Hack.into(DevicePolicyManager.class).method("getProfileOwnerAsUser")
+			DevicePolicyManager_getProfileOwnerAsUser = Hack.onlyIf(! isAndroidQ()).into(DevicePolicyManager.class).method("getProfileOwnerAsUser")
 			.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withParam(int.class);
 	static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked>
 			DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
@@ -92,11 +97,14 @@ public class Hacks {
 			Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class)
 			.fallbackReturning(false).withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
 	@RequiresApi(N) public static final @Nullable Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
-			UserManager_getProfileIds = SDK_INT < N || Builds.isAndroidPIncludingPreviews() ? null : Hack.into(UserManager.class).method("getProfileIds")
+			UserManager_getProfileIds = SDK_INT < N || SDK_INT > O_MR1 ? null : Hack.into(UserManager.class).method("getProfileIds")
 			.returning(int[].class).withParams(int.class, boolean.class);
 	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle>
 			Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
 			.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(String.class, int.class, UserHandle.class);
+	public static final Hack.HackedMethod2<Context, Context, NameNotFoundException, Unchecked, Unchecked, ApplicationInfo, Integer>
+			Context_createApplicationContext = Hack.into(Context.class).method("createApplicationContext").returning(Context.class)
+			.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(ApplicationInfo.class, int.class);
 	public static final @Nullable Hack.HackedMethod1<IBinder, Void, Unchecked, Unchecked, Unchecked, String>
 			ServiceManager_getService = Hack.into("android.os.ServiceManager").staticMethod("getService")
 			.returning(IBinder.class).withParam(String.class);
@@ -117,4 +125,6 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Void, AppOpsManager, Unchecked, Unchecked, Unchecked, Integer, Integer, String, Integer>
 			AppOpsManager_setMode = Hack.into(AppOpsManager.class).method("setMode").fallbackReturning(null)
 			.withParams(int.class, int.class, String.class, int.class);
+
+	private static boolean isAndroidQ() { return SDK_INT > O_MR1 + 1/* P */|| (SDK_INT > O_MR1 && PREVIEW_SDK_INT > 0); }
 }

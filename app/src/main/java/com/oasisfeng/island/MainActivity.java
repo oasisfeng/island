@@ -55,16 +55,18 @@ public class MainActivity extends LifecycleActivity {
 			return;
 		}
 
-		final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(this, profile);
-		if (is_profile_owner == null) { 	// Profile owner cannot be detected, the best bet is to continue to the main UI.
-			Log.w(TAG, "Not profile owner");
-			startMainUi(savedInstanceState);
-		} else if (! is_profile_owner.isPresent()) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
-			Log.w(TAG, "Profile without owner");
-			if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
-			else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
-		} else if (! is_profile_owner.get()) {			// Profile is not owned by us, show setup wizard.
-			startSetupWizard();
+		if (! DevicePolicies.isProfileOwner(this, profile)) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
+			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(this, profile);
+			if (owner == null) {
+				Log.w(TAG, "Not profile owner");
+				startMainUi(savedInstanceState);
+			} else if (owner.isEmpty()) {
+				Log.w(TAG, "Profile without owner");
+				if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
+				else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
+			} else {			// Profile is not owned by us, show setup wizard.
+				startSetupWizard();
+			}
 		} else {
 			final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			final List<LauncherActivityInfo> our_activities_in_launcher;

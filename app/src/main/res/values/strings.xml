@@ -148,7 +148,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_setup_header">Setup &amp; Shutdown</string>
     <string name="pref_setup_island_title">Island</string>
     <string name="pref_setup_island_summary_managed">Managed</string>
-    <string name="pref_setup_island_summary_unknown">Unknown</string>
     <string name="pref_setup_island_summary_managed_other">Existent Work profile is not managed by Island.\nClick the side icon to remove.</string>
     <string name="pref_setup_island_summary_incomplete">Setup incomplete.\nClick the side icon to rebuild.</string>
     <string name="pref_setup_island_summary_pending_setup">Not setup yet.\nClick the side icon to setup.</string>

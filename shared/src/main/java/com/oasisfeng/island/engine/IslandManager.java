@@ -10,6 +10,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
 
+import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -83,7 +84,7 @@ public class IslandManager {
 		return true;
 	}
 
-	@RequiresApi(N) public static int[] getProfileIdsIncludingDisabled(final Context context) {
+	@RequiresApi(N) public static @UserIdInt int[] getProfileIdsIncludingDisabled(final Context context) {
 		if (Hacks.UserManager_getProfileIds != null)
 			return Hacks.UserManager_getProfileIds.invoke(UserHandles.MY_USER_ID, false).on(requireNonNull(context.getSystemService(UserManager.class)));
 		else return requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles().stream().mapToInt(Users::toId).toArray();	// Fallback to profiles without disabled.

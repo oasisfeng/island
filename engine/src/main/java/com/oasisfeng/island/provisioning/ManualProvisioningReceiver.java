@@ -5,13 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Process;
 import android.util.Log;
 
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
-
-import java9.util.Optional;
 
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
@@ -32,8 +29,7 @@ public class ManualProvisioningReceiver extends BroadcastReceiver {
 				Log.d(TAG, "Profile is disabled");	// Profile is not enabled yet, that means we are currently in the managed provisioning flow
 				return;									// Nothing needs to be done here, we will receive ACTION_PROFILE_PROVISIONING_COMPLETE soon.
 			}
-			final Optional<Boolean> is_profile_owner = DevicePolicies.isProfileOwner(context, Process.myUserHandle());
-			if (is_profile_owner == null || ! is_profile_owner.orElse(false)) {	// Current user is not profile, or we are not profile owner
+			if (! new DevicePolicies(context).isProfileOwner()) {	// Current user is not profile, or we are not profile owner
 				Log.d(TAG, "Not profile owner");
 				return;
 			}

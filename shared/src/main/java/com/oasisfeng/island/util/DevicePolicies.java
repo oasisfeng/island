@@ -6,13 +6,17 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
+import com.oasisfeng.android.content.pm.LauncherAppsCompat;
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsHelper;
 
@@ -40,20 +44,28 @@ public class DevicePolicies {
 
 	public static final String ACTION_PACKAGE_UNFROZEN = "com.oasisfeng.island.action.PACKAGE_UNFROZEN";
 
-	/** @return whether Island is the profile owner, absent if no enabled profile or profile has no owner, or null for failure. */
-	public static @Nullable Optional<Boolean> isOwnerOfEnabledProfile(final Context context) {
-		return Users.profile == null ? Optional.empty() : isProfileOwner(context, Users.profile);
+	public boolean isProfileOwner() {
+		return mDevicePolicyManager.isProfileOwnerApp(Modules.MODULE_ENGINE);
 	}
 
-	/** @return whether Island is the profile owner, absent if no such profile or profile has no owner, or null for failure. */
-	public static @Nullable Optional<Boolean> isProfileOwner(final Context context, final UserHandle profile) {
+	public static boolean isProfileOwner(final Context context, final UserHandle profile) {
+		if (SDK_INT > O_MR1) return new DevicePolicies(context, profile).isProfileOwner();
 		final Optional<ComponentName> profile_owner = getProfileOwnerAsUser(context, Users.toId(profile));
-		return profile_owner == null ? null : ! profile_owner.isPresent() ? Optional.empty()
-				: Optional.of(Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName()));
+		return profile_owner != null && profile_owner.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName());
+	}
+
+	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final UserHandle profile) {
+		if (SDK_INT <= O_MR1) return getProfileOwnerAsUser(context, UserHandles.getIdentifier(profile));
+		if (Hacks.DevicePolicyManager_getProfileOwner.isAbsent()) return null;
+		try {
+			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwner.invoke().on(new DevicePolicies(context, profile).mDevicePolicyManager));
+		} catch (final RuntimeException e) {	// IllegalArgumentException("Requested profile owner for invalid userId", re) on API 21~23
+			return null;						//   or RuntimeException by RemoteException.rethrowFromSystemServer() on API 24+
+		}
 	}
 
 	/** @return the profile owner component (may not be present), or null for failure */
-	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final int profile_id) {
+	private static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final int profile_id) {
 		if (Hacks.DevicePolicyManager_getProfileOwnerAsUser.isAbsent()) return null;
 		final DevicePolicyManager dpm = Objects.requireNonNull((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE));
 		try {
@@ -175,6 +187,20 @@ public class DevicePolicies {
 	public DevicePolicies(final Context context) {
 		mAppContext = context.getApplicationContext();
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+		cacheDeviceAdminComponent(context);
+	}
+
+	@RequiresApi(O_MR1 + 1) private DevicePolicies(final Context context, final UserHandle profile) {
+		ApplicationInfo profile_app_info = null;
+		if (SDK_INT >= N) profile_app_info = new LauncherAppsCompat(context).getApplicationInfoNoThrows(Modules.MODULE_ENGINE, 0, profile);
+		if (profile_app_info == null) {		// Make up the required profile ApplicationInfo
+			profile_app_info = context.getApplicationInfo();
+			profile_app_info.uid = UserHandles.getUid(UserHandles.getIdentifier(profile), UserHandles.getAppId(Process.myUid()));
+		}
+		try {
+			mAppContext = Hacks.Context_createApplicationContext.invoke(profile_app_info, 0).on(context);
+		} catch (final PackageManager.NameNotFoundException e) { throw new IllegalStateException(e); }	// Should never happen
+		mDevicePolicyManager = (DevicePolicyManager) mAppContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
 		cacheDeviceAdminComponent(context);
 	}
 

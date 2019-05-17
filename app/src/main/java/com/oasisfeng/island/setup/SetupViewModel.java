@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.island.Config;
@@ -120,10 +121,10 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
 		// Check for incomplete provisioning, before DPM.isProvisioningAllowed() check which returns true in this case.
-		Optional<ComponentName> owner;
 		if (SDK_INT >= N && Users.profile == null) for (final int profile_id : IslandManager.getProfileIdsIncludingDisabled(context)) {
-			if (Users.isOwner(profile_id) || (owner = DevicePolicies.getProfileOwnerAsUser(context, profile_id)) == null || ! owner.isPresent())
-				continue;
+			if (Users.isOwner(profile_id)) continue;
+			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(context, UserHandles.of(profile_id));
+			if (owner == null || ! owner.isPresent()) continue;
 			final ComponentName profile_owner = owner.get();
 			if (! Modules.MODULE_ENGINE.equals(profile_owner.getPackageName())) {
 				final CharSequence label = readOwnerLabel(context, profile_owner);
@@ -255,8 +256,7 @@ public class SetupViewModel implements Parcelable {
 		if (SDK_INT >= M) {
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(context));
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
-		} else //noinspection deprecation
-			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
+		} else intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
 		if (BuildConfig.DEBUG && SDK_INT >= M)
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE, new Account("default_account", "miui_yellowpage"));
 		if (SDK_INT >= O) intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
@@ -273,9 +273,9 @@ public class SetupViewModel implements Parcelable {
 	private static CharSequence readOwnerLabel(final Context context, final ComponentName owner) {
 		final PackageManager pm = context.getPackageManager();
 		try {
-			final ActivityInfo owner_info = pm.getReceiverInfo(owner, 0);	// It should be a BroadcastReceiver
+			final ActivityInfo owner_info = pm.getReceiverInfo(owner, PackageManager.GET_UNINSTALLED_PACKAGES);	// It should be a BroadcastReceiver
 			if (owner_info != null) return owner_info.loadLabel(pm);
-			return pm.getApplicationInfo(owner.getPackageName(), 0).loadLabel(pm);	// If not, use app label
+			return pm.getApplicationInfo(owner.getPackageName(), PackageManager.GET_UNINSTALLED_PACKAGES).loadLabel(pm);	// If not, use app label
 		} catch (final PackageManager.NameNotFoundException ignored) {
 			return null;
 		}

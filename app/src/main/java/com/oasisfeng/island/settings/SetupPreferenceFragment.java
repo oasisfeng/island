@@ -2,7 +2,6 @@ package com.oasisfeng.island.settings;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -11,7 +10,9 @@ import android.preference.Preference;
 import android.provider.Settings;
 import android.widget.Toast;
 
+import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.android.widget.Toasts;
@@ -32,7 +33,6 @@ import java.util.List;
 
 import androidx.core.content.ContextCompat;
 import eu.chainfire.libsuperuser.Shell;
-import java9.util.Optional;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
@@ -76,12 +76,9 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 		}
 
 		final ActionButtonPreference pref_island = (ActionButtonPreference) findPreference(getString(R.string.key_setup_island));
-		final int[] profile_ids;
+		final @UserIdInt int[] profile_ids;
 		if (Users.profile != null) {
-			final Optional<Boolean> is_enabled_profile_owner = DevicePolicies.isOwnerOfEnabledProfile(activity);
-			if (is_enabled_profile_owner == null || ! is_enabled_profile_owner.isPresent()) {
-				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_unknown, R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
-			} else if (is_enabled_profile_owner.get()) {    // Normal (managed by Island)
+			if (DevicePolicies.isProfileOwner(activity, Users.profile)) {		// Normal (managed by Island)
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed, R.drawable.ic_delete_forever_black_24dp, p -> {
 					IslandSetup.requestProfileRemoval(getActivity());
 					return true;
@@ -105,8 +102,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			if (SDK_INT >= N && (profile_ids = IslandManager.getProfileIdsIncludingDisabled(activity)).length > 1) {
 				for (final int profile_id : profile_ids) {
 					if (Users.isOwner(profile_id)) continue;
-					final Optional<ComponentName> profile_owner = DevicePolicies.getProfileOwnerAsUser(activity, profile_id);
-					if (profile_owner == null || ! profile_owner.isPresent() || ! Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName()))
+					if (! DevicePolicies.isProfileOwner(activity, UserHandles.of(profile_id)))
 						continue;	// Managed by other app. It may be coexistent with Island. (e.g. Secure Folder on Samsung devices with Android P)
 					pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete, R.drawable.ic_build_black_24dp,
 							preference -> startSetupActivityCleanly());
