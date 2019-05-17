@@ -61,6 +61,8 @@ import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
+import static androidx.core.app.NotificationCompat.BADGE_ICON_SMALL;
+import static androidx.core.app.NotificationCompat.CATEGORY_STATUS;
 
 /**
  * The one-time provisioning for newly created managed profile of Island
@@ -338,10 +340,13 @@ public class IslandProvisioning extends IntentService {
 		setIntentRedelivery(true);
 	}
 
-	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> new Notification.Builder(this)
-			.setSmallIcon(android.R.drawable.stat_notify_sync).setPriority(PRIORITY_HIGH).setUsesChronometer(true)
-			.setContentTitle(getText(Users.isOwner() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
-			.setContentText(getText(R.string.notification_provisioning_text)));
+	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> {
+		final Notification.Builder builder = new Notification.Builder(this).setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS)
+				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getResources().getColor(R.color.accent)).setUsesChronometer(true)
+				.setContentTitle(getText(Users.isOwner() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
+				.setContentText(getText(R.string.notification_provisioning_text));
+		return SDK_INT < O ? builder : builder.setBadgeIconType(BADGE_ICON_SMALL).setColorized(true);
+	});
 
 	private static final String TAG = "Island.Provision";
 	public static final String SCHEME_PACKAGE = "package";
