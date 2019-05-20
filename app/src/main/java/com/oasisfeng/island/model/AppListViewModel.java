@@ -6,18 +6,13 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.LabeledIntent;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcelable;
 import android.os.UserHandle;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -33,7 +28,6 @@ import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
-import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.common.app.BaseAppListViewModel;
@@ -48,7 +42,6 @@ import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
-import com.oasisfeng.island.shuttle.ActivityShuttle;
 import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.OwnerUser;
@@ -72,7 +65,6 @@ import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 import java9.util.stream.StreamSupport;
 
-import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static android.content.Intent.EXTRA_USER;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
@@ -373,30 +365,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private static void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
-		final String pkg = app.packageName; final UserHandle user = app.user;
-		final Intent target = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, pkg).putExtra(EXTRA_USER, user);
-		if (context.getPackageManager().queryIntentActivities(target, 0).isEmpty()) {
-			launchSystemAppSettings(context, app);
-			return;
-		}
-		final PackageManager pm = context.getPackageManager();
-		unfreezeIfNeeded(context, app).thenAccept(unfrozen -> {
-			final Intent chooser = Intent.createChooser(target, null);
-			Intent default_intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null));
-			if (! UserHandles.MY_USER_HANDLE.equals(user)) {
-				if (user.equals(Users.profile)) {
-					final ResolveInfo mainland_resolve = pm.resolveActivity(default_intent, 0);	// Must resolve before forceForwardingToIsland()
-					ActivityShuttle.forceForwardingToIsland(pm, default_intent);	// ACTION_APPLICATION_DETAILS_SETTINGS is allowed to be forwarded
-					if (mainland_resolve != null) {		// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
-						final ActivityInfo activity = mainland_resolve.activityInfo;
-						default_intent = new LabeledIntent(default_intent, activity.packageName,
-								activity.labelRes != 0 ? activity.labelRes : activity.applicationInfo.labelRes, activity.getIconResource());
-					}
-				} else default_intent = null;	// TODO: Not the default managed profile, use LauncherApps.startAppDetailsActivity().
-			}
-			if (default_intent != null) chooser.putExtra(EXTRA_INITIAL_INTENTS, new Parcelable[] { default_intent });
-			Activities.startActivity(context, chooser);
-		});
+		final Intent intent = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).putExtra(IntentCompat.EXTRA_PACKAGE_NAME, app.packageName).setPackage(context.getPackageName());
+		final ResolveInfo resolve = context.getPackageManager().resolveActivity(intent, 0);
+		if (resolve == null) return;		// Should never happen as module "installer" is always bundled with "mobile".
+		intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));
+		unfreezeIfNeeded(context, app).thenAccept(unfrozen -> Activities.startActivity(context, intent));
 	}
 
 	private static CompletionStage<Boolean> unfreezeIfNeeded(final Context context, final IslandAppInfo app) {

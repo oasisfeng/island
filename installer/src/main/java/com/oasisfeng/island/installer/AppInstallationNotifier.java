@@ -7,13 +7,12 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.net.Uri;
 import android.os.Process;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.oasisfeng.android.base.Versions;
+import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.notification.NotificationIds;
 
@@ -26,16 +25,13 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
-import static com.oasisfeng.android.content.IntentCompat.ACTION_SHOW_APP_INFO;
 
 /**
- * Show notification about newly installed app.
+ * Show helper notification about newly installed app.
  *
  * Created by Oasis on 2018-11-16.
  */
 class AppInstallationNotifier {
-
-	private static final String EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME";		// Intent.EXTRA_PACKAGE_NAME
 
 	static void onPackageInstalled(final Context context, final String caller_pkg, final CharSequence caller_app_label, final String pkg) {
 		final PackageManager pm = context.getPackageManager();
@@ -68,16 +64,13 @@ class AppInstallationNotifier {
 				: dangerous_permissions.isEmpty() ? context.getString(R.string.notification_app_target_pre_m_wo_sensitive_permissions, target_version)
 				: (big_text = context.getString(R.string.notification_app_with_permissions, TextUtils.join(", ", dangerous_permissions)));
 
-		final Intent app_info_intent = new Intent(ACTION_SHOW_APP_INFO).putExtra(EXTRA_PACKAGE_NAME, pkg).putExtra(EXTRA_USER, Process.myUserHandle());
-		final PendingIntent app_settings = PendingIntent.getActivity(context, 0, new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-				Uri.fromParts("package", pkg, null)), FLAG_UPDATE_CURRENT);
+		final Intent app_info_forwarder = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).setClass(context, AppInfoForwarderActivity.class)
+				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, pkg).putExtra(EXTRA_USER, Process.myUserHandle());
+		final PendingIntent app_info = PendingIntent.getActivity(context, 0, app_info_forwarder, FLAG_UPDATE_CURRENT);
 		NotificationIds.AppInstallation.post(context, pkg, new Notification.Builder(context)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getResources().getColor(R.color.accent))
 				.setContentTitle(title).setContentText(text).setStyle(big_text != null ? new Notification.BigTextStyle().bigText(big_text) : null)
-				.setContentIntent(app_settings).addAction(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_settings), app_settings)
-				.addAction(pm.resolveActivity(app_info_intent, 0) == null ? null
-						: new Notification.Action(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_info),
-						PendingIntent.getActivity(context, pkg.hashCode()/* avoid overwriting */, app_info_intent, FLAG_UPDATE_CURRENT))));
+				.setContentIntent(app_info).addAction(R.drawable.ic_settings_applications_white_24dp, context.getString(R.string.action_show_app_settings), app_info));
 	}
 
 	private static final String TAG = "Island.AIN";
