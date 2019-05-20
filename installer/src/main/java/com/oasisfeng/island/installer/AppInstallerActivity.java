@@ -19,6 +19,7 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -32,6 +33,7 @@ import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
@@ -54,6 +56,7 @@ import java9.util.Optional;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
+import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -63,6 +66,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
@@ -137,6 +141,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	}
 
 	private void performInstall() {
+		if (SDK_INT >= P && ! getPackageManager().canRequestPackageInstalls()) try {
+			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
+		} catch (final RuntimeException e) {
+			Analytics.$().logAndReport(TAG, "Error granting permission REQUEST_INSTALL_PACKAGES", e);
+		}
+
 		final Intent intent = getIntent();
 		final Uri uri = requireNonNull(intent.getData());
 		final Map<String, InputStream> input_streams = new LinkedHashMap<>();

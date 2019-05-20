@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class AppOpsCompat {
 
+	public static final int OP_REQUEST_INSTALL_PACKAGES = 66;
 	public static final String GET_APP_OPS_STATS = "android.permission.GET_APP_OPS_STATS";
 
 	@RequiresPermission(GET_APP_OPS_STATS) @SuppressWarnings("unchecked")
@@ -29,7 +30,7 @@ public class AppOpsCompat {
 		return Hacks.AppOpsManager_getOpsForPackage.invoke(uid, pkg, ops).on(mAppOpsManager);
 	}
 
-	void setMode(final int code, final int uid, final String pkg, final int mode) {
+	public void setMode(final int code, final int uid, final String pkg, final int mode) {
 		if (Hacks.AppOpsManager_setMode.isAbsent()) return;
 		Hacks.AppOpsManager_setMode.invoke(code, uid, pkg, mode).on(mAppOpsManager);
 	}
