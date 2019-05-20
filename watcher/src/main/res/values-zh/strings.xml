@@ -3,4 +3,9 @@
     <string name="action_settings">设置</string>
 
     <string name="toast_manual_quiet_mode">停止工作资料失败，请手动关闭。</string>
+
+    <string name="notification_permission_was_granted_title">已授予权限“%s”</string>
+    <string name="notification_permission_was_granted_text">是否撤销此权限？</string>
+    <string name="action_revoke_granted">撤销</string>
+    <string name="action_keep_granted">保持授予</string>
 </resources>

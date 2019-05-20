@@ -171,16 +171,19 @@ public class DevicePolicies {
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
 			Analytics.$().logAndReport(TAG, "Error saving app ops settings for " + pkg, e);
 		}
-		final boolean changed = mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, hidden);
+		final boolean changed = setApplicationHiddenWithoutAppOpsSaver(pkg, hidden);
 
-		if (changed && ! hidden) {
-			Modules.broadcast(mAppContext, new Intent(ACTION_PACKAGE_UNFROZEN, Uri.fromParts("package", pkg, null)));
-			if (SDK_INT > O_MR1) try {
-				AppOpsHelper.restoreAppOps(mAppContext, pkg);
-			} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
-				Analytics.$().logAndReport(TAG, "Error restoring app ops settings for " + pkg, e);
-			}
+		if (changed && SDK_INT > O_MR1 && ! hidden) try {
+			AppOpsHelper.restoreAppOps(mAppContext, pkg);
+		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
+			Analytics.$().logAndReport(TAG, "Error restoring app ops settings for " + pkg, e);
 		}
+		return changed;
+	}
+
+	public boolean setApplicationHiddenWithoutAppOpsSaver(final String pkg, final boolean hidden) {
+		final boolean changed = mDevicePolicyManager.setApplicationHidden(sCachedComponent, pkg, hidden);
+		if (changed && ! hidden) Modules.broadcast(mAppContext, new Intent(ACTION_PACKAGE_UNFROZEN, Uri.fromParts("package", pkg, null)));
 		return changed;
 	}
 
@@ -210,6 +213,7 @@ public class DevicePolicies {
 	public interface TriFunction<A, B, C, R> { R apply(A a, B b, C c); }
 	public interface QuadConsumer<A, B, C, D> { void accept(A a, B b, C c, D d); }
 	public interface QuadFunction<A, B, C, D, R> { R apply(A a, B b, C c, D d); }
+	public interface QuinFunction<A, B, C, D, E, R> { R apply(A a, B b, C c, D d, E e); }
 
 	public void execute(final BiConsumer<DevicePolicyManager, ComponentName> callee) {
 		callee.accept(mDevicePolicyManager, sCachedComponent);
@@ -228,6 +232,9 @@ public class DevicePolicies {
 	}
 	public <A, B, R> R invoke(final QuadFunction<DevicePolicyManager, ComponentName, A, B, R> callee, final A a, final B b) {
 		return callee.apply(mDevicePolicyManager, sCachedComponent, a, b);
+	}
+	public <A, B, C, R> R invoke(final QuinFunction<DevicePolicyManager, ComponentName, A, B, C, R> callee, final A a, final B b, final C c) {
+		return callee.apply(mDevicePolicyManager, sCachedComponent, a, b, c);
 	}
 
 	private final Context mAppContext;

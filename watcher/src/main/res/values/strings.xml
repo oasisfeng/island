@@ -3,4 +3,9 @@
     <string name="action_settings">Settings</string>
 
     <string name="toast_manual_quiet_mode">Failed to deactivate, please toggle manually.</string>
+
+    <string name="notification_permission_was_granted_title">Permission \"%s\" was granted</string>
+    <string name="notification_permission_was_granted_text">Would you like to revoke this permission?</string>
+    <string name="action_revoke_granted">Revoke</string>
+    <string name="action_keep_granted">Keep granted</string>
 </resources>
