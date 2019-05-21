@@ -96,15 +96,13 @@ public class FeaturedListViewModel extends AndroidViewModel {
 	});
 
 	public void update(final Context context) {
-		final Apps apps = Apps.of(context);
 		final LifecycleActivity activity = (LifecycleActivity) Objects.requireNonNull(Activities.findActivityFrom(context));
 		final Application app = getApplication();
 		final boolean is_device_owner = new DevicePolicies(context).isActiveDeviceOwner(), has_profile = Users.hasProfile();
 		features.beginBatchedUpdates();
 		features.clear();
 
-		final boolean file_shuttle_compatible = IslandFiles.isCompatible(context);
-		if (SHOW_ALL || file_shuttle_compatible) {
+		if (SHOW_ALL || IslandFiles.isCompatible(context)) {
 			final boolean has_across_users_permission = Permissions.has(context, Permissions.INTERACT_ACROSS_USERS);
 			if (! has_across_users_permission)
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
@@ -114,9 +112,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 						0, R.string.dialog_button_activate, vm -> IslandFiles.enableFileShuttle(activity));
 			else {
 				Analytics.$().setProperty(Analytics.Property.FileShuttleEnabled, "1");
-				if (SHOW_ALL || ! apps.isInstalledInCurrentUser("nextapp.fx"))
-					addFeature(app, "fx", R.string.featured_fx_title, R.string.featured_fx_description, R.drawable.ic_launcher_fx,
-							R.string.featured_button_install, c -> showInMarket(c, "nextapp.fx"));
+				addFeaturedApp(R.string.featured_fx_title, R.string.featured_fx_description, R.drawable.ic_launcher_fx, "nextapp.fx");
 			}
 		}
 
@@ -133,14 +129,12 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					vm -> toggleAdbSecure(activity, vm, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
 
-		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("com.oasisfeng.greenify"))
-			addFeature(app, "greenify", R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify,
-					R.string.featured_button_install, c -> showInMarket(c, "com.oasisfeng.greenify"));
+		addFeaturedApp(R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify, "com.oasisfeng.greenify");
+		addFeaturedApp(R.string.featured_saf_enhancer_title, R.string.featured_saf_enhancer_description, R.drawable.ic_launcher_saf_enhancer,
+				"app.gwo.safenhancer.lite", "app.gwo.safenhancer");
 
-		if (SHOW_ALL || ! apps.isInstalledInCurrentUser(PACKAGE_ICEBOX)) {
-			addFeature(app, "icebox", R.string.featured_icebox_title, R.string.featured_icebox_description, R.drawable.ic_launcher_icebox,
-					R.string.featured_button_install, c -> showInMarket(c, PACKAGE_ICEBOX));
-		} else if (Users.hasProfile() && IslandAppListProvider.getInstance(context).get(PACKAGE_ICEBOX, Users.profile) == null) {
+		if (! addFeaturedApp(R.string.featured_icebox_title, R.string.featured_icebox_description, R.drawable.ic_launcher_icebox, PACKAGE_ICEBOX)
+				&& Users.hasProfile() && IslandAppListProvider.getInstance(context).get(PACKAGE_ICEBOX, Users.profile) == null) {
 			new Handler().postDelayed(() -> {	// Dirty workaround due to IslandAppListProvider updated after onResume()
 				if (activity.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)
 						&& IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.profile) != null)
@@ -151,17 +145,23 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					R.drawable.ic_launcher_icebox, R.string.action_clone, c -> IslandAppClones.cloneApp(context/* must be activity */, icebox_in_mainland));
 		}
 
-		if (SHOW_ALL || ! apps.isInstalledInCurrentUser("rikka.appops") && ! apps.isInstalledInCurrentUser("rikka.appops.pro"))
-			addFeature(app, "appops", R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,
-					R.string.featured_button_install, c -> showInMarket(c, "rikka.appops"));
+		addFeaturedApp(R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,
+				"rikka.appops", "rikka.appops.pro");
 
-		if (SHOW_ALL || ! apps.isInstalledBy(GooglePlayStore.PACKAGE_NAME)) {
+		if (SHOW_ALL || ! mApps.isInstalledBy(GooglePlayStore.PACKAGE_NAME)) {
 			final boolean installed = Apps.of(context).isInstalledOnDevice(PACKAGE_COOLAPK);
 			addFeature(app, "coolapk", R.string.featured_coolapk_title, R.string.featured_coolapk_description, R.drawable.ic_launcher_coolapk,
 					installed ? 0 : R.string.featured_button_install, installed ? c -> Apps.of(c).launch(PACKAGE_COOLAPK) : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
 		}
 
 		features.endBatchedUpdates();
+	}
+
+	private boolean addFeaturedApp(final @StringRes int title, final @StringRes int description, final @DrawableRes int icon, final String... pkgs) {
+		if (! SHOW_ALL) for (final String pkg : pkgs) if (mApps.isInstalledInCurrentUser(pkg)) return false;
+		final String pkg = pkgs[0];
+		addFeature(getApplication(), pkg, title, description, icon, R.string.featured_button_install, c -> showInMarket(c, pkg));
+		return true;
 	}
 
 	private void toggleAdbSecure(final LifecycleActivity activity, final FeaturedViewModel vm, final boolean enabling, final boolean security_confirmed) {
@@ -254,7 +254,9 @@ public class FeaturedListViewModel extends AndroidViewModel {
 				icon != 0 ? app.getDrawable(icon) : null, button, function, Scopes.app(app).isMarked(SCOPE_TAG_PREFIX_FEATURED + tag)));
 	}
 
-	public FeaturedListViewModel(final Application app) { super(app); }
+	public FeaturedListViewModel(final Application app) { super(app); mApps = Apps.of(app); }
+
+	private final Apps mApps;
 
 	private static final AtomicInteger sOrderGenerator = new AtomicInteger();
 	private static final String TAG = "FLVM";

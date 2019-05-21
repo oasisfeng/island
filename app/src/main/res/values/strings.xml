@@ -27,6 +27,8 @@
     <string name="featured_god_mode_description">\"God mode\" is a special mode of Island for advanced users, to help you take control of ALL apps (in both island and mainland). So you can freeze unwanted apps without root.</string>
     <string name="featured_greenify_title">Greenify</string>
     <string name="featured_greenify_description">Automatically freeze selected apps if not in active use, after screen goes off.</string>
+    <string name="featured_saf_enhancer_title">SAF Enhancer Lite</string>
+    <string name="featured_saf_enhancer_description">Enable cross-border image access for app not supporting \"Storage Access Framework\", provided it supports photo capture with external camera app.</string>
     <string name="featured_icebox_title">Ice Box</string>
     <string name="featured_icebox_description">Easy and pleasant app launching experience for frozen apps. Be sure to select \"Island\" as Work Mode in the settings of Ice Box. To manage apps in Island, clone Ice Box and launch it in Island.</string>
     <string name="featured_appops_title">App Ops</string>
