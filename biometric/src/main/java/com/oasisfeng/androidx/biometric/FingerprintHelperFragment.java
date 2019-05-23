@@ -72,7 +72,7 @@ public class FingerprintHelperFragment extends Fragment {
 
                 private void dismissAndForwardResult(final int errMsgId,
                         final CharSequence errString) {
-                    mHandler.obtainMessage(FingerprintDialogFragment.MSG_DISMISS_DIALOG)
+                    mHandler.obtainMessage(FingerprintDialogFragment.MSG_DISMISS_DIALOG_ERROR)
                             .sendToTarget();
                     mExecutor.execute(new Runnable() {
                         @Override
@@ -126,7 +126,8 @@ public class FingerprintHelperFragment extends Fragment {
                 public void onAuthenticationSucceeded(
                         final FingerprintManager.AuthenticationResult result) {
                     mHandler.obtainMessage(
-                            FingerprintDialogFragment.MSG_DISMISS_DIALOG).sendToTarget();
+                            FingerprintDialogFragment.MSG_DISMISS_DIALOG_AUTHENTICATED)
+                            .sendToTarget();
                     mExecutor.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -181,12 +182,13 @@ public class FingerprintHelperFragment extends Fragment {
         if (!mShowing) {
             mCancellationSignal = new CancellationSignal();
             mCanceledFrom = USER_CANCELED_FROM_NONE;
-            FingerprintManager FingerprintManager = mContext.getSystemService(FingerprintManager.class);
-            if (handlePreAuthenticationErrors(FingerprintManager)) {
-                mHandler.obtainMessage(FingerprintDialogFragment.MSG_DISMISS_DIALOG).sendToTarget();
+            FingerprintManager fingerprintManager = mContext.getSystemService(FingerprintManager.class);
+            if (handlePreAuthenticationErrors(fingerprintManager)) {
+                mHandler.obtainMessage(
+                        FingerprintDialogFragment.MSG_DISMISS_DIALOG_ERROR).sendToTarget();
                 cleanup();
             } else {
-                FingerprintManager.authenticate(
+                fingerprintManager.authenticate(
                         wrapCryptoObject(mCryptoObject),
                         mCancellationSignal,
                         0 /* flags */,

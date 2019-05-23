@@ -16,11 +16,11 @@
 
 package com.oasisfeng.androidx.biometric;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -57,6 +57,9 @@ public class BiometricPrompt implements BiometricConstants {
 
     private static final String TAG = "BiometricPromptCompat";
     private static final boolean DEBUG = false;
+    // In order to keep consistent behavior between versions, we need to send
+    // FingerprintDialogFragment a message indicating whether or not to dismiss the UI instantly.
+    private static final int DELAY_MILLIS = 500;
 
     static final String DIALOG_FRAGMENT_TAG = "FingerprintDialogFragment";
     static final String FINGERPRINT_HELPER_FRAGMENT_TAG = "FingerprintHelperFragment";
@@ -404,14 +407,14 @@ public class BiometricPrompt implements BiometricConstants {
 
     /**
      * Constructs a {@link BiometricPrompt} which can be used to prompt the user for
-     * authentication. The authentication prompt created by
+     * authentication. The authenticaton prompt created by
      * {@link BiometricPrompt#authenticate(PromptInfo, CryptoObject)} and
      * {@link BiometricPrompt#authenticate(PromptInfo)} will persist across device
      * configuration changes by default. If authentication is in progress, re-creating
      * the {@link BiometricPrompt} can be used to update the {@link Executor} and
      * {@link AuthenticationCallback}. This should be used to update the
      * {@link AuthenticationCallback} after configuration changes.
-     * such as {@link Activity#onCreate(Bundle)}.
+     * such as {@link android.app.Activity#onCreate(Bundle)}.
      *
      * @param fragmentActivity A reference to the client's activity.
      * @param executor An executor to handle callback events.
@@ -469,50 +472,80 @@ public class BiometricPrompt implements BiometricConstants {
         final FragmentManager fragmentManager = mFragmentActivity.getFragmentManager();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            // Create the fragment that wraps BiometricPrompt once.
-            if (mBiometricFragment == null) {
-                mBiometricFragment = BiometricFragment.newInstance(bundle);
-                mBiometricFragment.setCallbacks(mExecutor, mNegativeButtonListener,
-                        mAuthenticationCallback);
+
+            BiometricFragment biometricFragment =
+                    (BiometricFragment) fragmentManager.findFragmentByTag(
+                            BIOMETRIC_FRAGMENT_TAG);
+            if (biometricFragment != null) {
+                mBiometricFragment = biometricFragment;
+            } else {
+                mBiometricFragment = BiometricFragment.newInstance();
             }
+            mBiometricFragment.setCallbacks(mExecutor, mNegativeButtonListener,
+                    mAuthenticationCallback);
             // Set the crypto object.
             mBiometricFragment.setCryptoObject(crypto);
+            mBiometricFragment.setBundle(bundle);
 
-            if (fragmentManager.findFragmentByTag(BIOMETRIC_FRAGMENT_TAG) == null) {
+            if (biometricFragment == null) {
                 // If the fragment hasn't been added before, add it. It will also start the
                 // authentication.
                 fragmentManager.beginTransaction().add(mBiometricFragment, BIOMETRIC_FRAGMENT_TAG)
                         .commit();
-            } else {
+            } else if (mBiometricFragment.isDetached()) {
                 // If it's been added before, just re-attach it.
                 fragmentManager.beginTransaction().attach(mBiometricFragment).commit();
             }
         } else {
             // Create the UI
-            if (mFingerprintDialogFragment == null) {
-                mFingerprintDialogFragment = FingerprintDialogFragment.newInstance(bundle);
-                mFingerprintDialogFragment.setNegativeButtonListener(mNegativeButtonListener);
+            FingerprintDialogFragment fingerprintDialogFragment =
+                    (FingerprintDialogFragment) fragmentManager.findFragmentByTag(
+                            DIALOG_FRAGMENT_TAG);
+            if (fingerprintDialogFragment != null) {
+                mFingerprintDialogFragment = fingerprintDialogFragment;
+            } else {
+                mFingerprintDialogFragment = FingerprintDialogFragment.newInstance();
             }
-            mFingerprintDialogFragment.show(fragmentManager, DIALOG_FRAGMENT_TAG);
+
+            mFingerprintDialogFragment.setNegativeButtonListener(mNegativeButtonListener);
+            mFingerprintDialogFragment.setBundle(bundle);
+            if (fingerprintDialogFragment == null) {
+                mFingerprintDialogFragment.show(fragmentManager, DIALOG_FRAGMENT_TAG);
+            } else if (mFingerprintDialogFragment.isDetached()) {
+                fragmentManager.beginTransaction().attach(mFingerprintDialogFragment).commit();
+            }
 
             // Create the connection to FingerprintManager
-            if (mFingerprintHelperFragment == null) {
+            FingerprintHelperFragment fingerprintHelperFragment =
+                    (FingerprintHelperFragment) fragmentManager.findFragmentByTag(
+                            FINGERPRINT_HELPER_FRAGMENT_TAG);
+            if (fingerprintHelperFragment != null) {
+                mFingerprintHelperFragment = fingerprintHelperFragment;
+            } else {
                 mFingerprintHelperFragment = FingerprintHelperFragment.newInstance();
-                mFingerprintHelperFragment.setCallback(mExecutor, mAuthenticationCallback);
             }
-            mFingerprintHelperFragment.setHandler(mFingerprintDialogFragment.getHandler());
-            mFingerprintHelperFragment.setCryptoObject(crypto);
 
-            if (fragmentManager.findFragmentByTag(FINGERPRINT_HELPER_FRAGMENT_TAG) == null) {
+            mFingerprintHelperFragment.setCallback(mExecutor, mAuthenticationCallback);
+            final Handler fingerprintDialogHandler = mFingerprintDialogFragment.getHandler();
+            mFingerprintHelperFragment.setHandler(fingerprintDialogHandler);
+            mFingerprintHelperFragment.setCryptoObject(crypto);
+            fingerprintDialogHandler.sendMessageDelayed(
+                    fingerprintDialogHandler.obtainMessage(
+                            FingerprintDialogFragment.DISPLAYED_FOR_500_MS), DELAY_MILLIS);
+
+            if (fingerprintHelperFragment == null) {
                 // If the fragment hasn't been added before, add it. It will also start the
                 // authentication.
                 fragmentManager.beginTransaction()
                         .add(mFingerprintHelperFragment, FINGERPRINT_HELPER_FRAGMENT_TAG).commit();
-            } else {
+            } else if (mFingerprintHelperFragment.isDetached()) {
                 // If it's been added before, just re-attach it.
                 fragmentManager.beginTransaction().attach(mFingerprintHelperFragment).commit();
             }
         }
+        // For the case when onResume() is being called right after authenticate,
+        // we need to make sure that all fragment transactions have been committed.
+        fragmentManager.executePendingTransactions();
     }
 
     /**
