@@ -10,10 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.CrossProfileApps;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract.Contacts;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
@@ -38,6 +42,7 @@ import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import androidx.annotation.Nullable;
@@ -86,7 +91,7 @@ public class IslandProvisioning extends IntentService {
 	private static final String AFFILIATION_ID = "com.oasisfeng.island";
 	private static final String CATEGORY_MAIN_ACTIVITY = "com.oasisfeng.island.category.MAIN_ACTIVITY";
 
-	public static void start(final Context context, final @Nullable String action) {
+	@OwnerUser @ProfileUser public static void start(final Context context, final @Nullable String action) {
 		final Intent intent = new Intent(action).setComponent(new ComponentName(context, IslandProvisioning.class));
 		if (SDK_INT >= O) context.startForegroundService(intent);
 		else context.startService(intent);
@@ -99,7 +104,7 @@ public class IslandProvisioning extends IntentService {
 		start(context, intent.getAction());
 	}
 
-	@ProfileUser @WorkerThread @Override protected void onHandleIntent(@Nullable final Intent intent) {
+	@OwnerUser @ProfileUser @WorkerThread @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
 		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE.equals(intent.getAction())) {
 			Log.d(TAG, "Re-provisioning Mainland.");
@@ -146,6 +151,8 @@ public class IslandProvisioning extends IntentService {
 
 		// Prepare critical apps
 		enableCriticalAppsIfNeeded(this, policies);
+		// Disable unnecessarily enabled apps
+		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile();		// Users.isProfile() does not work before setProfileEnabled().
 
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
 			policies.execute(DevicePolicyManager::setProfileName, getString(R.string.profile_name));
@@ -161,6 +168,17 @@ public class IslandProvisioning extends IntentService {
 			Analytics.$().event("error_launch_main_ui").send();
 			Log.e(TAG, "Failed to launch main activity in owner user.");
 			Toasts.show(this, R.string.toast_setup_complete, Toast.LENGTH_LONG);
+		}
+	}
+
+	@ProfileUser private void hideUnnecessaryAppsInManagedProfile() {
+		final List<ResolveInfo> resolves = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),
+				SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);		// Do not use resolveActivity(), which will return ResolverActivity.
+		if (resolves != null) for (final ResolveInfo resolve : resolves) {
+			final String pkg = resolve.activityInfo.packageName;
+			if ((resolve.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || "android".equals(pkg)) continue;
+			if (getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), 0) != null)
+				new DevicePolicies(this).setApplicationHiddenWithoutAppOpsSaver(pkg, true);
 		}
 	}
 

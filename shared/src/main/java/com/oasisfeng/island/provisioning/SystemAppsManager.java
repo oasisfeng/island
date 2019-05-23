@@ -13,7 +13,6 @@ import android.provider.BlockedNumberContract;
 import android.provider.CalendarContract;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
-import android.provider.ContactsContract.Contacts;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -67,13 +66,11 @@ import static android.os.Build.VERSION_CODES.N;
 			Hacks.PrintManager_PRINT_SPOOLER_PACKAGE_NAME.get(),	// Print spooler (a critical bug will raise if this package is disabled)
 			// Enabled system apps with launcher activity by default
 			WellKnownPackages.PACKAGE_GOOGLE_PLAY_STORE,			// Google Play Store to let user install apps directly within
-			"com.android.contacts",					// Contacts
 			"com.android.providers.downloads.ui",	// Downloads
 			// Essential Google packages
 			"com.google.android.gsf",				// Google services framework
 			WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES,	// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
 			"com.google.android.feedback",			// Used by GMS for crash report
-			"com.google.android.contacts",			// Contacts (Google)
 			// MIUI-specific
 			"com.miui.core",						// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
 			"com.miui.securitycenter"				// Required by system Settings app of MIUI.
@@ -87,8 +84,7 @@ import static android.os.Build.VERSION_CODES.N;
 			/* New entrance for Downloads UI, required by old Downloads app trampoline */
 			new Intent("android.provider.action.MANAGE_ROOT"/* DocumentsContract.ACTION_MANAGE_ROOT */,
 					DocumentsContract.buildRootUri("com.android.providers.downloads.documents", "downloads")),
-			new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*"),	// Usually com.android.documentsui, may be file explorer app on some ROMs. (e.g. MIUI)
-			new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI)	// Contact picker, usually com.android.contacts
+			new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*")	// Usually com.android.documentsui, may be file explorer app on some ROMs. (e.g. MIUI)
 	);
 	private static final Collection<String> sCriticalContentAuthorities = Arrays.asList(
 			ContactsContract.AUTHORITY,								// Usually com.android.providers.contacts
