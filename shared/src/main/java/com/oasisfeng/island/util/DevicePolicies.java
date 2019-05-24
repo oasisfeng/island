@@ -75,7 +75,7 @@ public class DevicePolicies {
 		}
 	}
 
-	public boolean isActiveDeviceOwner() {
+	@OwnerUser public boolean isActiveDeviceOwner() {
 		return mDevicePolicyManager.isAdminActive(sCachedComponent) && mDevicePolicyManager.isDeviceOwnerApp(sCachedComponent.getPackageName());
 	}
 

@@ -1,5 +1,7 @@
 <resources>
-    <string name="action_deactivate_island">停止</string>
+    <string name="notification_island_watcher_title">壶中界 运转中</string>
+    <string name="notification_island_watcher_text">封印它可终止其中所有的潜在活动</string>
+    <string name="action_deactivate_island">封印</string>
     <string name="action_settings">设置</string>
 
     <string name="toast_manual_quiet_mode">停止工作资料失败，请手动关闭。</string>
