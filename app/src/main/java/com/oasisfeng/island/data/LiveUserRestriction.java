@@ -1,4 +1,4 @@
-package com.oasisfeng.island.featured;
+package com.oasisfeng.island.data;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,19 +23,19 @@ public class LiveUserRestriction extends LiveData<Boolean> {
 
 	private static final String ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED = "android.app.action.DEVICE_POLICY_MANAGER_STATE_CHANGED";	// DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED
 
-	LiveUserRestriction(final Context context, final String restriction, final UserHandle user) {
+	public LiveUserRestriction(final Context context, final String restriction, final UserHandle user) {
 		mAppContext = context.getApplicationContext();
 		mRestriction = restriction;
 		mUser = user;
 	}
 
-	boolean query(final Context context) {
+	public boolean query(final Context context) {
 		final Bundle restrictions = ((UserManager) context.getSystemService(Context.USER_SERVICE)).getUserRestrictions(mUser);
 		return restrictions.containsKey(mRestriction);
 	}
 
 	/** Request explicit update, in case broadcast receiver does not work (e.g. across users) */
-	static void requestUpdate(final Context context) {
+	public static void notifyUpdate(final Context context) {
 		LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED));
 	}
 

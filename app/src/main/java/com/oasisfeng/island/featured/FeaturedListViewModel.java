@@ -1,11 +1,9 @@
 package com.oasisfeng.island.featured;
 
 import android.app.Application;
-import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.os.Handler;
 import android.provider.Settings;
-import android.widget.Toast;
 
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.app.LifecycleActivity;
@@ -14,24 +12,23 @@ import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.google.GooglePlayStore;
-import com.oasisfeng.android.ui.Snackbars;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Consumer;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.Config;
+import com.oasisfeng.island.adb.AdbSecure;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.controller.IslandAppClones;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
+import com.oasisfeng.island.data.LiveUserRestriction;
 import com.oasisfeng.island.files.IslandFiles;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.FeaturedEntryBinding;
-import com.oasisfeng.island.security.SecurityPrompt;
 import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.settings.SetupPreferenceFragment;
-import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
@@ -42,7 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import androidx.annotation.DrawableRes;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.Lifecycle;
@@ -51,10 +47,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static androidx.lifecycle.Transformations.map;
 import static androidx.recyclerview.widget.ItemTouchHelper.END;
 import static androidx.recyclerview.widget.ItemTouchHelper.START;
@@ -68,7 +61,6 @@ import static androidx.recyclerview.widget.ItemTouchHelper.START;
 public class FeaturedListViewModel extends AndroidViewModel {
 
 	private static final String SCOPE_TAG_PREFIX_FEATURED = "featured_";
-	private static final String PREF_KEY_ADB_SECURE_PROTECTED = "adb_secure_protected";
 	private static final String PACKAGE_COOLAPK = "com.coolapk.market";
 	private static final String PACKAGE_ICEBOX = "com.catchingnow.icebox";
 	private static final boolean SHOW_ALL = false;		// For debugging purpose
@@ -126,7 +118,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		if (adb_secure != null && (SHOW_ALL || adb_enabled || adb_secure.query(activity))) {	// ADB is disabled so long as ADB secure is enabled.
 			addFeatureRaw(app, "adb_secure", is_device_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
 					R.string.featured_adb_secure_description,0, map(adb_secure, enabled -> enabled ? R.string.action_disable : R.string.action_enable),
-					vm -> toggleAdbSecure(activity, vm, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
+					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
 
 		addFeaturedApp(R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify, "com.oasisfeng.greenify");
@@ -164,75 +156,6 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		return true;
 	}
 
-	private void toggleAdbSecure(final LifecycleActivity activity, final FeaturedViewModel vm, final boolean enabling, final boolean security_confirmed) {
-		if (! enabling && ! security_confirmed && SDK_INT >= M && isAdbSecureProtected(activity)) {
-			requestSecurityConfirmationBeforeDisablingAdbSecure(activity, vm);
-			return;
-		}
-
-		final DevicePolicies policies = new DevicePolicies(activity);
-		if (policies.isActiveDeviceOwner()) {
-			if (! enabling) {
-				policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-				policies.execute(DevicePolicyManager::setGlobalSetting, Settings.Global.ADB_ENABLED, "1");	// DISALLOW_DEBUGGING_FEATURES also disables ADB.
-			} else policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-		}
-		if (! Users.hasProfile()) {
-			showPromptForAdbSecureProtection(activity, enabling);
-			return;		// No managed profile, all done.
-		}
-
-		final Context app_context = getApplication();
-		MethodShuttle.runInProfile(app_context, () -> {
-			final DevicePolicies device_policies = new DevicePolicies(app_context);	// The "policies" instance can not be passed into profile.
-			if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-			else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-			return enabling;
-		}).whenComplete((enabled, e) -> {
-			final Context context = getApplication();
-			if (e != null) {
-				Analytics.$().logAndReport(TAG, "Error setting featured button", e);
-				Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
-			} else {
-				LiveUserRestriction.requestUpdate(context);	// Request explicit update, since observer does not work across users.
-				showPromptForAdbSecureProtection(activity, enabled);
-			}
-		});
-	}
-
-	private void showPromptForAdbSecureProtection(final LifecycleActivity activity, final boolean enabled) {
-		if (SDK_INT < M || ! enabled || activity.isDestroyed()) return;
-		if (isAdbSecureProtected(activity)) Snackbars.make(activity, R.string.prompt_security_confirmation_activated)
-				.setAction(R.string.action_deactivate, v -> disableSecurityConfirmationForAdbSecure(activity)).show();
-		else Snackbars.make(activity, R.string.prompt_security_confirmation_suggestion)
-				.setAction(R.string.action_activate, v -> enableSecurityConfirmationForAdbSecure(activity)).show();
-	}
-
-	private static boolean isAdbSecureProtected(final Context context) {
-		return getDefaultSharedPreferences(context).getBoolean(PREF_KEY_ADB_SECURE_PROTECTED, false);
-	}
-
-	@RequiresApi(M) private void enableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
-		if (activity.isDestroyed()) return;
-		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_activating, () -> {
-			getDefaultSharedPreferences(getApplication()).edit().putBoolean(PREF_KEY_ADB_SECURE_PROTECTED, true).apply();
-			Toast.makeText(getApplication(), R.string.toast_security_confirmation_activated, Toast.LENGTH_SHORT).show();
-		});
-	}
-
-	@RequiresApi(M) private void disableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
-		if (activity.isDestroyed()) return;
-		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_deactivating, () -> {
-			getDefaultSharedPreferences(getApplication()).edit().putBoolean(PREF_KEY_ADB_SECURE_PROTECTED, false).apply();
-			Toast.makeText(getApplication(), R.string.toast_security_confirmation_deactivated, Toast.LENGTH_SHORT).show();
-		});
-	}
-
-	@RequiresApi(M) private void requestSecurityConfirmationBeforeDisablingAdbSecure(final LifecycleActivity activity, final FeaturedViewModel vm) {
-		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_to_disable,
-				() -> toggleAdbSecure(activity, vm, false, true));
-	}
-
 	private static void showInMarket(final Context context, final String pkg) {
 		Analytics.$().event("featured_install").with(Analytics.Param.ITEM_ID, pkg).send();
 		Apps.of(context).showInMarket(pkg, "island", "featured");
@@ -259,5 +182,4 @@ public class FeaturedListViewModel extends AndroidViewModel {
 	private final Apps mApps;
 
 	private static final AtomicInteger sOrderGenerator = new AtomicInteger();
-	private static final String TAG = "FLVM";
 }
