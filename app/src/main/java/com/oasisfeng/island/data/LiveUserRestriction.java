@@ -57,7 +57,9 @@ public class LiveUserRestriction extends LiveData<Boolean> {
 
 	private void deactivate() {
 		LocalBroadcastManager.getInstance(mAppContext).unregisterReceiver(mReceiver);
-		if (Users.current().equals(mUser)) mAppContext.unregisterReceiver(mReceiver);
+		if (Users.current().equals(mUser)) try {
+			mAppContext.unregisterReceiver(mReceiver);
+		} catch (final IllegalArgumentException ignored) {}
 	}
 
 	private void update(final Context context) {
