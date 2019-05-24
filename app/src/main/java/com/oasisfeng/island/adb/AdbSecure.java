@@ -3,6 +3,7 @@ package com.oasisfeng.island.adb;
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.os.UserManager;
 import android.provider.Settings;
 import android.widget.Toast;
 
@@ -20,6 +21,7 @@ import androidx.annotation.RequiresApi;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.N;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
@@ -49,20 +51,21 @@ public class AdbSecure {
 		}
 
 		final Context app_context = activity.getApplication();
-		MethodShuttle.runInProfile(app_context, () -> {
-			final DevicePolicies device_policies = new DevicePolicies(app_context);	// The "policies" instance can not be passed into profile.
-			if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-			else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-			return enabling;
-		}).whenComplete((enabled, e) -> {
-			if (e != null) {
-				Analytics.$().logAndReport(TAG, "Error setting featured button", e);
-				Toast.makeText(app_context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
-			} else {
-				LiveUserRestriction.notifyUpdate(app_context);	// Request explicit update, since observer does not work across users.
-				showPromptForAdbSecureProtection(activity, enabled);
-			}
-		});
+		if (SDK_INT < N || ! activity.getSystemService(UserManager.class).isQuietModeEnabled(Users.profile))
+			MethodShuttle.runInProfile(app_context, () -> {
+				final DevicePolicies device_policies = new DevicePolicies(app_context);	// The "policies" instance can not be passed into profile.
+				if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
+				else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
+				return enabling;
+			}).whenComplete((enabled, e) -> {
+				if (e != null) {
+					Analytics.$().logAndReport(TAG, "Error setting featured button", e);
+					Toast.makeText(app_context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+				} else {
+					LiveUserRestriction.notifyUpdate(app_context);	// Request explicit update, since observer does not work across users.
+					showPromptForAdbSecureProtection(activity, enabled);
+				}
+			});
 	}
 
 	private static void showPromptForAdbSecureProtection(final LifecycleActivity activity, final boolean enabled) {

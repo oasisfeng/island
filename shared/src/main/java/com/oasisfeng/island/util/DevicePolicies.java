@@ -187,6 +187,10 @@ public class DevicePolicies {
 		return changed;
 	}
 
+	public void setUserRestriction(final String restriction, final boolean enabled) {
+		execute(enabled ? DevicePolicyManager::addUserRestriction : DevicePolicyManager::clearUserRestriction, restriction);
+	}
+
 	public DevicePolicies(final Context context) {
 		mAppContext = context.getApplicationContext();
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
