@@ -3,6 +3,7 @@ package com.oasisfeng.island.installer;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -228,9 +229,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 					while ((count = input.read(buffer)) != - 1) out.write(buffer, 0, count);
 					mSession.fsync(out);
 				}
-		} catch (final IOException e) {
+		} catch (final IOException | RuntimeException e) {
 			Log.e(TAG, "Error preparing installation", e);
-			finish();
+			fallbackToSystemPackageInstaller("session", e);
 			return;
 		} finally {
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
@@ -250,8 +251,11 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				break;
 			case PackageInstaller.STATUS_PENDING_USER_ACTION:
 				final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-				if (action != null) startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
-				else finish();    // Should never happen
+				if (action != null) try {
+					startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
+				} catch (final ActivityNotFoundException e) {
+					fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", e);
+				} else finish();    // Should never happen
 				break;
 			case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
 				if (should_return_result) AppInstallerActivity.this.setResult(Activity.RESULT_CANCELED);
@@ -262,7 +266,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 					String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
 					if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
 					Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
-					Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message).withOkButton(() -> finish())
+					if (isFinishing()) fallbackToSystemPackageInstaller("alternative.auto", null);
+					else Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message).withOkButton(() -> finish())
 							.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null))
 							.setOnDismissListener(d -> finish()).show();
 				} else AppInstallerActivity.this.setResult(Activity.RESULT_FIRST_USER,	// The exact same result data as InstallFailed in PackageInstaller
@@ -309,6 +314,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 						Uri.fromParts(SCHEME_PACKAGE, getPackageName(), null))).resolveActivity(pm) != null)
 					startActivities(new Intent[] { intent, uas_settings });
 				else startActivity(intent);
+			} catch (final SecurityException security_exception) {		// UID {UID} does not have permission to {uri}
+				fallbackToSystemPackageInstaller("uri_permission", security_exception);
+				return;
 			} finally {
 				StrictMode.setVmPolicy(vm_policy);
 			}

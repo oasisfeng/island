@@ -64,9 +64,10 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 
 			@Override public void onButtonEndClick(final Context context, final CardView card) {
 				dismiss(card);
-				if (app == null) {
-					IslandAppClones.cloneApp(context, IslandAppListProvider.getInstance(context).get(pkg));
-				} else if (app.isHidden()) {
+				final IslandAppInfo app_in_owner = IslandAppListProvider.getInstance(context).get(pkg);
+				if (app == null && app_in_owner != null) {
+					IslandAppClones.cloneApp(context, app_in_owner);
+				} else if (app != null && app.isHidden()) {
 					MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false));
 				} else Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE))
 						.startAppDetailsActivity(new ComponentName(pkg, ""), Users.profile, null, null);

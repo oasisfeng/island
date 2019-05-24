@@ -178,7 +178,7 @@ public class IslandAppClones {
 
 	private static void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo source) {
 		final Activity activity = Activities.findActivityFrom(context);
-		if (activity != null && ! Scopes.app(context).isMarked(mark)) {
+		if (activity != null && ! activity.isFinishing() && ! Scopes.app(context).isMarked(mark)) {
 			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
 				Scopes.app(context).markOnly(mark);
 				doCloneUserApp(context, source);
