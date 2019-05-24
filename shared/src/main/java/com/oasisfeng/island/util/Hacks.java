@@ -10,6 +10,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.AssetManager;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -125,6 +126,10 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Void, AppOpsManager, Unchecked, Unchecked, Unchecked, Integer, Integer, String, Integer>
 			AppOpsManager_setMode = Hack.into(AppOpsManager.class).method("setMode").fallbackReturning(null)
 			.withParams(int.class, int.class, String.class, int.class);
+	public static final @Nullable Hack.HackedMethod0<AssetManager, Void, Unchecked, Unchecked, Unchecked>
+			AssetManager_constructor = Hack.into(AssetManager.class).constructor().withoutParams();
+	public static final @Nullable Hack.HackedMethod1<Integer, AssetManager, Unchecked, Unchecked, Unchecked, String>
+			AssetManager_addAssetPath = Hack.into(AssetManager.class).method("addAssetPath").returning(int.class).withParam(String.class);
 
 	private static boolean isAndroidQ() { return SDK_INT > O_MR1 + 1/* P */|| (SDK_INT > O_MR1 && PREVIEW_SDK_INT > 0); }
 }

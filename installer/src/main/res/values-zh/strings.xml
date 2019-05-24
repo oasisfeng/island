@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_installer_label">应用安装器</string>
-    <string name="dialog_install_confirmation">“%s”请求安装应用。\n\n是否继续？</string>
+
+    <string name="dialog_install_confirmation">“%1$s”请求安装 %2$s\n\n是否继续？</string>
+    <string name="label_unknown_app">应用</string>
     <string name="dialog_clone_confirmation">“%s”请求克隆应用。\n\n是否继续？</string>
     <string name="dialog_install_checkbox_always_allow">始终允许此来源安装应用</string>
     <string name="dialog_install_failure_title">安装失败</string>

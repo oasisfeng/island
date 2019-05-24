@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,8 +18,11 @@ import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
+import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
@@ -35,6 +39,7 @@ import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.util.CallerAwareActivity;
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
 
@@ -95,35 +100,71 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (getIntent().getData() == null) {
-			finish();
-			return;
-		}
+		if (! prepare()) finish();
+	}
+
+	private boolean prepare() {
+		final Uri data = getIntent().getData();
+		if (data == null) return false;
 		mCallerPackage = getCallingPackage();
 		if (mCallerPackage == null) {
 			Log.w(TAG, "Caller is unknown, fallback to default package installer.");
 			fallbackToSystemPackageInstaller("unknown_caller", null);
-			return;
+			return true;
 		}
 		mCallerAppInfo = Apps.of(this).getAppInfo(mCallerPackage);	// Null if caller is not in the same user and has no launcher activity
-		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) {
-			finish();
-			return;
+		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) return false;
+
+		if (ContentResolver.SCHEME_FILE.equals(data.getScheme())) {
+			final String path = data.getPath();
+			if (path == null) return false;
+			final File file = new File(path);
+			if (! file.exists()) return false;
 		}
 
 		if (! mCallerPackage.equals(getPackageName()) && ! requireNonNull(PreferenceManager.getDefaultSharedPreferences(this)
 				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet())).contains(mCallerPackage)) {
-			final String message = getString(SCHEME_PACKAGE.equals(getIntent().getData().getScheme()) ? R.string.dialog_clone_confirmation
-					: R.string.dialog_install_confirmation, mCallerAppLabel.get());
+			final CharSequence label = parseApkLabel(data);
+			final String message = getString(SCHEME_PACKAGE.equals(data.getScheme()) ? R.string.dialog_clone_confirmation
+					: R.string.dialog_install_confirmation, mCallerAppLabel.get(),
+					label != null ? label : getString(R.string.label_unknown_app));
 			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, message);
 			final View view = View.inflate(dialog.getContext()/* For consistent styling */, R.layout.dialog_checkbox, null);
 			final CheckBox checkbox = view.findViewById(R.id.checkbox);
 			checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
 			dialog.withCancelButton().withOkButton(() -> {
 				if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
-				performInstall();
+				performInstall(data);
 			}).setOnCancelListener(d -> finish()).setView(view).setCancelable(false).show();
-		} else performInstall();		// Whitelisted caller to perform installation without confirmation
+		} else performInstall(data);		// Whitelisted caller to perform installation without confirmation
+		return true;
+	}
+
+	private @Nullable String parseApkLabel(final Uri uri) {
+		ParcelFileDescriptor fd = null;
+		try {
+			final String path;
+			if (! ContentResolver.SCHEME_FILE.equals(uri.getScheme())) try {
+				fd = getContentResolver().openFileDescriptor(uri, "r");
+				if (fd == null) return null;
+				path = "/proc/self/fd/" + fd.getFd();
+			} catch (final IOException e) {
+				Log.e(TAG, "Error opening " + uri);
+				return null;
+			} else path = uri.getPath();
+			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);	// Special path for open file descriptor
+			if (pkg_info == null) return null;
+			final ApplicationInfo app_info = pkg_info.applicationInfo;
+			final CharSequence app_label;
+			if (app_info.nonLocalizedLabel == null && Hacks.AssetManager_constructor != null && Hacks.AssetManager_addAssetPath != null) {
+				final AssetManager am = Hacks.AssetManager_constructor.invoke().statically();
+				Hacks.AssetManager_addAssetPath.invoke(path).on(am);
+				app_label = new Resources(am, null, null).getText(app_info.labelRes);
+			} else app_label = app_info.nonLocalizedLabel;
+			return app_label == null ? app_info.packageName : app_label.toString() + " (" + app_info.packageName + ")";
+		} finally {
+			IoUtils.closeQuietly(fd);
+		}
 	}
 
 	@Override protected void onDestroy() {
@@ -140,22 +181,20 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		preferences.edit().putStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, pkgs).apply();
 	}
 
-	private void performInstall() {
+	private void performInstall(final Uri uri) {
 		if (SDK_INT >= P && ! getPackageManager().canRequestPackageInstalls()) try {
 			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
 		} catch (final RuntimeException e) {
 			Analytics.$().logAndReport(TAG, "Error granting permission REQUEST_INSTALL_PACKAGES", e);
 		}
 
-		final Intent intent = getIntent();
-		final Uri uri = requireNonNull(intent.getData());
 		final Map<String, InputStream> input_streams = new LinkedHashMap<>();
 		final String base_name = "Island[" + mCallerPackage + "]";
 		try {
 			if (SCHEME_PACKAGE.equals(uri.getScheme())) {
 				final String pkg = uri.getSchemeSpecificPart();
 				ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
-				if (info == null && (info = intent.getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
+				if (info == null && (info = getIntent().getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
 					Log.e(TAG, "Cannot read app info of " + pkg);
 					finish();	// Do not fall-back to default package installer, since it will fail too.
 					return;
@@ -197,7 +236,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 		}
 
-		final boolean should_return_result = intent.getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false);
+		final boolean should_return_result = getIntent().getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false);
 		mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 			final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
 			if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
