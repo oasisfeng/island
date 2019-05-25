@@ -65,7 +65,6 @@ import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
 import java9.util.stream.StreamSupport;
 
-import static android.content.Intent.EXTRA_USER;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static java.util.Objects.requireNonNull;
@@ -365,7 +364,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private static void launchExternalAppSettings(final Context context, final IslandAppInfo app) {
-		final Intent intent = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).putExtra(IntentCompat.EXTRA_PACKAGE_NAME, app.packageName).setPackage(context.getPackageName());
+		final Intent intent = new Intent(IntentCompat.ACTION_SHOW_APP_INFO).setPackage(context.getPackageName())
+				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, app.packageName).putExtra(Intent.EXTRA_USER, app.user);
 		final ResolveInfo resolve = context.getPackageManager().resolveActivity(intent, 0);
 		if (resolve == null) return;		// Should never happen as module "installer" is always bundled with "mobile".
 		intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));
@@ -431,7 +431,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 			} else {
 				Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
-						.setData(Uri.fromParts("package", app.packageName, null)).putExtra(EXTRA_USER, app.user));
+						.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
 				if (! Users.isProfileRunning(context, app.user)) {	// App clone can actually be removed in quiet mode, without callback triggered.
 					final Activity activity = Activities.findActivityFrom(context);
 					if (activity != null) AppStateTrackingHelper.requestSyncWhenResumed(activity, app.packageName, app.user);

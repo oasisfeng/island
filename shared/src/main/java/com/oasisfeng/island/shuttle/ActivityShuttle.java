@@ -14,12 +14,20 @@ import java.util.List;
  */
 public class ActivityShuttle {
 
-	public static void forceForwardingToIsland(final PackageManager pm, final Intent intent) {
+	public static Intent forceNeverForwarding(final PackageManager pm, final Intent intent) {
 		final List<ResolveInfo> candidates = pm.queryIntentActivities(intent, 0);
 		if (candidates != null) for (final ResolveInfo candidate : candidates) {
-			if (! "android".equals(candidate.activityInfo.packageName)) continue;
-			intent.setComponent(new ComponentName(candidate.activityInfo.packageName, candidate.activityInfo.name));
-			return;
+			if ("android".equals(candidate.activityInfo.packageName)) continue;
+			return intent.setComponent(new ComponentName(candidate.activityInfo.packageName, candidate.activityInfo.name));
 		}
+		return intent;
+	}
+
+	public static ComponentName selectForwarder(final List<ResolveInfo> candidates) {
+		if (candidates != null) for (final ResolveInfo candidate : candidates) {
+			if (! "android".equals(candidate.activityInfo.packageName)) continue;
+			return new ComponentName(candidate.activityInfo.packageName, candidate.activityInfo.name);
+		}
+		return null;
 	}
 }
