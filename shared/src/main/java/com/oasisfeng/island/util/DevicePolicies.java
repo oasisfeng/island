@@ -114,7 +114,7 @@ public class DevicePolicies {
 	}
 
 	public void addUserRestrictionIfNeeded(final Context context, final String key) {
-		if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
+		if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
 		if (SDK_INT >= N) {
 			if (! mDevicePolicyManager.getUserRestrictions(sCachedComponent).containsKey(key))
 				mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
@@ -128,7 +128,7 @@ public class DevicePolicies {
 	public void clearUserRestrictionsIfNeeded(final Context context, final String... keys) {
 		Bundle restrictions = null;
 		for (final String key : keys) {
-			if (Users.isProfile() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;	// Immutable
+			if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;	// Immutable
 			if (SDK_INT >= N) {
 				if (restrictions == null) restrictions = mDevicePolicyManager.getUserRestrictions(sCachedComponent);
 				if (restrictions.containsKey(key))

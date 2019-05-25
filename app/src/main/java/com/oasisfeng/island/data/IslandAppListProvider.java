@@ -60,7 +60,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	public @Nullable IslandAppInfo get(final String pkg, final UserHandle user) {
 		if (Users.isOwner(user)) return super.get(pkg);
-		if (! Users.isProfile(user)) return null;
+		if (! Users.isProfileManagedByIsland(user)) return null;
 		return mIslandAppMap.get().get(pkg);
 	}
 

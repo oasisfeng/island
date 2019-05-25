@@ -30,7 +30,7 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class Users extends PseudoContentProvider {
 
-	public static @Nullable UserHandle profile;		// The profile in use (semi-immutable, until profile is created or destroyed)
+	public static @Nullable UserHandle profile;		// The first profile managed by Island (semi-immutable, until profile is created or destroyed)
 	public static UserHandle owner;
 
 	public static boolean hasProfile() { return profile != null; }
@@ -50,22 +50,19 @@ public abstract class Users extends PseudoContentProvider {
 
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
-		profile = null;
-		final List<UserHandle> user_and_profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
-		for (final UserHandle user_or_profile : user_and_profiles) {
-			if (isOwner(user_or_profile)) {
-				owner = user_or_profile;
-				continue;
-			}
-			profile = user_or_profile;
-			if (DevicePolicies.isProfileOwner(context, user_or_profile)) break;
-			Log.i(TAG, "Profile not managed by Island: " + toId(user_or_profile));
+		final List<UserHandle> owner_and_profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
+		final List<UserHandle> profiles_managed_by_island = new ArrayList<>(owner_and_profiles.size() - 1);
+		UserHandle first_profile_managed_by_island = null;
+		for (final UserHandle user : owner_and_profiles) {
+			if (isOwner(user)) owner = user;
+			else if (DevicePolicies.isProfileOwner(context, user)) {
+				profiles_managed_by_island.add(user);
+				if (first_profile_managed_by_island == null) first_profile_managed_by_island = user;
+				Log.i(TAG, "Profile managed by Island: " + toId(user));
+			} else Log.i(TAG, "Profile not managed by Island: " + toId(user));
 		}
-
-		final List<UserHandle> profiles = new ArrayList<>(user_and_profiles);
-		profiles.remove(owner);
-		sProfiles = profiles;
-		Log.i(TAG, "All profiles: " + profiles);
+		profile = first_profile_managed_by_island;
+		sProfilesManagedByIsland = profiles_managed_by_island;
 	}
 
 	public static boolean isProfileRunning(final Context context, final UserHandle user) {
@@ -84,8 +81,10 @@ public abstract class Users extends PseudoContentProvider {
 	public static boolean isOwner(final UserHandle user) { return toId(user) == 0; }
 	public static boolean isOwner(final int user_id) { return user_id == 0; }
 
-	public static boolean isProfile() { return sProfiles.contains(CURRENT); }
-	public static boolean isProfile(final UserHandle user) { return sProfiles.contains(user); }
+	public static boolean isProfileManagedByIsland() { return isProfileManagedByIsland(CURRENT); }
+	public static boolean isProfileManagedByIsland(final UserHandle user) {
+		return user.equals(profile)/* fast path for first profile */ || sProfilesManagedByIsland.contains(user);
+	}
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 
@@ -103,6 +102,6 @@ public abstract class Users extends PseudoContentProvider {
 	}};
 
 	private static final int PER_USER_RANGE = 100000;
-	private static List<UserHandle> sProfiles = null;	// Intentionally left null to fail early if this class is accidentally used in non-default process.
-	private static final String TAG = "Users";
+	private static List<UserHandle> sProfilesManagedByIsland = null;	// Intentionally left null to fail early if this class is accidentally used in non-default process.
+	private static final String TAG = "Island.Users";
 }

@@ -52,7 +52,7 @@ public class Permissions extends com.oasisfeng.android.content.pm.Permissions {
 		if (sp.contains("2018") || sp.contains("2017-11") || sp.contains("2017-12")) return false;	// No longer works after 2017.11 security patch. (CVE-2017-0830)
 
 		if (Users.isOwner() && ! new DevicePolicies(context).isActiveDeviceOwner()) return false;
-		if (Users.isProfile() && ! new DevicePolicies(context).isProfileOwner()) return false;
+		if (Users.isProfileManagedByIsland() && ! new DevicePolicies(context).isProfileOwner()) return false;
 		final boolean result = new DevicePolicies(context).invoke((dpm, admin) ->
 				dpm.setPermissionGrantState(admin, context.getPackageName(), permission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED));
 		if (! result) Analytics.$().event("permission_failure").withRaw("permission", permission).withRaw("SP", sp).send();

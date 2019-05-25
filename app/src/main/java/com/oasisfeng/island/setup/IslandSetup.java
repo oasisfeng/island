@@ -228,7 +228,7 @@ public class IslandSetup {
 		}
 		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
 		final List<String> exclusive_clones = provider.installedApps()
-				.filter(app -> Users.isProfile(app.user) && ! app.isSystem() && provider.isExclusive(app))
+				.filter(app -> Users.isProfileManagedByIsland(app.user) && ! app.isSystem() && provider.isExclusive(app))
 				.map(AppInfo::getLabel).collect(Collectors.toList());
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 				.setMessage(R.string.dialog_destroy_message)

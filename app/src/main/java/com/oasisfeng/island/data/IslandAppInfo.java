@@ -54,8 +54,8 @@ public class IslandAppInfo extends AppInfo {
 		return enabled && ! isHiddenSysIslandAppTreatedAsDisabled();
 	}
 
-	public boolean isHiddenSysIslandAppTreatedAsDisabled() {	// Users.isProfile() is not checked
-		return Users.isProfile(user) && isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
+	public boolean isHiddenSysIslandAppTreatedAsDisabled() {
+		return Users.isProfileManagedByIsland(user) && isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
 	}
 
 	private boolean shouldTreatHiddenSysAppAsDisabled() {

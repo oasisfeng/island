@@ -79,13 +79,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
-	private static final String EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME";		// clone of Intent.EXTRA_PACKAGE_NAME
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
-	@SuppressWarnings("WeakerAccess") public enum Filter {
+	public enum Filter {
 		// Name		Visibility			Filter
-		Island		(Users::hasProfile,	app -> Users.isProfile(app.user) && app.shouldShowAsEnabled() && app.isInstalled()),
+		Island		(Users::hasProfile,	app -> Users.isProfileManagedByIsland(app.user) && app.shouldShowAsEnabled() && app.isInstalled()),
 		Mainland	(() -> true,		app -> Users.isOwner(app.user) && (app.isSystem() || app.isInstalled())),	// Including uninstalled system app
 		;
 		boolean available() { return mVisibility.getAsBoolean(); }

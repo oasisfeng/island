@@ -39,9 +39,11 @@ public class MainActivity extends LifecycleActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (Users.isProfile()) {	// Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
-			onCreateInProfile();
-			finish();
+		if (! Users.isOwner()) {
+			if (Users.isProfileManagedByIsland()) {    // Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
+				onCreateInProfile();
+				finish();
+			} else startSetupWizard();		// Running in non-primary user or profile not managed by Island. TODO: Proper handling?
 			return;
 		}
 		if (mIsDeviceOwner = new DevicePolicies(this).isActiveDeviceOwner()) {

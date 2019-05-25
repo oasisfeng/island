@@ -29,7 +29,7 @@ public class ManualProvisioningReceiver extends BroadcastReceiver {
 				Log.d(TAG, "Profile is disabled");	// Profile is not enabled yet, that means we are currently in the managed provisioning flow
 				return;									// Nothing needs to be done here, we will receive ACTION_PROFILE_PROVISIONING_COMPLETE soon.
 			}
-			if (! new DevicePolicies(context).isProfileOwner()) {	// Current user is not profile, or we are not profile owner
+			if (! Users.isProfileManagedByIsland()) {
 				Log.d(TAG, "Not profile owner");
 				return;
 			}
