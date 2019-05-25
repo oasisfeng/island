@@ -250,8 +250,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (mSelection.getValue() == null) return;
 		final String pkg = app.packageName;
 		Analytics.$().event("action_launch").with(ITEM_ID, pkg).send();
-		if (! app.isHidden() && IslandManager.launchApp(context, pkg, app.user)) return;	// Not frozen, launch the app directly.
-		if (app.isHidden()) {    // TODO: or isBlocked()?
+		if (! app.isHidden()) {		// Not frozen, launch the app directly. TODO: If isBlocked() ?
+			if (! IslandManager.launchApp(context, pkg, app.user))
+				Toast.makeText(context, context.getString(R.string.toast_app_launch_failure, app.getLabel()), Toast.LENGTH_SHORT).show();
+		} else {
 			(Users.isOwner(app.user) ? CompletableFuture.completedFuture(IslandManager.ensureAppFreeToLaunch(context, pkg))
 					: MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppFreeToLaunch(context, pkg))).thenAccept(failure -> {
 				if (failure == null)

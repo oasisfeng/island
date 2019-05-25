@@ -128,6 +128,7 @@
     <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>
     <string name="toast_setup_mainland_root_failed">通过 ROOT 权限启用“黄帝之名”时出现了异常。</string>
     <string name="toast_enable_install_from_unknown_source">请授予安装权限以创造应用分身</string>
+    <string name="toast_app_launch_failure">未能启动“%s”</string>
 
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>

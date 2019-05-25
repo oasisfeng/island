@@ -130,6 +130,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>
     <string name="toast_setup_mainland_root_failed">Error activating God mode with root.</string>
     <string name="toast_enable_install_from_unknown_source">Please enable this setting for Island to clone apps.</string>
+    <string name="toast_app_launch_failure">Could not launch \"%s\"</string>
 
     <!-- General words -->
     <string name="open_settings">Open Settings</string>
