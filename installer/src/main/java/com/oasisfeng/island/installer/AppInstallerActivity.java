@@ -292,8 +292,11 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			final String pkg = requireNonNull(intent.getData()).getSchemeSpecificPart();
 			ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
 			if (info == null) info = intent.getParcelableExtra(InstallerExtras.EXTRA_APP_INFO);
-			if (info != null && (info.splitPublicSourceDirs == null || info.splitPublicSourceDirs.length == 0))
+			if (info != null) {
 				intent.setData(Uri.fromFile(new File(info.publicSourceDir)));
+ 				if (info.splitPublicSourceDirs != null && info.splitPublicSourceDirs.length > 0)
+					Toast.makeText(getApplicationContext(), R.string.toast_split_apk_clone_fallback_warning, Toast.LENGTH_LONG).show();
+			}
 		}
 
 		final int flags = PackageManager.MATCH_DEFAULT_ONLY | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);

@@ -20,4 +20,5 @@
 
     <string name="app_info_forwarder_title">Select a target to show information about this app</string>
     <string name="fallback_to_sys_installer">Try alternate way</string>
+    <string name="toast_split_apk_clone_fallback_warning">App with Bundles may not be installed properly in this way. Please try installing it from app store if not working.</string>
 </resources>
