@@ -79,6 +79,7 @@ public class IslandAppClones {
 				reportAndShowToastForInternalException(context, "Error cloning system app: " + pkg, throwable);
 				return null;
 			});
+			return;
 		}
 		@SuppressWarnings("UnnecessaryLocalVariable") final ApplicationInfo info = source;	// cloneUserApp() accepts ApplicationInfo, not IslandAppInfo.
 		MethodShuttle.runInProfile(context, () -> new IslandAppClones(context).performUserAppCloning(info.packageName, info, false)).thenAccept(result -> {
@@ -144,7 +145,7 @@ public class IslandAppClones {
 						return;
 					}
 				} catch (final PackageManager.NameNotFoundException e) {
-					Log.w(TAG, "Failed to clone app via root: " + pkg);
+					Log.i(TAG, "Failed to clone app via root: " + pkg);
 					if (result != null && ! result.isEmpty()) Analytics.$().logAndReport(TAG, "Error executing: " + cmd,
 							new ExecutionException("ROOT: " + cmd + ", result: " + String.join(" \\n ", result), null));
 				}

@@ -29,7 +29,6 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
-import com.oasisfeng.island.shuttle.ServiceShuttleContext;
 import com.oasisfeng.island.tip.Tip;
 
 import java.util.Collection;
@@ -39,7 +38,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
-
 import java9.util.Optional;
 
 /** The main UI - App list */
@@ -51,7 +49,6 @@ public class AppListFragment extends LifecycleFragment {
 		setRetainInstance(true);	// To keep view-model (by keeping the view-model provider)
 		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
-		mServiceShuttleContext = new ServiceShuttleContext(activity);
 		final ViewModelProvider provider = ViewModelProviders.of(this);
 		mViewModel = provider.get(AppListViewModel.class);
 		mViewModel.mFeatured = mFeaturedViewModel = provider.get(FeaturedListViewModel.class);
@@ -188,7 +185,6 @@ public class AppListFragment extends LifecycleFragment {
 	private AppListViewModel mViewModel;
 	private FeaturedListViewModel mFeaturedViewModel;
 	private @Nullable UserGuide mUserGuide;
-	private ServiceShuttleContext mServiceShuttleContext;
 	private ServiceConnection mIslandManagerConnection;
 
 	private static final String TAG = "Island.AppsUI";

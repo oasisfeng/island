@@ -113,7 +113,7 @@ public class MethodShuttle {
 					final Object instance = constructor.newInstance(args);
 					if (instance instanceof GeneralVoidMethod)
 						((GeneralVoidMethod) instance).invoke();
-					else if (instance instanceof GeneralMethod) //noinspection unchecked
+					else if (instance instanceof GeneralMethod)
 						invocation.result = ((GeneralMethod) instance).invoke();
 					else throw new IllegalArgumentException("Internal error: method mismatch");
 				} catch (Throwable t) {
