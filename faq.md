@@ -1,21 +1,25 @@
 Frequently Asked Questions
 ==========================
 
-- Error in setup: **"Oops! Couldn't set up your work profile. Contact your IT department or try again later."**
+Error in setup: "Oops! Couldn't set up your work profile. Contact your IT department or try again later."
+---
 
   If your device has "Dual Apps", "App Twin" or similar feature, it may be implemented by the same "Android for Work" infrastructure as Island. This leads to a conflict, thus you can not use both Island and these features.
 
   Otherwise, your device is probably incompatible with Android for Work. At present, you can only [setup Island manually](/setup.md).
 
-- Error in setup: **"Custom OS installed" (Samsung-specific)**
+Error in setup: "Custom OS installed" (Samsung-specific)
+---
 
-  Samsung enforces extra limitation beyond stock Android, forbidding work profile to be created with custom recovery installed.
-You can either temporarily revert back to stock recovery and flash custom recovery again after setup, or [setup Island manually](/setup.md).
+  Samsung enforces extra limitation beyond stock Android, forbidding work profile to be created with custom recovery installed. You can either temporarily revert back to stock recovery and flash custom recovery again after setup, or [setup Island manually](/setup.md).
 
-- Failed to clone app with error message:  
+Failed to clone app with error message:  
+---
+
 `"Island cannot clone apps without a proper built-in app market on your device (preferable Google Play Store)"`
 
   This is a special requirement only on Android 5.0 devices. In most cases, your device will ship with an app store (e.g. Google Play Store) out of box.
+
   If you received this error message, please consider upgrading your device to Android 5.1+, or switching to another ROM variant with app store built-in.
 
   **Solution for advanced user**: execute the following ADB command on USB-connected computer:
@@ -24,7 +28,8 @@ You can either temporarily revert back to stock recovery and flash custom recove
 
   Replace "10" above with the actual user id of Island space on your device. (use `adb -d shell pm list users` to query)
 
-- Why is my (Google) cloud backup disabled in God mode?
+Why is my (Google) cloud backup disabled in God mode?
+---
 
   Due to immature internal restrictions in Android system, backup service may be disabled on older version of Android in God mode. Unfortunately, this cannot be changed unless upgrading your system to Android 8+.
 
