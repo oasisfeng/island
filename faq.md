@@ -1,6 +1,16 @@
 Frequently Asked Questions
 ==========================
 
+Is Island compatible with my device?
+---
+
+If you are facing setup failure, malfunction with apps in Island or any other issues and wondering whether Island is compatible with your device / ROM, please try [TestDPC](https://play.google.com/store/apps/details?id=com.afwsamples.testdpc)，the official "Android for Work" test tool from Google.
+
+If TestDPC also does not work properly on your device, there's a high chance that your device / ROM is incompatible with "Android for Work", please contact your device vendor or ROM maintainer, mentioning the TestDPC not working issue.
+
+If TestDPC works flawlessly but Island does not, please [file an issue](https://github.com/oasisfeng/island/issues) with logcat attached for us to further analyze. If you are not familiar with logcat, please "Take bug report" in system "Settings - (System) - Developer options" and share the bug-report privately.
+
+
 Error in setup: "Oops! Couldn't set up your work profile. Contact your IT department or try again later."
 ---
 
