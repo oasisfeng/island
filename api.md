@@ -1,12 +1,12 @@
 Delegation API
-----------------
+================
 
 Island provide an API mechanism similar to the "Delegated Scopes" introduced in Android 8, but backward-compatible back to 5.x.
 
 Authorization
-===============
+---------------
 
-Delegation(s) must be declared in `AndroidManifest.xml` as meta-data: (separated by comma)
+First of all, required delegation(s) must be declared in `AndroidManifest.xml` as meta-data: (separated by comma)
 
 `<meta-data android:name="com.oasisfeng.island.delegation" android:value="delegation-package-access,-island-delegation-app-ops" />`
 
@@ -29,7 +29,7 @@ Before invoking any of the privileged APIs, you can check and request authorizat
 ```
 
 Invocation
-============
+------------
 
 If authorized, you can bind to this service of Island to get the internal binder of delegated system service.
 
