@@ -6,6 +6,10 @@ Island provide an API mechanism similar to the "Delegated Scopes" introduced in 
 Authorization
 ===============
 
+Delegation(s) must be declared in `AndroidManifest.xml` as meta-data: (separated by comma)
+
+`<meta-data android:name="com.oasisfeng.island.delegation" android:value="delegation-package-access,-island-delegation-app-ops" />`
+
 Before invoking any of the privileged APIs, you can check and request authorization with `RestrictionsManager`:
 
 ```
