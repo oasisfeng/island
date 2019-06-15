@@ -1,10 +1,15 @@
 package com.oasisfeng.island;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.util.SparseArray;
+
+import com.oasisfeng.island.util.DevicePolicies;
 
 import java.io.FileDescriptor;
 import java.util.ArrayList;
@@ -17,7 +22,9 @@ import androidx.annotation.Nullable;
  */
 public class RestrictedBinderProxy extends Binder {
 
-	void seal() { mSealed = true; }
+	public void seal() { mSealed = true; }
+	protected boolean isSealed() { return mSealed; }
+	public IBinder getDelegate() { return mDelegate; }
 
 	@Override protected boolean onTransact(final int code, @NonNull final Parcel data, @Nullable final Parcel reply, final int flags) throws RemoteException {
 		final int index = code - FIRST_CALL_TRANSACTION;
@@ -28,16 +35,35 @@ public class RestrictedBinderProxy extends Binder {
 			return true;
 		} else {
 			if (index >= mAllowedCode.size() || mAllowedCode.get(index) != Boolean.TRUE) throw new SecurityException("Unauthorized");
+			if (! checkCallingDelegation()) throw new SecurityException("Require delegation authorization: " + mRequiredDelegation);
 			return mDelegate.transact(code, data, reply, flags);
 		}
 	}
 
-	public RestrictedBinderProxy(final IInterface delegate) {
-		mDelegate = delegate.asBinder();
+	private boolean checkCallingDelegation() {
+		if (mRequiredDelegation == null) return true;
+		final int uid = Binder.getCallingUid();
+		Boolean allowed = mUidVerificationCache.get(uid);
+		if (allowed != null) return allowed;
+
+		final String[] pkgs = mContext.getPackageManager().getPackagesForUid(uid);
+		if (pkgs == null) return false;		// Should hardly happen
+
+		allowed = false;
+		for (final String pkg : pkgs) allowed = mDelegationManager.isDelegationAuthorized(pkg, Binder.getCallingUserHandle(), mRequiredDelegation);
+		mUidVerificationCache.put(uid, allowed);
+		return allowed;
+	}
+
+	public RestrictedBinderProxy(final Context context, final @Nullable String delegation, final IBinder delegate) {
+		mContext = context;
+		mDelegate = delegate;
+		mRequiredDelegation = delegation;
+		mDelegationManager = new DelegationManager(new DevicePolicies(context));
 		try {
 			attachInterface(null, mDelegate.getInterfaceDescriptor());
 		} catch (final RemoteException e) {
-			e.printStackTrace();
+			throw new IllegalArgumentException("Invalid delegate: " + delegate, e);
 		}
 	}
 
@@ -55,7 +81,11 @@ public class RestrictedBinderProxy extends Binder {
 	@Override public boolean isBinderAlive() { return mDelegate.isBinderAlive(); }
 	@Override public @Nullable IInterface queryLocalInterface(@NonNull final String descriptor) { return mDelegate.queryLocalInterface(descriptor); }
 
+	private final Context mContext;
 	private final IBinder mDelegate;
+	private final String mRequiredDelegation;
+	private final DelegationManager mDelegationManager;
 	private boolean mSealed;
 	private final ArrayList<Boolean> mAllowedCode = new ArrayList<>();
+	@SuppressLint("UseSparseArrays") private final SparseArray<Boolean> mUidVerificationCache = new SparseArray<>();
 }

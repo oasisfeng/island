@@ -2,13 +2,19 @@
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <service android:name="com.oasisfeng.island.ContainerService" android:process=":isolated" android:isolatedProcess="true" />
-
-        <service android:name="com.oasisfeng.island.ContainerService$Launcher" android:enabled="false"> <!-- Disabled during internal testing -->
+        <service android:name="com.oasisfeng.island.SystemServiceBridge" android:exported="true">
             <intent-filter>
-                <action android:name="com.oasisfeng.island.action.BIND_DELEGATED_SERVICE" />
+                <action android:name="com.oasisfeng.island.api.action.BIND_SYSTEM_SERVICE" />
+                <data android:scheme="service" />
             </intent-filter>
         </service>
+
+        <provider android:name="com.oasisfeng.island.DelegatedScopeAuthorization$Initializer" android:authorities="com.oasisfeng.island.open.initializer" android:exported="false" />
+        <receiver android:name="com.oasisfeng.island.DelegatedScopeAuthorization" android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <intent-filter>
+                <action android:name="android.content.action.REQUEST_PERMISSION" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

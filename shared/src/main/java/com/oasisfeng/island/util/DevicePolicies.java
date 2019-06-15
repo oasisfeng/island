@@ -191,6 +191,10 @@ public class DevicePolicies {
 		execute(enabled ? DevicePolicyManager::addUserRestriction : DevicePolicyManager::clearUserRestriction, restriction);
 	}
 
+	public boolean isProfileOrDeviceOwnerOnCallingUser() {
+		return Users.isOwner() ? isActiveDeviceOwner() : isProfileOwner();
+	}
+
 	public DevicePolicies(final Context context) {
 		mAppContext = context.getApplicationContext();
 		mDevicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);

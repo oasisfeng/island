@@ -7,8 +7,10 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Process;
 import android.provider.Settings;
 
+import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.shared.R;
 
 import androidx.annotation.Nullable;
@@ -17,11 +19,15 @@ import androidx.annotation.StringRes;
 import androidx.core.app.NotificationManagerCompat;
 import java9.util.function.Consumer;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_MIN;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
+import static android.provider.Settings.EXTRA_APP_PACKAGE;
+import static com.oasisfeng.island.appops.AppOpsCompat.OP_POST_NOTIFICATION;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -31,11 +37,13 @@ import static java.util.Objects.requireNonNull;
  */
 public enum NotificationIds {
 
+	// New ID must be added to the end, to preserve the ordinal
 	Provisioning(Channel.OngoingTask),
 	UninstallHelper(Channel.Important),
 	AppInstallation(Channel.AppInstall),
 	IslandWatcher(Channel.Watcher),
 	IslandAppWatcher(Channel.AppWatcher),
+	Authorization(Channel.Important),
 	Debug(Channel.Debug, 999);
 
 	public void post(final Context context, final Notification.Builder notification) {
@@ -54,11 +62,23 @@ public enum NotificationIds {
 		NotificationManagerCompat.from(context).cancel(tag, id());
 	}
 
-	@RequiresApi(O) public boolean isBlocked(final Context context) {
-		final NotificationManager nm = requireNonNull((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE));
-		if (! nm.areNotificationsEnabled()) return true;
+	public boolean isBlocked(final Context context) {
+		final NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+		if (nm == null || isBlockedByApp(context, nm)) return true;
+		if (SDK_INT < O) return false;
 		final NotificationChannel actual_channel = nm.getNotificationChannel(channel.name);
 		return actual_channel != null && actual_channel.getImportance() == NotificationManager.IMPORTANCE_NONE;
+	}
+
+	public static boolean isBlockedByApp(final Context context) {
+		final NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+		return nm == null || isBlockedByApp(context, nm);
+	}
+
+	private static boolean isBlockedByApp(final Context context, final NotificationManager nm) {
+		if (SDK_INT < N)	// Treat as not being blocked in case of ROM incompatibility
+			return new AppOpsCompat(context).checkOpNoThrow(OP_POST_NOTIFICATION, Process.myUid(), context.getPackageName()) > MODE_ALLOWED;
+		return ! nm.areNotificationsEnabled();
 	}
 
 	public void startForeground(final Service service, final Notification.Builder notification) {
@@ -72,8 +92,14 @@ public enum NotificationIds {
 
 	private int id() { return id != 0 ? id : ordinal() + 1; }		// 0 is reserved
 
+	public Intent buildUnblockRequestIntent(final Context context) {
+		if (SDK_INT < O || isBlockedByApp(context))
+			return new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(EXTRA_APP_PACKAGE, context.getPackageName());
+		return buildChannelSettingsIntent(context);
+	}
+
 	@RequiresApi(O) public Intent buildChannelSettingsIntent(final Context context) {
-		return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName())
+		return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(EXTRA_APP_PACKAGE, context.getPackageName())
 				.putExtra(Settings.EXTRA_CHANNEL_ID, channel.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 	}
 
