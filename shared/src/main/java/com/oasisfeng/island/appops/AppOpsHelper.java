@@ -1,12 +1,11 @@
 package com.oasisfeng.island.appops;
 
-import android.app.AppOpsManager$OpEntry;
-import android.app.AppOpsManager$PackageOps;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.ProfileUser;
 
 import java.util.Arrays;
@@ -29,7 +28,7 @@ import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 	/** @return whether anything is saved. False will be returned for failure */
 	@ProfileUser @RequiresPermission(GET_APP_OPS_STATS)
 	public static boolean saveAppOps(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
-		final List<AppOpsManager$PackageOps> list = new AppOpsCompat(context)
+		final List<Hacks.AppOpsManager.PackageOps> list = new AppOpsCompat(context)
 				.getOpsForPackage(context.getPackageManager().getPackageUid(pkg, MATCH_DISABLED_COMPONENTS), pkg, null);
 		final SharedPreferences.Editor store = getDeviceProtectedSharedPreferences(context).edit();
 		final String flat_pkg_ops = list == null || list.isEmpty() ? null : list.stream().filter(ops -> pkg.equals(ops.getPackageName()))
@@ -41,7 +40,7 @@ import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 		return true;
 	}
 
-	private static boolean isDefaultMode(final AppOpsManager$OpEntry entry) {
+	private static boolean isDefaultMode(final Hacks.AppOpsManager.OpEntry entry) {
 		return entry.getMode() == AppOpsCompat.opToDefaultMode(entry.getOp());
 	}
 

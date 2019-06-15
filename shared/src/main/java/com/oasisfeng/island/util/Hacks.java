@@ -1,6 +1,5 @@
 package com.oasisfeng.island.util;
 
-import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -73,8 +72,8 @@ public class Hacks {
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
-	public static final Hack.HackedTargetField<int[]>
-			/* Dark grey */ AppOpsManager_sOpDefaultMode = Hack.into(AppOpsManager.class).staticField("sOpDefaultMode").fallbackTo(null);
+//	public static final Hack.HackedTargetField<int[]>
+//			/* Dark grey */ AppOpsManager_sOpDefaultMode = Hack.into(AppOpsManager.class).staticField("sOpDefaultMode").fallbackTo(null);
 
 	public static final Hack.HackedMethod2<Boolean, Void, Unchecked, Unchecked, Unchecked, String, Boolean>
 			SystemProperties_getBoolean = Hack.into("android.os.SystemProperties").staticMethod("getBoolean")
@@ -120,16 +119,34 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked>
 			Environment_getDataSystemDirectory = Hack.into(Environment.class)
 			.staticMethod(SDK_INT < N ? "getSystemSecureDirectory" : "getDataSystemDirectory").returning(File.class).withoutParams();
-	public static final Hack.HackedMethod3<List, AppOpsManager, Unchecked, Unchecked, Unchecked, Integer, String, int[]>
-			AppOpsManager_getOpsForPackage = Hack.into(AppOpsManager.class).method("getOpsForPackage")
-			.returning(List/*<PackageOps>*/.class).fallbackReturning(null).withParams(int.class, String.class, int[].class);
-	public static final Hack.HackedMethod4<Void, AppOpsManager, Unchecked, Unchecked, Unchecked, Integer, Integer, String, Integer>
-			AppOpsManager_setMode = Hack.into(AppOpsManager.class).method("setMode").fallbackReturning(null)
-			.withParams(int.class, int.class, String.class, int.class);
 	public static final @Nullable Hack.HackedMethod0<AssetManager, Void, Unchecked, Unchecked, Unchecked>
 			AssetManager_constructor = Hack.into(AssetManager.class).constructor().withoutParams();
 	public static final @Nullable Hack.HackedMethod1<Integer, AssetManager, Unchecked, Unchecked, Unchecked, String>
 			AssetManager_addAssetPath = Hack.into(AssetManager.class).method("addAssetPath").returning(int.class).withParam(String.class);
+
+	public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
+
+		interface PackageOps extends Hack.Mirror {
+			String getPackageName();
+			int getUid();
+			List<OpEntry> getOps();
+		}
+
+		interface OpEntry extends Hack.Mirror {
+			int getOp();
+			int getMode();
+		}
+
+		default int checkOpNoThrow(final int op, final int uid, final String pkg) { return -1; }
+		List<PackageOps> getOpsForPackage(int uid, String pkg, int[] ops);
+		List<PackageOps> getPackagesForOps(int[] ops);
+		void setMode(int code, int uid, String packageName, int mode);
+
+		/** Retrieve the default mode for the operation. */
+		static int opToDefaultMode(final int op) { return Hack.mirrorStaticMethod("opToDefaultMode", -1, op); }
+	}
+
+	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
 
 	private static boolean isAndroidQ() { return SDK_INT > O_MR1 + 1/* P */|| (SDK_INT > O_MR1 && PREVIEW_SDK_INT > 0); }
 }

@@ -1,10 +1,9 @@
 package com.oasisfeng.island.appops;
 
 import android.app.AppOpsManager;
-import android.app.AppOpsManager$PackageOps;
 import android.content.Context;
-import android.util.Log;
 
+import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.util.Hacks;
 
 import java.util.List;
@@ -21,22 +20,35 @@ import static java.util.Objects.requireNonNull;
  */
 public class AppOpsCompat {
 
+	public static final int OP_POST_NOTIFICATION = 11;
 	public static final int OP_REQUEST_INSTALL_PACKAGES = 66;
 	public static final String GET_APP_OPS_STATS = "android.permission.GET_APP_OPS_STATS";
 
-	@RequiresPermission(GET_APP_OPS_STATS) @SuppressWarnings("unchecked")
-	@Nullable List<AppOpsManager$PackageOps> getOpsForPackage(final int uid, final String pkg, final int[] ops) {
-		if (Hacks.AppOpsManager_getOpsForPackage.isAbsent()) return null;
-		return Hacks.AppOpsManager_getOpsForPackage.invoke(uid, pkg, ops).on(mAppOpsManager);
+	/**
+	 * Retrieve current operation state for one application.
+	 *
+	 * @param uid The uid of the application of interest.
+	 * @param pkg The name of the application of interest.
+	 * @param ops The set of operations you are interested in, or null if you want all of them.
+	 */
+	@RequiresPermission(GET_APP_OPS_STATS)
+	@Nullable List<Hacks.AppOpsManager.PackageOps> getOpsForPackage(final int uid, final String pkg, final @Nullable int[] ops) {
+		return Hack.into(mAppOpsManager).with(Hacks.AppOpsManager.class).getOpsForPackage(uid, pkg, ops);
 	}
 
 	public void setMode(final int code, final int uid, final String pkg, final int mode) {
-		if (Hacks.AppOpsManager_setMode.isAbsent()) return;
-		Hacks.AppOpsManager_setMode.invoke(code, uid, pkg, mode).on(mAppOpsManager);
+		Hack.into(mAppOpsManager).with(Hacks.AppOpsManager.class).setMode(code, uid, pkg, mode);
 	}
 
-	static int opToDefaultMode(final int op) {
-		return sOpDefaultMode[op];
+	/** @return -1 for incompatibility */
+	public int checkOpNoThrow(final int op, final int uid, final String pkg) {
+		return Hack.into(mAppOpsManager).with(Hacks.AppOpsManager.class).checkOpNoThrow(op, uid, pkg);
+	}
+
+	public static int opToDefaultMode(final int op) {
+		final int default_mode = Hacks.AppOpsManager.opToDefaultMode(op);
+		if (default_mode >= 0) return default_mode;
+		return sOpDefaultMode[op];	// Fallback local map
 	}
 
 	public AppOpsCompat(final Context context) {
@@ -47,17 +59,8 @@ public class AppOpsCompat {
 
 	private static final String TAG = "Island.AOC";
 
-	static {
-		try {
-			final int[] value = Hacks.AppOpsManager_sOpDefaultMode.get();
-			if (value != null) sOpDefaultMode = value;
-		} catch (final RuntimeException e) {
-			Log.e(TAG, "Error correcting sOpDefaultMode", e);
-		}
-	}
-
 	/** (Mirrored from {@link AppOpsManager}) This specifies the default mode for each operation. */
-	private static int[] sOpDefaultMode = new int[] {
+	private static final int[] sOpDefaultMode = new int[] {
 			AppOpsManager.MODE_ALLOWED,
 			AppOpsManager.MODE_ALLOWED,
 			AppOpsManager.MODE_ALLOWED,
