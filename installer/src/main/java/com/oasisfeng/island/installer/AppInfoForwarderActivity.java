@@ -60,7 +60,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 				return app_detail;		// Simulate EXTRA_AUTO_LAUNCH_SINGLE_CHOICE on Android pre-O.
 		} else app_detail = null;
 
-		final Intent chooser = Intent.createChooser(target, getString(R.string.app_info_forwarder_title)).addFlags(FLAG_ACTIVITY_FORWARD_RESULT);
+		final Intent chooser = Intent.createChooser(target, getString(R.string.app_info_forwarder_title, pkg)).addFlags(FLAG_ACTIVITY_FORWARD_RESULT);
 		if (SDK_INT >= O) chooser.putExtra(IntentCompat.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE, ! caller_is_settings);
 		if (app_detail != null && ! caller_is_settings) {
 			if (user.equals(Users.profile)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
