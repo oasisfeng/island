@@ -1,7 +1,9 @@
 package com.oasisfeng.island.provisioning;
 
+import android.app.Activity;
 import android.app.IntentService;
 import android.app.Notification;
+import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -15,6 +17,7 @@ import android.content.pm.CrossProfileApps;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Bundle;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract.Contacts;
@@ -24,6 +27,8 @@ import android.widget.Toast;
 
 import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.content.IntentFilters;
+import com.oasisfeng.android.ui.Dialogs;
+import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
@@ -54,10 +59,12 @@ import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.Intent.ACTION_INSTALL_PACKAGE;
+import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.ACTION_SEND;
 import static android.content.Intent.ACTION_SEND_MULTIPLE;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_BROWSABLE;
+import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
@@ -90,6 +97,7 @@ public class IslandProvisioning extends IntentService {
 	private static final int POST_PROVISION_REV = 9;
 	private static final String AFFILIATION_ID = "com.oasisfeng.island";
 	private static final String CATEGORY_MAIN_ACTIVITY = "com.oasisfeng.island.category.MAIN_ACTIVITY";
+	private static final String SCHEME_PACKAGE = "package";
 
 	@OwnerUser @ProfileUser public static void start(final Context context, final @Nullable String action) {
 		final Intent intent = new Intent(action).setComponent(new ComponentName(context, IslandProvisioning.class));
@@ -106,25 +114,29 @@ public class IslandProvisioning extends IntentService {
 
 	@OwnerUser @ProfileUser @WorkerThread @Override protected void onHandleIntent(@Nullable final Intent intent) {
 		if (intent == null) return;		// Should never happen since we already setIntentRedelivery(true).
+		proceed(this, intent);
+	}
+
+	@WorkerThread private static void proceed(final Context context, final Intent intent) {
 		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE.equals(intent.getAction())) {
 			Log.d(TAG, "Re-provisioning Mainland.");
 			if (! Users.isOwner()) throw new IllegalStateException("Not running in owner user");
-			startDeviceOwnerPostProvisioning(this);
-			Toasts.show(this, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
+			startDeviceOwnerPostProvisioning(context);
+			Toasts.show(context, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
 		}
 		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE.equals(intent.getAction())) {		// Borrow this activity intent for re-provision.
 			Log.d(TAG, "Re-provisioning Island.");
-			reprovisionManagedProfile(this);
-			Toasts.show(this, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
+			reprovisionManagedProfile(context);
+			Toasts.show(context, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
 		}
 		// Grant essential permissions early, since they may be required in the following provision procedure.
-		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(this);
+		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(context);
 
 		if (Users.isOwner() && DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
-			startDeviceOwnerPostProvisioning(this);
+			startDeviceOwnerPostProvisioning(context);
 			return;
 		}
 
@@ -132,53 +144,53 @@ public class IslandProvisioning extends IntentService {
 		Analytics.$().setProperty(Analytics.Property.IslandSetup, is_manual_setup ? "manual" : "managed");
 		Log.d(TAG, "Provisioning profile (" + Users.toId(android.os.Process.myUserHandle()) + (is_manual_setup ? ", manual) " : ")"));
 
-		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, 1).putInt(PREF_KEY_PROFILE_PROVISION_TYPE, is_manual_setup ? 1 : 0).apply();
-		final DevicePolicies policies = new DevicePolicies(this);
+		final DevicePolicies policies = new DevicePolicies(context);
 		if (is_manual_setup) {		// Do the similar job of ManagedProvisioning here.
 			Log.d(TAG, "Manual provisioning");
 			Analytics.$().event("profile_post_provision_manual_start").send();
-			ProfileOwnerManualProvisioning.start(this, policies);	// Mimic the stock managed profile provision
+			ProfileOwnerManualProvisioning.start(context, policies);	// Mimic the stock managed profile provision
 		} else Analytics.$().event("profile_post_provision_start").send();
 
 		Log.d(TAG, "Start post-provisioning.");
 		try {
-			startProfileOwnerPostProvisioning(this, policies);
+			startProfileOwnerPostProvisioning(context, policies);
 		} catch (final Exception e) {
 			Analytics.$().event("profile_post_provision_error").with(Analytics.Param.ITEM_NAME, e.toString()).send();
 			Analytics.$().report(e);
 		}
 
 		// Prepare critical apps
-		enableCriticalAppsIfNeeded(this, policies);
+		enableCriticalAppsIfNeeded(context, policies);
 		// Disable unnecessarily enabled apps
-		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile();		// Users.isProfile() does not work before setProfileEnabled().
+		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile(context);	// Users.isProfile() does not work before setProfileEnabled().
 
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
-			policies.execute(DevicePolicyManager::setProfileName, getString(R.string.profile_name));
+			policies.execute(DevicePolicyManager::setProfileName, context.getString(R.string.profile_name));
 			Log.d(TAG, "Enable profile now.");
 			policies.execute(DevicePolicyManager::setProfileEnabled);
 		}
 		Analytics.$().event("profile_post_provision_done").send();
 
-		disableLauncherActivity(this);
+		disableLauncherActivity(context);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
-		if (! launchMainActivityInOwnerUser(this)) {
+		if (! launchMainActivityInOwnerUser(context)) {
 			Analytics.$().event("error_launch_main_ui").send();
 			Log.e(TAG, "Failed to launch main activity in owner user.");
-			Toasts.show(this, R.string.toast_setup_complete, Toast.LENGTH_LONG);
+			Toasts.show(context, R.string.toast_setup_complete, Toast.LENGTH_LONG);
 		}
 	}
 
-	@ProfileUser private void hideUnnecessaryAppsInManagedProfile() {
-		final List<ResolveInfo> resolves = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),
+	@ProfileUser private static void hideUnnecessaryAppsInManagedProfile(final Context context) {
+		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),
 				SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);		// Do not use resolveActivity(), which will return ResolverActivity.
 		if (resolves != null) for (final ResolveInfo resolve : resolves) {
 			final String pkg = resolve.activityInfo.packageName;
 			if ((resolve.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || "android".equals(pkg)) continue;
-			if (getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), 0) != null)
-				new DevicePolicies(this).setApplicationHiddenWithoutAppOpsSaver(pkg, true);
+			if (context.getPackageManager().resolveActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg), 0) != null)
+				new DevicePolicies(context).setApplicationHiddenWithoutAppOpsSaver(pkg, true);
 		}
 	}
 
@@ -206,7 +218,7 @@ public class IslandProvisioning extends IntentService {
 
 	@ProfileUser private static boolean launchMainActivityInOwnerUser(final Context context) {
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		if (SDK_INT >= P) try {
+		if (SDK_INT == P) try {		// Not working on Android Q beta 4. TODO: verify it on Android Q final version
 			context.getSystemService(CrossProfileApps.class).startMainActivity(activity, Users.owner);
 			return true;
 		} catch (final RuntimeException e) {
@@ -221,9 +233,9 @@ public class IslandProvisioning extends IntentService {
 		}
 		// Since Android O, activities in owner user is invisible to managed profile, use special forward rule to launch it in owner user.
 		new DevicePolicies(context).execute(DevicePolicyManager::addCrossProfileIntentFilter,
-				IntentFilters.forAction(Intent.ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
+				IntentFilters.forAction(ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
 		try {
-			context.startActivity(new Intent(Intent.ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			context.startActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			return true;
 		} catch (final ActivityNotFoundException e) {
 			return false;
@@ -314,7 +326,7 @@ public class IslandProvisioning extends IntentService {
 
 		// Prepare AppLaunchShortcut
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")
-				.withCategories(Intent.CATEGORY_DEFAULT, Intent.CATEGORY_LAUNCHER), FLAG_MANAGED_CAN_ACCESS_PARENT);
+				.withCategories(Intent.CATEGORY_DEFAULT, CATEGORY_LAUNCHER), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare ServiceShuttle
 		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
@@ -366,6 +378,19 @@ public class IslandProvisioning extends IntentService {
 		return SDK_INT < O ? builder : builder.setBadgeIconType(BADGE_ICON_SMALL).setColorized(true);
 	});
 
+	/** Receives {@link DevicePolicyManager#ACTION_PROVISIONING_SUCCESSFUL} in managed profile */
+	public static class CompletionActivity extends Activity {
+
+		@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+			if (Users.isProfileManagedByIsland()) {		// This is true only after DevicePolicyManager.setProfileEnabled().
+				Log.w(TAG, getClass().getSimpleName() + " should not be started after provisioning.");
+				return;
+			}
+			Dialogs.buildProgress(this, R.string.notification_provisioning_island_title).indeterminate().nonCancelable().show();
+			SafeAsyncTask.execute(this, a -> proceed(a, new Intent(DeviceAdminReceiver.ACTION_PROFILE_PROVISIONING_COMPLETE)), Activity::finish);
+		}
+	}
+
 	private static final String TAG = "Island.Provision";
-	public static final String SCHEME_PACKAGE = "package";
 }
