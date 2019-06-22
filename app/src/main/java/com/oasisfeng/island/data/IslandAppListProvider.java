@@ -19,7 +19,6 @@ import com.oasisfeng.island.provisioning.CriticalAppsManager;
 import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.shuttle.MethodShuttle;
-import com.oasisfeng.island.shuttle.ServiceShuttleContext;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
@@ -122,7 +121,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	private void refresh(final Map<String, IslandAppInfo> output_apps) {
 		if (Users.profile != null) {		// Collect Island-specific apps
-			if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && (SDK_INT >= O || Hacks.LauncherApps_getApplicationInfo != null)) {
+			if (SDK_INT >= N && (SDK_INT >= O || Hacks.LauncherApps_getApplicationInfo != null)) {
 				super.installedApps().map(app -> getApplicationInfo(app.packageName, Users.profile))
 						.filter(info -> info != null && (info.flags & FLAG_INSTALLED) != 0)
 						.forEach(info -> output_apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
@@ -157,7 +156,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		final UserHandle profile = Users.profile;
 		if (profile == null) return;
 		final Context context = context();
-		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && Permissions.has(context, Permissions.INTERACT_ACROSS_USERS)) try {
+		if (Permissions.has(context, Permissions.INTERACT_ACROSS_USERS)) try {
 			final ApplicationInfo info = mProfilePackageManager.get().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
 			callback.accept(nullIfNotInstalled(info));
 			return;
@@ -167,7 +166,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		} catch (final SecurityException ignored) {}	// Fall-through. This should hardly happen as permission is checked.
 
 		final List<LauncherActivityInfo> activities;
-		if (! ServiceShuttleContext.ALWAYS_USE_SHUTTLE && SDK_INT >= N && (SDK_INT >= O || Hacks.LauncherApps_getApplicationInfo != null)) {
+		if (SDK_INT >= N && (SDK_INT >= O || Hacks.LauncherApps_getApplicationInfo != null)) {
 			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
 			final ApplicationInfo info = getApplicationInfo(pkg, Users.profile);
 			callback.accept(nullIfNotInstalled(info));

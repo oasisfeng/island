@@ -21,16 +21,16 @@ import java.util.WeakHashMap;
  *
  * Created by Oasis on 2017/2/16.
  */
-public class ServiceShuttleContext extends ContextWrapper {
+class ServiceShuttleContext extends ContextWrapper {
 
-	public static final boolean ALWAYS_USE_SHUTTLE = Boolean.FALSE;		// For test purpose
+	private static final boolean ALWAYS_USE_ACTIVITY_SHUTTLE = Boolean.FALSE;		// For test purpose
 
 	public ServiceShuttleContext(final Context base) { super(base); }
 
 	@Override public boolean bindService(final Intent service, final ServiceConnection connection, final int flags) {
 		final UserHandle profile = Users.profile;
 		if (profile == null) return false;
-		if (! ALWAYS_USE_SHUTTLE && Permissions.ensure(this, Permissions.INTERACT_ACROSS_USERS)) try {
+		if (! ALWAYS_USE_ACTIVITY_SHUTTLE && Permissions.ensure(this, Permissions.INTERACT_ACROSS_USERS)) try {
 			if (Hacks.Context_bindServiceAsUser.invoke(service, connection, flags, profile).on(getBaseContext())) {
 				Log.d(TAG, "Connecting to service in profile: " + service);
 				return true;
@@ -57,7 +57,7 @@ public class ServiceShuttleContext extends ContextWrapper {
 
 	@Override public void unbindService(final ServiceConnection connection) {
 		if (Users.profile == null) return;
-		if (! ALWAYS_USE_SHUTTLE && Permissions.has(this, Permissions.INTERACT_ACROSS_USERS)) {
+		if (! ALWAYS_USE_ACTIVITY_SHUTTLE && Permissions.has(this, Permissions.INTERACT_ACROSS_USERS)) {
 			getBaseContext().unbindService(connection);
 			return;
 		}
