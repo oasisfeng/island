@@ -1,5 +1,5 @@
 Setup Guide
-===========
+=============
 
 On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may got “incompatible with your device” message on Google Play Store, or be notified during the setup with error message “Sorry, your device (or ROM) is incompatible with Island”, or other failures. In these cases, Island could probably still work on your device if setup manually.
 
@@ -7,7 +7,8 @@ If you are prompted to encrypt your device during the setup, it means your devic
 
 
 Preparation
------------
+-------------
+
 First of all, you need to connect your Android device to a computer with USB cable, and the official [ADB tool](https://developer.android.com/studio/releases/platform-tools.html) provided by Google.
 
 To check whether the USB-connected Android device is properly recognized by your computer, type the following command in the shell (or Command Prompt on Windows):
@@ -24,7 +25,8 @@ For Windows PC, [this official guide and driver list for common OEM](https://dev
 - In system "Settings - Permissions - Autostart", enable "Island". (grant auto-start permission)
 
 Manual setup for Island
------------------------
+-------------------------
+
 Type `adb -d shell` to open ADB shell, and execute the following commands one by one in sequence:
 
 - `pm create-user --profileOf 0 --managed Island`
@@ -48,22 +50,29 @@ If you get error message `java.lang.SecurityException: Neither user 2000 nor cur
 
 If all goes well, Island will show the app list.
 
-Manual setup for Island in "God mode"
---------------------------------------------------
 
-- Remove all accounts and work profile in system Settings - Accounts.
+Manual setup for Island in "God mode"
+=======================================
+
+- Backup all data of your non-primary users and all data of your logged-in accounts.
+
+- Remove all accounts and work profile in system "Settings" - "Accounts". (may vary on different devices)
+
+- Remove all non-primary users in system "Settings" - ("System") - "Users". (may vary on different devices)
 
 - Execute in ADB shell: `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`
 
-  If you get error message in this step, please try executing following commands in order.  
+  If you get error message "... Not allowed to set the device owner because there are already several **users** on the device". make sure all non-primary users are removed. You may use ADB command `pm list users` to reveal all users (including the hidden ones on some devices) and then `pm remove-user <id>` to remove them forcibly.
+
+  If you get error message "... Not allowed to set the device owner because there are already some **accounts** on the device". make sure all accounts are removed. You may use ADB command `dumpsys account|grep -A 3 Accounts:` to reveal remaining accounts (including the hidden ones on some devices). Forcible removal of all accounts will be implemented in coming version of Island, please stay tuned.
+
+  If you get other error message, please try executing following commands in order.  
   - `settings put global device_provisioned 0`  
   - `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`  
   - `settings put global device_provisioned 1`  
   *(The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.)*
 
   Some ROM variants (e.g. MIUI) enforce extra security policy which may block the above command, if you got permission-related error message, please check the development (or security) settings to enable USB-debugging related security options, then retry the "`dpm ...`" command again.
-
-  Some ROM variants (e.g. MIUI) may not reveal or allow user to remove internal accounts on the device. You can run "dumpsys account" in ADB shell to list all active accounts. We are working on possible solutions.
 
 - Start Island app now and it will work in God mode.
 
