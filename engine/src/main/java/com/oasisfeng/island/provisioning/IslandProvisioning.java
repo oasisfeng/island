@@ -18,6 +18,7 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.UserManager;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract.Contacts;
@@ -34,6 +35,7 @@ import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
+import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
@@ -55,6 +57,7 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
+import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
@@ -323,6 +326,10 @@ public class IslandProvisioning extends IntentService {
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
 
 		enableAdditionalForwarding(context, policies);
+
+		// Acquire SYSTEM_ALERT_WINDOW permission to overcome "background activity start" blocking on Android Q+.
+		if (SDK_INT > P && ! Settings.canDrawOverlays(context))
+			new AppOpsCompat(context).setMode(AppOpsCompat.OP_SYSTEM_ALERT_WINDOW, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
 
 		// Prepare AppLaunchShortcut
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")

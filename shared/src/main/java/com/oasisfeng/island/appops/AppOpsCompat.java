@@ -9,6 +9,7 @@ import com.oasisfeng.island.util.Hacks;
 import java.util.List;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -21,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 public class AppOpsCompat {
 
 	public static final int OP_POST_NOTIFICATION = 11;
+	public static final int OP_SYSTEM_ALERT_WINDOW = 24;
 	public static final int OP_REQUEST_INSTALL_PACKAGES = 66;
 	public static final String GET_APP_OPS_STATS = "android.permission.GET_APP_OPS_STATS";
 
@@ -36,7 +38,7 @@ public class AppOpsCompat {
 		return Hack.into(mAppOpsManager).with(Hacks.AppOpsManager.class).getOpsForPackage(uid, pkg, ops);
 	}
 
-	public void setMode(final int code, final int uid, final String pkg, final int mode) {
+	@RequiresApi(28) public void setMode(final int code, final int uid, final String pkg, final int mode) {
 		Hack.into(mAppOpsManager).with(Hacks.AppOpsManager.class).setMode(code, uid, pkg, mode);
 	}
 
