@@ -28,6 +28,7 @@ import android.os.Process;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Toast;
@@ -124,25 +125,40 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			if (! file.exists()) return false;
 		}
 
-		if (! mCallerPackage.equals(getPackageName()) && ! requireNonNull(PreferenceManager.getDefaultSharedPreferences(this)
+		final CharSequence target_app_description; final Pair<PackageInfo, CharSequence> parsed;
+		if (SCHEME_PACKAGE.equals(data.getScheme())) {
+			final String target_pkg = data.getSchemeSpecificPart();
+			target_app_description = getString(R.string.description_for_cloning_app, Apps.of(this).getAppName(target_pkg), target_pkg);
+			mUpdateOrInstall = null;
+		} else if ((parsed = parseApk(data)) != null) {
+			final String target_pkg = parsed.first.packageName;
+			target_app_description = getString(R.string.description_for_installing_app, parsed.second, target_pkg, parsed.first.versionName,
+					SDK_INT >= P ? parsed.first.getLongVersionCode() : parsed.first.versionCode);
+			mUpdateOrInstall = target_pkg != null && Apps.of(this).isInstalledOnDevice(target_pkg);
+		} else {
+			target_app_description = getString(R.string.label_unknown_app);
+			mUpdateOrInstall = Boolean.FALSE;    // Fallback to be considered as "install"
+		}
+
+		if (mCallerPackage.equals(getPackageName()) || requireNonNull(PreferenceManager.getDefaultSharedPreferences(this)
 				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet())).contains(mCallerPackage)) {
-			final CharSequence label = parseApkLabel(data);
-			final String message = getString(SCHEME_PACKAGE.equals(data.getScheme()) ? R.string.dialog_clone_confirmation
-					: R.string.dialog_install_confirmation, mCallerAppLabel.get(),
-					label != null ? label : getString(R.string.label_unknown_app));
-			final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, message);
-			final View view = View.inflate(dialog.getContext()/* For consistent styling */, R.layout.dialog_checkbox, null);
-			final CheckBox checkbox = view.findViewById(R.id.checkbox);
-			checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
-			dialog.withCancelButton().withOkButton(() -> {
-				if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
-				performInstall(data);
-			}).setOnDismissListener(d -> finish()).setView(view).setCancelable(false).show();
-		} else performInstall(data);		// Whitelisted caller to perform installation without confirmation
+			performInstall(data, target_app_description);		// Whitelisted caller to perform installation without confirmation
+			return true;
+		}
+		final String message = getString(mUpdateOrInstall == null ? R.string.confirm_cloning : mUpdateOrInstall
+				? R.string.confirm_updating : R.string.confirm_installing, mCallerAppLabel.get(), target_app_description);
+		final Dialogs.Builder dialog = Dialogs.buildAlert(this, null, message);
+		final View view = View.inflate(dialog.getContext()/* For consistent styling */, R.layout.dialog_checkbox, null);
+		final CheckBox checkbox = view.findViewById(R.id.checkbox);
+		checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
+		dialog.withCancelButton().withOkButton(() -> {
+			if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
+			performInstall(data, target_app_description);
+		}).setOnDismissListener(d -> finish()).setView(view).setCancelable(false).show();
 		return true;
 	}
 
-	private @Nullable String parseApkLabel(final Uri uri) {
+	private @Nullable Pair<PackageInfo, CharSequence> parseApk(final Uri uri) {
 		ParcelFileDescriptor fd = null;
 		try {
 			final String path;
@@ -154,7 +170,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				Log.e(TAG, "Error opening " + uri);             //   due to either URI permission not granted or non-exported ContentProvider.
 				return null;
 			} else path = uri.getPath();
-			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);	// Special path for open file descriptor
+			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);    // Special path for open file descriptor
 			if (pkg_info == null) return null;
 			final ApplicationInfo app_info = pkg_info.applicationInfo;
 			final CharSequence app_label;
@@ -163,7 +179,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				Hacks.AssetManager_addAssetPath.invoke(path).on(am);
 				app_label = new Resources(am, null, null).getText(app_info.labelRes);
 			} else app_label = app_info.nonLocalizedLabel;
-			return app_label == null ? app_info.packageName : app_label.toString() + " (" + app_info.packageName + ")";
+			return new Pair<>(pkg_info, app_label == null ? app_info.packageName : app_label.toString());
 		} finally {
 			IoUtils.closeQuietly(fd);
 		}
@@ -183,7 +199,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		preferences.edit().putStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, pkgs).apply();
 	}
 
-	private void performInstall(final Uri uri) {
+	private void performInstall(final Uri uri, final CharSequence app_description) {
 		final PackageManager pm = getPackageManager();
 		if (SDK_INT >= P && ! pm.canRequestPackageInstalls() && new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) try {
 			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
@@ -281,8 +297,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 		mSession.commit(PendingIntent.getBroadcast(this, session_id, callback, FLAG_UPDATE_CURRENT).getIntentSender());
 
-		mProgressDialog = Dialogs.buildProgress(this, getString(R.string.progress_dialog_installing, mCallerAppLabel.get()))
-				.indeterminate().nonCancelable().start();
+		final String progress_text = getString(mUpdateOrInstall == null ? R.string.progress_dialog_cloning : mUpdateOrInstall
+				? R.string.progress_dialog_updating : R.string.progress_dialog_installing, mCallerAppLabel.get(), app_description);
+		mProgressDialog = Dialogs.buildProgress(this, progress_text).indeterminate().nonCancelable().start();
 	}
 
 	private void fallbackToSystemPackageInstaller(final String reason, final @Nullable Exception e) {
@@ -383,6 +400,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	private @Nullable ApplicationInfo mCallerAppInfo;
 	private final Supplier<CharSequence> mCallerAppLabel = Suppliers.memoizeWithExpiration(() ->	// Long cache time to workaround temporarily unavailable-
 			mCallerAppInfo != null ? Apps.of(this).getAppName(mCallerAppInfo) : mCallerPackage, 30, SECONDS);	// label of self-updated app
+	private Boolean mUpdateOrInstall;	// TRUE: Update, FALSE: Install, null: Clone
 	private PackageInstaller.Session mSession;
 	private BroadcastReceiver mStatusCallback;
 	private ProgressDialog mProgressDialog;
