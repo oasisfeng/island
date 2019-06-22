@@ -40,6 +40,7 @@ import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.util.CallerAwareActivity;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
@@ -183,7 +184,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	}
 
 	private void performInstall(final Uri uri) {
-		if (SDK_INT >= P && ! getPackageManager().canRequestPackageInstalls()) try {
+		final PackageManager pm = getPackageManager();
+		if (SDK_INT >= P && ! pm.canRequestPackageInstalls() && new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) try {
 			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
 		} catch (final RuntimeException e) {
 			Analytics.$().logAndReport(TAG, "Error granting permission REQUEST_INSTALL_PACKAGES", e);
@@ -216,7 +218,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			return;
 		}
 
-		final PackageInstaller installer = getPackageManager().getPackageInstaller();
+		final PackageInstaller installer = pm.getPackageInstaller();
 		final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
 		final int session_id;
 		try {
