@@ -52,7 +52,7 @@ If all goes well, Island will show the app list.
 
 
 Manual setup for Island in "God mode"
-=======================================
+---------------------------------------
 
 - Backup all data of your non-primary users and all data of your logged-in accounts.
 
