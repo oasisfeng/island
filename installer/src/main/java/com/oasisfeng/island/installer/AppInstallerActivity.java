@@ -149,8 +149,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				fd = getContentResolver().openFileDescriptor(uri, "r");
 				if (fd == null) return null;
 				path = "/proc/self/fd/" + fd.getFd();
-			} catch (final IOException e) {
-				Log.e(TAG, "Error opening " + uri);
+			} catch (final IOException | SecurityException e) { // "SecurityException: Permission Denial"
+				Log.e(TAG, "Error opening " + uri);             //   due to either URI permission not granted or non-exported ContentProvider.
 				return null;
 			} else path = uri.getPath();
 			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);	// Special path for open file descriptor
