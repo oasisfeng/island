@@ -19,6 +19,7 @@ import android.os.UserManager;
 import android.print.PrintManager;
 import android.util.Log;
 
+import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.hack.Hack.Unchecked;
 import com.oasisfeng.island.analytics.Analytics;
@@ -146,6 +147,16 @@ public class Hacks {
 		static int opToDefaultMode(final int op) { return Hack.mirrorStaticMethod("opToDefaultMode", -1, op); }
 	}
 
+	public interface UserManagerHack extends Hack.Mirror<UserManager> {
+
+		@Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror {
+			int getId();
+			UserHandle getUserHandle();
+		}
+
+		List<UserInfo> getUsers();
+		boolean removeUser(@UserIdInt int userHandle);
+	}
 	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
 
 	private static boolean isAndroidQ() { return SDK_INT > O_MR1 + 1/* P */|| (SDK_INT > O_MR1 && PREVIEW_SDK_INT > 0); }

@@ -6,14 +6,18 @@ import android.accounts.AccountManagerFuture
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Context.ACCOUNT_SERVICE
+import android.content.Context.USER_SERVICE
 import android.content.Intent
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.LOLLIPOP_MR1
 import android.os.Bundle
 import android.os.Looper
 import android.os.Process
+import android.os.UserManager
 import androidx.annotation.Keep
+import com.oasisfeng.hack.Hack
 import com.oasisfeng.island.util.Dump
+import com.oasisfeng.island.util.Hacks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -35,13 +39,23 @@ object AdbShell {
         Thread.setDefaultUncaughtExceptionHandler { t, e -> System.err.println("\n$t"); e.printStackTrace() }
 
         when(if (args.isEmpty()) "" else args[0]) {
-            "--remove-account" -> runBlocking { if (args.size > 1) runRemoveAccount(args[1]) else runRemoveAllAccounts() }
+            "remove-account" -> runBlocking { if (args.size > 1) runRemoveAccount(args[1]) else runRemoveAllAccounts() }
+            "remove-user" -> runRemoveNonPrimaryUsers(if (args.size <= 1) null else (args[1].toIntOrNull() ?: return help()))
             else -> help()
         }
     }
 
     private fun help() {
-        println("Usage: AdbShell [-h] | [--remove-account [<account type>:[<account name>]]]")
+        println("Usage: AdbShell -h | remove-account [<account type>:[<account name>]] | remove-user [user ID]")
+    }
+
+    private fun runRemoveNonPrimaryUsers(userId: Int?) {
+        val um = Hack.into(shellContext.getSystemService(USER_SERVICE) as UserManager).with(Hacks.UserManagerHack::class.java)
+        for (id in if (userId != null) listOf(userId) else um.users.map { user -> user.userHandle.hashCode() }) {
+            if (id == 0) continue
+            print("Removing user $id... ")
+            um.removeUser(id).also { successful -> println(if (successful) "Done" else "Failed") }
+        }
     }
 
     private suspend fun runRemoveAccount(account: String) {
