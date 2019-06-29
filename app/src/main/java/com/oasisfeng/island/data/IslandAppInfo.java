@@ -18,9 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import java9.util.stream.Collectors;
-import java9.util.stream.StreamSupport;
-
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
@@ -29,6 +26,8 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Process.myUserHandle;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java9.util.stream.Collectors.toSet;
+import static java9.util.stream.StreamSupport.stream;
 
 /**
  * Island-specific {@link AppInfo}
@@ -93,19 +92,26 @@ public class IslandAppInfo extends AppInfo {
 			() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | GET_DISABLED_COMPONENTS), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
-		if (sLaunchableAppsCache != null) return sLaunchableAppsCache.contains(packageName);
-		return super.checkLaunchable(flags_for_resolve);
+		if (! Users.isOwner(user) && ! isHidden()) {		// Accurate detection for non-frozen app in Island
+			if (sLaunchableNonFrozenIslandAppsCache != null) return sLaunchableNonFrozenIslandAppsCache.contains(packageName);
+			return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty();
+		}
+		if (sPotentiallyLaunchableAppsCache != null) return sPotentiallyLaunchableAppsCache.contains(packageName);
+		return super.checkLaunchable(flags_for_resolve);	// Inaccurate detection for frozen app (false-positive if launcher activity is actually disabled)
 	}
 
 	public static void cacheLaunchableApps(final Context context) {
+		if (Users.profile != null) sLaunchableNonFrozenIslandAppsCache = stream(((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
+				.getActivityList(null, Users.profile)).map(lai -> lai.getComponentName().getPackageName()).collect(toSet());
 		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager().queryIntentActivities(
 				new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | GET_DISABLED_COMPONENTS);
-		sLaunchableAppsCache = StreamSupport.stream(activities).map(resolve -> resolve.activityInfo.packageName).collect(Collectors.toSet());
+		sPotentiallyLaunchableAppsCache = stream(activities).map(resolve -> resolve.activityInfo.packageName).collect(toSet());
 	}
 
-	public static void invalidateLaunchableAppsCache() { sLaunchableAppsCache = null; }
+	public static void invalidateLaunchableAppsCache() { sLaunchableNonFrozenIslandAppsCache = null; sPotentiallyLaunchableAppsCache = null; }
 
-	private static Set<String> sLaunchableAppsCache;
+	private static Set<String> sLaunchableNonFrozenIslandAppsCache;
+	private static Set<String> sPotentiallyLaunchableAppsCache;
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 
