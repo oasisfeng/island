@@ -51,15 +51,16 @@ public class AppListFragment extends LifecycleFragment {
 		final Activity activity = getActivity();
 		final ViewModelProvider provider = ViewModelProviders.of(this);
 		mViewModel = provider.get(AppListViewModel.class);
-		mViewModel.mFeatured = mFeaturedViewModel = provider.get(FeaturedListViewModel.class);
+		mViewModel.mFeatured = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, mViewModel);
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
+		mViewModel.mFeatured.visible.observe(this, visible -> invalidateOptionsMenu());
 	}
 
 	@Override public void onResume() {
 		super.onResume();
 		if (SystemClock.uptimeMillis() - mTimeLastPaused < 1_000) return;	// Avoid updating for brief pausing caused by cross-profile functionality.
-		if (mFeaturedViewModel.visible.getValue()) mFeaturedViewModel.update(getActivity());
+		if (mViewModel.mFeatured.visible.getValue()) mViewModel.mFeatured.update(getActivity());
 		Loopers.addIdleTask(() -> AsyncTask.execute(() -> Optional.ofNullable(getActivity()).map(Tip::next).ifPresent(mBinding::setCard)));
 	}
 
@@ -106,7 +107,7 @@ public class AppListFragment extends LifecycleFragment {
 		final Activity activity = Objects.requireNonNull(getActivity());
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
-		mBinding.setFeatured(mFeaturedViewModel);
+		mBinding.setFeatured(mViewModel.mFeatured);
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
@@ -128,14 +129,15 @@ public class AppListFragment extends LifecycleFragment {
 
 	@Override public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
 		inflater.inflate(R.menu.main_actions, menu);
+		menu.findItem(R.id.menu_search).setOnActionExpandListener(mOnActionExpandListener);
 	}
 
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
+		final boolean not_featured_tab = ! mViewModel.mFeatured.visible.getValue();
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
-		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
-		menu.findItem(R.id.menu_search).setOnActionExpandListener(mOnActionExpandListener);
-//		menu.findItem(R.id.menu_files).setVisible(context != null && Users.hasProfile() &&
-//				(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null));
+		menu.findItem(R.id.menu_tip).setVisible(not_featured_tab && tip != null).setOnMenuItemClickListener(tip);
+		menu.findItem(R.id.menu_search).setVisible(not_featured_tab);
+		menu.findItem(R.id.menu_filter).setVisible(not_featured_tab);
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
@@ -187,7 +189,6 @@ public class AppListFragment extends LifecycleFragment {
 
 	private AppListBinding mBinding;
 	private AppListViewModel mViewModel;
-	private FeaturedListViewModel mFeaturedViewModel;
 	private @Nullable UserGuide mUserGuide;
 	private ServiceConnection mIslandManagerConnection;
 
