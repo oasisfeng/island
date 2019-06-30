@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -57,6 +58,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.os.HandlerCompat;
 import androidx.lifecycle.MutableLiveData;
 import java9.util.Optional;
 import java9.util.concurrent.CompletableFuture;
@@ -100,18 +102,43 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		return mActiveFilters;
 	}
 
-	public void onQueryTextChange(final String text) {
-		if (TextUtils.equals(text, mFilterText)) return;
-
-		mHandler.removeCallbacks(mQueryTextDelayer);
-		mFilterText = text;
-		if (TextUtils.isEmpty(text)) mQueryTextDelayer.run();
-		else mHandler.postDelayed(mQueryTextDelayer, QUERY_TEXT_DELAY);		// A short delay to avoid flickering during typing.
+	/** @see SearchView.OnQueryTextListener#onQueryTextChange(String) */
+	public boolean onQueryTextChange(final String text) {
+		mHandler.removeCallbacksAndMessages(mFilterText);		// In case like "A -> AB -> A" in a short time
+		if (TextUtils.equals(text, mFilterText.getValue())) return true;
+		HandlerCompat.postDelayed(mHandler, () -> mFilterText.setValue(text), mFilterText, QUERY_TEXT_DELAY);	// A short delay to avoid flickering during typing.
+		return true;
 	}
-	private final Runnable mQueryTextDelayer = this::updateActiveFilters;
+
+	/** @see SearchView.OnQueryTextListener#onQueryTextSubmit(String) */
+	public boolean onQueryTextSubmit(final @Nullable MenuItem item, final String text) {
+		mChipsVisible.setValue(! TextUtils.isEmpty(text) || mFilterIncludeHiddenSystemApps.getValue());
+		if (! TextUtils.equals(text, mFilterText.getValue())) {
+			mHandler.removeCallbacksAndMessages(mFilterText);
+			mFilterText.setValue(text);
+		}
+		if (item != null) item.collapseActionView();
+		return true;
+	}
+
+	public void onSearchClick(final SearchView view) {
+		view.setQuery(mFilterText.getValue(), false);
+	}
+
+	/** @see SearchView.OnCloseListener#onClose() */
+	public boolean onSearchViewClose() {
+		onQueryTextSubmit(null, mFilterText.getValue());
+		return true;
+	}
+
+	public void onQueryTextCleared() {
+		onQueryTextSubmit(null, "");
+	}
 
 	private boolean matchQueryText(final IslandAppInfo app) {
-		final String text_lc = mFilterText.toLowerCase();
+		final String text = mFilterText.getValue();
+		if (text.isEmpty()) return true;
+		final String text_lc = text.toLowerCase();
 		return app.packageName.toLowerCase().contains(text_lc) || app.getLabel().toLowerCase().contains(text_lc);	// TODO: Support T9 Pinyin
 	}
 
@@ -123,7 +150,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
 		if (! mFilterIncludeHiddenSystemApps.getValue())
 			combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
-		if (! TextUtils.isEmpty(mFilterText)) combined_filter = combined_filter.and(this::matchQueryText);
+		if (! TextUtils.isEmpty(mFilterText.getValue())) combined_filter = combined_filter.and(this::matchQueryText);
 		mActiveFilters = combined_filter;
 
 		final AppViewModel selected = mSelection.getValue();
@@ -187,6 +214,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		// Start observation after initial value is set.
 		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
 		mFilterIncludeHiddenSystemApps.observeForever(filter -> updateActiveFilters());
+		mFilterText.observeForever(text -> updateActiveFilters());
 		mSelection.observeForever(selection -> {
 			final Interpolator interpolator = new AccelerateDecelerateInterpolator();
 			if (selection != null) tabs.animate().alpha(0).translationZ(-10).scaleX(0.95f).scaleY(0.95f).setDuration(200).setInterpolator(interpolator);
@@ -507,10 +535,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	/* Parcelable fields */
 	public final MutableLiveData<Filter> mPrimaryFilter = new MutableLiveData<>();
 	public final NonNullMutableLiveData<Boolean> mFilterIncludeHiddenSystemApps = new NonNullMutableLiveData<>(false);
+	public final NonNullMutableLiveData<String> mFilterText = new NonNullMutableLiveData<>("");
 	/* Transient fields */
 	public final NonNullMutableLiveData<Boolean> mChipsVisible = new NonNullMutableLiveData<>(false);
 	private Predicate<IslandAppInfo> mFilterShared;			// All other filters to apply always
-	private String mFilterText;
 	private boolean mDeviceOwner;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
 	private final Handler mHandler = new Handler();

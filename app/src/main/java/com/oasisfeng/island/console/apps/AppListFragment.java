@@ -133,7 +133,7 @@ public class AppListFragment extends LifecycleFragment {
 	@Override public void onPrepareOptionsMenu(final Menu menu) {
 		final MenuItem.OnMenuItemClickListener tip = mUserGuide == null ? null : mUserGuide.getAvailableTip();
 		menu.findItem(R.id.menu_tip).setVisible(tip != null).setOnMenuItemClickListener(tip);
-		menu.findItem(R.id.menu_search).setVisible(mViewModel.mSelection.getValue() == null).setOnActionExpandListener(mOnActionExpandListener);
+		menu.findItem(R.id.menu_search).setOnActionExpandListener(mOnActionExpandListener);
 //		menu.findItem(R.id.menu_files).setVisible(context != null && Users.hasProfile() &&
 //				(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null));
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
@@ -143,21 +143,23 @@ public class AppListFragment extends LifecycleFragment {
 
 		@Override public boolean onMenuItemActionExpand(final MenuItem item) {
 			final View action_view = item.getActionView();
-			if (action_view instanceof SearchView) ((SearchView) action_view).setOnQueryTextListener(mOnQueryTextListener);
+			if (action_view instanceof SearchView) {
+				final SearchView search_view = ((SearchView) action_view);
+				search_view.setOnSearchClickListener(v -> mViewModel.onSearchClick((SearchView) v));
+				search_view.setOnCloseListener(() -> mViewModel.onSearchViewClose());
+				search_view.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+					@Override public boolean onQueryTextChange(final String text) { return mViewModel.onQueryTextChange(text); }
+					@Override public boolean onQueryTextSubmit(final String query) { return mViewModel.onQueryTextSubmit(item, query); }
+				});
+			}
 			return true;
 		}
 
-		@Override public boolean onMenuItemActionCollapse(final MenuItem item) { return true; }
-	};
-
-	private final SearchView.OnQueryTextListener mOnQueryTextListener = new SearchView.OnQueryTextListener() {
-
-		@Override public boolean onQueryTextChange(final String text) {
-			mViewModel.onQueryTextChange(text);
+		@Override public boolean onMenuItemActionCollapse(final MenuItem item) {
+			final View action_view = item.getActionView();
+			if (action_view instanceof SearchView) ((SearchView) action_view).setOnQueryTextListener(null);		// Prevent onQueryTextChange("") from invoked
 			return true;
 		}
-
-		@Override public boolean onQueryTextSubmit(final String query) { return true; }
 	};
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {

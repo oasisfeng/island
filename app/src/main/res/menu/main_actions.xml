@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" tools:ignore="AppCompatResource">
     <item android:id="@+id/menu_tip" android:title="@string/menu_tip" android:icon="@drawable/ic_lightbulb_outline_24dp" android:showAsAction="ifRoom" />
     <item android:id="@+id/menu_search" android:title="@string/menu_search" android:icon="@drawable/ic_search_white_24dp"
-          android:showAsAction="collapseActionView|ifRoom" android:actionViewClass="android.widget.SearchView" />
+          android:showAsAction="collapseActionView|ifRoom" android:actionViewClass="com.oasisfeng.island.widget.PersistableSearchView" />
     <item android:id="@+id/menu_filter" android:title="@string/menu_filter" android:icon="@drawable/ic_filter_list_white_24dp" android:showAsAction="ifRoom" />
     <item android:id="@+id/menu_settings" android:title="@string/menu_settings" android:showAsAction="never" />
     <item android:id="@+id/menu_test" android:title="Test" tools:ignore="HardcodedText" android:showAsAction="never" android:visible="false" />
