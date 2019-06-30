@@ -136,7 +136,6 @@ public class AppListFragment extends LifecycleFragment {
 		menu.findItem(R.id.menu_search).setVisible(mViewModel.mSelection.getValue() == null).setOnActionExpandListener(mOnActionExpandListener);
 //		menu.findItem(R.id.menu_files).setVisible(context != null && Users.hasProfile() &&
 //				(! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || findFileBrowser(context) != null));
-		menu.findItem(R.id.menu_show_system).setChecked(mViewModel.areSystemAppsIncluded());
 		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).setVisible(true);
 	}
 
@@ -163,11 +162,8 @@ public class AppListFragment extends LifecycleFragment {
 
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
 		final int id = item.getItemId();
-		if (id == R.id.menu_show_system) {
-			final boolean should_include = ! item.isChecked();
-			mViewModel.onFilterHiddenSysAppsInclusionChanged(should_include);
-			item.setChecked(should_include);    // Toggle the checked state
-		} else if (id == R.id.menu_settings) startActivity(new Intent(getActivity(), SettingsActivity.class));
+		if (id == R.id.menu_filter) mViewModel.mChipsVisible.setValue(! mViewModel.mChipsVisible.getValue());
+		if (id == R.id.menu_settings) startActivity(new Intent(getActivity(), SettingsActivity.class));
 		else if (id == R.id.menu_test) TempDebug.run(getActivity());
 		else return super.onOptionsItemSelected(item);
 		return true;

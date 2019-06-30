@@ -3,7 +3,7 @@
     <!-- Duplicate entries without "android" namespace are for AppCompat,
          to be compatible with Android Design Support Library -->
 
-    <style name="AppTheme.NoActionBar" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="AppTheme.NoActionBar" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:colorPrimary">@color/primary</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="android:colorPrimaryDark">@color/primary_dark</item>

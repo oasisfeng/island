@@ -18,20 +18,54 @@
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout android:layout_width="match_parent" android:layout_height="match_parent" >
 
-        <Toolbar
-            android:id="@+id/actionbar"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/top_bar"
             android:layout_width="match_parent"
-            android:layout_height="?android:attr/actionBarSize"
-            android:background="?android:attr/colorPrimary"
-            android:elevation="4dp"
-            android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-            android:popupTheme="@style/AppThemeOverlay.Dark.Popup" />
+            android:layout_height="wrap_content"
+            android:background="@color/background">
+
+            <Toolbar
+                android:id="@+id/actionbar"
+                android:layout_width="match_parent"
+                android:layout_height="?android:attr/actionBarSize"
+                android:background="?android:attr/colorPrimary"
+                android:elevation="4dp"
+                android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
+                android:popupTheme="@style/AppThemeOverlay.Dark.Popup" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chips"
+                android:background="@color/background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_small"
+                android:layout_marginBottom="@dimen/margin_small"
+                android:layout_marginStart="@dimen/margin_medium"
+                android:layout_marginEnd="@dimen/margin_medium"
+                app:chipSpacing="@dimen/margin_medium"
+                bind:shown="@{apps.mChipsVisible}">
+
+                <com.google.android.material.chip.Chip
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipStrokeColor="@color/accent"
+                    app:chipStrokeWidth="2dp"
+                    app:checkedIconVisible="false"
+                    app:chipBackgroundColor="@color/chip_background_color"
+                    app:rippleColor="@color/accent"
+                    android:checked="@={apps.mFilterIncludeHiddenSystemApps}"
+                    android:text="@string/filter_include_hidden_system_components" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+        </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/app_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?android:attr/actionBarSize"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             android:paddingBottom="88dp"
             android:paddingStart="-16dp" tools:comment="To workaround the weired tilt side shadow on elevated item"
             android:paddingEnd="-16dp"

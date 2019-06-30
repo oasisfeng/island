@@ -30,6 +30,7 @@ import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.widget.Toasts;
+import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.common.app.BaseAppListViewModel;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.controller.IslandAppClones;
@@ -79,6 +80,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private static final long QUERY_TEXT_DELAY = 300;	// The delay before typed query text is applied
 	private static final String STATE_KEY_FILTER_PRIMARY_CHOICE = "filter.primary";
+	private static final String STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS = "filter.hidden_sys";
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
@@ -94,15 +96,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		private final Predicate<IslandAppInfo> mFilter;
 	}
 
-	public boolean areSystemAppsIncluded() { return mFilterIncludeHiddenSystemApps; }
-
 	private Predicate<IslandAppInfo> activeFilters() {
 		return mActiveFilters;
-	}
-
-	public void onFilterHiddenSysAppsInclusionChanged(final boolean should_include) {
-		mFilterIncludeHiddenSystemApps = should_include;
-		updateActiveFilters();
 	}
 
 	public void onQueryTextChange(final String text) {
@@ -126,7 +121,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (primary_filter == null) return;
 		Log.d(TAG, "Primary filter: " + primary_filter);
 		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
-		if (! mFilterIncludeHiddenSystemApps) combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
+		if (! mFilterIncludeHiddenSystemApps.getValue())
+			combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
 		if (! TextUtils.isEmpty(mFilterText)) combined_filter = combined_filter.and(this::matchQueryText);
 		mActiveFilters = combined_filter;
 
@@ -174,7 +170,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
 		mActions = actions;
 		mFilterShared = IslandAppListProvider.excludeSelf(context);
-		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
 
 		if (! Filter.Island.available()) {		// Island is unavailable
 			tabs.getMenu().removeItem(R.id.tab_island);
@@ -186,8 +181,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			final Filter primary_filter = Filter.values()[ordinal];
 			tabs.setSelectedItemId(primary_filter == Filter.Mainland ? R.id.tab_mainland : R.id.tab_island);
 			mPrimaryFilter.setValue(primary_filter);
+			mFilterIncludeHiddenSystemApps.setValue(saved_state != null && saved_state.getBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS));
 			setTitle(context, tabs.getMenu().findItem(tabs.getSelectedItemId()));
 		}
+		// Start observation after initial value is set.
+		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
+		mFilterIncludeHiddenSystemApps.observeForever(filter -> updateActiveFilters());
 		mSelection.observeForever(selection -> {
 			final Interpolator interpolator = new AccelerateDecelerateInterpolator();
 			if (selection != null) tabs.animate().alpha(0).translationZ(-10).scaleX(0.95f).scaleY(0.95f).setDuration(200).setInterpolator(interpolator);
@@ -202,6 +201,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	public void onSaveInstanceState(final Bundle saved) {
 		final Filter primary_filter = mPrimaryFilter.getValue();
 		if (primary_filter != null) saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, primary_filter.ordinal());
+		saved.putBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS, mFilterIncludeHiddenSystemApps.getValue());
 	}
 
 	private void updateActions() {
@@ -506,9 +506,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private Menu mActions;
 	/* Parcelable fields */
 	public final MutableLiveData<Filter> mPrimaryFilter = new MutableLiveData<>();
-	private boolean mFilterIncludeHiddenSystemApps;
+	public final NonNullMutableLiveData<Boolean> mFilterIncludeHiddenSystemApps = new NonNullMutableLiveData<>(false);
 	/* Transient fields */
-	private Predicate<IslandAppInfo> mFilterShared;		// All other filters to apply always
+	public final NonNullMutableLiveData<Boolean> mChipsVisible = new NonNullMutableLiveData<>(false);
+	private Predicate<IslandAppInfo> mFilterShared;			// All other filters to apply always
 	private String mFilterText;
 	private boolean mDeviceOwner;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters

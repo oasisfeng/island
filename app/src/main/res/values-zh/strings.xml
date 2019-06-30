@@ -76,8 +76,10 @@
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜索</string>
-    <string name="menu_show_hidden_sys_apps">显示隐去的系统组件</string>
+    <string name="menu_filter">过滤</string>
     <string name="menu_settings">设置</string>
+
+    <string name="filter_include_hidden_system_components">+ 不可见的系统组件</string>
 
     <string name="dialog_title_warning">注意</string>
     <string name="dialog_manual_setup"><b>致高级用户</b>：\n这一限制可以通过在 USB 连接的电脑上进行手动操作绕过。</string>

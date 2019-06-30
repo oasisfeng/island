@@ -78,8 +78,10 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="menu_tip">Tip…</string>
     <string name="menu_search">Search</string>
-    <string name="menu_show_hidden_sys_apps">Show hidden system apps</string>
+    <string name="menu_filter">Filter</string>
     <string name="menu_settings">Settings</string>
+
+    <string name="filter_include_hidden_system_components">+ Hidden System Components</string>
 
     <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_manual_setup"><b>For advanced user</b>:\nThis limitation could also be circumvented with one-time manual setup via USB-connected PC.</string>
