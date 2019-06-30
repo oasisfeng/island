@@ -23,7 +23,7 @@
     <string name="notification_app_target_pre_m_wo_sensitive_permissions">targeting Android %s with no sensitive permissions</string>
     <string name="action_show_app_settings">App Settings</string>
 
-    <string name="app_info_forwarder_title">Show info about this app (%s) in</string>
+    <string name="app_info_forwarder_title">Show info about %1$s (%2$s) in</string>
     <string name="fallback_to_sys_installer">Try alternate way</string>
     <string name="toast_split_apk_clone_fallback_warning">App with Bundles may not be installed properly in this way. Please try installing it from app store if not working.</string>
 </resources>
