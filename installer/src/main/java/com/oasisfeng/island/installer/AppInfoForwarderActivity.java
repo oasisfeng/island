@@ -1,5 +1,6 @@
 package com.oasisfeng.island.installer;
 
+import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -9,7 +10,6 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -30,7 +30,6 @@ import androidx.annotation.Nullable;
 import java9.util.Optional;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
-import static android.content.Intent.EXTRA_USER;
 import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.Build.VERSION.SDK_INT;
@@ -46,12 +45,12 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		final Intent intent = getIntent().setComponent(null).setPackage(null);
-		final UserHandle user = intent.getParcelableExtra(EXTRA_USER);
-		startActivity(buildChooser(intent.getStringExtra(IntentCompat.EXTRA_PACKAGE_NAME), user != null ? user : Process.myUserHandle(), intent));
+		final UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
+		startActivity(buildTargetIntent(intent.getStringExtra(IntentCompat.EXTRA_PACKAGE_NAME), user, intent));
 		finish();
 	}
 
-	private Intent buildChooser(final String pkg, final UserHandle user, final Intent target) {
+	private Intent buildTargetIntent(final String pkg, final @Nullable UserHandle user, final Intent target) {
 		final PackageManager pm = getPackageManager();
 		final String caller = getCallingPackage();
 		Intent app_detail = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null));
@@ -61,7 +60,13 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		final Supplier<List<ResolveInfo>> target_resolves = Suppliers.memoize(() -> pm.queryIntentActivities(target, MATCH_DEFAULT_ONLY/* Excluding this activity */));
 		if (app_detail_resolve != null) {
 			caller_is_settings = app_detail_resolve.activityInfo.packageName.equals(caller);
-			if (! caller_is_settings && ! UserHandles.MY_USER_HANDLE.equals(user)) {
+			if (! caller_is_settings && ! isCallerIslandButNotForwarder(caller)) {	// Started by 3rd-party app or this forwarder itself
+				final Intent intent = new Intent(Intent.ACTION_SEARCH).putExtra(SearchManager.QUERY, "package:" + pkg).setPackage(getPackageName());
+				if (user != null) intent.putExtra(Intent.EXTRA_USER, user);
+				final ResolveInfo resolve = getPackageManager().resolveActivity(intent, 0);
+				if (resolve != null) return intent.setClassName(this, resolve.activityInfo.name);
+			}
+			if (! caller_is_settings && user != null && ! UserHandles.MY_USER_HANDLE.equals(user)) {
 				if (user.equals(Users.profile)) app_detail.setComponent(ActivityShuttle.selectForwarder(app_detail_resolves));	// ACTION_APPLICATION_DETAILS_SETTINGS was added to forwarding by IslandProvisioning
 				else app_detail = null;    // TODO: Not the default managed profile, use LauncherApps.startAppDetailsActivity().
 			} else ActivityShuttle.forceNeverForwarding(pm, app_detail);
@@ -76,7 +81,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 
 		final List<Intent> initial_intents = new ArrayList<>();
 		if (app_detail != null && ! caller_is_settings) {
-			if (user.equals(Users.profile)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
+			if (user != null && user.equals(Users.profile)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
 				final ActivityInfo activity = app_detail_resolve.activityInfo;
 				app_detail = new LabeledIntent(app_detail, activity.packageName,
 						activity.labelRes != 0 ? activity.labelRes : activity.applicationInfo.labelRes, activity.getIconResource());
@@ -86,8 +91,8 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		// Also add app markets to the chooser. EXTRA_ALTERNATE_INTENTS is not used here due to inability of de-dup. (e.g. Google Play Store)
 		final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg));
 		final List<ResolveInfo> market_apps = getPackageManager().queryIntentActivities(market_intent, 0);
+		final List<ComponentName> exclude_components = new ArrayList<>();
 		if (market_apps != null) {
-			final List<ComponentName> exclude_components = new ArrayList<>();
 			stream(market_apps).map(r -> r.activityInfo).filter(ai -> ! ai.packageName.equals(caller)).forEachOrdered(market_activity -> {
 				final Optional<ActivityInfo> dup_target = stream(target_resolves.get()).map(r -> r.activityInfo).filter(target_activity ->
 						market_activity.packageName.equals(target_activity.packageName) && market_activity.labelRes == target_activity.labelRes
@@ -99,11 +104,17 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 				}
 				initial_intents.add(new Intent(market_intent).setClassName(market_activity.packageName, market_activity.name));
 			});
-			if (SDK_INT >= N && ! exclude_components.isEmpty())
-				chooser.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, exclude_components.toArray(new ComponentName[0]));
+		}
+		if (SDK_INT >= N) {
+			if (isCallerIslandButNotForwarder(caller)) exclude_components.add(new ComponentName(this, AppInfoForwarderActivity.class));
+			if (! exclude_components.isEmpty()) chooser.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, exclude_components.toArray(new ComponentName[0]));
 		}
 		if (! initial_intents.isEmpty()) chooser.putExtra(EXTRA_INITIAL_INTENTS, initial_intents.toArray(new Parcelable[0]));
 		return chooser;
+	}
+
+	private boolean isCallerIslandButNotForwarder(final String caller) {
+		return getPackageName().equals(caller) && (getIntent().getFlags() & FLAG_ACTIVITY_FORWARD_RESULT) == 0;
 	}
 
 	private static boolean hasNonForwardingResolves(final List<ResolveInfo> resolves) {

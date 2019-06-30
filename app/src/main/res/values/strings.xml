@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="label_searchable">Apps in Island</string>
 
     <string name="tab_mainland">Mainland</string>
     <string name="tab_island">Island</string>
@@ -200,5 +201,4 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="pref_privacy_active_island_notification_title">Notification for active Island space</string>
     <string name="pref_privacy_active_island_notification_summary">with action to quickly deactivate, to prevent all background behaviors within the Island space.</string>
-
 </resources>

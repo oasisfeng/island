@@ -34,10 +34,10 @@
         <activity android:name=".AppInfoForwarderActivity"
                   android:taskAffinity=""
                   android:excludeFromRecents="true"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                  android:exported="false"> <!-- Not exported to be visible only to system Settings. -->
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.SHOW_APP_INFO" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

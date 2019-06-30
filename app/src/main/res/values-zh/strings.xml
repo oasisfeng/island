@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="label_searchable">炼妖壶中的应用</string>
 
     <string name="tab_mainland">山海界</string>
     <string name="tab_island">壶中界</string>
@@ -196,5 +197,4 @@
     <string name="tip_action_ignore">忽略</string>
     <string name="tip_critical_package_required">关键应用（或组件）</string>
     <string name="tip_critical_package_message">“%1$s”是一个关键的系统应用（或组件），需保留以确保壶中界的正常运作。\n\n立即采取行动以避免预期之外的应用或系统功能异常。</string>
-
 </resources>

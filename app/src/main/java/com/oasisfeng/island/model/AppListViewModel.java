@@ -2,6 +2,7 @@ package com.oasisfeng.island.model;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.SearchManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -60,7 +61,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.HandlerCompat;
 import androidx.lifecycle.MutableLiveData;
-import java9.util.Optional;
 import java9.util.concurrent.CompletableFuture;
 import java9.util.concurrent.CompletionStage;
 import java9.util.function.BooleanSupplier;
@@ -111,14 +111,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	/** @see SearchView.OnQueryTextListener#onQueryTextSubmit(String) */
-	public boolean onQueryTextSubmit(final @Nullable MenuItem item, final String text) {
+	public void onQueryTextSubmit(final String text) {
 		mChipsVisible.setValue(! TextUtils.isEmpty(text) || mFilterIncludeHiddenSystemApps.getValue());
 		if (! TextUtils.equals(text, mFilterText.getValue())) {
 			mHandler.removeCallbacksAndMessages(mFilterText);
 			mFilterText.setValue(text);
 		}
-		if (item != null) item.collapseActionView();
-		return true;
 	}
 
 	public void onSearchClick(final SearchView view) {
@@ -127,19 +125,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	/** @see SearchView.OnCloseListener#onClose() */
 	public boolean onSearchViewClose() {
-		onQueryTextSubmit(null, mFilterText.getValue());
+		onQueryTextSubmit(mFilterText.getValue());
 		return true;
 	}
 
 	public void onQueryTextCleared() {
-		onQueryTextSubmit(null, "");
-	}
-
-	private boolean matchQueryText(final IslandAppInfo app) {
-		final String text = mFilterText.getValue();
-		if (text.isEmpty()) return true;
-		final String text_lc = text.toLowerCase();
-		return app.packageName.toLowerCase().contains(text_lc) || app.getLabel().toLowerCase().contains(text_lc);	// TODO: Support T9 Pinyin
+		onQueryTextSubmit("");
 	}
 
 	private void updateActiveFilters() {
@@ -147,11 +138,20 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final Filter primary_filter = mPrimaryFilter.getValue();
 		if (primary_filter == null) return;
 		Log.d(TAG, "Primary filter: " + primary_filter);
-		Predicate<IslandAppInfo> combined_filter = mFilterShared.and(primary_filter.mFilter);
+		Predicate<IslandAppInfo> filters = mFilterShared.and(primary_filter.mFilter);
 		if (! mFilterIncludeHiddenSystemApps.getValue())
-			combined_filter = combined_filter.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
-		if (! TextUtils.isEmpty(mFilterText.getValue())) combined_filter = combined_filter.and(this::matchQueryText);
-		mActiveFilters = combined_filter;
+			filters = filters.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
+		final String text = mFilterText.getValue();
+		if (! TextUtils.isEmpty(text)) {
+			if (text.startsWith("package:")) {
+				final String pkg = text.substring(8);
+				filters = filters.and(app -> app.packageName.equals(pkg));
+			} else {    // TODO: Support T9 Pinyin
+				final String text_lc = text.toLowerCase();
+				filters = filters.and(app -> app.packageName.toLowerCase().contains(text_lc) || app.getLabel().toLowerCase().contains(text_lc));
+			}
+		}
+		mActiveFilters = filters;
 
 		final AppViewModel selected = mSelection.getValue();
 		clearSelection();
@@ -192,7 +192,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		return true;
 	}
 
-	public void attach(final Context context, final Menu actions, final BottomNavigationView tabs, final @Nullable Bundle saved_state) {
+	public void attach(final Context context, final Menu actions, final BottomNavigationView tabs, final @Nullable Bundle state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
 		mActions = actions;
@@ -204,12 +204,24 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			mPrimaryFilter.setValue(Filter.Mainland);
 			setTitle(context, tabs.getMenu().findItem(R.id.tab_mainland));
 		} else {
-			final int ordinal = Optional.ofNullable(saved_state).map(s -> s.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE)).orElse(Filter.Island.ordinal()/* default */);
-			final Filter primary_filter = Filter.values()[ordinal];
+			Filter primary_filter = Filter.Island;		// Default
+			if (state != null) {
+				final int ordinal = state.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE, -1);
+				if (ordinal >= 0 && ordinal < Filter.values().length) primary_filter = Filter.values()[ordinal];
+				else {
+					UserHandle user = state.getParcelable(Intent.EXTRA_USER);
+					if (user == null) user = Users.current();
+					if (user.equals(Users.owner)) primary_filter = Filter.Mainland;
+				}
+			}
 			tabs.setSelectedItemId(primary_filter == Filter.Mainland ? R.id.tab_mainland : R.id.tab_island);
 			mPrimaryFilter.setValue(primary_filter);
-			mFilterIncludeHiddenSystemApps.setValue(saved_state != null && saved_state.getBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS));
+			mFilterIncludeHiddenSystemApps.setValue(state != null && state.getBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS));
 			setTitle(context, tabs.getMenu().findItem(tabs.getSelectedItemId()));
+		}
+		if (state != null) {
+			final String filter_text = state.getString(SearchManager.QUERY);
+			if (filter_text != null && ! filter_text.isEmpty()) onQueryTextSubmit(filter_text);
 		}
 		// Start observation after initial value is set.
 		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
@@ -230,6 +242,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final Filter primary_filter = mPrimaryFilter.getValue();
 		if (primary_filter != null) saved.putInt(STATE_KEY_FILTER_PRIMARY_CHOICE, primary_filter.ordinal());
 		saved.putBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS, mFilterIncludeHiddenSystemApps.getValue());
+		final String text = mFilterText.getValue();
+		if (! text.isEmpty()) saved.putString(SearchManager.QUERY, text);
 	}
 
 	private void updateActions() {

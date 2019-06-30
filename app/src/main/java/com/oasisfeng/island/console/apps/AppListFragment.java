@@ -110,7 +110,7 @@ public class AppListFragment extends LifecycleFragment {
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
-		mViewModel.attach(activity, mBinding.toolbar.getMenu(), mBinding.bottomNavigation, saved_state);
+		mViewModel.attach(activity, mBinding.toolbar.getMenu(), mBinding.bottomNavigation, saved_state != null ? saved_state : getArguments());
 		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
@@ -148,8 +148,14 @@ public class AppListFragment extends LifecycleFragment {
 				search_view.setOnSearchClickListener(v -> mViewModel.onSearchClick((SearchView) v));
 				search_view.setOnCloseListener(() -> mViewModel.onSearchViewClose());
 				search_view.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-					@Override public boolean onQueryTextChange(final String text) { return mViewModel.onQueryTextChange(text); }
-					@Override public boolean onQueryTextSubmit(final String query) { return mViewModel.onQueryTextSubmit(item, query); }
+					@Override public boolean onQueryTextChange(final String text) {
+						return mViewModel.onQueryTextChange(text);
+					}
+					@Override public boolean onQueryTextSubmit(final String query) {
+						mViewModel.onQueryTextSubmit(query);
+						item.collapseActionView();
+						return true;
+					}
 				});
 			}
 			return true;

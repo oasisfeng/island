@@ -1,5 +1,6 @@
 package com.oasisfeng.island;
 
+import android.app.SearchManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -110,7 +111,16 @@ public class MainActivity extends LifecycleActivity {
 	private void startMainUi(final Bundle savedInstanceState) {
 		setContentView(R.layout.activity_main);
 		if (savedInstanceState != null) return;
-		getFragmentManager().beginTransaction().replace(R.id.container, new AppListFragment()).commit();
+		final AppListFragment fragment = new AppListFragment();
+		final Intent intent = getIntent();
+		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+			final Bundle arguments = new Bundle();
+			arguments.putString(SearchManager.QUERY, intent.getStringExtra(SearchManager.QUERY));
+			final UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
+			if (user != null) arguments.putParcelable(Intent.EXTRA_USER, user);
+			fragment.setArguments(arguments);
+		}
+		getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
 		performOverallAnalyticsIfNeeded();
 	}
 
