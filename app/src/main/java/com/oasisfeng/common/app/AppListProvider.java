@@ -49,14 +49,14 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		final String authority = context.getPackageName() + AUTHORITY_SUFFIX;		// Do not use BuildConfig.APPLICATION_ID
 		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(authority);
 		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + authority);
-		try {
+		try {	// DO NOT replace this with try-with-resources, since ContentProviderClient.close() was added in API 24.
 			final ContentProvider provider = client.getLocalContentProvider();
 			if (provider == null)
 				throw new IllegalStateException("android:multiprocess=\"true\" is required for this provider.");
 			if (! (provider instanceof AppListProvider)) throw new IllegalArgumentException("");
 			@SuppressWarnings("unchecked") final T casted = (T) provider;
 			return casted;
-		} finally { //noinspection deprecation
+		} finally {
 			client.release();
 		}
 	}
@@ -91,7 +91,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		context().registerReceiver(mPackagesEventsObserver, pkgs_filter);
 
 		//noinspection WrongConstant
-		for (final ApplicationInfo app : context().getPackageManager().getInstalledApplications(PM_FLAGS_GET_APP_INFO))
+		for (final ApplicationInfo app : context().getPackageManager().getInstalledApplications(PM_FLAGS_APP_INFO))
 			apps.put(app.packageName, createEntry(app, null));
 	}
 
@@ -99,7 +99,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		final Map<String, T> apps = mAppMap.get();
 		T entry = null;
 		try { //noinspection WrongConstant
-			final ApplicationInfo info = context().getPackageManager().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
+			final ApplicationInfo info = context().getPackageManager().getApplicationInfo(pkg, PM_FLAGS_APP_INFO);
 			final T last_entry = mAppMap.get().get(pkg);
 			entry = createEntry(info, last_entry);
 		} catch (final PackageManager.NameNotFoundException ignored) {}
@@ -130,7 +130,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 			for (final String pkg : pkgs) {
 				ApplicationInfo info = null;
 				try { //noinspection WrongConstant
-					info = context().getPackageManager().getApplicationInfo(pkg, PM_FLAGS_GET_APP_INFO);
+					info = context().getPackageManager().getApplicationInfo(pkg, PM_FLAGS_APP_INFO);
 				} catch (final PackageManager.NameNotFoundException ignored) {}
 				if (info == null) {
 					Log.w(TAG, "Unexpected package absence: " + pkg);
@@ -247,7 +247,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 
 	private static final int CALLBACK_UPDATE = 0;
 	private static final int CALLBACK_REMOVE = -1;
-	@SuppressLint("InlinedApi") protected static final int PM_FLAGS_GET_APP_INFO
+	@SuppressLint("InlinedApi") protected static final int PM_FLAGS_APP_INFO
 			= PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS;
 	private static final String TAG = "AppListProvider";
 }

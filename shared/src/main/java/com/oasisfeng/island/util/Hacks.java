@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
@@ -91,9 +90,6 @@ public class Hacks {
 	static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked>
 			DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
 			.returning(String.class).fallbackReturning(null).withoutParams();
-	@RequiresApi(N) public static final @Nullable Hack.HackedMethod3<ApplicationInfo, LauncherApps, Exception, Unchecked, Unchecked, String, Integer, UserHandle>
-			LauncherApps_getApplicationInfo = SDK_INT < N ? null : Hack.into(LauncherApps.class).method("getApplicationInfo").throwing()	// NameNotFoundException added since Android O.
-			.returning(ApplicationInfo.class).withParams(String.class, int.class, UserHandle.class);
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle>
 			Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class)
 			.fallbackReturning(false).withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
