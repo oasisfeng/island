@@ -25,8 +25,12 @@ import java9.util.concurrent.CompletionStage;
  */
 public class MethodShuttle {
 
-	public interface GeneralVoidMethod { void invoke(); }
-	public interface GeneralMethod<ReturnType> { ReturnType invoke(); }
+	public interface GeneralVoidMethod extends ShuttleMethod { void invoke(); }
+	public interface GeneralMethod<ReturnType> extends ShuttleMethod { ReturnType invoke(); }
+	public interface GeneralContextFunction<ReturnType> extends ShuttleMethod { ReturnType apply(Context context); }
+	public interface GeneralContextRunnable extends ShuttleMethod { void run(Context context); }
+
+	private interface ShuttleMethod {}
 
 	/** @param lambda should be a lambda function without return value.
 	 *                Context (but not its derivation) and types acceptable by {@link Parcel#writeValue(Object)} can be carried. */
@@ -40,7 +44,15 @@ public class MethodShuttle {
 		return shuttle(context, lambda);
 	}
 
-	private static <Result> CompletionStage<Result> shuttle(final Context context, final Object lambda) {
+	public static <R> CompletionStage<R> runInProfile(final Context context, final GeneralContextFunction<R> lambda) {
+		return shuttle(context, lambda);
+	}
+
+	public static CompletionStage<Void> runInProfile(final Context context, final GeneralContextRunnable lambda) {
+		return shuttle(context, lambda);
+	}
+
+	private static <Result> CompletionStage<Result> shuttle(final Context context, final ShuttleMethod lambda) {
 		final Class<?> clazz = lambda.getClass();
 		final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
 		if (constructors == null || constructors.length < 1) throw new IllegalArgumentException("The method must have at least one constructor");
@@ -109,9 +121,13 @@ public class MethodShuttle {
 					constructor.setAccessible(true);
 					final Object[] args = invocation.args;
 					final Class<?>[] arg_types = constructor.getParameterTypes();
-					for (int i = 0; i < arg_types.length; i++) if (arg_types[i] == Context.class) args[i] = MethodShuttleService.this;	// Fill in context
+					for (int i = 0; i < arg_types.length; i ++) if (arg_types[i] == Context.class) args[i] = MethodShuttleService.this;	// Fill in context
 					final Object instance = constructor.newInstance(args);
-					if (instance instanceof GeneralVoidMethod)
+					if (instance instanceof GeneralContextRunnable)
+						((GeneralContextRunnable) instance).run(MethodShuttleService.this);
+					else if (instance instanceof GeneralContextFunction)
+						invocation.result = ((GeneralContextFunction) instance).apply(MethodShuttleService.this);
+					else if (instance instanceof GeneralVoidMethod)
 						((GeneralVoidMethod) instance).invoke();
 					else if (instance instanceof GeneralMethod)
 						invocation.result = ((GeneralMethod) instance).invoke();
