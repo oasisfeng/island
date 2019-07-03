@@ -49,7 +49,6 @@ import static android.os.Build.VERSION_CODES.N;
 	/** This list serves as a known common package names for quick filtering */
 	private static final Collection<String> sCriticalSystemPkgs = Arrays.asList(
 			"android",
-			"com.android.systemui",					// This package is generally safe to either freeze or not, leave them unfrozen for better compatibility.
 			"com.android.settings",					// For various setting intent activities
 			"com.android.keychain",					// MIUI system will crash without this
 			"com.android.providers.telephony",		// The SMS & MMS and carrier info provider. (SMS & MMS provider is shared across all users)
