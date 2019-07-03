@@ -29,6 +29,7 @@ import java.util.List;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.RequiresPermission;
 
 import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
@@ -150,7 +151,9 @@ public class Hacks {
 			UserHandle getUserHandle();
 		}
 
-		List<UserInfo> getUsers();
+		/** Requires permission MANAGE_USERS only if userHandle is not current user */
+		List<UserInfo> getProfiles(int userHandle);
+		@RequiresPermission("android.permission.MANAGE_USERS") List<UserInfo> getUsers();
 		boolean removeUser(@UserIdInt int userHandle);
 	}
 	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
