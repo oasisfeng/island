@@ -22,6 +22,7 @@ import com.oasisfeng.pattern.PseudoContentProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -96,10 +97,11 @@ import static android.os.Build.VERSION_CODES.O;
 		}
 	}
 
-	private void refreeze(final Context context, final String pkg, final ArrayList<String> watching_permissions) {
+	private void refreeze(final Context context, final String pkg, final @Nullable List<String> watching_permissions) {
 		if (mCallerId == null) mCallerId = PendingIntent.getBroadcast(context, 0, new Intent(), FLAG_UPDATE_CURRENT);
 		context.sendBroadcast(new Intent(Api.latest.ACTION_FREEZE, Uri.fromParts("package", pkg, null))
 				.putExtra(Api.latest.EXTRA_CALLER_ID, mCallerId).setPackage(context.getPackageName()));
+		if (watching_permissions == null) return;
 		final PackageManager pm = context.getPackageManager();
 		final String[] granted_permissions = watching_permissions.stream().filter(p -> pm.checkPermission(p, pkg) == PERMISSION_GRANTED).toArray(String[]::new);
 		if (granted_permissions.length == 0) return;

@@ -173,11 +173,13 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);    // Special path for open file descriptor
 			if (pkg_info == null) return null;
 			final ApplicationInfo app_info = pkg_info.applicationInfo;
-			final CharSequence app_label;
+			CharSequence app_label = null;
 			if (app_info.nonLocalizedLabel == null && Hacks.AssetManager_constructor != null && Hacks.AssetManager_addAssetPath != null) {
 				final AssetManager am = Hacks.AssetManager_constructor.invoke().statically();
 				Hacks.AssetManager_addAssetPath.invoke(path).on(am);
-				app_label = new Resources(am, null, null).getText(app_info.labelRes);
+				try {
+					app_label = new Resources(am, null, null).getText(app_info.labelRes);
+				} catch (final Resources.NotFoundException ignored) {}
 			} else app_label = app_info.nonLocalizedLabel;
 			return new Pair<>(pkg_info, app_label == null ? app_info.packageName : app_label.toString());
 		} finally {

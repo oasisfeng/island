@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
@@ -78,9 +79,14 @@ public class IslandManager {
 
 	@OwnerUser public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
 		final LauncherApps launcher_apps = requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
-		final List<LauncherActivityInfo> activities = launcher_apps.getActivityList(pkg, profile);
-		if (activities == null || activities.isEmpty()) return false;
-		launcher_apps.startMainActivity(activities.get(0).getComponentName(), profile, null, null);
+		try {
+			final List<LauncherActivityInfo> activities = launcher_apps.getActivityList(pkg, profile);
+			if (activities == null || activities.isEmpty()) return false;
+			launcher_apps.startMainActivity(activities.get(0).getComponentName(), profile, null, null);
+		} catch (final SecurityException e) {		// SecurityException: Cannot retrieve activities for unrelated profile 10
+			Log.e(TAG, "Error launching app: " + pkg + " @ user " + profile, e);
+			return false;
+		}
 		return true;
 	}
 
@@ -89,4 +95,6 @@ public class IslandManager {
 			return Hacks.UserManager_getProfileIds.invoke(UserHandles.MY_USER_ID, false).on(requireNonNull(context.getSystemService(UserManager.class)));
 		else return requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles().stream().mapToInt(Users::toId).toArray();	// Fallback to profiles without disabled.
 	}
+
+	private static final String TAG = "Island.Manager";
 }
