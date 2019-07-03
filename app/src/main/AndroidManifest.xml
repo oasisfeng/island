@@ -21,6 +21,7 @@
                  tools:ignore="AllowBackup,GoogleAppIndexingWarning">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
+        <meta-data android:name="com.google.android.actions" android:resource="@xml/actions" /> <!-- Placed here instead of module "mobile" for App Action Test Tool to work -->
 
         <!-- windowSoftInputMode="adjustPan" to avoid bottom-sheet hanging in the center of screen when search is finished and IME panel is closed. -->
         <activity android:name="com.oasisfeng.island.MainActivity" android:windowSoftInputMode="adjustPan">
@@ -36,11 +37,22 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
             <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
         </activity>
 
         <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
+
+        <activity android:name="com.oasisfeng.island.action.FeatureActionActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:excludeFromRecents="true">
+            <intent-filter> <!-- Deep-link for App Actions -->
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="island" android:host="feature" />
+            </intent-filter>
+        </activity>
 
         <provider android:authorities="${applicationId}.apps"
                   android:name="com.oasisfeng.island.data.IslandAppListProvider"

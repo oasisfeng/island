@@ -127,7 +127,7 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 		return "launch:" + (user == null || Users.isOwner(user) ? pkg : pkg + "@" + Users.toId(user));
 	}
 
-	/** Runs in managed profile or device owner */
+	/** Runs in managed profile or owner user */
 	private boolean launchApp(final Intent intent) {
 		final Uri uri = intent.getData();
 		if (uri == null) return false;
@@ -162,26 +162,32 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 				if ((component = ComponentName.unflattenFromString(target)) == null) return false;
 				pkg = component.getPackageName();
 			} else return false;
-			if (! prepareToLaunchApp(pkg)) return false;
-
-			final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg).addFlags(FLAG_ACTIVITY_NEW_TASK);
-			if (component == null) {    // Entrance activity may not contain CATEGORY_DEFAULT, component must be set in launch intent.
-				final ResolveInfo resolve = getPackageManager().resolveActivity(launch_intent, 0);
-				if (resolve == null) return false;
-				launch_intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));
-			} else launch_intent.setComponent(component);
-			try {
-				startActivity(launch_intent);
-			} catch (final ActivityNotFoundException e) {
-				if (component == null) return false;	// Already attempted to launch by package above.
-				try {
-					startActivity(launch_intent.setComponent(null).setPackage(pkg));
-				} catch (final ActivityNotFoundException ex) {
-					return false;
-				}
-			}
-			return true;
+			return prepareToLaunchApp(pkg) && launchApp(this, pkg, component);
 		}
+	}
+
+	protected static boolean launchApp(final Context context, final String pkg, final @Nullable ComponentName component) {
+		final Intent launch_intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg).addFlags(FLAG_ACTIVITY_NEW_TASK);
+		if (component == null) {    // Entrance activity may not contain CATEGORY_DEFAULT, component must be set in launch intent.
+			final ResolveInfo resolve = context.getPackageManager().resolveActivity(launch_intent, 0);
+			if (resolve == null) return false;
+			launch_intent.setComponent(new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name));
+		} else launch_intent.setComponent(component);
+		try {
+			context.startActivity(launch_intent);
+		} catch (final ActivityNotFoundException e) {
+			if (component == null) return false;	// Already attempted to launch by package above.
+			try {
+				context.startActivity(launch_intent.setComponent(null).setPackage(pkg));
+			} catch (final ActivityNotFoundException ex) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean launchApp(final Context context, final String pkg) {
+		return launchApp(context, pkg, null);
 	}
 
 	@Override protected void onCreate(final @Nullable Bundle savedInstanceState) {
@@ -205,6 +211,4 @@ public abstract class AbstractAppLaunchShortcut extends Activity {
 	}
 
 	protected abstract void onLaunchFailed();
-
-	private static final String TAG = "AppShortcut";
 }

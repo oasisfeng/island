@@ -1,4 +1,6 @@
 apply plugin: 'com.android.feature'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
@@ -40,6 +42,7 @@ dependencies {
     implementation project(':deagle')
     implementation project(':biometric')
 
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.0.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel:2.0.0'
@@ -47,6 +50,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'com.google.firebase:firebase-appindexing:19.0.0'        // FeatureActionActivity
     implementation 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     implementation 'uk.co.samuelwall:material-tap-target-prompt:2.0.1'
     implementation(name: 'setup-wizard-lib-platform-release', ext: 'aar')
