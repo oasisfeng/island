@@ -25,7 +25,7 @@ public class ActivityShuttle {
 
 	public static ComponentName selectForwarder(final List<ResolveInfo> candidates) {
 		if (candidates != null) for (final ResolveInfo candidate : candidates) {
-			if (! "android".equals(candidate.activityInfo.packageName)) continue;
+			if (candidate.activityInfo == null || ! "android".equals(candidate.activityInfo.packageName)) continue;
 			return new ComponentName(candidate.activityInfo.packageName, candidate.activityInfo.name);
 		}
 		return null;
