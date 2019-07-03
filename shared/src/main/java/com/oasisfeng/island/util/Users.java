@@ -42,7 +42,7 @@ public abstract class Users extends PseudoContentProvider {
 
 	@Override public boolean onCreate() {
 		final int priority = IntentFilter.SYSTEM_HIGH_PRIORITY - 1;
-		context().registerReceiver(mProfileChangeObserver,
+		context().registerReceiver(mProfileChangeObserver,		// ACTION_MANAGED_PROFILE_ADDED is sent by DevicePolicyManagerService.setProfileEnabled()
 				IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED, Intent.ACTION_MANAGED_PROFILE_REMOVED).inPriority(priority));
 		refreshUsers(context());
 		return true;

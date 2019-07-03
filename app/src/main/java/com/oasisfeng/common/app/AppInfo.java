@@ -138,7 +138,7 @@ public class AppInfo extends ApplicationInfo {
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;
 	// Global Thread-pool for app label & icon loading
-	static final ThreadPoolExecutor TASK_THREAD_POOL = new ThreadPoolExecutor(0, 16, 1, SECONDS,
+	static final ThreadPoolExecutor TASK_THREAD_POOL = new ThreadPoolExecutor(0, 8, 1, SECONDS,
 			new LinkedBlockingQueue<>(1024), r -> new Thread(r, "AppInfo.AsyncTask"), new CallerRunsPolicy()/* In worst case */);
 	static { TASK_THREAD_POOL.allowCoreThreadTimeOut(true); }
 

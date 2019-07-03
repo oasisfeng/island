@@ -248,6 +248,6 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	private static final int CALLBACK_UPDATE = 0;
 	private static final int CALLBACK_REMOVE = -1;
 	@SuppressLint("InlinedApi") protected static final int PM_FLAGS_APP_INFO
-			= PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS;
+			= PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS;
 	private static final String TAG = "AppListProvider";
 }

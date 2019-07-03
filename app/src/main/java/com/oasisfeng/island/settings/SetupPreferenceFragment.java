@@ -50,11 +50,10 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 
 	@Override public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		final Activity activity = getActivity();
 
 		final ActionButtonPreference pref_setup_mainland = (ActionButtonPreference) findPreference(getString(R.string.key_setup_mainland));
 		final Preference pref_mainland_reprovisioning = findPreference(getString(R.string.key_setup_mainland_reprovision));
-		if (new DevicePolicies(activity).isActiveDeviceOwner()) {
+		if (new DevicePolicies(getActivity()).isActiveDeviceOwner()) {
 			pref_setup_mainland.setSummaryAndActionButton(R.string.pref_setup_mainland_summary_managed, R.drawable.ic_cancel_black_24dp, p -> {
 				IslandSetup.requestDeviceOwnerDeactivation(getActivity());
 				return true;
@@ -64,7 +63,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			pref_mainland_reprovisioning.setOnPreferenceClickListener(p -> {
 				final Context context = getActivity();		// ACTION_PROVISION_MANAGED_DEVICE is handled by IslandProvisioning.
 				if (context != null && null == context.startService(new Intent(ACTION_PROVISION_MANAGED_DEVICE).setPackage(Modules.MODULE_ENGINE)))
-					Toast.makeText(activity, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+					Toast.makeText(context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
 				return true;
 			});
 		} else {
@@ -78,7 +77,7 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 		final ActionButtonPreference pref_island = (ActionButtonPreference) findPreference(getString(R.string.key_setup_island));
 		final @UserIdInt int[] profile_ids;
 		if (Users.profile != null) {
-			if (DevicePolicies.isProfileOwner(activity, Users.profile)) {		// Normal (managed by Island)
+			if (DevicePolicies.isProfileOwner(getActivity(), Users.profile)) {		// Normal (managed by Island)
 				pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed, R.drawable.ic_delete_forever_black_24dp, p -> {
 					IslandSetup.requestProfileRemoval(getActivity());
 					return true;
@@ -86,9 +85,9 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 				final Preference pref_island_reprovisioning = findPreference(getString(R.string.key_setup_island_reprovision));
 				pref_island_reprovisioning.setEnabled(true);
 				pref_island_reprovisioning.setOnPreferenceClickListener(p -> {
-					final Context context = getActivity();
-					if (context != null) MethodShuttle.runInProfile(context, () ->	// ACTION_PROVISION_MANAGED_PROFILE is handled by IslandProvisioning.
-						ContextCompat.startForegroundService(context, new Intent(ACTION_PROVISION_MANAGED_PROFILE).setPackage(Modules.MODULE_ENGINE))
+					final Activity activity = getActivity();
+					if (activity != null) MethodShuttle.runInProfile(activity, () ->	// ACTION_PROVISION_MANAGED_PROFILE is handled by IslandProvisioning.
+						ContextCompat.startForegroundService(activity, new Intent(ACTION_PROVISION_MANAGED_PROFILE).setPackage(Modules.MODULE_ENGINE))
 					).exceptionally(t -> {	// Toast for success will be shown by IslandProvisioning.
 						Toasts.show(activity, R.string.toast_internal_error, Toast.LENGTH_LONG);
 						Analytics.$().logAndReport(TAG, "Error reprovisioning Island", t);
@@ -99,10 +98,10 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 			} else pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_managed_other,
 					R.drawable.ic_delete_forever_black_24dp, p -> startAccountSettingActivity());
 		} else {
-			if (SDK_INT >= N && (profile_ids = IslandManager.getProfileIdsIncludingDisabled(activity)).length > 1) {
+			if (SDK_INT >= N && (profile_ids = IslandManager.getProfileIdsIncludingDisabled(getActivity())).length > 1) {
 				for (final int profile_id : profile_ids) {
 					if (Users.isOwner(profile_id)) continue;
-					if (! DevicePolicies.isProfileOwner(activity, UserHandles.of(profile_id)))
+					if (! DevicePolicies.isProfileOwner(getActivity(), UserHandles.of(profile_id)))
 						continue;	// Managed by other app. It may be coexistent with Island. (e.g. Secure Folder on Samsung devices with Android P)
 					pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_incomplete, R.drawable.ic_build_black_24dp,
 							preference -> startSetupActivityCleanly());
@@ -110,15 +109,14 @@ public class SetupPreferenceFragment extends SettingsActivity.SubPreferenceFragm
 				}
 			}
 			pref_island.setSummaryAndActionButton(R.string.pref_setup_island_summary_pending_setup, R.drawable.ic_build_black_24dp, preference -> {
-				if (SetupViewModel.checkManagedProvisioningPrerequisites(activity, true) == null)
+				final Activity current_activity = getActivity();
+				if (current_activity == null) return true;
+				if (SetupViewModel.checkManagedProvisioningPrerequisites(current_activity, true) == null)
 					return startSetupActivityCleanly();		// Prefer ManagedProvision, which could also fallback to root routine.
 
-				SafeAsyncTask.execute(activity, a -> Shell.SU.available(), su_available -> {
-					final Activity activity_now = getActivity();
-					if (activity_now == null) return;
-
-					if (su_available) IslandSetup.requestProfileOwnerSetupWithRoot(activity_now);
-					else WebContent.view(getActivity(), Uri.parse(Config.URL_SETUP.get()));
+				SafeAsyncTask.execute(current_activity, context -> Shell.SU.available(), (activity, su_available) -> {
+					if (su_available) IslandSetup.requestProfileOwnerSetupWithRoot(activity);
+					else WebContent.view(activity, Uri.parse(Config.URL_SETUP.get()));
 				});
 				return true;
 			});

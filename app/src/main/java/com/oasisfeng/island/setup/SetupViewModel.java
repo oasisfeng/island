@@ -93,12 +93,12 @@ public class SetupViewModel implements Parcelable {
 					SafeAsyncTask.execute(activity, _a -> {
 						try {		// Worker thread
 							Shell.SU.run("setprop persist.sys.no_req_encrypt 1");
+							if (! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
 						} catch (final Exception e) {
 							Log.e(TAG, "Error running root command", e);
 						}
 						return null;
-					}, _r -> {		// Main thread
-						if (! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
+					}, (_a, _r) -> {		// Main thread
 						if (fragment.getActivity() == null) return;
 						startManagedProvisioning(fragment);
 					});

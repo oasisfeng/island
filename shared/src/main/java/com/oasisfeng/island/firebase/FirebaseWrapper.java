@@ -103,5 +103,5 @@ import androidx.annotation.NonNull;
 		}
 	}
 
-	static final String TAG = "FirebaseWrapper";
+	private static final String TAG = "FirebaseWrapper";
 }

@@ -113,7 +113,7 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
     }
 
     class Initializer : PseudoContentProvider() { override fun onCreate(): Boolean {
-        val policies = DevicePolicies(context)
+        val context = context(); val policies = DevicePolicies(context)
         if (policies.isProfileOrDeviceOwnerOnCallingUser) try {
             policies.execute(DevicePolicyManager::setRestrictionsProvider, ComponentName(context, DelegatedScopeAuthorization::class.java))
             // This allows us (thus API caller) to call DevicePolicyManager APIs with null as admin component argument.

@@ -114,7 +114,7 @@ public class ShortcutShuttle extends BroadcastReceiver {
 			}
 		}
 
-		final Intent shuttle_intent = AppLaunchShortcut.createShortcutOnLauncher(context, target_intent);
+		final Intent shuttle_intent = AppLaunchShortcut.createShortcutOnLauncher(target_intent);
 		shuttle_intent.putExtra(AppLaunchShortcut.EXTRA_SIGNATURE, intent.getStringExtra(AppLaunchShortcut.EXTRA_SIGNATURE));
 		final String id = "#" + shortcut_name.hashCode() + "@" + Users.toId(Users.profile);        // #<hash>@<user>
 		final ShortcutInfoCompat info = new ShortcutInfoCompat.Builder(context, id).setShortLabel(shortcut_name)

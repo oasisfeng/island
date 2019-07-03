@@ -117,7 +117,7 @@
         </service>
 
         <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" android:exported="false"
-                 android:directBootAware="true" tools:targetApi="n">
+                 android:directBootAware="true" tools:targetApi="N">
             <intent-filter>
                 <action android:name="android.app.action.PROVISION_MANAGED_PROFILE" />
                 <action android:name="android.app.action.PROVISION_MANAGED_DEVICE" />
@@ -142,7 +142,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.oasisfeng.island.provisioning.ManualProvisioningReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="n">
+        <receiver android:name="com.oasisfeng.island.provisioning.ManualProvisioningReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="N">
             <intent-filter android:priority="9999"> <!-- High priority to ensure being executed as early as possible -->
                 <action android:name="android.intent.action.USER_INITIALIZE" />
                 <action android:name="android.app.action.DEVICE_OWNER_CHANGED" />
@@ -151,7 +151,7 @@
 
         <provider android:name="com.oasisfeng.island.provisioning.AutoIncrementalProvision" android:authorities="${applicationId}.AIP" android:exported="false"/>
 
-        <receiver android:name="com.oasisfeng.island.AppUpdateReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="n">
+        <receiver android:name="com.oasisfeng.island.AppUpdateReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="N">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>

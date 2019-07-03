@@ -1,6 +1,8 @@
 <resources>
     <string name="notification_island_watcher_title">壶中界 运转中</string>
     <string name="notification_island_watcher_text">封印它可终止其中所有的潜在活动</string>
+    <string name="notification_app_watcher_title">%s 已解冻</string>
+    <string name="notification_app_watcher_text">待冻结</string>
     <string name="action_deactivate_island">封印</string>
     <string name="action_settings">设置</string>
 

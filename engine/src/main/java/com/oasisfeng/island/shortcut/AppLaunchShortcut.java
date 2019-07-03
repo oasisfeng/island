@@ -1,6 +1,5 @@
 package com.oasisfeng.island.shortcut;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.widget.Toast;
@@ -26,7 +25,7 @@ public class AppLaunchShortcut extends AbstractAppLaunchShortcut {
 
 	public static final String EXTRA_SIGNATURE = "signature";		// String
 
-	public static Intent createShortcutOnLauncher(final Context context, final Intent target_intent) {
+	public static Intent createShortcutOnLauncher(final Intent target_intent) {
 		final Uri target_intent_uri = Uri.parse(target_intent.toUri(Intent.URI_INTENT_SCHEME)).buildUpon().scheme("target").build();
 		return new Intent(ACTION_LAUNCH_CLONE).addCategory(CATEGORY_LAUNCHER).setData(target_intent_uri);
 	}

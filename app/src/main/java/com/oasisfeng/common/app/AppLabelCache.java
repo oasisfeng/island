@@ -1,5 +1,6 @@
 package com.oasisfeng.common.app;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentCallbacks;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -10,8 +11,9 @@ import android.util.Log;
 
 import com.oasisfeng.island.util.Hacks;
 
+import java.util.Objects;
+
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
@@ -27,6 +29,8 @@ class AppLabelCache implements ComponentCallbacks {
 
 	/** Get the cached label if valid. If not cached or invalid, trigger an asynchronous update. */
 	@Nullable String get(final AppInfo info) {
+		if (info.nonLocalizedLabel != null) return filterString(info.nonLocalizedLabel.toString());
+
 		final String pkg = info.packageName;
 		final int version = Hacks.ApplicationInfo_versionCode.get(info);	// 0 if hack is incompatible
 		final String version_key = pkg + KEY_VERSION_CODE_SUFFIX;
@@ -36,33 +40,14 @@ class AppLabelCache implements ComponentCallbacks {
 
 		// Load label asynchronously
 		Log.v(TAG, (cached_version == -1 ? "Load: " : "Reload: ") + info.packageName);
-		new AsyncTask<Void, Void, String>() {
+		@SuppressWarnings("unused") @SuppressLint("StaticFieldLeak") final AsyncTask unused = new AsyncTask<Void, Void, String>() {
 			@Override protected String doInBackground(final Void... params) {
-				final String label = info.loadLabel(mPackageManager).toString();
-				return filterString(label);
-			}
-
-			private String filterString(final String name) {
-				if (name == null) return null;
-				StringBuilder buffer = null;
-				for (int i = 0; i < name.length(); i ++) {
-					final char c = name.charAt(i);
-					if (c >= 0x20) {
-						if (buffer != null) buffer.append(c);
-						continue;
-					}
-					// Bad char found
-					if (buffer == null) {
-						buffer = new StringBuilder(name.length());
-						buffer.append(name, 0, i);
-					}
-				}
-				return buffer == null ? name : buffer.toString();
+				return filterString(info.loadLabel(mPackageManager).toString());
 			}
 
 			@Override protected void onPostExecute(final String label) {
 				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
-				if (label == null ? cached_label == null : label.equals(cached_label)) return;	// Unchanged
+				if (Objects.equals(label, cached_label)) return;	// Unchanged
 				Log.v(TAG, "Loaded: " + info.packageName + " = " + label);
 				mCallback.onLabelUpdate(pkg);
 			}
@@ -70,10 +55,21 @@ class AppLabelCache implements ComponentCallbacks {
 		return null;
 	}
 
+	private static String filterString(final String name) {
+		if (name == null) return null;
+		StringBuilder buffer = null;
+		for (int i = 0; i < name.length(); i ++) {
+			final char c = name.charAt(i);
+			if (c < 0x20) {		// Bad char found
+				if (buffer == null) buffer = new StringBuilder(name.length()).append(name, 0, i);
+			} else if (buffer != null) buffer.append(c);
+		}
+		return buffer == null ? name : buffer.toString();
+	}
+
 	@Override public void onConfigurationChanged(final Configuration config) {
 		final String language_tags;
-		if (SDK_INT < N) //noinspection deprecation
-			language_tags = config.locale.toLanguageTag();
+		if (SDK_INT < N) language_tags = config.locale.toLanguageTag();
 		else language_tags = config.getLocales().toLanguageTags();
 
 		final String cache_language_tags = mStore.getString(KEY_LANGUAGE_TAGS, null);
@@ -82,10 +78,6 @@ class AppLabelCache implements ComponentCallbacks {
 	}
 
 	@Override public void onLowMemory() {}
-
-	@VisibleForTesting void invalidate() {
-		mStore.edit().clear().apply();
-	}
 
 	interface Callback { void onLabelUpdate(String pkg); }
 

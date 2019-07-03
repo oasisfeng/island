@@ -1,6 +1,6 @@
 apply plugin: 'com.android.feature'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
@@ -17,8 +17,8 @@ android {
 
 dependencies {
     implementation project(':shared')
-    compile "androidx.core:core-ktx:+"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "androidx.core:core-ktx:1.0.2"
 }
 repositories {
     mavenCentral()

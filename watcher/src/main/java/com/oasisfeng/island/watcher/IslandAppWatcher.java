@@ -132,7 +132,7 @@ import static android.os.Build.VERSION_CODES.O;
 		final CharSequence app_label = info.applicationInfo.loadLabel(context.getPackageManager());
 		NotificationIds.IslandAppWatcher.post(context, info.packageName, new Notification.Builder(context).setOngoing(true).setGroup(IslandWatcher.GROUP)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getResources().getColor(R.color.primary))
-				.setContentTitle(app_label + " is active").setContentText("Pending re-freeze")
+				.setContentTitle(context.getString(R.string.notification_app_watcher_title, app_label)).setContentText(context.getText(R.string.notification_app_watcher_text))
 				.addAction(new Action.Builder(null, "Freeze", makePendingIntent(context, ACTION_REFREEZE, "package", info.packageName,
 						watching_permissions == null ? null : intent -> intent.putStringArrayListExtra(EXTRA_WATCHING_PERMISSIONS, watching_permissions))).build())
 				.addAction(new Action.Builder(null, "Settings", PendingIntent.getActivity(context, 0,
