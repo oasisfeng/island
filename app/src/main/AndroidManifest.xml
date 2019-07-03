@@ -21,7 +21,7 @@
                  tools:ignore="AllowBackup,GoogleAppIndexingWarning">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
-        <meta-data android:name="com.google.android.actions" android:resource="@xml/actions" /> <!-- Placed here instead of module "mobile" for App Action Test Tool to work -->
+        <!-- <meta-data android:name="com.google.android.actions" android:resource="@xml/actions" /> -->
 
         <!-- windowSoftInputMode="adjustPan" to avoid bottom-sheet hanging in the center of screen when search is finished and IME panel is closed. -->
         <activity android:name="com.oasisfeng.island.MainActivity" android:windowSoftInputMode="adjustPan">
