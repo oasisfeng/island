@@ -34,6 +34,7 @@
         <activity android:name=".AppInfoForwarderActivity"
                   android:taskAffinity=""
                   android:excludeFromRecents="true"
+                  android:relinquishTaskIdentity="true"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.SHOW_APP_INFO" />
