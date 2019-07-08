@@ -160,7 +160,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		dialog.withCancelButton().withOkButton(() -> {
 			if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
 			performInstall(data, target_app_description);
-		}).setOnDismissListener(d -> finish()).setView(view).setCancelable(false).show();
+		}).setOnCancelListener(d -> finish()).setView(view).setCancelable(false).show();
 		return true;
 	}
 
@@ -267,11 +267,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 			final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
 			if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
+			final AppInstallerActivity activity = AppInstallerActivity.this;
 			switch (status) {
 			case PackageInstaller.STATUS_SUCCESS:
 				unregisterReceiver(this);
 				if (should_return_result)		// Implement the exact same result data as InstallSuccess in PackageInstaller
-					AppInstallerActivity.this.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
+					activity.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
 				AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
 				finish();
 				break;
@@ -284,20 +285,22 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				} else finish();    // Should never happen
 				break;
 			case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
-				if (should_return_result) AppInstallerActivity.this.setResult(Activity.RESULT_CANCELED);
+				if (should_return_result) activity.setResult(Activity.RESULT_CANCELED);
 				finish();
 				break;
 			default:
-				if (! should_return_result) {
-					String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-					if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
-					Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
-					if (isFinishing()) fallbackToSystemPackageInstaller("alternative.auto", null);
-					else Dialogs.buildAlert(AppInstallerActivity.this, getString(R.string.dialog_install_failure_title), message).withOkButton(() -> finish())
-							.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null))
-							.setOnDismissListener(d -> finish()).show();
-				} else AppInstallerActivity.this.setResult(Activity.RESULT_FIRST_USER,	// The exact same result data as InstallFailed in PackageInstaller
+				String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+				if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
+				Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
+				if (should_return_result) activity.setResult(Activity.RESULT_FIRST_USER,    // The exact same result data as InstallFailed in PackageInstaller
 						new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
+				if (isFinishing()) {
+					fallbackToSystemPackageInstaller("alternative.auto", null);
+					return;
+				}
+				Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
+						.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
+						.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null)).show();
 			}
 		}};
 		final Intent callback = new Intent("INSTALL_STATUS").setPackage(getPackageName());
