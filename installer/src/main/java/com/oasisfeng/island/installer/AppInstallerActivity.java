@@ -263,48 +263,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 		}
 
-		final boolean should_return_result = getIntent().getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false);
-		mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
-			final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
-			if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
-			final AppInstallerActivity activity = AppInstallerActivity.this;
-			switch (status) {
-			case PackageInstaller.STATUS_SUCCESS:
-				unregisterReceiver(this);
-				if (should_return_result)		// Implement the exact same result data as InstallSuccess in PackageInstaller
-					activity.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
-				AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
-				finish();
-				break;
-			case PackageInstaller.STATUS_PENDING_USER_ACTION:
-				final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-				if (action != null) try {
-					startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
-				} catch (final ActivityNotFoundException e) {
-					fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", e);
-				} else finish();    // Should never happen
-				break;
-			case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
-				if (should_return_result) activity.setResult(Activity.RESULT_CANCELED);
-				finish();
-				break;
-			default:
-				String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-				if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
-				Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
-				if (should_return_result) activity.setResult(Activity.RESULT_FIRST_USER,    // The exact same result data as InstallFailed in PackageInstaller
-						new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
-				if (isFinishing()) {
-					fallbackToSystemPackageInstaller("alternative.auto", null);
-					return;
-				}
-				Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
-						.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
-						.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null)).show();
-			}
-		}};
 		final Intent callback = new Intent("INSTALL_STATUS").setPackage(getPackageName());
 		registerReceiver(mStatusCallback, new IntentFilter(callback.getAction()));
+		mResultNeeded = getIntent().getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false);
 
 		mSession.commit(PendingIntent.getBroadcast(this, session_id, callback, FLAG_UPDATE_CURRENT).getIntentSender());
 
@@ -407,13 +368,54 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		return false;
 	}
 
+	private final BroadcastReceiver mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+		final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
+		if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
+		final AppInstallerActivity activity = AppInstallerActivity.this;
+		switch (status) {
+		case PackageInstaller.STATUS_SUCCESS:
+			unregisterReceiver(this);
+			if (mResultNeeded)		// Implement the exact same result data as InstallSuccess in PackageInstaller
+				activity.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
+			AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
+			finish();
+			break;
+		case PackageInstaller.STATUS_PENDING_USER_ACTION:
+			final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+			if (action != null) try {
+				startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
+			} catch (final ActivityNotFoundException e) {
+				fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", e);
+			} else finish();    // Should never happen
+			break;
+		case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
+			if (mResultNeeded) activity.setResult(Activity.RESULT_CANCELED);
+			finish();
+			break;
+		default:
+			String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+			if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
+			final Uri uri = getIntent().getData();
+			Analytics.$().event("installer_failure").with(LOCATION, uri != null ? uri.toString() : null).with(CONTENT, message).send();
+			if (mResultNeeded) activity.setResult(Activity.RESULT_FIRST_USER,    // The exact same result data as InstallFailed in PackageInstaller
+					new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
+			if (isFinishing()) {
+				fallbackToSystemPackageInstaller("alternative.auto", null);
+				return;
+			}
+			Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
+					.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
+					.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null)).show();
+		}
+	}};
+
 	private String mCallerPackage;
 	private @Nullable ApplicationInfo mCallerAppInfo;
 	private final Supplier<CharSequence> mCallerAppLabel = Suppliers.memoizeWithExpiration(() ->	// Long cache time to workaround temporarily unavailable-
 			mCallerAppInfo != null ? Apps.of(this).getAppName(mCallerAppInfo) : mCallerPackage, 30, SECONDS);	// label of self-updated app
 	private Boolean mUpdateOrInstall;	// TRUE: Update, FALSE: Install, null: Clone
+	private boolean mResultNeeded;
 	private PackageInstaller.Session mSession;
-	private BroadcastReceiver mStatusCallback;
 	private ProgressDialog mProgressDialog;
 
 	private static final String TAG = "Island.AIA";
