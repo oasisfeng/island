@@ -2,18 +2,19 @@
 <resources>
     <string name="app_installer_label">App Installer</string>
 
-    <string name="confirm_installing">\"%1$s\" requests installing \"%2$s\".\n\nAre you sure you want to continue?</string>
-    <string name="confirm_updating">\"%1$s\" requests updating \"%2$s\".\n\nAre you sure you want to continue?</string>
-    <string name="confirm_cloning">\"%1$s\" requests cloning \"%2$s\".\n\nAre you sure you want to continue?</string>
-    <string name="description_for_installing_app">%1$s (%2$s) version %3$s (%4$d)</string>
-    <string name="description_for_cloning_app">%1$s (%2$s)</string>
+    <string name="confirm_installing">\"%1$s\" requests installing %2$s.\n\nAre you sure you want to continue?</string>
+    <string name="confirm_updating">\"%1$s\" requests updating %2$s.\n\nAre you sure you want to continue?</string>
+    <string name="confirm_cloning">\"%1$s\" requests cloning %2$s.\n\nAre you sure you want to continue?</string>
+    <string name="description_for_installing_app">\"%1$s\" (%2$s) version %3$s (%4$d)</string>
+    <string name="description_for_cloning_app">\"%1$s\" (%2$s)</string>
+    <string name="description_for_installing_split">app bundle for \"%1$s\"</string>
     <string name="label_unknown_app">an app</string>
     <string name="dialog_install_checkbox_always_allow">Always allow app installation from this source.</string>
     <string name="dialog_install_failure_title">Failed to install</string>
     <string name="dialog_install_unknown_failure_message">Internal error occurred during the installation performed by Android system</string>
-    <string name="progress_dialog_installing">\"%1$s\" is installing \"%2$s\"</string>
-    <string name="progress_dialog_updating">\"%1$s\" is updating \"%2$s\"</string>
-    <string name="progress_dialog_cloning">\"%1$s\" is cloning \"%2$s\"</string>
+    <string name="progress_dialog_installing">\"%1$s\" is installing %2$s</string>
+    <string name="progress_dialog_updating">\"%1$s\" is updating %2$s</string>
+    <string name="progress_dialog_cloning">\"%1$s\" is cloning %2$s</string>
 
     <string name="notification_caller_installed_app">\"%1$s\" installed \"%2$s\"</string>
     <string name="notification_caller_updated_app">\"%1$s\" updated \"%2$s\"</string>

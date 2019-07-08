@@ -2,18 +2,19 @@
 <resources>
     <string name="app_installer_label">应用安装器</string>
 
-    <string name="confirm_installing">“%1$s”请求安装新应用“%2$s”。\n\n是否继续？</string>
-    <string name="confirm_updating">“%1$s”请求更新“%2$s”。\n\n是否继续？</string>
-    <string name="confirm_cloning">“%1$s”请求克隆“%2$s”。\n\n是否继续？</string>
-    <string name="description_for_installing_app">%1$s (%2$s) 版本 %3$s (%4$d)</string>
-    <string name="description_for_cloning_app">%1$s (%2$s)</string>
+    <string name="confirm_installing">“%1$s”请求安装 %2$s。\n\n是否继续？</string>
+    <string name="confirm_updating">“%1$s”请求更新 %2$s。\n\n是否继续？</string>
+    <string name="confirm_cloning">“%1$s”请求克隆 %2$s。\n\n是否继续？</string>
+    <string name="description_for_installing_app">“%1$s” (%2$s) 版本 %3$s (%4$d)</string>
+    <string name="description_for_cloning_app">“%1$s” (%2$s)</string>
+    <string name="description_for_installing_split">“%1$s” 的应用组件</string>
     <string name="label_unknown_app">应用</string>
     <string name="dialog_install_checkbox_always_allow">始终允许此来源安装应用</string>
     <string name="dialog_install_failure_title">安装失败</string>
     <string name="dialog_install_unknown_failure_message">Android 系统的应用安装过程发生了内部错误</string>
-    <string name="progress_dialog_installing">“%1$s”正在安装新应用“%2$s”</string>
-    <string name="progress_dialog_updating">“%1$s”正在安装“%2$s”</string>
-    <string name="progress_dialog_cloning">“%1$s”正在克隆“%2$s”</string>
+    <string name="progress_dialog_installing">“%1$s”正在安装 %2$s</string>
+    <string name="progress_dialog_updating">“%1$s”正在安装 %2$s</string>
+    <string name="progress_dialog_cloning">“%1$s”正在克隆 %2$s</string>
 
     <string name="notification_caller_installed_app">“%1$s”已安装新应用“%2$s”</string>
     <string name="notification_caller_updated_app">“%1$s”已更新“%2$s”</string>

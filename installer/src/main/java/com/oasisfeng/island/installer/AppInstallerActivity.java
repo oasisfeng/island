@@ -68,7 +68,7 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageInstaller.EXTRA_PACKAGE_NAME;
+import static android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
@@ -118,10 +118,18 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		mCallerAppInfo = Apps.of(this).getAppInfo(mCallerPackage);	// Null if caller is not in the same user and has no launcher activity
 		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) return false;
 
-		if (! new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) {
+		final boolean is_owner = new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser();
+		final PackageManager pm = getPackageManager();
+		if (SDK_INT >= P && ! pm.canRequestPackageInstalls() && is_owner) try {
+			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
+		} catch (final RuntimeException e) {
+			Analytics.$().logAndReport(TAG, "Error granting permission REQUEST_INSTALL_PACKAGES", e);
+		}
+
+		if (! is_owner) {	// Being not profile/device owner, PackageInstaller always requires confirmation, thus no need for pre-confirmation.
 			mUpdateOrInstall = false;		// Skip APK parsing and always show as "install".
-			performInstall(data, getString(R.string.label_unknown_app));	// Being not profile/device owner, PackageInstaller always requires confirmation,
-			return true;					// just skip pre-confirmation and proceed to PackageInstaller now.
+			performInstall(data, getString(R.string.label_unknown_app), null);
+			return true;
 		}
 
 		if (ContentResolver.SCHEME_FILE.equals(data.getScheme())) {
@@ -148,7 +156,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 		if (mCallerPackage.equals(getPackageName()) || requireNonNull(PreferenceManager.getDefaultSharedPreferences(this)
 				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet())).contains(mCallerPackage)) {
-			performInstall(data, target_app_description);		// Whitelisted caller to perform installation without confirmation
+			performInstall(data, target_app_description, null);	// Whitelisted caller to perform installation without confirmation
 			return true;
 		}
 		final String message = getString(mUpdateOrInstall == null ? R.string.confirm_cloning : mUpdateOrInstall
@@ -159,7 +167,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		checkbox.setText(getString(R.string.dialog_install_checkbox_always_allow));
 		dialog.withCancelButton().withOkButton(() -> {
 			if (checkbox.isChecked()) addAlwaysAllowedCallerPackage(mCallerPackage);
-			performInstall(data, target_app_description);
+			performInstall(data, target_app_description, null);
 		}).setOnCancelListener(d -> finish()).setView(view).setCancelable(false).show();
 		return true;
 	}
@@ -177,7 +185,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				return null;
 			} else path = uri.getPath();
 			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);
-			if (pkg_info == null) return null;		// Possibly due to lack of reading permission
+			if (pkg_info == null) return null;		// Possibly due to lack of reading permission or invalid APK (e.g. split APK)
 			final ApplicationInfo app_info = pkg_info.applicationInfo;
 			CharSequence app_label = null;
 			if (app_info.nonLocalizedLabel == null && Hacks.AssetManager_constructor != null && Hacks.AssetManager_addAssetPath != null) {
@@ -207,18 +215,14 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		preferences.edit().putStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, pkgs).apply();
 	}
 
-	private void performInstall(final Uri uri, final CharSequence app_description) {
-		final PackageManager pm = getPackageManager();
-		if (SDK_INT >= P && ! pm.canRequestPackageInstalls() && new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) try {
-			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
-		} catch (final RuntimeException e) {
-			Analytics.$().logAndReport(TAG, "Error granting permission REQUEST_INSTALL_PACKAGES", e);
-		}
-
+	/** @param base_pkg the base package name for split APK installation, or null for full installation. */
+	private void performInstall(final Uri uri, final CharSequence app_description, final @Nullable String base_pkg) {
+		final boolean is_scheme_package = SCHEME_PACKAGE.equals(uri.getScheme());
+		if (is_scheme_package && base_pkg != null) throw new IllegalArgumentException("Scheme \"package\" could never be installed as split");
 		final Map<String, InputStream> input_streams = new LinkedHashMap<>();
-		final String base_name = "Island[" + mCallerPackage + "]";
+		final String stream_name = "Island[" + mCallerPackage + "]";
 		try {
-			if (SCHEME_PACKAGE.equals(uri.getScheme())) {
+			if (is_scheme_package) {
 				final String pkg = uri.getSchemeSpecificPart();
 				ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
 				if (info == null && (info = getIntent().getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
@@ -227,13 +231,13 @@ public class AppInstallerActivity extends CallerAwareActivity {
 					return;
 				}
 				// TODO: Reject forward-locked package
-				input_streams.put(base_name, new FileInputStream(info.publicSourceDir));
+				input_streams.put(stream_name, new FileInputStream(info.publicSourceDir));
 				if (info.splitPublicSourceDirs != null)
 					for (int i = 0, num_splits = info.splitPublicSourceDirs.length; i < num_splits; i ++) {
 						final String split = info.splitPublicSourceDirs[i];
 						input_streams.put(SDK_INT >= O ? info.splitNames[i] : "split" + i, new FileInputStream(split));
 					}
-			} else input_streams.put(base_name, requireNonNull(getContentResolver().openInputStream(uri)));
+			} else input_streams.put(stream_name, requireNonNull(getContentResolver().openInputStream(uri)));
 		} catch(final IOException | RuntimeException e) {		// SecurityException may be thrown by ContentResolver.openInputStream().
 			Log.w(TAG, "Error opening " + uri + " for reading.\nTo launch Island app installer, " +
 					"please ensure data URI is accessible by Island, either exposed by content provider or world-readable (on pre-N)", e);
@@ -242,8 +246,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			return;
 		}
 
-		final PackageInstaller installer = pm.getPackageInstaller();
-		final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+		final PackageInstaller installer = getPackageManager().getPackageInstaller();
+		final SessionParams params = new SessionParams(base_pkg != null ? SessionParams.MODE_INHERIT_EXISTING : SessionParams.MODE_FULL_INSTALL);
+		if (base_pkg != null) params.setAppPackageName(base_pkg);
 		final int session_id;
 		try {
 			mSession = installer.openSession(session_id = installer.createSession(params));
@@ -372,12 +377,13 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
 		if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
 		final AppInstallerActivity activity = AppInstallerActivity.this;
+		final String pkg = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME);
 		switch (status) {
 		case PackageInstaller.STATUS_SUCCESS:
 			unregisterReceiver(this);
 			if (mResultNeeded)		// Implement the exact same result data as InstallSuccess in PackageInstaller
 				activity.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
-			AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), intent.getStringExtra(EXTRA_PACKAGE_NAME));
+			AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), pkg);
 			finish();
 			break;
 		case PackageInstaller.STATUS_PENDING_USER_ACTION:
@@ -393,10 +399,16 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			finish();
 			break;
 		default:
+			final Uri uri = requireNonNull(getIntent().getData());
 			String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
 			if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
-			final Uri uri = getIntent().getData();
-			Analytics.$().event("installer_failure").with(LOCATION, uri != null ? uri.toString() : null).with(CONTENT, message).send();
+			else if (status == STATUS_FAILURE_INVALID && message.endsWith("base package")) {	// Possible message: "Full install must include a base package"
+				Log.i(TAG, "Install as split for " + pkg + ": " + uri);
+				mUpdateOrInstall = true;
+				performInstall(uri, getString(R.string.description_for_installing_split, Apps.of(context).getAppName(pkg)), pkg);
+				return;
+			}
+			Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
 			if (mResultNeeded) activity.setResult(Activity.RESULT_FIRST_USER,    // The exact same result data as InstallFailed in PackageInstaller
 					new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
 			if (isFinishing()) {
