@@ -169,6 +169,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="pref_about_header">About</string>
     <string name="pref_about_version_title">Version</string>
+    <string name="pref_about_open_source_title">Island is open source</string>
+    <string name="pref_about_open_source_summary">Welcome to visit us on GitHub</string>
     <string name="pref_about_licenses_title">Licenses</string>
 
     <string name="notification_island_after_uninstall_title">Remove Island completely</string>

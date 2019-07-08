@@ -152,7 +152,6 @@
     <string name="pref_setup_header">创造 与 毁灭</string>
     <string name="pref_setup_island_title">壶中界</string>
     <string name="pref_setup_island_summary_managed">受控</string>
-    <string name="pref_setup_island_summary_unknown">未知</string>
     <string name="pref_setup_island_summary_managed_other">不明来源的异界\n点击侧面的图标将其移除。</string>
     <string name="pref_setup_island_summary_incomplete">未能正常完成创建\n点击侧面的图标重建。</string>
     <string name="pref_setup_island_summary_pending_setup">尚未创建\n点击侧面的图标开始创建。</string>
@@ -168,6 +167,8 @@
 
     <string name="pref_about_header">关于</string>
     <string name="pref_about_version_title">版本</string>
+    <string name="pref_about_open_source_title">这是一个开源项目</string>
+    <string name="pref_about_open_source_summary">欢迎来 GitHub 访问我们</string>
     <string name="pref_about_licenses_title">授权</string>
 
     <string name="notification_island_after_uninstall_title">壶中界已失去控制</string>
