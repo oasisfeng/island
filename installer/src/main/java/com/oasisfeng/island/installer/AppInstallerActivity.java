@@ -118,6 +118,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		mCallerAppInfo = Apps.of(this).getAppInfo(mCallerPackage);	// Null if caller is not in the same user and has no launcher activity
 		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) return false;
 
+		if (! new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) {
+			mUpdateOrInstall = false;		// Skip APK parsing and always show as "install".
+			performInstall(data, getString(R.string.label_unknown_app));	// Being not profile/device owner, PackageInstaller always requires confirmation,
+			return true;					// just skip pre-confirmation and proceed to PackageInstaller now.
+		}
+
 		if (ContentResolver.SCHEME_FILE.equals(data.getScheme())) {
 			final String path = data.getPath();
 			if (path == null) return false;
@@ -165,13 +171,13 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			if (! ContentResolver.SCHEME_FILE.equals(uri.getScheme())) try {
 				fd = getContentResolver().openFileDescriptor(uri, "r");
 				if (fd == null) return null;
-				path = "/proc/self/fd/" + fd.getFd();
-			} catch (final IOException | SecurityException e) { // "SecurityException: Permission Denial"
-				Log.e(TAG, "Error opening " + uri);             //   due to either URI permission not granted or non-exported ContentProvider.
+				path = "/proc/self/fd/" + fd.getFd();		// Special path for open file descriptor
+			} catch (final IOException | SecurityException e) { 	// "SecurityException: Permission Denial"
+				Log.e(TAG, "Error opening " + uri);			//   due to either URI permission not granted or non-exported ContentProvider.
 				return null;
 			} else path = uri.getPath();
-			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);    // Special path for open file descriptor
-			if (pkg_info == null) return null;
+			final PackageInfo pkg_info = getPackageManager().getPackageArchiveInfo(path, 0);
+			if (pkg_info == null) return null;		// Possibly due to lack of reading permission
 			final ApplicationInfo app_info = pkg_info.applicationInfo;
 			CharSequence app_label = null;
 			if (app_info.nonLocalizedLabel == null && Hacks.AssetManager_constructor != null && Hacks.AssetManager_addAssetPath != null) {
