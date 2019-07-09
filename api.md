@@ -10,6 +10,8 @@ First of all, required delegation(s) must be declared in `AndroidManifest.xml` a
 
 `<meta-data android:name="com.oasisfeng.island.delegation" android:value="delegation-package-access,-island-delegation-app-ops" />`
 
+All standard delegations definded by Android SDK can be declared here, together with non-standard delegations (with vendor prefix, just like [CSS Vendor Prefix](https://developer.mozilla.org/en-US/docs/Glossary/Vendor_Prefix)). Some standard delegations requiring recent version of Android are also supported in back-port manner by Island. (see [Invocation](#invocation) section below for the instructions of back-ported delegation)
+
 Before invoking any of the privileged APIs, you can check and request authorization with `RestrictionsManager`:
 
 ```
@@ -31,7 +33,9 @@ Before invoking any of the privileged APIs, you can check and request authorizat
 Invocation
 ------------
 
-If authorized, you can bind to this service of Island to get the internal binder of delegated system service.
+For standard delegation on supported Android version, corresponding APIs can be invoked directly, as mentioned in Android developer documents.
+
+For non-standard delegation or standard delegation on not-yet-supported Android version, you can bind to this service of Island to get the internal binder of delegated system service.
 
 ```
     final String ACTION_BIND_SYSTEM_SERVICE = "com.oasisfeng.island.api.action.BIND_SYSTEM_SERVICE";
