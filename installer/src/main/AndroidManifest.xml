@@ -7,10 +7,9 @@
 
         <activity android:name=".AppInstallerActivity"
                   android:label="@string/app_installer_label"
-                  android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
+                  android:configChanges="uiMode|orientation|screenSize|keyboard|keyboardHidden"
                   android:excludeFromRecents="true"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar">
-
             <intent-filter> <!-- with MIME type -->
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.INSTALL_PACKAGE" />
@@ -19,7 +18,6 @@
                 <data android:scheme="content" />
                 <data android:mimeType="application/vnd.android.package-archive" />
             </intent-filter>
-
             <intent-filter> <!-- without MIME type -->
                 <action android:name="android.intent.action.INSTALL_PACKAGE" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -28,7 +26,6 @@
                 <data android:scheme="package" />
                 <data android:scheme="content" />
             </intent-filter>
-
         </activity>
 
         <activity android:name=".AppInfoForwarderActivity"

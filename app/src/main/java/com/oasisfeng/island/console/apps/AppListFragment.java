@@ -15,7 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
 
-import com.oasisfeng.android.app.LifecycleFragment;
+import com.oasisfeng.android.app.LifecycleViewModelFragment;
 import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.androidx.lifecycle.ViewModelProviders;
 import com.oasisfeng.common.app.AppListProvider;
@@ -42,7 +42,7 @@ import java9.util.Optional;
 
 /** The main UI - App list */
 @ParametersAreNonnullByDefault
-public class AppListFragment extends LifecycleFragment {
+public class AppListFragment extends LifecycleViewModelFragment {
 
 	@Override public void onCreate(final @Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

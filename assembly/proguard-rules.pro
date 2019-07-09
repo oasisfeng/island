@@ -24,27 +24,10 @@
 -dontwarn android.content.ContentResolver
 -dontwarn android.content.IContentProvider
 
-# For Google Error Prone (depended by Guava)
--dontwarn com.google.errorprone.annotations.*
-
-# For android-restrostream library
--dontwarn java9.util.stream.**
-
-# For Guava library
--dontwarn javax.annotation.**
--dontwarn sun.misc.Unsafe
--dontwarn com.google.common.**
-
 # Remove verbose and debug logging
 -assumenosideeffects class android.util.Log {
 	public static boolean isLoggable(java.lang.String, int);
 	public static int v(...);
-}
-
-# For @Keep to work
--keep @android.support.annotation.Keep class *
--keepclassmembers class * {
-    @android.support.annotation.Keep *;
 }
 
 # For generics reflection to work
