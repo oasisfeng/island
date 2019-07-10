@@ -33,9 +33,9 @@ Before invoking any of the privileged APIs, you can check and request authorizat
 Invocation
 ------------
 
-For standard delegation on supported Android version, corresponding APIs can be invoked directly, as mentioned in Android developer documents.
+For standard delegation on supported Android version, corresponding APIs can be invoked directly, as mentioned in official [Android developer documents](https://developer.android.com/work/versions/android-8.0#app-management-api-delegation).
 
-For non-standard delegation or standard delegation on not-yet-supported Android version, you can bind to this service of Island to get the internal binder of delegated system service.
+For non-standard delegation or standard delegation on not-yet-supported Android version, you can bind to this service of Island to get the internal binder of delegated system service. The binder returned in `onServiceConnected()` needs to be injected into a system service manager (e.g. `AppOpsManager.mService`) for convenient invocation.
 
 ```
     final String ACTION_BIND_SYSTEM_SERVICE = "com.oasisfeng.island.api.action.BIND_SYSTEM_SERVICE";
