@@ -19,13 +19,13 @@ Before invoking any of the privileged APIs, you can check and request authorizat
     final String DELEGATION_APP_OPS = "-island-delegation-app-ops";
 
     final RestrictionsManager rm = (RestrictionsManager) context.getSystemService(RESTRICTIONS_SERVICE);
-    if (rm.hasRestrictionsProvider()) { // Current user is not managed by Island or Island version is too low if no restrictions provider
-        final Bundle restrictions = ((UserManager) context.getSystemService(Context.USER_SERVICE)).getApplicationRestrictions(context.getPackageName());
+    if (rm != null && rm.hasRestrictionsProvider()) { // Otherwise, current user is not managed by Island or the version of Island is too low.
+        final Bundle restrictions = Objects.requireNonNull((UserManager) context.getSystemService(Context.USER_SERVICE)).getApplicationRestrictions(context.getPackageName());
         final String[] delegations = restrictions.getStringArray(TYPE_DELEGATION);
         if (delegations == null || ! Arrays.asList(delegations).contains(DELEGATION_APP_OPS)) {
             final PersistableBundle request = new PersistableBundle();
             request.putString(RestrictionsManager.REQUEST_KEY_DATA, DELEGATION_APP_OPS);
-            ((RestrictionsManager) context.getSystemService(Context.RESTRICTIONS_SERVICE)).requestPermission(TYPE_DELEGATION, "", request)
+            rm.requestPermission(TYPE_DELEGATION, "com.example.android.app-ops", request)
         }
     }
 ```
