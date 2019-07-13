@@ -20,8 +20,7 @@ Before invoking any of the privileged APIs, you can check and request authorizat
 
     final RestrictionsManager rm = (RestrictionsManager) context.getSystemService(RESTRICTIONS_SERVICE);
     if (rm != null && rm.hasRestrictionsProvider()) { // Otherwise, current user is not managed by Island or the version of Island is too low.
-        final Bundle restrictions = Objects.requireNonNull((UserManager) context.getSystemService(Context.USER_SERVICE)).getApplicationRestrictions(context.getPackageName());
-        final String[] delegations = restrictions.getStringArray(TYPE_DELEGATION);
+        final String[] delegations = rm.getApplicationRestrictions().getStringArray(TYPE_DELEGATION);
         if (delegations == null || ! Arrays.asList(delegations).contains(DELEGATION_APP_OPS)) {
             final PersistableBundle request = new PersistableBundle();
             request.putString(RestrictionsManager.REQUEST_KEY_DATA, DELEGATION_APP_OPS);
