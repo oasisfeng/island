@@ -69,10 +69,7 @@ import static android.os.Build.VERSION_CODES.N;
 			// Essential Google packages
 			"com.google.android.gsf",				// Google services framework
 			WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES,	// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
-			"com.google.android.feedback",			// Used by GMS for crash report
-			// MIUI-specific
-			"com.miui.core",						// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
-			"com.miui.securitycenter"				// Required by system Settings app of MIUI.
+			"com.google.android.feedback"			// Used by GMS for crash report
 	);
 	private static final Collection<Intent> sCriticalActivityIntents = Arrays.asList(
 			new Intent(Intent.ACTION_INSTALL_PACKAGE)				// Usually com.[google.]android.packageinstaller, may be altered by ROM.
