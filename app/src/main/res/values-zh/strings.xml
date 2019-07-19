@@ -144,6 +144,11 @@
     <string name="pref_launch_shortcut_prefix_title">应用启动快捷方式的名称前缀</string>
     <string name="pref_show_admin_message_title">在操作限制界面中显示提示信息</string>
     <string name="pref_show_admin_message_summary">在系统弹出的“不允许执行此操作”对话框中显示针对性的提示信息。</string>
+    <string name="pref_preserve_app_ops">为解冻的应用恢复 App-Ops</string>
+    <string name="pref_preserve_app_ops_description">Android 系统不会为冻结的应用保留已设置的 App-Ops（权限限制，例如“后台限制”、“显示在其它应用的上层”），炼妖壶可以为其提供恢复。</string>
+    <string name="pref_preserve_app_ops_adb_footnote">\n\n（需要执行 ADB 指令，仅在首次开启时）</string>
+    <string name="prompt_adb_app_ops_command">请在 ADB 命令行执行以下指令：\n\n</string>
+    <string name="action_copy">复制至剪贴板</string>
 
     <string name="pref_privacy_header">Privacy Protection</string>
     <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>

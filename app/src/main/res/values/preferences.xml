@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- General -->
     <string translatable="false" name="key_launch_shortcut_prefix">launch_shortcut_prefix</string>
     <string translatable="false" name="key_show_admin_message">show_admin_message</string>
+    <string translatable="false" name="key_preserve_app_ops">preserve_app_ops</string>
+    <!-- Privacy -->
     <string translatable="false" name="key_privacy_notification_for_clone">privacy_notification_clone</string>
+    <!-- Setup -->
     <string translatable="false" name="key_setup_mainland">setup_mainland</string>
     <string translatable="false" name="key_setup_island">setup_island</string>
     <string translatable="false" name="key_setup_mainland_reprovision">setup_mainland_reprovision</string>
     <string translatable="false" name="key_setup_island_reprovision">setup_island_reprovision</string>
+    <!-- About -->
     <string translatable="false" name="key_version">version</string>
 </resources>

@@ -146,6 +146,11 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_launch_shortcut_prefix_title">Launch shortcut prefix</string>
     <string name="pref_show_admin_message_title">Extra info in "Action not allowed" dialog</string>
     <string name="pref_show_admin_message_summary">Show Island-specific extra information in the \"Action not allowed\" system dialog.</string>
+    <string name="pref_preserve_app_ops">Preserve App-Ops for frozen apps</string>
+    <string name="pref_preserve_app_ops_description">Android system does not preserve the App-Ops (permission override) settings (e.g. \"background restriction\", \"show above other apps\") for frozen apps, let Island do that for you.</string>
+    <string name="pref_preserve_app_ops_adb_footnote">\n\n(ADB shell is only required for a one-time setup)</string>
+    <string name="prompt_adb_app_ops_command">Run the following command in ADB shell:</string>
+    <string name="action_copy">Copy to clipboard</string>
 
     <string name="pref_privacy_header">Privacy Protection</string>
     <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>

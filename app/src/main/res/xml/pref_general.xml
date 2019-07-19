@@ -9,4 +9,9 @@
                       android:summary="@string/pref_show_admin_message_summary"
                       android:persistent="false" />
 
+    <SwitchPreference android:key="@string/key_preserve_app_ops"
+                      android:title="@string/pref_preserve_app_ops"
+                      android:summary="@string/pref_preserve_app_ops_description"
+                      android:persistent="false" />
+
 </PreferenceScreen>
