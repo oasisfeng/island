@@ -77,7 +77,12 @@ public class MainActivity extends LifecycleActivity {
 				// Main activity is left enabled, probably due to pending post-provisioning in manual setup. Some domestic ROMs may block implicit broadcast, causing ACTION_USER_INITIALIZE being dropped.
 				Analytics.$().event("profile_provision_leftover").send();
 				Log.w(TAG, "Setup in Island is not complete, continue it now.");
-				launcher_apps.startMainActivity(our_activities_in_launcher.get(0).getComponentName(), profile, null, null);
+				try {
+					launcher_apps.startMainActivity(our_activities_in_launcher.get(0).getComponentName(), profile, null, null);
+				} catch (final RuntimeException e) {
+					Analytics.$().logAndReport(TAG, "Error starting self in profile " + Users.toId(profile), e);
+					startSetupWizard();
+				}
 				finish();
 				return;
 			}
