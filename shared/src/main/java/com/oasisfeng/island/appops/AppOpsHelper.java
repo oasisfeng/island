@@ -32,7 +32,7 @@ import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 				.getOpsForPackage(context.getPackageManager().getPackageUid(pkg, MATCH_DISABLED_COMPONENTS), pkg, null);
 		final SharedPreferences.Editor store = getDeviceProtectedSharedPreferences(context).edit();
 		final String flat_pkg_ops = list == null || list.isEmpty() ? null : list.stream().filter(ops -> pkg.equals(ops.getPackageName()))
-				.flatMap(ops -> ops.getOps().stream()).filter(entry -> ! isDefaultMode(entry)).map(entry -> entry.getOp() + ":" + entry.getMode())
+				.flatMap(ops -> ops.getOps().stream()).filter(entry -> ! isDefaultMode(entry.getOp(), entry.getMode())).map(entry -> entry.getOp() + ":" + entry.getMode())
 				.collect(Collectors.joining(","));
 		if (flat_pkg_ops == null || flat_pkg_ops.isEmpty()) store.remove(pkg).apply();
 		else store.putString(pkg, flat_pkg_ops).apply();
@@ -40,8 +40,8 @@ import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 		return true;
 	}
 
-	private static boolean isDefaultMode(final Hacks.AppOpsManager.OpEntry entry) {
-		return entry.getMode() == AppOpsCompat.opToDefaultMode(entry.getOp());
+	private static boolean isDefaultMode(final int op, final int mode) { // DO NOT pass in OpEntry as parameter, which causes disaster after R8. (as of AS 3.5 Beta 5)
+		return mode == AppOpsCompat.opToDefaultMode(op);
 	}
 
 	@ProfileUser public static boolean restoreAppOps(final Context context, final String pkg) throws PackageManager.NameNotFoundException {
