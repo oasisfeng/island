@@ -54,8 +54,14 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		final PackageManager pm = getPackageManager();
 		final String caller = getCallingPackage();
 		Intent app_detail = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null));
-		final List<ResolveInfo> app_detail_resolves = pm.queryIntentActivities(app_detail, 0);    // Must before forceForwardingToIsland()
-		final ResolveInfo app_detail_resolve = app_detail_resolves == null || app_detail_resolves.isEmpty() ? null : app_detail_resolves.get(0);
+		ResolveInfo app_detail_resolve;
+		final int flags = SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0;
+		try {
+			final List<ResolveInfo> app_detail_resolves = pm.queryIntentActivities(app_detail, flags);
+			app_detail_resolve = app_detail_resolves == null || app_detail_resolves.isEmpty() ? null : app_detail_resolves.get(0);
+		} catch (final NullPointerException e) {	// Huawei-specific issue, only reported on Android 8
+			app_detail_resolve = pm.resolveActivity(app_detail, flags);
+		}
 		boolean caller_is_settings = false;
 		final Supplier<List<ResolveInfo>> target_resolves = Suppliers.memoize(() -> pm.queryIntentActivities(target, MATCH_DEFAULT_ONLY/* Excluding this activity */));
 		if (app_detail_resolve != null) {
@@ -67,7 +73,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 				if (resolve != null) return intent.setClassName(this, resolve.activityInfo.name);
 			}
 			if (! caller_is_settings && user != null && ! UserHandles.MY_USER_HANDLE.equals(user)) {
-				if (user.equals(Users.profile)) app_detail.setComponent(ActivityShuttle.selectForwarder(app_detail_resolves));	// ACTION_APPLICATION_DETAILS_SETTINGS was added to forwarding by IslandProvisioning
+				if (user.equals(Users.profile)) app_detail.setComponent(ActivityShuttle.getForwarder(this));	// Forwarding added in IslandProvisioning
 				else app_detail = null;    // TODO: Not the default managed profile, use LauncherApps.startAppDetailsActivity().
 			} else ActivityShuttle.forceNeverForwarding(pm, app_detail);
 
