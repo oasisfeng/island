@@ -111,7 +111,7 @@ import static android.os.Build.VERSION_CODES.O;
 			final CharSequence permission_label = pm.getPermissionInfo(granted_permission, 0).loadLabel(pm);
 			NotificationIds.IslandAppWatcher.post(context, Uri.fromParts(pkg, granted_permission, null).toString(), new Notification.Builder(context)
 					.setOngoing(true).setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getColor(R.color.accent))
-					.setSubText(app_name).setCategory(CATEGORY_STATUS).setGroup(IslandWatcher.GROUP)
+					.setSubText(app_name).setCategory(CATEGORY_STATUS).setGroup(IslandWatcher.GROUP).setVisibility(Notification.VISIBILITY_PUBLIC)
 					.setContentTitle(context.getString(R.string.notification_permission_was_granted_title, permission_label))
 					.setContentText(context.getText(R.string.notification_permission_was_granted_text))
 					.addAction(new Action.Builder(null, context.getText(R.string.action_keep_granted),

@@ -66,7 +66,7 @@ import static android.os.Build.VERSION_CODES.P;
 				settings = PendingIntent.getActivity(context, 0, NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT);
 		NotificationIds.IslandWatcher.post(context, new Notification.Builder(context, null).setOngoing(true).setGroup(GROUP).setGroupSummary(true)
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS)
-				.setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
+				.setLargeIcon(Icon.createWithBitmap(getAppIcon(context))).setVisibility(Notification.VISIBILITY_PUBLIC)
 				.setContentTitle(context.getText(R.string.notification_island_watcher_title))
 				.setContentText(context.getText(R.string.notification_island_watcher_text))
 				.addAction(new Action.Builder(null, context.getText(R.string.action_deactivate_island), deactivate).build())
