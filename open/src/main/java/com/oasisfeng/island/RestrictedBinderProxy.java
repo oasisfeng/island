@@ -36,8 +36,12 @@ public class RestrictedBinderProxy extends Binder {
 		} else {
 			if (index >= mAllowedCode.size() || mAllowedCode.get(index) != Boolean.TRUE) throw new SecurityException("Unauthorized");
 			if (! checkCallingDelegation()) throw new SecurityException("Require delegation authorization: " + mRequiredDelegation);
-			return mDelegate.transact(code, data, reply, flags);
+			return doTransact(code, data, reply, flags);
 		}
+	}
+
+	protected boolean doTransact(final int code, final Parcel data, final Parcel reply, final int flags) throws RemoteException {
+		return mDelegate.transact(code, data, reply, flags);
 	}
 
 	private boolean checkCallingDelegation() {
@@ -81,7 +85,7 @@ public class RestrictedBinderProxy extends Binder {
 	@Override public boolean isBinderAlive() { return mDelegate.isBinderAlive(); }
 	@Override public @Nullable IInterface queryLocalInterface(@NonNull final String descriptor) { return mDelegate.queryLocalInterface(descriptor); }
 
-	private final Context mContext;
+	protected final Context mContext;
 	private final IBinder mDelegate;
 	private final String mRequiredDelegation;
 	private final DelegationManager mDelegationManager;

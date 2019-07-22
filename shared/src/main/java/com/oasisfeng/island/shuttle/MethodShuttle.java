@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.DeadObjectException;
 import android.os.Parcel;
+import android.os.RemoteException;
 import android.util.Log;
 
 import com.oasisfeng.android.service.AidlService;
@@ -27,8 +28,8 @@ public class MethodShuttle {
 
 	public interface GeneralVoidMethod extends ShuttleMethod { void invoke(); }
 	public interface GeneralMethod<ReturnType> extends ShuttleMethod { ReturnType invoke(); }
-	public interface GeneralContextFunction<ReturnType> extends ShuttleMethod { ReturnType apply(Context context); }
-	public interface GeneralContextRunnable extends ShuttleMethod { void run(Context context); }
+	public interface GeneralContextFunction<ReturnType> extends ShuttleMethod { ReturnType apply(Context context) throws RemoteException; }
+	public interface GeneralContextRunnable extends ShuttleMethod { void run(Context context) throws RemoteException; }
 
 	private interface ShuttleMethod {}
 
