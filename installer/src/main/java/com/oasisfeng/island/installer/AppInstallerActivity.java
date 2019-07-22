@@ -30,6 +30,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
@@ -276,7 +277,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 		final String progress_text = getString(mUpdateOrInstall == null ? R.string.progress_dialog_cloning : mUpdateOrInstall
 				? R.string.progress_dialog_updating : R.string.progress_dialog_installing, mCallerAppLabel.get(), app_description);
-		mProgressDialog = Dialogs.buildProgress(this, progress_text).indeterminate().nonCancelable().start();
+		try {
+			mProgressDialog = Dialogs.buildProgress(this, progress_text).indeterminate().nonCancelable().start();
+		} catch (final WindowManager.BadTokenException ignored) {}		// Activity may no longer visible.
 	}
 
 	private void fallbackToSystemPackageInstaller(final String reason, final @Nullable Exception e) {
