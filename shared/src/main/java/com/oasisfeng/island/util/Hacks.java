@@ -141,7 +141,9 @@ public class Hacks {
 		void setMode(int code, int uid, String packageName, int mode);
 
 		/** Retrieve the default mode for the operation. */
-		static int opToDefaultMode(final int op) { return Hack.mirrorStaticMethod("opToDefaultMode", -1, op); }
+		static int opToDefaultMode(final int op) {
+			return Hack.mirrorStaticMethod(AppOpsManager.class, "opToDefaultMode", -1, op);
+		}
 	}
 
 	public interface UserManagerHack extends Hack.Mirror<UserManager> {
