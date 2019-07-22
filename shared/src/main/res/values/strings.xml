@@ -10,4 +10,5 @@
     <string name="device_admin_support_message_short">To disable this restriction, please refer to corresponding setting in Island.</string>
     <string name="device_admin_support_message_long">When Island is activated, you may see \"device is managed by your organization\" or similar information around the system UI. It\'s the standard transparency notice of Android for Work (the underlying Android feature used by Island), which cannot be removed.\n\nIsland does not collect your personal information in any means, see our privacy policy on Google Play Store for details.\n\nIf you get message \"xxx feature disabled by admin\", you may have enabled one of the restriction features in Island, please refer to corresponding setting in Island.\n\nTo uninstall Island, you must deactivate it first, go to Island - Settings - Setup &amp; Shutdown - Click the \"X\" icon besides \"Mainland\".</string>
 
+    <string name="prompt_failed_preserving_app_ops">App Ops was not preserved due to internal error.</string>
 </resources>

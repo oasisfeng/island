@@ -17,8 +17,10 @@ import android.util.Log;
 
 import com.oasisfeng.android.content.pm.LauncherAppsCompat;
 import com.oasisfeng.android.os.UserHandles;
+import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsHelper;
+import com.oasisfeng.island.shared.R;
 
 import java.util.Objects;
 
@@ -169,6 +171,7 @@ public class DevicePolicies {
 		if (SDK_INT > O_MR1 && hidden && Permissions.has(mAppContext, GET_APP_OPS_STATS)) try {
 			AppOpsHelper.saveAppOps(mAppContext, pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
+			Toasts.showLong(mAppContext, R.string.prompt_failed_preserving_app_ops);
 			Analytics.$().logAndReport(TAG, "Error saving app ops settings for " + pkg, e);
 		}
 		final boolean changed = setApplicationHiddenWithoutAppOpsSaver(pkg, hidden);
@@ -176,6 +179,7 @@ public class DevicePolicies {
 		if (changed && SDK_INT > O_MR1 && ! hidden) try {
 			AppOpsHelper.restoreAppOps(mAppContext, pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
+			Toasts.showLong(mAppContext, R.string.prompt_failed_preserving_app_ops);
 			Analytics.$().logAndReport(TAG, "Error restoring app ops settings for " + pkg, e);
 		}
 		return changed;
@@ -232,16 +236,16 @@ public class DevicePolicies {
 	public <A, B> void execute(final QuadConsumer<DevicePolicyManager, ComponentName, A, B> callee, final A a, final B b) {
 		callee.accept(mDevicePolicyManager, sCachedComponent, a, b);
 	}
-	public <R> R invoke(final BiFunction<DevicePolicyManager, ComponentName, R> callee) {
+	public <T> T invoke(final BiFunction<DevicePolicyManager, ComponentName, T> callee) {
 		return callee.apply(mDevicePolicyManager, sCachedComponent);
 	}
-	public <A, R> R invoke(final TriFunction<DevicePolicyManager, ComponentName, A, R> callee, final A a) {
+	public <A, T> T invoke(final TriFunction<DevicePolicyManager, ComponentName, A, T> callee, final A a) {
 		return callee.apply(mDevicePolicyManager, sCachedComponent, a);
 	}
-	public <A, B, R> R invoke(final QuadFunction<DevicePolicyManager, ComponentName, A, B, R> callee, final A a, final B b) {
+	public <A, B, T> T invoke(final QuadFunction<DevicePolicyManager, ComponentName, A, B, T> callee, final A a, final B b) {
 		return callee.apply(mDevicePolicyManager, sCachedComponent, a, b);
 	}
-	public <A, B, C, R> R invoke(final QuinFunction<DevicePolicyManager, ComponentName, A, B, C, R> callee, final A a, final B b, final C c) {
+	public <A, B, C, T> T invoke(final QuinFunction<DevicePolicyManager, ComponentName, A, B, C, T> callee, final A a, final B b, final C c) {
 		return callee.apply(mDevicePolicyManager, sCachedComponent, a, b, c);
 	}
 
