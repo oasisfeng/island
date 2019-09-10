@@ -99,7 +99,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	private static final String EXTRA_ORIGINATING_UID = "android.intent.extra.ORIGINATING_UID";		// Intent.EXTRA_ORIGINATING_UID
 	private static final String EXTRA_INSTALL_RESULT = "android.intent.extra.INSTALL_RESULT";		// Intent.EXTRA_INSTALL_RESULT
 	private static final int INSTALL_SUCCEEDED = 1;													// PackageManager.INSTALL_SUCCEEDED
-	private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;									// PackageManager.INSTALL_FAILED_INTERNAL_ERROR
+	private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;									// ...
+	private static final int INSTALL_FAILED_ABORTED = -115;
 	private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";		// PackageInstall.EXTRA_LEGACY_STATUS
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
@@ -378,6 +379,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 	private final BroadcastReceiver mStatusCallback = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
+		final int legacy_status = intent.getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR);
 		if (BuildConfig.DEBUG) Log.i(TAG, "Status received: " + intent.toUri(Intent.URI_INTENT_SCHEME));
 		final AppInstallerActivity activity = AppInstallerActivity.this;
 		final String pkg = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME);
@@ -397,11 +399,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", e);
 			} else finish();    // Should never happen
 			break;
-		case PackageInstaller.STATUS_FAILURE_ABORTED:		// Aborted by user or us, no explicit feedback needed.
-			if (mResultNeeded) activity.setResult(Activity.RESULT_CANCELED);
-			finish();
-			break;
 		default:
+			if (status == PackageInstaller.STATUS_FAILURE_ABORTED && legacy_status == INSTALL_FAILED_ABORTED) {	// Aborted by user or us, no explicit feedback needed.
+				if (mResultNeeded) activity.setResult(Activity.RESULT_CANCELED);
+				finish();
+				break;
+			}
 			final Uri uri = requireNonNull(getIntent().getData());
 			String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
 			if (message == null) message = getString(R.string.dialog_install_unknown_failure_message);
@@ -412,8 +415,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				return;
 			}
 			Analytics.$().event("installer_failure").with(LOCATION, uri.toString()).with(CONTENT, message).send();
-			if (mResultNeeded) activity.setResult(Activity.RESULT_FIRST_USER,    // The exact same result data as InstallFailed in PackageInstaller
-					new Intent().putExtra(EXTRA_INSTALL_RESULT, getIntent().getIntExtra(EXTRA_LEGACY_STATUS, INSTALL_FAILED_INTERNAL_ERROR)));
+			if (mResultNeeded)		// The exact same result data as InstallFailed in PackageInstaller
+				activity.setResult(Activity.RESULT_FIRST_USER, new Intent().putExtra(EXTRA_INSTALL_RESULT, legacy_status));
 			if (isFinishing()) {
 				fallbackToSystemPackageInstaller("alternative.auto", null);
 				return;
