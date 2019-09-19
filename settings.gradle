@@ -1,3 +1,2 @@
 include 'shared', 'engine', ':mobile', 'fileprovider', 'installer', ':biometric', ':watcher', ':open', 'assembly', ':deagle'
-project(':mobile').projectDir = new File(settingsDir, 'app')
 project(':deagle').projectDir = new File(settingsDir, '../deagle/library')

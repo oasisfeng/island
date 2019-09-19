@@ -3,6 +3,7 @@ package com.oasisfeng.island;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -48,6 +49,7 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
 
 /**
  * Prompt user for full removal if Island is uninstalled in owner user without removing managed profile first.
@@ -83,13 +85,18 @@ public class UninstallHelper extends PseudoContentProvider {
 
 	private static void check(final Context context) {
 		final PackageManager owner_pm;
-		if (Permissions.has(context, Permissions.INTERACT_ACROSS_USERS) && (owner_pm = ContextShuttle.getPackageManagerAsUser(context, Users.owner)) != null) try { @SuppressLint("WrongConstant")
-			final ApplicationInfo owner_island = owner_pm.getApplicationInfo(context.getPackageName(), Hacks.GET_ANY_USER_AND_UNINSTALLED);
-			if ((owner_island.flags & ApplicationInfo.FLAG_INSTALLED) == 0)
-				onIslandRemovedInOwnerUser(context);
-			return;
-		} catch (final PackageManager.NameNotFoundException e) {
-			Log.e(TAG, "Island not found");	// Should not happen
+		if (Permissions.has(context, Permissions.INTERACT_ACROSS_USERS) && (owner_pm = ContextShuttle.getPackageManagerAsUser(context, Users.owner)) != null) {
+			try { @SuppressLint("WrongConstant")
+				final ApplicationInfo owner_island = owner_pm.getApplicationInfo(context.getPackageName(), Hacks.GET_ANY_USER_AND_UNINSTALLED);
+				if ((owner_island.flags & ApplicationInfo.FLAG_INSTALLED) == 0)
+					onIslandRemovedInOwnerUser(context);
+				return;
+			} catch (final PackageManager.NameNotFoundException e) {
+				Log.e(TAG, "Island not found");	// Should not happen
+			}
+		} else if (SDK_INT <= P) {
+			final NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+			nm.areNotificationsEnabledForPackage()
 		}
 
 		final File app_mainland_data_path = new File(new File(Environment.getDataDirectory(), "data"), context.getPackageName());
