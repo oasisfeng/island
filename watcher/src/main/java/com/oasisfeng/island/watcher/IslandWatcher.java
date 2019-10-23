@@ -101,8 +101,6 @@ import static android.os.Build.VERSION_CODES.P;
 				} catch (final ActivityNotFoundException ex) {
 					Toast.makeText(getApplicationContext(), "Sorry, ROM is incompatible.", Toast.LENGTH_LONG).show();
 				}
-			} finally {
-				stopForeground(true);
 			}
 			return START_NOT_STICKY;
 		}
