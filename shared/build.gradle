@@ -1,7 +1,7 @@
 apply plugin: 'com.android.feature'
 
 android {
-    compileSdkVersion 27        // Not raised to 28 due to NotificationManagerExtender
+    compileSdkVersion 29        // Not raised to 28 due to NotificationManagerExtender
 
     defaultConfig {
         minSdkVersion 21
@@ -45,6 +45,7 @@ dependencies {
     api 'com.google.code.findbugs:jsr305:3.0.2'
     api 'net.sourceforge.streamsupport:android-retrostreams:1.7.0'
     api 'net.sourceforge.streamsupport:android-retrofuture:1.7.0'
+    implementation project(':legacy')
     implementation 'org.jetbrains:annotations:15.0'
     implementation 'com.google.android.gms:play-services-analytics:16.0.6'
     implementation 'com.google.firebase:firebase-core:16.0.6'
@@ -57,6 +58,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.18.3'
 
     androidTestImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.1.1'
-    androidTestImplementation 'androidx.test:rules:1.1.1'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test:rules:1.2.0'
 }
