@@ -1,12 +1,10 @@
 package com.oasisfeng.island;
 
 import android.app.Application;
-import android.content.pm.PackageManager;
-import android.util.ArrayMap;
 
 import com.oasisfeng.island.analytics.CrashReport;
-
-import java.util.Map;
+import com.oasisfeng.island.firebase.FirebaseServiceProxy;
+import com.oasisfeng.island.shared.R;
 
 /**
  * For singleton instance purpose only.
@@ -19,31 +17,17 @@ public class IslandApplication extends Application {
 		return sInstance;
 	}
 
-	@Override public Object getSystemService(final String name) {
-		final Object service = mRegisteredServices.get(name);
-		return service != null ? service : super.getSystemService(name);
-	}
-
-	@Override public PackageManager getPackageManager() {
-		return mRegisteredPackageManager != null ? mRegisteredPackageManager : super.getPackageManager();
-	}
-
 	public IslandApplication() {
 		if (sInstance != null) throw new IllegalStateException("Already initialized");
 		sInstance = this;
 		CrashReport.initCrashHandler();
 	}
 
-	void registerSystemService(final String name, final Object service) {
-		mRegisteredServices.put(name, service);
+	@Override public void onCreate() {
+		super.onCreate();
+		final String firebase_proxy_host = getString(R.string.firebase_proxy_host);
+		if (! firebase_proxy_host.isEmpty()) FirebaseServiceProxy.initialize(firebase_proxy_host);
 	}
-
-	void registerPackageManager(final PackageManager pm) {
-		mRegisteredPackageManager = pm;
-	}
-
-	private final Map<String, Object> mRegisteredServices = new ArrayMap<>();
-	private PackageManager mRegisteredPackageManager;
 
 	private static IslandApplication sInstance;
 }
