@@ -118,7 +118,10 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			return true;
 		}
 		mCallerAppInfo = Apps.of(this).getAppInfo(mCallerPackage);	// Null if caller is not in the same user and has no launcher activity
-		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) return false;
+		if (SDK_INT >= O && mCallerAppInfo != null && ! isCallerQualified(mCallerAppInfo)) {
+			Log.w(TAG, "Reject installation for unqualified caller: " + mCallerPackage);
+			return false;
+		}
 
 		final boolean is_owner = new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser();
 		final PackageManager pm = getPackageManager();
@@ -136,9 +139,15 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 		if (ContentResolver.SCHEME_FILE.equals(data.getScheme())) {
 			final String path = data.getPath();
-			if (path == null) return false;
+			if (path == null) {
+				Log.w(TAG, "Invalid file URI: " + data);
+				return false;
+			}
 			final File file = new File(path);
-			if (! file.exists()) return false;
+			if (! file.exists()) {
+				Log.w(TAG, "File not found: " + file);
+				return false;
+			}
 		}
 
 		final CharSequence target_app_description; final Pair<PackageInfo, CharSequence> parsed;
@@ -228,7 +237,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				final String pkg = uri.getSchemeSpecificPart();
 				ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
 				if (info == null && (info = getIntent().getParcelableExtra(InstallerExtras.EXTRA_APP_INFO)) == null) {
-					Log.e(TAG, "Cannot read app info of " + pkg);
+					Log.e(TAG, "Cannot query app info for " + pkg);
 					finish();	// Do not fall-back to default package installer, since it will fail too.
 					return;
 				}
