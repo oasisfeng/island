@@ -42,7 +42,9 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import eu.chainfire.libsuperuser.Shell;
 
+import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
@@ -90,7 +92,7 @@ public class IslandAppClones {
 			case CLONE_RESULT_NO_SYS_MARKET:
 				Activity activity = Activities.findActivityFrom(context);
 				if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
-						.setNeutralButton(R.string.dialog_button_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
+						.setNeutralButton(R.string.action_learn_more, (d, w) -> WebContent.view(context, Config.URL_FAQ.get()))
 						.setPositiveButton(android.R.string.cancel, null).show();
 				else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show();
 				break;
@@ -140,7 +142,7 @@ public class IslandAppClones {
 			@RequiresApi(O) @Override protected void onPostExecute(final List<String> result) {
 				try {
 					final ApplicationInfo app_info = context.getSystemService(LauncherApps.class).getApplicationInfo(pkg, 0, profile);
-					if (app_info != null && (app_info.flags & ApplicationInfo.FLAG_INSTALLED) != 0) {
+					if (app_info != null && (app_info.flags & FLAG_INSTALLED) != 0) {
 						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, source.getLabel()), Toast.LENGTH_SHORT).show();
 						return;
 					}
@@ -180,7 +182,7 @@ public class IslandAppClones {
 	private static void showExplanationBeforeCloning(final String mark, final Context context, final @StringRes int explanation, final IslandAppInfo source) {
 		final Activity activity = Activities.findActivityFrom(context);
 		if (activity != null && ! activity.isFinishing() && ! Scopes.app(context).isMarked(mark)) {
-			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.dialog_button_continue, (d, w) -> {
+			Dialogs.buildAlert(activity, 0, explanation).setPositiveButton(R.string.action_continue, (d, w) -> {
 				Scopes.app(context).markOnly(mark);
 				doCloneUserApp(context, source);
 			}).show();
@@ -204,12 +206,16 @@ public class IslandAppClones {
 		if (! IslandManager.ensureLegacyInstallNonMarketAppAllowed(mContext, mDevicePolicies))
 			return cloneUserAppViaMarketApp(pkg, do_it);
 
+		if (! do_it) return CLONE_RESULT_OK_INSTALL;
+
 		final String my_pkg = mContext.getPackageName();
 		final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts(SCHEME_PACKAGE, pkg, null))
 				.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, my_pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		mDevicePolicies.enableSystemApp(intent);				// Ensure package installer is enabled.
-
-		if (! do_it) return CLONE_RESULT_OK_INSTALL;
+		// Ensure PackageInstaller is enabled. DO NOT use DPM.enableSystemApp(Intent), which will fail on Android 5.x due to Island App Installer being not a system app
+		for (final ResolveInfo r : mContext.getPackageManager().queryIntentActivities(intent, GET_UNINSTALLED_PACKAGES | (SDK_INT < N ? 0 : MATCH_SYSTEM_ONLY))) {
+			final ApplicationInfo app = r.activityInfo.applicationInfo;
+			if ((app.flags & (FLAG_SYSTEM | FLAG_INSTALLED)) == FLAG_SYSTEM) mDevicePolicies.enableSystemApp(app.packageName);
+		}
 
 		mContext.startActivity(intent.addCategory(mContext.getPackageName()).putExtra(InstallerExtras.EXTRA_APP_INFO, app_info));	// Launch App Installer
 		return CLONE_RESULT_OK_INSTALL;

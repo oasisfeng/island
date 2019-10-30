@@ -150,7 +150,7 @@ public class IslandSetup {
 	public static void requestDeviceOwnerActivation(final Fragment fragment, final int request_code) {
 		Dialogs.buildAlert(fragment.getActivity(), fragment.getText(R.string.featured_god_mode_title),
 				fragment.getText(R.string.featured_god_mode_description) + "\n\n" + fragment.getText(R.string.dialog_activate_god_mode_additional_text))
-				.setPositiveButton(R.string.dialog_button_continue, (d, w) -> activateDeviceOwnerOrShowSetupGuide(fragment, request_code)).show();
+				.setPositiveButton(R.string.action_continue, (d, w) -> activateDeviceOwnerOrShowSetupGuide(fragment, request_code)).show();
 	}
 
 	private static void activateDeviceOwnerOrShowSetupGuide(final Fragment fragment, final int request_code) {
@@ -199,13 +199,13 @@ public class IslandSetup {
 	public static void onAddAdminResult(final Activity activity) {
 		if (! new DevicePolicies(activity).invoke(DevicePolicyManager::isAdminActive)) return;
 		Dialogs.buildAlert(activity, 0, R.string.dialog_mainland_setup_done).withCancelButton()
-				.setPositiveButton(R.string.dialog_button_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
+				.setPositiveButton(R.string.action_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
 	}
 
 	public static void requestDeviceOwnerDeactivation(final Activity activity) {
-		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_deactivate_message)
+		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_rescind_message)
 				.setPositiveButton(android.R.string.no, null)
-				.setNeutralButton(R.string.dialog_button_deactivate, (d, w) -> {
+				.setNeutralButton(R.string.action_deactivate, (d, w) -> {
 					try {
 						final List<String> frozen_pkgs = IslandAppListProvider.getInstance(activity).installedApps().filter(app -> app.isHidden())
 								.map(app -> app.packageName).collect(Collectors.toList());
@@ -244,7 +244,7 @@ public class IslandSetup {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 				.setMessage(R.string.dialog_destroy_message)
 				.setPositiveButton(android.R.string.no, null)
-				.setNeutralButton(R.string.dialog_button_destroy, (d, w) -> {
+				.setNeutralButton(R.string.action_destroy, (d, w) -> {
 					if (exclusive_clones.isEmpty()) {
 						destroyProfile(activity);
 						return;
@@ -253,7 +253,7 @@ public class IslandSetup {
 					final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
 					new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 							.setMessage(activity.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
-							.setNeutralButton(R.string.dialog_button_destroy, (dd, ww) -> destroyProfile(activity))
+							.setNeutralButton(R.string.action_destroy, (dd, ww) -> destroyProfile(activity))
 							.setPositiveButton(android.R.string.no, null).show();
 				}).show();
 	}

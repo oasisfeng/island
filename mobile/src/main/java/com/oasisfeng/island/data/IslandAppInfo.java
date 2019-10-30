@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import androidx.annotation.Nullable;
+
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
@@ -73,7 +75,7 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	/** @return hidden state, or null if failed to */
-	private static Boolean isHidden(final ApplicationInfo info) {
+	public static @Nullable Boolean isHidden(final ApplicationInfo info) {
 		if (SDK_INT >= M) {
 			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
 			if (private_flags != null) return (private_flags & PRIVATE_FLAG_HIDDEN) != 0;

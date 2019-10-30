@@ -444,7 +444,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			String message = context.getString(R.string.dialog_greenify_explanation);
 			if (greenify_installed && unavailable_or_version_too_low)
 				message += "\n\n" + context.getString(R.string.dialog_greenify_version_too_low);
-			final int button = ! greenify_installed ? R.string.dialog_button_install : ! greenify_ready ? R.string.dialog_button_upgrade : R.string.dialog_button_continue;
+			final int button = ! greenify_installed ? R.string.action_install : ! greenify_ready ? R.string.action_upgrade : R.string.action_continue;
 			new AlertDialog.Builder(context).setTitle(R.string.dialog_greenify_title).setMessage(message).setPositiveButton(button, (d, w) -> {
 				if (! unavailable_or_version_too_low) {
 					Scopes.app(context).markOnly(mark);
@@ -469,9 +469,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				final Activity activity = requireNonNull(Activities.findActivityFrom(context));
 				if (app.isCritical()) {
 					Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning).withCancelButton()
-							.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
+							.setPositiveButton(R.string.action_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 				} else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal).withCancelButton()
-						.setPositiveButton(R.string.dialog_button_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
+						.setPositiveButton(R.string.action_continue, (d, w) -> launchSystemAppSettings(context, app)).show();
 			} else {
 				Activities.startActivity(context, new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
 						.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user));
@@ -489,7 +489,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final Activity activity = Activities.findActivityFrom(context);
 		if (activity == null) reinstallSystemApp(context, app);
 		else Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_reinstall_system_app_warning)
-				.withCancelButton().setPositiveButton(R.string.dialog_button_continue, (d, w) -> reinstallSystemApp(context, app)).show();
+				.withCancelButton().setPositiveButton(R.string.action_continue, (d, w) -> reinstallSystemApp(context, app)).show();
 	}
 
 	private static void reinstallSystemApp(final Context context, final IslandAppInfo app) {

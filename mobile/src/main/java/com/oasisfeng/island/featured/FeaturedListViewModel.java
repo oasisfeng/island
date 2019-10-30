@@ -98,19 +98,15 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			final boolean has_across_users_permission = Permissions.has(context, Permissions.INTERACT_ACROSS_USERS);
 			if (! has_across_users_permission)
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
-						R.string.dialog_button_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
+						R.string.action_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
 			else if (! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(context))
 				addFeatureRaw(app, "file_shuttle", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
-						0, R.string.dialog_button_activate, vm -> IslandFiles.enableFileShuttle(activity));
+						0, R.string.action_activate, vm -> IslandFiles.enableFileShuttle(activity));
 			else {
 				Analytics.$().setProperty(Analytics.Property.FileShuttleEnabled, "1");
 				addFeaturedApp(R.string.featured_fx_title, R.string.featured_fx_description, R.drawable.ic_launcher_fx, "nextapp.fx");
 			}
 		}
-
-		if (SHOW_ALL || ! is_device_owner)
-			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
-					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(c, SetupPreferenceFragment.class));
 
 		final boolean adb_enabled = "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.ADB_ENABLED));
 		final LiveUserRestriction adb_secure = ! is_device_owner && ! has_profile ? null
@@ -120,6 +116,10 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					R.string.featured_adb_secure_description,0, map(adb_secure, enabled -> enabled ? R.string.action_disable : R.string.action_enable),
 					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
+
+		if (SHOW_ALL || ! is_device_owner)
+			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
+					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(c, SetupPreferenceFragment.class));
 
 		addFeaturedApp(R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify, "com.oasisfeng.greenify");
 		addFeaturedApp(R.string.featured_saf_enhancer_title, R.string.featured_saf_enhancer_description, R.drawable.ic_launcher_saf_enhancer,
@@ -143,7 +143,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		if (SHOW_ALL || ! mApps.isInstalledBy(GooglePlayStore.PACKAGE_NAME)) {
 			final boolean installed = Apps.of(context).isInstalledOnDevice(PACKAGE_COOLAPK);
 			addFeature(app, "coolapk", R.string.featured_coolapk_title, R.string.featured_coolapk_description, R.drawable.ic_launcher_coolapk,
-					installed ? 0 : R.string.featured_button_install, installed ? c -> Apps.of(c).launch(PACKAGE_COOLAPK) : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
+					installed ? 0 : R.string.action_install, installed ? c -> Apps.of(c).launch(PACKAGE_COOLAPK) : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
 		}
 
 		features.endBatchedUpdates();
@@ -152,7 +152,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 	private boolean addFeaturedApp(final @StringRes int title, final @StringRes int description, final @DrawableRes int icon, final String... pkgs) {
 		if (! SHOW_ALL) for (final String pkg : pkgs) if (mApps.isInstalledInCurrentUser(pkg)) return false;
 		final String pkg = pkgs[0];
-		addFeature(getApplication(), pkg, title, description, icon, R.string.featured_button_install, c -> showInMarket(c, pkg));
+		addFeature(getApplication(), pkg, title, description, icon, R.string.action_install, c -> showInMarket(c, pkg));
 		return true;
 	}
 

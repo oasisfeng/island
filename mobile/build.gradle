@@ -26,8 +26,6 @@ android {
         textReport true
         textOutput "stdout"
     }
-
-    repositories.flatDir { dirs 'libs' }
 }
 
 dependencies {
@@ -38,6 +36,7 @@ dependencies {
     feature project(":watcher")
     feature project(":open")
 
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
     implementation project(':shared')
     implementation project(':deagle')
     implementation project(':biometric')
@@ -54,7 +53,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-appindexing:19.0.0'        // FeatureActionActivity
     implementation 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     implementation 'uk.co.samuelwall:material-tap-target-prompt:2.0.1'
-    implementation(name: 'setup-wizard-lib-platform-release', ext: 'aar')
 
     androidTestImplementation 'org.mockito:mockito-android:2.8.9'
     androidTestImplementation 'androidx.test:runner:1.2.0'

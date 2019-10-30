@@ -16,7 +16,6 @@
     <string name="status_appendix_exclusive">仅存于此界</string>
 
     <string name="featured_button_setup">激活</string>
-    <string name="featured_button_install">安装</string>
     <string name="featured_file_shuttle_title">文件传送门</string>
     <string name="featured_file_shuttle_description">借助“虚空之阵”实现穿越结界的文件访问能力，让文件可以更轻松的往返壶中界。布此阵需要通过 USB 连接的电脑使用 ADB 指令。</string>
     <string name="featured_fx_title">FX File Explorer</string>
@@ -104,14 +103,12 @@
     <string name="dialog_island_setup_failed">抱歉，创建壶中界时出现了异常。（阶段 %1$d）</string>
     <string name="dialog_activate_god_mode_additional_text">如果设备已 ROOT，“黄帝之名”接下来将自动启用（不会触碰系统分区）。\n\n对于未 ROOT 的设备，也可以手动激活，请按照即将打开的在线指导中的步骤操作。</string>
 
-    <string name="dialog_button_continue">继续</string>
-    <string name="dialog_button_learn_more">详细了解</string>
-    <string name="dialog_button_install">安装</string>
-    <string name="dialog_button_upgrade">升级</string>
-    <string name="dialog_button_destroy">毁灭</string>
-    <string name="dialog_button_activate">启用</string>
-    <string name="dialog_button_deactivate">停用</string>
-    <string name="dialog_button_reboot">重启</string>
+    <string name="action_continue">继续</string>
+    <string name="action_learn_more">详细了解</string>
+    <string name="action_install">安装</string>
+    <string name="action_upgrade">升级</string>
+    <string name="action_destroy">毁灭</string>
+    <string name="action_reboot">重启</string>
 
     <string name="prompt_disable_sys_app_as_removal">系统应用（或组件）只能被停用，与卸载安装的应用效果相似。\n\n由于没有权限直接停用应用，接下来即将打开系统的应用设置界面，届时请点击“停用”按钮。</string>
     <string name="toast_enable_disabled_system_app">请重新启用此分身</string>

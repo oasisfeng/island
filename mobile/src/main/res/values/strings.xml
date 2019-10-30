@@ -16,7 +16,6 @@
     <string name="status_appendix_exclusive">only in Island</string>
 
     <string name="featured_button_setup">Setup</string>
-    <string name="featured_button_install">Install</string>
     <string name="featured_file_shuttle_title">File Shuttle</string>
     <string name="featured_file_shuttle_description">File Shuttle provides cross-border file access and makes managing files inside Island much easier. It requires manual permission granting with ADB via USB-connected PC to activate.</string>
     <string name="featured_fx_title">FX File Explorer</string>
@@ -106,14 +105,13 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_island_setup_failed">Sorry, something went wrong in Island setup. (stage %1$d)</string>
     <string name="dialog_activate_god_mode_additional_text">If your device is rooted, God mode can be activated now systemlessly (system partition untouched).\n\nFor non-root device, God mode could only be activated manually. Please follow the online guide for instructions.</string>
 
-    <string name="dialog_button_continue">Continue</string>
-    <string name="dialog_button_learn_more">Learn more</string>
-    <string name="dialog_button_install">Install</string>
-    <string name="dialog_button_upgrade">Upgrade</string>
-    <string name="dialog_button_destroy">Destroy</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_learn_more">Learn more</string>
+    <string name="action_install">Install</string>
+    <string name="action_upgrade">Upgrade</string>
+    <string name="action_destroy">Destroy</string>
     <string name="dialog_button_activate">Activate</string>
-    <string name="dialog_button_deactivate">Deactivate</string>
-    <string name="dialog_button_reboot">Reboot</string>
+    <string name="action_reboot">Reboot</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
     <string name="toast_enable_disabled_system_app">Please re-enable this clone.</string>
