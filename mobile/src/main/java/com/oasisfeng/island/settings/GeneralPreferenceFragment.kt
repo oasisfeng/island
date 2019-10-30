@@ -8,9 +8,7 @@ import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.N
 import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
-import android.preference.Preference
 import android.preference.TwoStatePreference
-import androidx.annotation.StringRes
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS
 import com.oasisfeng.island.mobile.R
@@ -34,7 +32,7 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(activity) }
-            if (SDK_INT < N || ! policies.isActiveDeviceOwner) return@setup remove()
+            if (SDK_INT < N || ! policies.isActiveDeviceOwner) return@setup remove(this)
 
             isChecked = policies.invoke(DevicePolicyManager::getShortSupportMessage) != null
             onChange { enabled ->
@@ -45,7 +43,7 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
         }
 
         setup<TwoStatePreference>(R.string.key_preserve_app_ops) {
-            if (SDK_INT < P) return@setup remove()
+            if (SDK_INT < P) return@setup remove(this)
             if (Permissions.has(activity, GET_APP_OPS_STATS)) return@setup lock(true)
 
             summary = getString(R.string.pref_preserve_app_ops_description) + getString(R.string.pref_preserve_app_ops_adb_footnote)
@@ -68,12 +66,4 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
             }
         }
     }
-
-    private inline fun <T: Preference> setup(@StringRes key: Int, crossinline block: T.() -> Unit)
-            = @Suppress("UNCHECKED_CAST") (findPreference(getString(key)) as? T)?.apply { block() }
-    private inline fun Preference.onChange(crossinline block: (enabled: Boolean) -> Boolean)
-            = setOnPreferenceChangeListener { _, v -> block(v as Boolean) }
-    private fun TwoStatePreference.lock(checked: Boolean) { isChecked = checked; isSelectable = false }
-    private fun Preference.remove(): Unit
-            = removeLeafPreference(preferenceScreen, this).let { return }
 }

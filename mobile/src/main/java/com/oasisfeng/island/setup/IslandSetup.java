@@ -13,7 +13,6 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.DeadObjectException;
 import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -27,14 +26,13 @@ import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.IslandAppListProvider;
-import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
-import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
+import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
 import java.io.File;
@@ -173,7 +171,7 @@ public class IslandSetup {
 		SafeAsyncTask.execute(activity, context -> Shell.SU.run(command.toString()), (context, output) -> {
 			if (output == null || output.isEmpty()) {
 				Toast.makeText(context, R.string.toast_setup_mainland_non_root, Toast.LENGTH_LONG).show();
-				WebContent.view(context, Uri.parse(Config.URL_SETUP.get()));
+				WebContent.view(context, Uri.parse(Config.URL_SETUP_GOD_MODE.get()));
 				return;
 			}
 			if (! "DONE".equals(output.get(output.size() - 1))) {
@@ -232,8 +230,9 @@ public class IslandSetup {
 		System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
 	}
 
-	public static void requestProfileRemoval(final Activity activity) {
-		if (Users.profile == null || ! DevicePolicies.isProfileOwner(activity, Users.profile)) {
+	@ProfileUser public static void requestProfileRemoval(final Activity activity) {
+		if (Users.isOwner()) throw new IllegalStateException("Must be called in managed profile");
+		if (! DevicePolicies.isProfileOwner(activity, Users.current())) {
 			showPromptForProfileManualRemoval(activity);
 			return;
 		}
@@ -269,22 +268,14 @@ public class IslandSetup {
 		Analytics.$().event("cannot_destroy").send();
 	}
 
-	private static void destroyProfile(final Activity activity) {
-		@SuppressWarnings("UnnecessaryLocalVariable") final Context context = activity;		// MethodShuttle accepts only Context, but not Activity.
-		MethodShuttle.runInProfile(activity, () -> {
-			final DevicePolicies policies = new DevicePolicies(context);
+	@ProfileUser private static void destroyProfile(final Activity activity) {
+		if (Users.isOwner()) throw new IllegalStateException("Must be called in managed profile.");
+		final DevicePolicies policies = new DevicePolicies(activity);
+		try {
 			policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);
 			policies.getManager().wipeData(0);
-		}).whenComplete((result, e) -> {
-			if (e != null && ! (e instanceof DeadObjectException)) {	// DeadObjectException is normal, as wipeData() also terminated the calling process.
-				showPromptForProfileManualRemoval(activity);
-				return;
-			}
-			ClonedHiddenSystemApps.reset(activity, Users.profile);
-			activity.finishAffinity();	// Finish the whole activity stack.
-			System.exit(0);		// Force terminate the whole app, to avoid potential inconsistency.
-		});
+		} catch(final RuntimeException e) {
+			showPromptForProfileManualRemoval(activity);
+		}
 	}
-
-	private static final String TAG = IslandSetup.class.getSimpleName();
 }

@@ -92,13 +92,10 @@ public enum NotificationIds {
 
 	private int id() { return id != 0 ? id : ordinal() + 1; }		// 0 is reserved
 
-	public Intent buildUnblockRequestIntent(final Context context) {
+	public Intent buildChannelSettingsIntent(final Context context) {
+		if (SDK_INT >= O) channel.createAndGetId(context);
 		if (SDK_INT < O || isBlockedByApp(context))
 			return new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(EXTRA_APP_PACKAGE, context.getPackageName());
-		return buildChannelSettingsIntent(context);
-	}
-
-	@RequiresApi(O) public Intent buildChannelSettingsIntent(final Context context) {
 		return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(EXTRA_APP_PACKAGE, context.getPackageName())
 				.putExtra(Settings.EXTRA_CHANNEL_ID, channel.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 	}
@@ -114,7 +111,7 @@ public enum NotificationIds {
 		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(false)),
 		Important	("Important",	R.string.notification_channel_important,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
 		AppInstall	("AppInstall",	R.string.notification_channel_app_install,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
-		Watcher		("Watcher",		R.string.notification_channel_watcher,		IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
+		Watcher		("Watcher",		R.string.notification_channel_island_watcher,		IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
 		AppWatcher	("AppWatcher",	R.string.notification_channel_app_watcher,	IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
 		Debug		("Debug",		R.string.notification_channel_debug,		IMPORTANCE_MIN,  	channel -> channel.setShowBadge(false));
 

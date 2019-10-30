@@ -5,15 +5,12 @@
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/pref_general_header" />
 
-    <!--<header
-        android:fragment="com.oasisfeng.island.settings.SettingsActivity$PrivacyPreferenceFragment"
-        android:icon="@drawable/ic_block_black_24dp"
-        android:title="@string/pref_privacy_header" />-->
-
     <header
-        android:fragment="com.oasisfeng.island.settings.SetupPreferenceFragment"
-        android:icon="@drawable/ic_power_settings_new_black_24dp"
-        android:title="@string/pref_setup_header" />
+        android:id="@+id/pref_header_island"
+        android:fragment="com.oasisfeng.island.settings.IslandSettingsFragment"
+        android:icon="@drawable/ic_landscape_black_24dp"
+        android:title="@string/pref_scoped_settings_header"
+        android:breadCrumbTitle="@string/tab_mainland" /> <!-- "breadCrumbTitle" is only used for mainland -->
 
     <header
         android:fragment="com.oasisfeng.island.settings.SettingsActivity$AboutFragment"

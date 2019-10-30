@@ -139,7 +139,7 @@ public class Hacks {
 			AddressCache_put = Hack.onlyIf(SDK_INT <= P).into("java.net.AddressCache").method("put")
 			.withParams(String.class, int.class, InetAddress[].class);
 
-	public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
+	@ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 
 		interface PackageOps extends Hack.Mirror {
 			String getPackageName();
@@ -152,15 +152,13 @@ public class Hacks {
 			int getMode();
 		}
 
-		default int checkOpNoThrow(final int op, final int uid, final String pkg) { return -1; }
-		List<PackageOps> getOpsForPackage(int uid, String pkg, int[] ops);
-		List<PackageOps> getPackagesForOps(int[] ops);
+		@Hack.Fallback(-1) int checkOpNoThrow(final int op, final int uid, final String pkg);
+		@Nullable List<PackageOps> getOpsForPackage(int uid, String pkg, @Nullable int[] ops);
+		@Nullable List<PackageOps> getPackagesForOps(@Nullable int[] ops);
 		void setMode(int code, int uid, String packageName, int mode);
 
 		/** Retrieve the default mode for the operation. */
-		static int opToDefaultMode(final int op) {
-			return Hack.mirrorStaticMethod(AppOpsManager.class, "opToDefaultMode", -1, op);
-		}
+		@Hack.Fallback(-1) int opToDefaultMode(final int op);
 	}
 
 	public interface UserManagerHack extends Hack.Mirror<UserManager> {

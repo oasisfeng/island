@@ -1,11 +1,16 @@
 package com.oasisfeng.island.settings;
 
 import android.app.ActionBar;
+import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.LauncherActivityInfo;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -13,31 +18,34 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.view.MenuItem;
+import android.widget.Toast;
 
-import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
+import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.Modules;
+import com.oasisfeng.island.util.Users;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.StringRes;
 import androidx.annotation.XmlRes;
 import androidx.core.app.NavUtils;
 
+import static android.content.Intent.EXTRA_TITLE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
+import static java.util.Objects.requireNonNull;
+import static java9.util.stream.StreamSupport.stream;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On handset devices, settings are presented as a single list.
  * On tablets, settings are split by category, with category headers shown to the left of the list of settings.
  */
 public class SettingsActivity extends PreferenceActivity {
-
-	public static void startWithPreference(final Context context, final Class<? extends PreferenceFragment> fragment) {
-		final Intent intent = new Intent(context, SettingsActivity.class).putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, fragment.getName());
-		Activities.startActivity(context, intent);
-	}
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -92,8 +100,55 @@ public class SettingsActivity extends PreferenceActivity {
 
 	@Override public void onBuildHeaders(final List<Header> target) { loadHeadersFromResource(R.xml.pref_headers, target); }
 
+	@Override public void onHeaderClick(final Header header, final int position) {
+		if (header.id != R.id.pref_header_island) {
+			super.onHeaderClick(header, position);
+			return;
+		}
+		final List<UserHandle> users = new ArrayList<>();		// Support multiple managed-profiles
+		users.add(Users.owner);
+		users.addAll(Users.getProfilesManagedByIsland());
+		if (users.size() <= 1) {		// God mode without Island
+			switchToHeader(header);
+			return;
+		}
+		final String[] profile_labels = stream(users).map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
+				: user.equals(Users.profile) ? getText(R.string.tab_island) : "Island " + Users.toId(user)).toArray(String[]::new);	// TODO: Use actual name for Islands
+		Dialogs.buildList(this, null, profile_labels, (d, which) -> {
+			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which), profile_labels[which]);
+		}).show();
+	}
+
+	private void launchSettingsActivityAsUser(final UserHandle user, final String title) {
+		if (Users.isOwner(user)) {
+			startMainlandSettingsFragment(this);
+			return;
+		}
+		final LauncherApps la = ((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE));
+		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), user);
+		if (! activities.isEmpty()) {
+			for (final LauncherActivityInfo activity : activities)
+				if (IslandSettingsActivity.class.getName().equals(activity.getComponentName().getClassName())) {
+					la.startMainActivity(activity.getComponentName(), activity.getUser(), null, null);
+					break;
+				}
+		} else {	// In case IslandSettingsActivity is not enabled, due to Island space is not yet activated after upgrading.
+			if (user.equals(Users.profile)) {
+				MethodShuttle.runInProfile(this, (Context context) -> {
+					context.getPackageManager().setComponentEnabledSetting(new ComponentName(this, IslandSettingsActivity.class),
+							PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+					context.startActivity(new Intent(this, IslandSettingsActivity.class).putExtra(EXTRA_TITLE, title).addFlags(FLAG_ACTIVITY_NEW_TASK));
+				});
+			} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+		}
+	}
+
+	public static void startMainlandSettingsFragment(final Activity activity) {
+		activity.getFragmentManager().beginTransaction().replace(android.R.id.content, new IslandSettingsFragment()).commit();
+	}
+
 	/** This method stops fragment injection in malicious applications. Make sure to deny any unknown fragments here. */
-	protected boolean isValidFragment(final String fragmentName) { return fragmentName.startsWith(getClass().getPackage().getName()); }
+	protected boolean isValidFragment(final String fragmentName) { return fragmentName.startsWith(requireNonNull(getClass().getPackage()).getName()); }
 
 	public static abstract class SubPreferenceFragment extends PreferenceFragment {
 

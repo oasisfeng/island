@@ -73,7 +73,8 @@ public class MainActivity extends LifecycleActivity {
 		} else {
 			final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
 			final List<LauncherActivityInfo> our_activities_in_launcher;
-			if (launcher_apps != null && ! (our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile)).isEmpty()) {
+			if (launcher_apps != null && ! (our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile)).isEmpty()
+					&& our_activities_in_launcher.get(0).getComponentName().getClassName().equals(MainActivity.class.getName())) {
 				// Main activity is left enabled, probably due to pending post-provisioning in manual setup. Some domestic ROMs may block implicit broadcast, causing ACTION_USER_INITIALIZE being dropped.
 				Analytics.$().event("profile_provision_leftover").send();
 				Log.w(TAG, "Setup in Island is not complete, continue it now.");

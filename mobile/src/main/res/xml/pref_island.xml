@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/pref_privacy_header">
+
+        <com.oasisfeng.android.preference.WallOfTextPreference
+            android:summary="@string/pref_privacy_summary"
+            android:selectable="false" />
+
+        <com.oasisfeng.android.preference.WallOfTextPreference
+            android:summary="@string/pref_privacy_appops"
+            android:selectable="false" />
+
+        <Preference
+            android:key="@string/key_manage_read_phone_state"
+            android:title="@string/pref_privacy_read_phone_state_title"
+            android:summary="@string/pref_privacy_read_phone_state_summary" />
+
+        <Preference
+            android:key="@string/key_manage_read_sms"
+            android:title="@string/pref_privacy_read_sms_title" />
+
+        <Preference
+            android:key="@string/key_manage_location"
+            android:title="@string/pref_privacy_location_title"
+            android:summary="@string/pref_privacy_location_summary" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_quick_controls_header">
+
+        <SwitchPreference
+            android:key="@string/key_island_watcher"
+            android:title="@string/notification_channel_island_watcher"
+            android:summary="@string/pref_island_watcher_summary" />
+
+        <SwitchPreference
+            android:key="@string/key_app_watcher"
+            android:title="@string/notification_channel_app_watcher"
+            android:summary="@string/pref_app_watcher_summary" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_setup_header">
+
+        <Preference
+            android:key="@string/key_reprovision"
+            android:title="@string/pref_reprovision_title"
+            android:summary="@string/pref_reprovision_summary" />
+
+        <Preference
+            android:key="@string/key_destroy"
+            android:title="@string/pref_destroy_title"
+            android:summary="@string/pref_destroy_summary" />
+
+        <Preference
+            android:key="@string/key_device_owner"
+            android:title="@string/pref_device_owner_title"
+            android:summary="@string/pref_device_owner_summary" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

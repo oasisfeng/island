@@ -9,6 +9,10 @@
         <value>https://island.oasisfeng.com/setup</value>
     </entry>
     <entry>
+        <key>url_setup_god_mode</key>
+        <value>https://island.oasisfeng.com/setup#manual-setup-for-island-in-god-mode</value>
+    </entry>
+    <entry>
         <key>url_setup_trouble</key>
         <value>https://island.oasisfeng.com/faq</value>
     </entry>

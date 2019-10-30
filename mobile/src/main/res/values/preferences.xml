@@ -4,13 +4,17 @@
     <string translatable="false" name="key_launch_shortcut_prefix">launch_shortcut_prefix</string>
     <string translatable="false" name="key_show_admin_message">show_admin_message</string>
     <string translatable="false" name="key_preserve_app_ops">preserve_app_ops</string>
+    <!-- Island (per-profile) -->
+    <string translatable="false" name="key_manage_read_phone_state">manage_read_phone_state</string>
+    <string translatable="false" name="key_manage_read_sms">manage_read_sms</string>
+    <string translatable="false" name="key_manage_location">manage_location</string>
+    <string translatable="false" name="key_island_watcher">island_watcher</string>
+    <string translatable="false" name="key_app_watcher">app_watcher</string>
+    <string translatable="false" name="key_reprovision">reprovision</string>
+    <string translatable="false" name="key_destroy">destroy</string>
+    <string translatable="false" name="key_device_owner">device_owner</string>
     <!-- Privacy -->
     <string translatable="false" name="key_privacy_notification_for_clone">privacy_notification_clone</string>
-    <!-- Setup -->
-    <string translatable="false" name="key_setup_mainland">setup_mainland</string>
-    <string translatable="false" name="key_setup_island">setup_island</string>
-    <string translatable="false" name="key_setup_mainland_reprovision">setup_mainland_reprovision</string>
-    <string translatable="false" name="key_setup_island_reprovision">setup_island_reprovision</string>
     <!-- About -->
     <string translatable="false" name="key_version">version</string>
 </resources>

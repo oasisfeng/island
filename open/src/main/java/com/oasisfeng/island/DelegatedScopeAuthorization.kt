@@ -63,7 +63,7 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
             return notifyAuthorizationResult(context, pkg, requestId, RESULT_APPROVED)
 
         if (NotificationIds.Authorization.isBlocked(context)) {
-            context.startActivity(NotificationIds.Authorization.buildUnblockRequestIntent(context).addFlags(FLAG_ACTIVITY_NEW_TASK))
+            context.startActivity(NotificationIds.Authorization.buildChannelSettingsIntent(context).addFlags(FLAG_ACTIVITY_NEW_TASK))
             return Toast.makeText(context, R.string.prompt_unblock_notification_for_auth_request, Toast.LENGTH_LONG).show()
         }
         val intent = Intent(context, javaClass).setData(Uri.parse("request:$requestId"))

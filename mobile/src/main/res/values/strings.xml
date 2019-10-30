@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="label_searchable">Apps in Island</string>
+    <string name="label_activity_island_settings">Island Settings</string>
 
     <string name="tab_mainland">Mainland</string>
     <string name="tab_island">Island</string>
@@ -35,6 +36,7 @@
     <string name="featured_appops_description">Island is incapable to block apps from accessing device-level data (e.g. IMEI, SMS). AppOps is a powerful tool to selectively block such accesses gracefully from specified apps.</string>
     <string name="featured_coolapk_title">CoolApk</string>
     <string name="featured_coolapk_description">Upgrade frozen apps easily, no need to unfreeze them first. (\"Show hidden apps\" must be enabled in the \"labs settings\" of CoolApk)\n\nTo upgrade apps solely installed in Island, you still need to use the clone of CoolApk inside Island.</string>
+    <string name="featured_setup_island_title">Setup a separate Island</string>
 
     <string name="setup_profile_welcome">Welcome</string>
     <string name="setup_island_intro">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data
@@ -48,7 +50,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="setup_error_managed_profile_not_supported">Sorry, the required feature \"Managed Profile\" is not supported on this device.</string>
     <string name="setup_error_provisioning_incomplete">Island setup is incomplete, the previous attempt might be unsuccessful.\n\nIf your device ROM or 3rd-party tool enforce auto-start control (or similar background-restriction functionality), please whitelist Island in related settings, then continue the setup.</string>
     <string name="setup_error_managed_device">Sorry, Island cannot be setup due to device currently being managed by <b>%1$s</b>.</string>
-    <string name="setup_error_other_work_profile">Sorry, \"Work profile\" was setup on this device already by other app. To use Island, the existent Work Profile must be removed first in system Settings - Accounts.</string>
     <string name="setup_error_missing_managed_provisioning">Sorry, the required \"Android for Work\" feature may not be fully supported on your device.</string>
     <string name="setup_solution_for_cancelled_provision">Trouble setting-up Island?\n\nIf you got error message during the setup procedure of Island, please continue to open the online troubleshooting guide with suggested solutions.\n\nIf all the solutions do not work and your device is rooted, you can alternatively setup Island with root.</string>
 
@@ -96,7 +97,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_reactivate_message">Island was unexpectedly deactivated, please grant the Device Admin permission to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island? You will LOSE ALL THE DATA IN ISLAND.\n\nDon\'t worry, apps and data outside Island will NEVER be affected.</string>
     <string name="dialog_destroy_exclusives_message">Since exclusively installed in Island, the following %1$d app(s) will be UNINSTALLED effectively from your device if Island is destroyed.\n\n%2$s\n\nAre you sure you want to proceed?</string>
-    <string name="dialog_deactivate_message">Are you sure to deactivate God mode?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
+    <string name="dialog_rescind_message">Are you sure to rescind?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_critical_app_warning">This app (or component) is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
     <string name="dialog_reinstall_system_app_warning">This system app (or component) is not installed for some reason. If proceed, the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
@@ -110,7 +111,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_install">Install</string>
     <string name="action_upgrade">Upgrade</string>
     <string name="action_destroy">Destroy</string>
-    <string name="dialog_button_activate">Activate</string>
     <string name="action_reboot">Reboot</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
@@ -130,7 +130,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
     <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>
     <string name="toast_setup_mainland_root_failed">Error activating God mode with root.</string>
-    <string name="toast_enable_install_from_unknown_source">Please enable this setting for Island to clone apps.</string>
     <string name="toast_app_launch_failure">Could not launch \"%s\"</string>
 
     <!-- General words -->
@@ -150,35 +149,44 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="prompt_adb_app_ops_command">Run the following command in ADB shell:</string>
     <string name="action_copy">Copy to clipboard</string>
 
+    <string name="pref_scoped_settings_header">Scoped Settings</string>
+    <string name="prompt_island_not_yet_setup">Island is not yet setup.</string>
     <string name="pref_privacy_header">Privacy Protection</string>
+    <string name="pref_privacy_summary">Apps in Island cannot access your private data and apps in Mainland (e.g. contacts, call log, photos, documents) except device global data: (including but not limited to)
+        \n\n· Device identifiers (forbidden on Android 10+)\n· SMS\n· Device location</string>
+    <string name="pref_privacy_appops">On Android 9+, the above exceptions can also be restricted by supervising the permission of apps (overriding the granted state of permissions).\n\nIf permission is revoked here, app could never gain access to the private data protected by that permission, even if you explicitly grant the permission in the app.</string>
+    <string name="pref_privacy_read_phone_state_title">Read device identity and telephony state</string>
+    <string name="pref_privacy_read_phone_state_summary">Revoking it also affect the ability of app to check telephony state</string>
+    <string name="pref_privacy_read_sms_title">Read SMS</string>
+    <string name="pref_privacy_location_title">Access device location</string>
+    <string name="pref_privacy_location_summary">Also affect the ability to scan near-by devices</string>
+    <string name="label_postfix_for_system_app">(system)</string>
+    <string name="label_suffix_permission_not_granted">(not granted by user)</string>
+    <string name="action_revoke_all">Revoke all</string>
+    <string name="action_done">Done</string>
+    <string name="pref_quick_controls_header">Quick controls in notification</string>
+    <string name="pref_island_watcher_summary">Shortcut to deactivate Island, ceasing all the background activities inside. Island can then be activated on-demand by launching any of the apps inside.</string>
+    <string name="pref_app_watcher_summary">Shortcut to freeze app recently unfrozen and revoke permissions temporarily granted.</string>
+    <string name="pref_reprovision_title">Repair</string>
+    <string name="pref_reprovision_summary">This may help to fix some issues. All apps and data will be preserved.</string>
+    <string name="pref_destroy_title">Destroy permanently</string>
+    <string name="pref_destroy_summary">Remove this Island, together with all apps inside and their data.</string>
+    <string name="pref_rescind_title">Rescind</string>
+    <string name="pref_rescind_summary">Rescind the privilege on Mainland. All your apps and data will be intact (unfrozen), but you could no longer:\n\n</string>
+    <string name="pref_device_owner_title">God mode</string>
+    <string name="pref_device_owner_summary">A powerful mode with special privilege granted to Island. If activated, you can:\n\n</string>
+    <string name="pref_device_owner_featurs">· Freeze apps in Mainland\n· Supervise app permissions in Mainland(Android 9+)\n· Use some device global features (e.g. full ADB Secure).</string>
+
     <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>
     <string name="pref_privacy_notification_for_clone_summary">Show notification for potential privacy exposure in cloned apps</string>
 
-    <string name="pref_setup_header">Setup &amp; Shutdown</string>
-    <string name="pref_setup_island_title">Island</string>
-    <string name="pref_setup_island_summary_managed">Managed</string>
-    <string name="pref_setup_island_summary_managed_other">Existent Work profile is not managed by Island.\nClick the side icon to remove.</string>
-    <string name="pref_setup_island_summary_incomplete">Setup incomplete.\nClick the side icon to rebuild.</string>
-    <string name="pref_setup_island_summary_pending_setup">Not setup yet.\nClick the side icon to setup.</string>
-    <string name="pref_setup_mainland_title">Mainland</string>
-    <string name="pref_setup_mainland_summary_managed">Managed</string>
-    <string name="pref_setup_mainland_summary_not_managed">Unmanaged</string>
-    <string name="pref_setup_category_status">Status</string>
-    <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
-    <string name="pref_setup_mainland_reprovision_title">Repair Mainland</string>
-    <string name="pref_setup_mainland_reprovision_summary">This may help to fix issues in Mainland.\nAll apps and data will be preserved.</string>
-    <string name="pref_setup_island_reprovision_title">Repair Island</string>
-    <string name="pref_setup_island_reprovision_summary">This may help to fix issues in Island.\nAll apps and data will be preserved.</string>
+    <string name="pref_setup_header">Setup</string>
 
     <string name="pref_about_header">About</string>
     <string name="pref_about_version_title">Version</string>
     <string name="pref_about_open_source_title">Island is open source</string>
     <string name="pref_about_open_source_summary">Welcome to visit us on GitHub</string>
     <string name="pref_about_licenses_title">Licenses</string>
-
-    <string name="notification_island_after_uninstall_title">Remove Island completely</string>
-    <string name="notification_island_after_uninstall_text">Destroy the Island and remove all apps and data within?</string>
-    <string name="notification_action_restore">Restore</string>
 
     <!-- Security Confirmation -->
 
@@ -204,6 +212,4 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="tip_critical_package_required">Critical app (or component) required</string>
     <string name="tip_critical_package_message">\"%1$s\" is a critical system component required inside Island for Android system to work properly.\n\nTake action now to avoid unexpected app or system malfunction.</string>
 
-    <string name="pref_privacy_active_island_notification_title">Notification for active Island space</string>
-    <string name="pref_privacy_active_island_notification_summary">with action to quickly deactivate, to prevent all background behaviors within the Island space.</string>
 </resources>

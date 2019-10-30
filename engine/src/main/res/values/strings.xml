@@ -17,5 +17,5 @@
 
     <string name="toast_shortcut_invalid">Shortcut is no longer valid, please check the status of Island or re-create it in Island</string>
     <string name="toast_setup_complete">Island setup is complete.</string>
-    <string name="toast_reprovision_done">Done re-provisioning.</string>
+    <string name="toast_reprovision_done">Done repairing.</string>
 </resources>

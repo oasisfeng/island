@@ -18,6 +18,7 @@ public enum Config {
 	IS_REMOTE("is_remote"),
 	URL_FAQ("url_faq"),
 	URL_SETUP("url_setup"),
+	URL_SETUP_GOD_MODE("url_setup_god_mode"),
 	URL_SETUP_TROUBLESHOOTING("url_setup_trouble"),
 	URL_FILE_SHUTTLE("url_file_shuttle"),
 	URL_COOLAPK("url_coolapk"),

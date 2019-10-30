@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="label_searchable">炼妖壶中的应用</string>
+    <string name="label_activity_island_settings">炼妖壶设置</string>
 
     <string name="tab_mainland">山海界</string>
     <string name="tab_island">壶中界</string>
@@ -24,7 +25,7 @@
     <string name="featured_adb_secure_island_title">ADB 安全结界（仅限壶中界）</string>
     <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果启用“黄帝之名”，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
     <string name="featured_god_mode_title">黄帝之名</string>
-    <string name="featured_god_mode_description">“黄帝之名”可召唤黄帝当年创造山海界的上古神器“东皇钟”，赋予在壶中界之外同时驾驭山海界的力量。以“黄帝之名”，不仅可以冻结山海界中的应用，还能召唤其它神器相助。</string>
+    <string name="featured_god_mode_description">将炼妖壶的强大力量扩展至界外。以“黄帝之名”，不仅可以冻结界外的应用，还能召唤其它神器相助。</string>
     <string name="featured_greenify_title">绿色守护</string>
     <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_saf_enhancer_title">SAF 增强器 Lite</string>
@@ -32,9 +33,10 @@
     <string name="featured_icebox_title">冰箱</string>
     <string name="featured_icebox_description">轻松愉悦的应用冻结和启动体验。请确保在冰箱的工作模式设置中选择“炼妖壶”。将其克隆至壶中界即可管理和启动壶中界的应用。</string>
     <string name="featured_appops_title">App Ops</string>
-    <string name="featured_appops_description">壶中界的应用并没有被剥夺窥测山海界与壶中界共同基石（如 IMEI、短信）的能力。而 App Ops 则拥有选择性剥夺指定应用各种窥测能力的法力。</string>
+    <string name="featured_appops_description">App Ops 拥有选择性剥夺指定应用各项能力的强大法力。</string>
     <string name="featured_coolapk_title">酷安</string>
     <string name="featured_coolapk_description">轻松升级冻结的应用，无需事先解冻。（需在酷安的设置 - 实验室中开启“显示隐藏应用”）\n\n升级壶中界的应用需要在壶中界运行酷安。</string>
+    <string name="featured_setup_island_title">创建一个独立的壶中界</string>
 
     <string name="setup_profile_welcome">欢迎来到壶中界</string>
     <string name="setup_island_intro">壶中界是一个独立的应用和数据空间。可以为应用选择性的在壶中界创造分身，也可以将应用单独安装在壶中界。
@@ -46,7 +48,6 @@
     <string name="setup_error_managed_profile_not_supported">抱歉，此设备不支持必需的“Android 工作资料”特性。</string>
     <string name="setup_error_provisioning_incomplete">壶中界的创建不完整，此前的创建尝试可能并未成功。\n\n<b>如果您的设备或其它三方工具施加了“自启动”（或类似的）限制，请务必首先将壶中界解除限制或加入白名单，然后再次创建壶中界。</b></string>
     <string name="setup_error_managed_device">抱歉，由于此设备已被 <b>%1$s</b> 接管，壶中界无法创建。</string>
-    <string name="setup_error_other_work_profile">抱歉，由于设备上的其它应用已经创造了未知的异界，壶中界无法与之共存。如果仍然希望创建壶中界，须首先至“系统设置 -（用户和）账号”中“移除工作资料”。</string>
     <string name="setup_error_missing_managed_provisioning">抱歉，由于此设备并未完整支持必需的“Android 工作资料”特性。</string>
     <string name="setup_solution_for_cancelled_provision">创建壶中界遇到了困难？\n\n如果你遇到了错误信息，请点击“继续”打开在线的故障排除指南，并参照其中给出的解决方案。\n\n如果故障排除指南未能解决问题，而您的设备已 ROOT，也可以尝试使用 ROOT 权限创建壶中界。</string>
 
@@ -94,7 +95,7 @@
     <string name="dialog_reactivate_message">通往壶中界的入口被意外关闭，请再次授予设备管理权限以重新开启。</string>
     <string name="dialog_destroy_message">确定希望毁灭整个壶中界？其中的应用分身和所有数据将会完全湮灭，无法恢复。\n\n别担心，外部的应用和数据不会受到任何影响。</string>
     <string name="dialog_destroy_exclusives_message">以下 %1$d 个应用仅存与壶中界，因此将随着壶中界的毁灭而被完全卸载。\n\n%2$s\n\n确定要继续毁灭壶中界？</string>
-    <string name="dialog_deactivate_message">确定希望解除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
+    <string name="dialog_rescind_message">确定希望解除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壶中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
     <string name="dialog_critical_app_warning">这个应用（或组件）可能对于 Android 系统或其它应用的正常运作至关重要。如果继续此操作，部分应用甚至整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
     <string name="dialog_reinstall_system_app_warning">这个系统应用（或组件）因为某些原因并未安装。如果继续此操作，整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
@@ -127,7 +128,6 @@
     <string name="toast_failed_to_launch_app">抱歉，启动应用时出现了异常。</string>
     <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>
     <string name="toast_setup_mainland_root_failed">通过 ROOT 权限启用“黄帝之名”时出现了异常。</string>
-    <string name="toast_enable_install_from_unknown_source">请授予安装权限以创造应用分身</string>
     <string name="toast_app_launch_failure">未能启动“%s”</string>
 
     <!-- General words -->
@@ -147,35 +147,41 @@
     <string name="prompt_adb_app_ops_command">请在 ADB 命令行执行以下指令：\n\n</string>
     <string name="action_copy">复制至剪贴板</string>
 
-    <string name="pref_privacy_header">Privacy Protection</string>
-    <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>
-    <string name="pref_privacy_notification_for_clone_summary">Show notification for potential privacy exposure in cloned apps</string>
+    <string name="pref_scoped_settings_header">分空间的独立设置</string>
+    <string name="prompt_island_not_yet_setup">壶中界尚未创建</string>
+    <string name="pref_privacy_header">隐私保护</string>
+    <string name="pref_privacy_summary">壶中界里的应用无法访问您在外部的应用和私人数据（如 联系人、通话记录、照片、文档等），除了设备全局的数据：（包括但不限于）
+        \n\n· 设备唯一标识（Android 10 已禁止）\n· 短信\n· 设备的地理位置</string>
+    <string name="pref_privacy_appops">从 Android 9 开始，以上几项设备全局数据也能通过以下“权限审查”对特定应用的权限加以限制。\n\n在这里撤销的权限，即使用户在应用中授权，应用亦无法访问该权限保护的数据。</string>
+    <string name="pref_privacy_read_phone_state_title">读取设备标识及通讯状态</string>
+    <string name="pref_privacy_read_phone_state_summary">撤销此权限将影响应用检查通讯状态的能力</string>
+    <string name="pref_privacy_read_sms_title">读取短信</string>
+    <string name="pref_privacy_location_title">访问设备的地理位置</string>
+    <string name="pref_privacy_location_summary">将影响应用扫描附近设备的能力</string>
+    <string name="label_postfix_for_system_app">(内置)</string>
+    <string name="label_suffix_permission_not_granted">(用户未授权)</string>
+    <string name="action_revoke_all">全部撤销</string>
+    <string name="action_done">完成</string>
+    <string name="pref_quick_controls_header">通知区快捷控制</string>
+    <string name="pref_island_watcher_summary">可封印诸界，中止其中所有应用的后台活动。再次启动其中的任何应用将会重新激活。</string>
+    <string name="pref_app_watcher_summary">可重新冻结最近解冻的应用，撤销临时授予的权限。</string>
+    <string name="pref_reprovision_title">修缮壶中界</string>
+    <string name="pref_reprovision_summary">有助于解决出现的问题。所有的应用和数据都将保留。</string>
+    <string name="pref_destroy_title">彻底摧毁</string>
+    <string name="pref_destroy_summary">永久的销毁此界，连同其中的所有应用及其数据。</string>
+    <string name="pref_rescind_title">撤除管理权</string>
+    <string name="pref_rescind_summary">撤销炼妖壶对设备的全局管理权。所有的应用和数据都将保留（解冻），但你将无法再：\n\n</string>
+    <string name="pref_device_owner_title">黄帝之名</string>
+    <string name="pref_device_owner_summary">授予炼妖壶此设备的全局管理权，你将可以：\n\n</string>
+    <string name="pref_device_owner_featurs">· 冻结界外的应用\n· 监管界外应用的权限。(Android 9+)\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全结界）</string>
 
-    <string name="pref_setup_header">创造 与 毁灭</string>
-    <string name="pref_setup_island_title">壶中界</string>
-    <string name="pref_setup_island_summary_managed">受控</string>
-    <string name="pref_setup_island_summary_managed_other">不明来源的异界\n点击侧面的图标将其移除。</string>
-    <string name="pref_setup_island_summary_incomplete">未能正常完成创建\n点击侧面的图标重建。</string>
-    <string name="pref_setup_island_summary_pending_setup">尚未创建\n点击侧面的图标开始创建。</string>
-    <string name="pref_setup_mainland_title">山海界</string>
-    <string name="pref_setup_mainland_summary_managed">受控</string>
-    <string name="pref_setup_mainland_summary_not_managed">非受控</string>
-    <string name="pref_setup_category_status">状态</string>
-    <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
-    <string name="pref_setup_mainland_reprovision_title">修复山海界</string>
-    <string name="pref_setup_mainland_reprovision_summary">有助于解决山海界出现的问题。\n所有的应用和数据将保留。</string>
-    <string name="pref_setup_island_reprovision_title">修复壶中界</string>
-    <string name="pref_setup_island_reprovision_summary">有助于解决壶中界出现的问题。\n所有的应用和数据将保留。</string>
+    <string name="pref_setup_header">管理</string>
 
     <string name="pref_about_header">关于</string>
     <string name="pref_about_version_title">版本</string>
     <string name="pref_about_open_source_title">这是一个开源项目</string>
     <string name="pref_about_open_source_summary">欢迎来 GitHub 访问我们</string>
     <string name="pref_about_licenses_title">授权</string>
-
-    <string name="notification_island_after_uninstall_title">壶中界已失去控制</string>
-    <string name="notification_island_after_uninstall_text">让其毁灭（连同其中的所有应用和数据）还是重生？</string>
-    <string name="notification_action_restore">重生</string>
 
     <!-- Security Confirmation -->
 

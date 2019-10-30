@@ -59,16 +59,6 @@
                   android:exported="false"
                   android:multiprocess="true" />
 
-        <provider android:authorities="${applicationId}.removal"
-                  android:name="com.oasisfeng.island.UninstallHelper"
-                  android:exported="false" />
-
-        <receiver android:name="com.oasisfeng.island.UninstallHelper$UninstallReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
         <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true" tools:targetApi="N">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
@@ -76,10 +66,31 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="com.oasisfeng.island.settings.IslandSettingsActivity$Enabler"> <!-- Enable SettingsActivity then disable self -->
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <activity android:name="com.oasisfeng.island.settings.SettingsActivity"
                   android:label="@string/settings_title"
                   android:theme="@android:style/Theme.Material.Settings"
                   android:parentActivityName="com.oasisfeng.island.MainActivity" />
+
+        <activity android:name="com.oasisfeng.island.settings.IslandSettingsActivity"
+                  android:label="@string/label_activity_island_settings"
+                  android:theme="@android:style/Theme.Material.Settings"
+                  android:enabled="false"> <!-- Enabled explicitly for managed profiles during Island setup -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="com.oasisfeng.island.category.ISLAND_ONLY" />
+            </intent-filter>
+        </activity>
+
+        <activity-alias android:name="com.oasisfeng.island.settings.IslandSettingsActivityInMainland"
+                        android:targetActivity="com.oasisfeng.island.settings.IslandSettingsActivity" /> <!-- To avoid launcher icon in mainland -->
 
     </application>
 

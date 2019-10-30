@@ -13,6 +13,7 @@ import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import androidx.annotation.Nullable;
@@ -85,6 +86,7 @@ public abstract class Users extends PseudoContentProvider {
 	public static boolean isProfileManagedByIsland(final UserHandle user) {
 		return user.equals(profile)/* fast path for first profile */ || sProfilesManagedByIsland.contains(user);
 	}
+	public static List<UserHandle> getProfilesManagedByIsland() { return Collections.unmodifiableList(sProfilesManagedByIsland); }
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 

@@ -7,11 +7,13 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.RestrictedBinderProxy;
+import com.oasisfeng.island.appops.AppOpsHelper;
 import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
@@ -24,6 +26,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import static android.content.Context.APP_OPS_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.P;
 import static com.oasisfeng.island.ApiConstants.DELEGATION_APP_OPS;
 
 /**
@@ -61,26 +65,27 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 
 		@Override protected boolean doTransact(final int code, final Parcel data, final Parcel reply, final int flags) throws RemoteException {
 			if (code != mCodeSetMode) return super.doTransact(code, data, reply, flags);
+			if (SDK_INT < P) throw new SecurityException("Island has no privilege to setMode() before Android P.");
 
-			final int pos = data.dataPosition();
 			data.enforceInterface(DESCRIPTOR);
-			final int ops = data.readInt();
+			final int op = data.readInt();
 			final int uid = data.readInt();
+			final String pkg = data.readString();
+			if (pkg == null) throw new NullPointerException("packageName is null");
+			final int mode = data.readInt();
+			Log.i(TAG, "IAppOpsService.setMode(" + op + ", " + uid + ", " + pkg + ", " + mode + ")");
 
 			final @UserIdInt int user_id = UserHandles.getUserId(uid);
 			if (user_id == UserHandles.getIdentifier(Users.current())) {
-				data.setDataPosition(pos);
-				return super.doTransact(code, data, reply, flags);
+				new AppOpsHelper(mContext).setMode(pkg, op, mode, uid);
+				return true;
 			}
 			if (Users.profile == null || user_id != UserHandles.getIdentifier(Users.profile))
 				throw new IllegalArgumentException("User " + user_id + " is not managed by Island");
 
-			final String pkg = data.readString();
-			final int mode = data.readInt();
-			data.setDataPosition(pos);
 			try {	// Cross-profile synchronized invocation with 2s timeout.
 				MethodShuttle.runInProfile(mContext, context -> {
-					Hack.into(context.getSystemService(APP_OPS_SERVICE)).with(Hacks.AppOpsManager.class).setMode(ops, uid, pkg, mode);
+					new AppOpsHelper(context).setMode(pkg, op, mode, uid);
 				}).toCompletableFuture().get(2, TimeUnit.SECONDS);
 			} catch (final ExecutionException e) {
 				final Throwable cause = e.getCause();

@@ -169,7 +169,7 @@ public class DevicePolicies {
 
 	public boolean setApplicationHidden(final String pkg, final boolean hidden) {
 		if (SDK_INT > O_MR1 && hidden && Permissions.has(mAppContext, GET_APP_OPS_STATS)) try {
-			AppOpsHelper.saveAppOps(mAppContext, pkg);
+			new AppOpsHelper(mAppContext).saveAppOps(pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
 			Toasts.showLong(mAppContext, R.string.prompt_failed_preserving_app_ops);
 			Analytics.$().logAndReport(TAG, "Error saving app ops settings for " + pkg, e);
@@ -177,7 +177,7 @@ public class DevicePolicies {
 		final boolean changed = setApplicationHiddenWithoutAppOpsSaver(pkg, hidden);
 
 		if (changed && SDK_INT > O_MR1 && ! hidden) try {
-			AppOpsHelper.restoreAppOps(mAppContext, pkg);
+			new AppOpsHelper(mAppContext).restoreAppOps(pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
 			Toasts.showLong(mAppContext, R.string.prompt_failed_preserving_app_ops);
 			Analytics.$().logAndReport(TAG, "Error restoring app ops settings for " + pkg, e);
