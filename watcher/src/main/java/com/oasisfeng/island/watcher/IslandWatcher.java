@@ -3,6 +3,7 @@ package com.oasisfeng.island.watcher;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.Notification.Action;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
@@ -27,6 +28,8 @@ import android.widget.Toast;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.util.ProfileUser;
 
+import java.util.Arrays;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
@@ -46,15 +49,17 @@ import static android.os.Build.VERSION_CODES.P;
  *
  * Created by Oasis on 2019-2-25.
  */
-@ProfileUser public class IslandWatcher extends BroadcastReceiver {
+@RequiresApi(P) @ProfileUser public class IslandWatcher extends BroadcastReceiver {
 
 	// With shared notification group, app watcher (group child) actually hides Island watcher (group summary), which only shows up if no app watchers.
 	static final String GROUP = "Watcher";
+	// ACTION_LOCKED_BOOT_COMPLETED is unnecessary, because requestQuietModeEnabled() does not work if user is still locked.
+	private static final String[] VALID_ACTIONS = { Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
+			NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED, NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED };
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		Log.d(TAG, "onReceive: " + intent);
-		// ACTION_LOCKED_BOOT_COMPLETED is unnecessary, because requestQuietModeEnabled() does not work if user is still locked.
-		if (! Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) && ! Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction())) return;
+		if (! Arrays.asList(VALID_ACTIONS).contains(intent.getAction())) return;
 		if (! ((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE)).isProfileOwnerApp(context.getPackageName())) {
 			context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, getClass()), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 			return;		// We don't need this receiver in owner user.
