@@ -110,6 +110,13 @@
             </intent-filter>
         </activity>
 
+        <service android:name="com.oasisfeng.island.service.IslandPersistentService"
+                 android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_SERVICE" />
+            </intent-filter>
+        </service>
+
         <service android:name="com.oasisfeng.island.shuttle.MethodShuttle$MethodShuttleService" android:exported="false">
             <intent-filter android:priority="-1">
                 <action android:name="com.oasisfeng.island.shuttle.IMethodShuttle" />
