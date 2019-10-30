@@ -12,7 +12,7 @@
     <string name="permission_suspend_app_description">这个应用被授权可随时暂停及恢复炼妖壶管理的任意应用</string>
 
     <string name="notification_provisioning_island_title">正在准备 壶中界…</string>
-    <string name="notification_provisioning_mainland_title">正在接管 山海界…</string>
+    <string name="notification_provisioning_mainland_title">正在接管 界外…</string>
     <string name="notification_provisioning_text">可能需要数分钟之久</string>
 
     <string name="toast_shortcut_invalid">快捷方式已失效，请检查壶中界的状态或重新创建此快捷方式。</string>

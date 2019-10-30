@@ -3,7 +3,7 @@
     <string name="label_searchable">炼妖壶中的应用</string>
     <string name="label_activity_island_settings">炼妖壶设置</string>
 
-    <string name="tab_mainland">山海界</string>
+    <string name="tab_mainland">界外</string>
     <string name="tab_island">壶中界</string>
     <string name="tab_discovery">天书</string>
 
@@ -61,7 +61,7 @@
     <string name="button_setup_island_with_root">通过 ROOT 创建壶中界</string>
 
     <string name="action_clone">分身</string>
-    <string name="action_clone_back">分身回山海界</string>
+    <string name="action_clone_back">分身回界外</string>
     <string name="action_freeze">冻结</string>
     <string name="action_unfreeze">解除冻结</string>
     <string name="action_shortcut">创建“解冻并启动”快捷方式</string>
@@ -199,7 +199,7 @@
     <string name="prompt_freeze_title">冻结壶中界的应用</string>
     <string name="prompt_freeze_text">被冻结应用会完全消失，看起来就像是卸载了一样，直到将其解冻。\n\n在冻结状态的应用绝对无法做任何事情。</string>
     <string name="prompt_clone_title">在壶中界创造应用的分身</string>
-    <string name="prompt_clone_text">山海界的应用可以在壶中界获得分身。\n\n应用的分身就像是新安装的应用副本，有自己独立的数据。他们只共享应用的执行文件以节省空间。</string>
+    <string name="prompt_clone_text">界外的应用可以在壶中界获得分身。\n\n应用的分身就像是新安装的应用副本，有自己独立的数据。他们只共享应用的执行文件以节省空间。</string>
 
     <!-- Tip cards -->
 
