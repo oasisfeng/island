@@ -31,6 +31,7 @@ import java.util.Map;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
@@ -139,15 +140,15 @@ public class Hacks {
 			AddressCache_put = Hack.onlyIf(SDK_INT <= P).into("java.net.AddressCache").method("put")
 			.withParams(String.class, int.class, InetAddress[].class);
 
-	@ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
+	@Keep @ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 
-		interface PackageOps extends Hack.Mirror {
+		@Keep interface PackageOps extends Hack.Mirror {
 			String getPackageName();
 			int getUid();
 			List<OpEntry> getOps();
 		}
 
-		interface OpEntry extends Hack.Mirror {
+		@Keep interface OpEntry extends Hack.Mirror {
 			int getOp();
 			int getMode();
 		}
