@@ -160,7 +160,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_privacy_read_sms_title">Read SMS</string>
     <string name="pref_privacy_location_title">Access device location</string>
     <string name="pref_privacy_location_summary">Also affect the ability to scan near-by devices</string>
-    <string name="label_postfix_for_system_app">(system)</string>
+    <string name="label_prefix_for_system_app">[System]</string>
     <string name="label_suffix_permission_not_granted">(not granted by user)</string>
     <string name="action_revoke_all">Revoke all</string>
     <string name="action_done">Done</string>

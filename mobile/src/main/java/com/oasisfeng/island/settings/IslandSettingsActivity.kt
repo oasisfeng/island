@@ -82,27 +82,29 @@ class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.Prefer
     private fun setupPreferenceForManagingAppOps(key: Int, permission: String, op: Int, @StringRes prompt: Int, precondition: Boolean = true) {
         setup<Preference>(key) {
             if (SDK_INT < P || ! precondition) return@setup remove(this)
-            setOnPreferenceClickListener { true.also {
+            setOnPreferenceClickListener { true.also {      // TODO: Use worker thread to avoid ANR
                 val entriesUnsorted = LinkedHashMap<String, CharSequence>(); val pm = context.packageManager; val apps = Apps.of(context)
-                // Apps with permission granted, as the first batch
-                val systemSuffix = getString(R.string.label_postfix_for_system_app)
-                val buildLabel = { info: ApplicationInfo -> apps.getAppName(info).toString() + " " + (if (Apps.isSystem(info)) systemSuffix else "") }
+                val pkgs = context.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
+                        .filter { Apps.isInstalledInCurrentUser(it.applicationInfo) && it.requestedPermissions?.contains(permission) == true }
+                // Apps with permission granted
+                val systemPrefix = getString(R.string.label_prefix_for_system_app)
+                val buildBaseLabel = { info: ApplicationInfo -> (if (Apps.isSystem(info)) systemPrefix else "") + " " + apps.getAppName(info).trim().toString() }
                 pm.getPackagesHoldingPermissions(arrayOf(permission), GET_PERMISSIONS).forEach {
-                    if (! Apps.isPrivileged(it.applicationInfo)) entriesUnsorted[it.packageName] = buildLabel(it.applicationInfo) }
-                // Apps with app-op revoked, as the second batch
+                    if (! Apps.isPrivileged(it.applicationInfo)) entriesUnsorted[it.packageName] = buildBaseLabel(it.applicationInfo) }
+                // Apps with app-op revoked
                 val appops = AppOpsHelper(context)
                 val pkgOpsMap = appops.getPackageOps(op)
                 val hiddenSuffix = getString(R.string.default_launch_shortcut_prefix).trimEnd(); val notGrantedSuffix = getString(R.string.label_suffix_permission_not_granted)
-                pkgOpsMap.keys.forEach { pkg ->
+                pkgs.forEach { info ->
+                    val pkg = info.packageName
                     if (entriesUnsorted.contains(pkg)) return@forEach
-                    val info = pm.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES)
-                    if (Apps.isInstalledInCurrentUser(info) && ! Apps.isPrivileged(info)) {   // Result of getPackageOps() may contains uninstalled packages.
-                        entriesUnsorted[pkg] = buildLabel(info) + if (IslandAppInfo.isHidden(info) == true) hiddenSuffix else notGrantedSuffix }}
-                // TODO: Frozen apps with app-op granted, as the last batch
+                    val app = info.applicationInfo
+                    if (Apps.isInstalledInCurrentUser(app) && ! Apps.isPrivileged(app)) {   // Result of getPackageOps() may contains uninstalled packages.
+                        entriesUnsorted[pkg] = buildBaseLabel(app) + " " + if (IslandAppInfo.isHidden(app) == true) hiddenSuffix else notGrantedSuffix }}
 
-                val sortedPair = entriesUnsorted.toList().asSequence().sortedBy { (_, value) -> value.toString() }.partition {
-                    when (pkgOpsMap[it.first]?.ops?.getOrNull(0)?.mode) { null, MODE_ALLOWED -> true; else -> false }}  // Allowed first
-                val entriesSorted = sortedPair.first.asSequence().plus(sortedPair.second).toMap()
+                val sortedPair = entriesUnsorted.toList().asSequence().sortedBy { (_, value) -> value.toString()/* App label TODO: User apps first */}.partition {
+                    when (pkgOpsMap[it.first]?.ops?.getOrNull(0)?.mode) { null, MODE_ALLOWED -> true; else -> false }}
+                val entriesSorted = sortedPair.first.asSequence().plus(sortedPair.second).toMap()   // Allowed first
                 val numAllowed = sortedPair.first.size
                 val checkedItems = BooleanArray(entriesSorted.size) { i -> i < numAllowed }
                 val pkgList by lazy { entriesSorted.keys.toList() }

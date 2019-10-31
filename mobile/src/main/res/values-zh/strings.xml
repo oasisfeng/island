@@ -158,7 +158,7 @@
     <string name="pref_privacy_read_sms_title">读取短信</string>
     <string name="pref_privacy_location_title">访问设备的地理位置</string>
     <string name="pref_privacy_location_summary">将影响应用扫描附近设备的能力</string>
-    <string name="label_postfix_for_system_app">(内置)</string>
+    <string name="label_prefix_for_system_app">[内置]</string>
     <string name="label_suffix_permission_not_granted">(用户未授权)</string>
     <string name="action_revoke_all">全部撤销</string>
     <string name="action_done">完成</string>
