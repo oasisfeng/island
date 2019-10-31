@@ -36,6 +36,8 @@ import androidx.core.app.NavUtils;
 
 import static android.content.Intent.EXTRA_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
 import static java.util.Objects.requireNonNull;
@@ -134,10 +136,10 @@ public class SettingsActivity extends PreferenceActivity {
 				}
 		} else {	// In case IslandSettingsActivity is not enabled, due to Island space is not yet activated after upgrading.
 			if (user.equals(Users.profile)) {
+				final ComponentName component = new ComponentName(this, IslandSettingsActivity.class);
 				MethodShuttle.runInProfile(this, (Context context) -> {
-					context.getPackageManager().setComponentEnabledSetting(new ComponentName(this, IslandSettingsActivity.class),
-							PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-					context.startActivity(new Intent(this, IslandSettingsActivity.class).putExtra(EXTRA_TITLE, title).addFlags(FLAG_ACTIVITY_NEW_TASK));
+					context.getPackageManager().setComponentEnabledSetting(component, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+					context.startActivity(new Intent().setComponent(component).putExtra(EXTRA_TITLE, title).addFlags(FLAG_ACTIVITY_NEW_TASK));
 				});
 			} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
 		}
