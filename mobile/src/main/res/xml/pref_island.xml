@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="@string/pref_privacy_header">
+    <Preference
+        android:key="@string/key_device_owner_setup"
+        android:title="@string/pref_device_owner_title"
+        android:summary="@string/pref_device_owner_summary" />
+
+    <PreferenceCategory android:key="@string/key_privacy" android:title="@string/pref_privacy_header">
 
         <com.oasisfeng.android.preference.WallOfTextPreference
             android:summary="@string/pref_privacy_summary"
@@ -27,7 +32,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/pref_quick_controls_header">
+    <PreferenceCategory android:key="@string/key_watcher" android:title="@string/pref_quick_controls_header">
 
         <SwitchPreference
             android:key="@string/key_island_watcher"
@@ -41,7 +46,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/pref_setup_header">
+    <PreferenceCategory android:key="@string/key_setup" android:title="@string/pref_setup_header">
 
         <Preference
             android:key="@string/key_reprovision"
@@ -52,11 +57,6 @@
             android:key="@string/key_destroy"
             android:title="@string/pref_destroy_title"
             android:summary="@string/pref_destroy_summary" />
-
-        <Preference
-            android:key="@string/key_device_owner"
-            android:title="@string/pref_device_owner_title"
-            android:summary="@string/pref_device_owner_summary" />
 
     </PreferenceCategory>
 

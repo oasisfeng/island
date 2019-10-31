@@ -43,6 +43,19 @@ class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.Prefer
 
     override fun onResume() {
         super.onResume()
+        val isDeviceOwner = DevicePolicies(activity).isActiveDeviceOwner
+        if (Users.isOwner() && ! isDeviceOwner) {
+            setup<Preference>(R.string.key_device_owner_setup) {
+                summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
+                setOnPreferenceClickListener { true.also {
+                    IslandSetup.requestDeviceOwnerActivation(this@IslandSettingsFragment, REQUEST_DEVICE_OWNER_ACTIVATION) }}}
+            setup<Preference>(R.string.key_privacy) { isEnabled = false }   // Show but disabled, as a feature preview.
+            setup<Preference>(R.string.key_watcher) { isEnabled = false }
+            setup<Preference>(R.string.key_island_watcher) { remove(this) }
+            setup<Preference>(R.string.key_setup) { remove(this) }
+            return
+        }
+        setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
         setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
                 R.string.pref_privacy_read_phone_state_title, SDK_INT <= P)
         setupPreferenceForManagingAppOps(R.string.key_manage_read_sms, READ_SMS, AppOpsCompat.OP_READ_SMS,
@@ -51,7 +64,6 @@ class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.Prefer
                 R.string.pref_privacy_location_title)
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
-        val isDeviceOwner = DevicePolicies(activity).isActiveDeviceOwner
         setup<Preference>(R.string.key_reprovision) {
             if (Users.isOwner() && ! isDeviceOwner) return@setup remove(this)
             setOnPreferenceClickListener { true.also {
@@ -65,11 +77,6 @@ class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.Prefer
             setOnPreferenceClickListener { true.also {
                 if (Users.isOwner()) IslandSetup.requestDeviceOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}
-        setup<Preference>(R.string.key_device_owner) {
-            if (! Users.isOwner() || isDeviceOwner) return@setup remove(this)
-            summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
-            setOnPreferenceClickListener { true.also { IslandSetup.requestDeviceOwnerActivation(this@IslandSettingsFragment, REQUEST_DEVICE_OWNER_ACTIVATION) }}
-        }
     }
 
     private fun setupPreferenceForManagingAppOps(key: Int, permission: String, op: Int, @StringRes prompt: Int, precondition: Boolean = true) {
