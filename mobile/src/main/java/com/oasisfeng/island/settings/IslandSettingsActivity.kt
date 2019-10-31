@@ -49,7 +49,7 @@ class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.Prefer
                 R.string.pref_privacy_read_sms_title)
         setupPreferenceForManagingAppOps(R.string.key_manage_location, ACCESS_COARSE_LOCATION, AppOpsCompat.OP_COARSE_LOCATION,
                 R.string.pref_privacy_location_title)
-        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P, NotificationIds.IslandWatcher)
+        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
         val isDeviceOwner = DevicePolicies(activity).isActiveDeviceOwner
         setup<Preference>(R.string.key_reprovision) {
