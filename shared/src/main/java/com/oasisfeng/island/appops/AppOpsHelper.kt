@@ -8,14 +8,18 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.NameNotFoundException
+import android.util.ArrayMap
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS
-import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Hacks.AppOpsManager.OpEntry
 import com.oasisfeng.island.util.Hacks.AppOpsManager.PackageOps
+import com.oasisfeng.island.util.OwnerUser
+import com.oasisfeng.island.util.Permissions
+import com.oasisfeng.island.util.ProfileUser
 
 /**
  * Hybrid implementation for App Ops, with local storage for ops if GET_APP_OPS_STATS is not granted.
@@ -40,8 +44,7 @@ private const val PREFS_NAME = "app_ops"
     fun saveAppOps(pkg: String) {
         val uid = context.packageManager.getPackageUid(pkg, PackageManager.MATCH_DISABLED_COMPONENTS)
         val pkgOps = getOpsForPackage(uid, pkg)
-        if (pkgOps == null) { Log.w(TAG, "No ops for $pkg (uid: $uid)"); return }
-        saveAppOps(pkgOps)
+        if (pkgOps != null) saveAppOps(pkgOps) else Log.w(TAG, "No ops for $pkg (uid: $uid)")
     }
 
     private fun saveAppOps(pkgOps: PackageOps) {
@@ -51,14 +54,14 @@ private const val PREFS_NAME = "app_ops"
         Log.d(TAG, "Ops saved for $pkg: $flatPkgOps")
     }
 
-    /** Unlike [Hacks.AppOpsManager.getPackagesForOps], this only returns packages in current user, and may contain packages already uninstalled. */
-    fun getPackageOps(op: Int): List<PackageOps> {
-        val saved: ArrayList<PackageOps> = mStore.all.mapNotNullTo(ArrayList()) {
-            PackageOpsData(it.key, -1, unflattenPackageOps(mAppOps, it.value as? String ?: return@mapNotNullTo null).toList()) }
-        if (Permissions.has(context, GET_APP_OPS_STATS)) {      // With permission granted, replace unfrozen packages with actual ops data.
-            mAppOps.getPackagesForOps(intArrayOf(op))?.forEach {
-                if (UserHandles.getUserId(it.uid) == UserHandles.MY_USER_ID) saved.add(it) }}
-        return saved
+    /** Unlike [AppOpsCompat.getPackagesForOps], this only returns packages in current user, and may contain packages already uninstalled. */
+    fun getPackageOps(op: Int): Map<String, PackageOps> {
+        val opsByPkg: ArrayMap<String, PackageOps> = mStore.all.mapNotNullTo(ArrayList()) {
+            PackageOpsData(it.key, -1, unflattenPackageOps(mAppOps, it.value as? String ?: return@mapNotNullTo null).toList())
+        }.associateByTo(ArrayMap()) { it.packageName }
+        if (Permissions.has(context, GET_APP_OPS_STATS))    // With permission granted, replace unfrozen packages with actual ops data.
+            mAppOps.getPackagesForOps(intArrayOf(op))?.forEach { if (UserHandles.getUserId(it.uid) == UserHandles.MY_USER_ID) opsByPkg[it.packageName] = it }
+        return opsByPkg
     }
 
     private fun getOpsForPackage(uid: Int, pkg: String): PackageOps? {

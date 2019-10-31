@@ -91,7 +91,7 @@ class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.Prefer
                     if (! Apps.isPrivileged(it.applicationInfo)) entriesUnsorted[it.packageName] = buildLabel(it.applicationInfo) }
                 // Apps with app-op revoked, as the second batch
                 val appops = AppOpsHelper(context)
-                val pkgOpsMap = appops.getPackageOps(op).associateBy { it.packageName }
+                val pkgOpsMap = appops.getPackageOps(op)
                 val hiddenSuffix = getString(R.string.default_launch_shortcut_prefix).trimEnd(); val notGrantedSuffix = getString(R.string.label_suffix_permission_not_granted)
                 pkgOpsMap.keys.forEach { pkg ->
                     if (entriesUnsorted.contains(pkg)) return@forEach
