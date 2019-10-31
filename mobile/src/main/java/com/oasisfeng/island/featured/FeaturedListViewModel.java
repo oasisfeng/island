@@ -31,6 +31,7 @@ import com.oasisfeng.island.files.IslandFiles;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.FeaturedEntryBinding;
+import com.oasisfeng.island.settings.IslandSettingsFragment;
 import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.setup.IslandSetup;
 import com.oasisfeng.island.setup.SetupActivity;
@@ -137,7 +138,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 		if (SHOW_ALL || ! is_device_owner)
 			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
-					R.string.featured_button_setup, c -> SettingsActivity.startMainlandSettingsFragment(activity));
+					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(activity, IslandSettingsFragment.class));
 
 		addFeaturedApp(R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify, "com.oasisfeng.greenify");
 		addFeaturedApp(R.string.featured_saf_enhancer_title, R.string.featured_saf_enhancer_description, R.drawable.ic_launcher_saf_enhancer,

@@ -1,7 +1,6 @@
 package com.oasisfeng.island.settings;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +19,7 @@ import android.preference.PreferenceManager;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
@@ -48,6 +48,11 @@ import static java9.util.stream.StreamSupport.stream;
  * On tablets, settings are split by category, with category headers shown to the left of the list of settings.
  */
 public class SettingsActivity extends PreferenceActivity {
+
+	public static void startWithPreference(final Context context, final Class<? extends PreferenceFragment> fragment) {
+		final Intent intent = new Intent(context, SettingsActivity.class).putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, fragment.getName());
+		Activities.startActivity(context, intent);
+	}
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -122,10 +127,6 @@ public class SettingsActivity extends PreferenceActivity {
 	}
 
 	private void launchSettingsActivityAsUser(final UserHandle user, final String title) {
-		if (Users.isOwner(user)) {
-			startMainlandSettingsFragment(this);
-			return;
-		}
 		final LauncherApps la = ((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE));
 		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), user);
 		if (! activities.isEmpty()) {
@@ -143,10 +144,6 @@ public class SettingsActivity extends PreferenceActivity {
 				});
 			} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
 		}
-	}
-
-	public static void startMainlandSettingsFragment(final Activity activity) {
-		activity.getFragmentManager().beginTransaction().replace(android.R.id.content, new IslandSettingsFragment()).commit();
 	}
 
 	/** This method stops fragment injection in malicious applications. Make sure to deny any unknown fragments here. */
