@@ -37,7 +37,7 @@ If you got "Error: couldn't create User", execute `setprop fw.max_users 10` firs
 
 - `pm path com.oasisfeng.island`
 
-It prints the path of the APK file of Island on your device. Copy the full path (after "package:"), and paste it to replace the <path> potion of the following command:
+It prints the path of the APK file of Island on your device. Copy the full path (after "`package:`"), and paste it to replace the `<path>` potion of the following command:
 
 - `pm install -r --user <user id> <path>`
 
