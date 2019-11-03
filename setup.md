@@ -35,12 +35,16 @@ If succeed, you will be prompted with the ID of newly created user (usually 10 o
 
 If you got "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
 
-- `pm install -r /data/app/com.oasisfeng.island-1/base.apk`
+- `pm path com.oasisfeng.island`
 
-If you get "file not found" error, use "-2" instead of "-1" in above command and try again.
+It prints the path of the APK file of Island on your device. Copy the full path (after "package:"), and paste it to replace the <path> potion of the following command:
+
+- `pm install -r --user <user id> <path>`
+
+After the installation, proceed to the activation step: (slightly different by Android version)
 
 - Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver` 
-Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
+- Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
 
 If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
 
