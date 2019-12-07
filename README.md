@@ -43,7 +43,7 @@ In normal mode, Island only takes care of apps inside the Island space. The "God
 
 The limitations in "God mode":
 
-- This device may no longer be available on the Google Play Store web site. (missing from the drop-down list of devices when initiating app installation from web)
+- This device may no longer be available on the Google Play Store web site. (missing from the drop-down list of devices when initiating app installation from web) App installation from Google Play Store on the device is working as normal.
 - "App Timer" feature of Digital Wellbeing is not available. (Usage statistics still works)
 - If any corporation Google account is logged-in on the device, Google Play Store will operate in "Work Mode" which may block the installation of paid apps.
 - On Android version prior to 7.1, app backup (e.g. Cloud backup for app data with Google Drive) will stop working. (Android 7.1+ is not affected)
