@@ -57,6 +57,7 @@ If all goes well, Island will show the app list.
 
 Manual setup for Island in "God mode"
 ---------------------------------------
+**WARNING: Some Samsung users encountered [boot failure](https://github.com/oasisfeng/island/issues/75) after activating God mode. It's advised NOT to use god mod on Samsung devices.**
 
 1. Backup all data of your non-primary users and all data of your logged-in accounts.
 
