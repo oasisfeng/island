@@ -10,29 +10,33 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.annotation.StringRes;
+import androidx.annotation.XmlRes;
+import androidx.core.app.NavUtils;
+
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.ui.Dialogs;
+import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
 import com.oasisfeng.island.shuttle.MethodShuttle;
+import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.StringRes;
-import androidx.annotation.XmlRes;
-import androidx.core.app.NavUtils;
 
 import static android.content.Intent.EXTRA_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -58,6 +62,18 @@ public class SettingsActivity extends PreferenceActivity {
 		super.onCreate(savedInstanceState);
 		final ActionBar actionBar = getActionBar();
 		if (actionBar != null) actionBar.setDisplayHomeAsUpEnabled(true);		// Show the Up button in the action bar.
+	}
+
+	@Override protected void onResume() {
+		super.onResume();
+		if (! new DevicePolicies(this).isActiveDeviceOwner()) {
+			final List<UserHandle> profiles = ((UserManager) getSystemService(Context.USER_SERVICE)).getUserProfiles();
+			if (profiles.size() == 1) {     // The last Island is just destroyed
+				Log.i(TAG, "Nothing left, back to initial setup.");
+				finishAffinity();
+				startActivity(new Intent(this, MainActivity.class));
+			}
+		}
 	}
 
 	@Override public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
@@ -207,4 +223,6 @@ public class SettingsActivity extends PreferenceActivity {
 
 		public AboutFragment() { super(R.xml.pref_about); }
 	}
+
+	private static final String TAG = "Island.SA";
 }
