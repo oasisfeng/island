@@ -13,7 +13,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.CrossProfileApps;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -25,6 +24,10 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
 
 import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.content.IntentFilters;
@@ -51,10 +54,6 @@ import com.oasisfeng.island.util.Users;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.WorkerThread;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
@@ -220,23 +219,19 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static boolean launchMainActivityInOwnerUser(final Context context) {
-		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		if (SDK_INT == P) try {		// Not working on Android Q beta 4. TODO: verify it on Android Q final version
-			context.getSystemService(CrossProfileApps.class).startMainActivity(activity, Users.owner);
-			return true;
-		} catch (final RuntimeException e) {
-			Log.e(TAG, "Error launching main activity in owner user directly.", e);	// Fall-through
-		}
-
+		// Never use CrossProfileApps, which is not working here on Android 10+ and some Android 9 devices (e.g. EMUI).
 		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		if (apps == null) return false;
+		final ComponentName activity = Modules.getMainLaunchActivity(context);
 		if (apps.isActivityEnabled(activity, Users.owner)) {
+			Log.i(TAG, "Launching main activity in owner user..");
 			apps.startMainActivity(activity, Users.owner, null, null);
 			return true;
 		}
 		// Since Android O, activities in owner user is invisible to managed profile, use special forward rule to launch it in owner user.
 		new DevicePolicies(context).execute(DevicePolicyManager::addCrossProfileIntentFilter,
 				IntentFilters.forAction(ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
+		Log.i(TAG, "Launching main activity in owner user...");
 		try {
 			context.startActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			return true;
