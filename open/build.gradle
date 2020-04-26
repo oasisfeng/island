@@ -1,9 +1,8 @@
-apply plugin: 'com.android.feature'
+apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion this.compileSdkVersion
     
     defaultConfig {
         minSdkVersion 21

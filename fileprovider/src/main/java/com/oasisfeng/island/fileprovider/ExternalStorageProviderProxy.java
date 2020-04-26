@@ -25,6 +25,10 @@ import android.os.Process;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.Users;
@@ -37,10 +41,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.content.Context.CONTEXT_IGNORE_SECURITY;
@@ -240,6 +240,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 					.with(ITEM_ID, Proxy.getInvocationHandler(content_service).getClass().getCanonicalName()).send();
 
 			final Context context = context().createPackageContext(target_provider.packageName, CONTEXT_INCLUDE_CODE | CONTEXT_IGNORE_SECURITY);
+			Log.d(TAG, "Initializing " + target_provider.name);
 			@SuppressLint("PrivateApi") final Class<?> ExternalStorageProvider = context.getClassLoader().loadClass(target_provider.name);
 			mDelegate = (ContentProvider) ExternalStorageProvider.newInstance();
 			mDelegate.attachInfo(wrapWithResolverWrapper(context), target_provider);

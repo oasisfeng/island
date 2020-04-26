@@ -1,16 +1,13 @@
-apply plugin: 'com.android.feature'
+apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion this.compileSdkVersion
 
     defaultConfig {
         minSdkVersion 21
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
-
-    baseFeature true
 
     dataBinding.enabled true
 
@@ -29,13 +26,6 @@ android {
 }
 
 dependencies {
-    application project(':assembly')
-    feature project(':engine')
-    feature project(':fileprovider')
-    feature project(':installer')
-    feature project(":watcher")
-    feature project(":open")
-
     implementation fileTree(dir: 'libs', include: ['*.aar'])
     implementation project(':shared')
     implementation project(':deagle')
@@ -44,11 +34,12 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutine_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlin_coroutine_version"
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.0.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.0.0'
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'com.google.android.material:material:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.2.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.firebase:firebase-appindexing:19.0.0'        // FeatureActionActivity
     implementation 'eu.chainfire:libsuperuser:1.0.0.201510071325'

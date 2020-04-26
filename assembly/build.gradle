@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion this.compileSdkVersion
 
     defaultConfig {
         applicationId "com.oasisfeng.island"

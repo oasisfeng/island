@@ -37,6 +37,12 @@ import com.oasisfeng.island.util.Users
         if (pkgs.size == 1 && pkgs[0] == pkg) Toast.makeText(context, "QUERY_PACKAGE_RESTART: $pkg", Toast.LENGTH_LONG).show()
     }}
 
+    override fun onDestroy() {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return      // TODO: Remove before release
+        try { unregisterReceiver(mPackageRestartQueryReceiver) } catch (e: IllegalArgumentException) {}
+        getSystemService(AppOpsManager::class.java).stopWatchingMode(mListener)
+    }
+
     private val mHandler = Handler(Looper.getMainLooper())
     private val mListener = AppOpsManager.OnOpChangedListener { op, pkg ->
         mHandler.post { Toast.makeText(this@IslandPersistentService, "Changed: $op - $pkg", Toast.LENGTH_LONG).show() }}

@@ -149,7 +149,7 @@ class IslandSettingsActivity: Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         title = intent?.getStringExtra(Intent.EXTRA_TITLE)
-                ?: getString(R.string.tab_island).let { if (Users.current() == Users.profile) it else "it (${Users.current()})"}
+                ?: getString(R.string.tab_island).let { if (Users.current() == Users.profile) it else "$it (${Users.toId(Users.current())})"}
         @Suppress("DEPRECATION") fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
 

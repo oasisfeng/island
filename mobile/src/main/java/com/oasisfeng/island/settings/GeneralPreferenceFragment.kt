@@ -59,7 +59,8 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
                         if (Permissions.has(activity, GET_APP_OPS_STATS)) lock(true)
                         else Dialogs.buildAlert(activity, null, getString(R.string.prompt_adb_app_ops_command) + "\n\n" + cmd)
                                 .withOkButton(null).setNeutralButton(R.string.action_copy) { _,_ ->
-                                    (activity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).primaryClip = ClipData.newPlainText(null, cmd)
+                                    val cm = activity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                                    cm.setPrimaryClip(ClipData.newPlainText(null, cmd))
                                 }.show()
                     }}
                 }}
