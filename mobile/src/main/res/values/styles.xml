@@ -3,26 +3,24 @@
     <!-- Duplicate entries without "android" namespace are for AppCompat,
          to be compatible with Android Design Support Library -->
 
-    <style name="AppTheme.NoActionBar" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="android:colorPrimary">@color/primary</item>
+    <style name="AppTheme.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
-        <item name="android:colorPrimaryDark">@color/primary_dark</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="android:colorAccent">@color/accent</item>
         <item name="colorAccent">@color/accent</item>
-        <item name="android:colorControlHighlight">@color/control_highlight</item>
-        <item name="colorControlHighlight">@color/control_highlight</item>
 
+        <item name="materialAlertDialogTheme">@style/Theme.MaterialComponents.DayNight.Dialog.Alert</item>
         <item name="android:navigationBarColor">@color/primary_dark</item>
     </style>
 
-    <style name="AppTheme.Dark" parent="android:Theme.Material">
-        <item name="android:colorPrimary">@color/primary</item>
+    <style name="AppTheme.Dark" parent="Theme.MaterialComponents">
         <item name="colorPrimary">@color/primary</item>
-        <item name="android:colorPrimaryDark">@color/primary_dark</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="android:colorAccent">@color/accent</item>
         <item name="colorAccent">@color/accent</item>
+    </style>
+
+    <style name="AppTheme.Settings" parent="Theme.MaterialComponents.DayNight.Bridge"> <!-- These attributes restore the action-bar -->
+        <item name="android:windowActionBar">true</item>
+        <item name="android:windowNoTitle">false</item>
     </style>
 
     <style name="AppThemeOverlay.Dark.Popup" parent="android:ThemeOverlay.Material.Dark">

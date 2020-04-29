@@ -3,6 +3,7 @@
     <!-- Global style colors -->
     <color name="primary">#3F51B5</color>
     <color name="primary_dark">#303F9F</color>
-    <color name="accent">#FFAB40</color>
-    <color name="control_highlight">#423F51B5</color>
+    <color name="accent">#FFA000</color>
+
+    <color name="action_icon">@android:color/black</color>
 </resources>

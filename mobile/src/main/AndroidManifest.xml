@@ -75,12 +75,12 @@
 
         <activity android:name="com.oasisfeng.island.settings.SettingsActivity"
                   android:label="@string/settings_title"
-                  android:theme="@android:style/Theme.Material.Settings"
+                  android:theme="@style/AppTheme.Settings"
                   android:parentActivityName="com.oasisfeng.island.MainActivity" />
 
         <activity android:name="com.oasisfeng.island.settings.IslandSettingsActivity"
                   android:label="@string/label_activity_island_settings"
-                  android:theme="@android:style/Theme.Material.Settings"
+                  android:theme="@style/AppTheme.Settings"
                   android:enabled="false"> <!-- Enabled explicitly for managed profiles during Island setup -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

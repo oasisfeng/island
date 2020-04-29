@@ -38,10 +38,10 @@
                 android:background="@color/background"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_small"
-                android:layout_marginBottom="@dimen/margin_small"
-                android:layout_marginStart="@dimen/margin_medium"
-                android:layout_marginEnd="@dimen/margin_medium"
+                android:paddingTop="@dimen/margin_small"
+                android:paddingBottom="@dimen/margin_small"
+                android:paddingStart="@dimen/margin_medium"
+                android:paddingEnd="@dimen/margin_medium"
                 app:chipSpacing="@dimen/margin_medium"
                 bind:shown="@{apps.mChipsVisible &amp;&amp; ! featured.visible}">
 
@@ -50,6 +50,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:chipStrokeColor="@color/accent"
+                    app:chipIconTint="@color/accent"
                     app:chipStrokeWidth="2dp"
                     app:checkedIconVisible="false"
                     app:chipBackgroundColor="@color/chip_background_color"

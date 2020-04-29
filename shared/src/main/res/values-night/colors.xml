@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Global style colors -->
+    <color name="primary">#303F9F</color>
+    <color name="primary_dark">#1a237e</color>
+    <color name="accent">#c67100</color>
+
+    <color name="action_icon">@android:color/white</color>
+</resources>

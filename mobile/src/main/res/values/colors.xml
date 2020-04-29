@@ -3,9 +3,11 @@
     <!-- Semantic colors -->
     <color name="background">#F3F3F3</color>
     <color name="background_highlight">@android:color/white</color>
+    <color name="card_background">@android:color/white</color>
     <color name="card_attention">#FFFFE082</color>
     <color name="card_button">#259B24</color>
     <!-- Specific colors -->
-    <color name="state_alive">#FF6D00</color>
+    <color name="state_alive">#FF8F00</color>
     <color name="state_frozen">@color/primary_dark</color>
+    <color name="side_control">@color/primary_dark</color>
 </resources>

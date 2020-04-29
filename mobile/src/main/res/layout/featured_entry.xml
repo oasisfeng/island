@@ -17,7 +17,7 @@
         android:layout_marginBottom="0dp"
         android:elevation="@dimen/elevation_card_resting"
         app:contentPadding="@dimen/card_content_padding"
-        app:cardBackgroundColor="@{safeUnbox(vm.dismissed) ? @color/background : @color/background_highlight}">
+        app:cardBackgroundColor="@{safeUnbox(vm.dismissed) ? @color/background : @color/card_background}">
 
         <RelativeLayout
             android:layout_width="match_parent"
