@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion 21
-        targetSdkVersion 27     // Module "fileprovider" indirectly accessed private APIs in dark greylist, via loaded remote class.
+        targetSdkVersion 28     // Module "fileprovider" indirectly accessed private APIs in dark greylist, via loaded remote class.
         resConfigs "en", "zh"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
