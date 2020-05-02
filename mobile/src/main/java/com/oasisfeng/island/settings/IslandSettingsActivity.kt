@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.oasisfeng.island.settings
 
 import android.Manifest.permission.*
@@ -39,7 +41,7 @@ import com.oasisfeng.island.util.Users
  *
  * Created by Oasis on 2019-10-12.
  */
-class IslandSettingsFragment: @Suppress("DEPRECATION") android.preference.PreferenceFragment() {
+class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
     override fun onResume() {
         super.onResume()
@@ -150,7 +152,7 @@ class IslandSettingsActivity: Activity() {
         setContentView(R.layout.activity_main)
         title = intent?.getStringExtra(Intent.EXTRA_TITLE)
                 ?: getString(R.string.tab_island).let { if (Users.current() == Users.profile) it else "$it (${Users.toId(Users.current())})"}
-        @Suppress("DEPRECATION") fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
+        fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
 
     class Enabler: BroadcastReceiver() {    // One-time enabler for

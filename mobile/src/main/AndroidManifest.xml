@@ -66,7 +66,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.oasisfeng.island.settings.IslandSettingsActivity$Enabler"> <!-- Enable SettingsActivity then disable self -->
+        <receiver android:name="com.oasisfeng.island.settings.IslandSettingsActivity$Enabler"> <!-- Enable IslandSettingsActivity then disable self -->
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
