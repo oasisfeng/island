@@ -6,14 +6,14 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresPermission;
+
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shuttle.ContextShuttle;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
-
-import androidx.annotation.RequiresPermission;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
@@ -43,7 +43,7 @@ public class IslandFiles {
 		}
 		if (SDK_INT >= M) {
 			Analytics.$().event("file_shuttle_request").send();
-			Permissions.request(activity, WRITE_EXTERNAL_STORAGE, result -> {
+			com.oasisfeng.android.content.pm.Permissions.request(activity, WRITE_EXTERNAL_STORAGE, result -> {
 				if (result == PERMISSION_GRANTED) onPermissionGranted(activity);
 				else Toast.makeText(activity, R.string.toast_external_storage_permission_required, Toast.LENGTH_LONG).show();
 			});

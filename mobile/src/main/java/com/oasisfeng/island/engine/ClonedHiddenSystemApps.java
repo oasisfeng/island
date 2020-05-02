@@ -86,7 +86,7 @@ import static android.os.Build.VERSION_CODES.M;
 
 	/** Query the used packages during the given time span. (works on Android 6+ or Android 5.x with PACKAGE_USAGE_STATS permission granted manually) */
 	private static Collection<String> queryUsedPackagesDuring(final Context context, final long begin_time, final long end_time) {
-		if (! Permissions.ensure(context, Manifest.permission.PACKAGE_USAGE_STATS)) return Collections.emptySet();
+		if (! Permissions.has(context, Manifest.permission.PACKAGE_USAGE_STATS)) return Collections.emptySet();
 		@SuppressLint("InlinedApi") final UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE); /* hidden but accessible on API 21 */
 		if (usm == null) return Collections.emptySet();
 		final Map<String, UsageStats> stats = usm.queryAndAggregateUsageStats(begin_time, end_time);

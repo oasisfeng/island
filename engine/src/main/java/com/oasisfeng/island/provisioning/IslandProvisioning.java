@@ -26,7 +26,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
 import com.oasisfeng.android.content.IntentCompat;
@@ -47,7 +46,6 @@ import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.OwnerUser;
-import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
@@ -55,7 +53,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.Notification.PRIORITY_HIGH;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
@@ -133,9 +130,6 @@ public class IslandProvisioning extends IntentService {
 			Toasts.show(context, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
 		}
-		// Grant essential permissions early, since they may be required in the following provision procedure.
-		if (SDK_INT >= M) grantEssentialDebugPermissionsIfPossible(context);
-
 		if (Users.isOwner() && DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
 			startDeviceOwnerPostProvisioning(context);
@@ -194,10 +188,6 @@ public class IslandProvisioning extends IntentService {
 			if (context.getPackageManager().resolveActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg), 0) != null)
 				new DevicePolicies(context).setApplicationHiddenWithoutAppOpsSaver(pkg, true);
 		}
-	}
-
-	@RequiresApi(M) private static void grantEssentialDebugPermissionsIfPossible(final Context context) {
-		if (Permissions.ensure(context, Permissions.INTERACT_ACROSS_USERS)) Permissions.ensure(context, WRITE_SECURE_SETTINGS);
 	}
 
 	@WorkerThread public static void performIncrementalProfileOwnerProvisioningIfNeeded(final Context context) {
@@ -311,10 +301,7 @@ public class IslandProvisioning extends IntentService {
 			policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
 			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);
 		}
-		if (SDK_INT >= M) {
-			grantEssentialDebugPermissionsIfPossible(context);
-			policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
-		}
+		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
