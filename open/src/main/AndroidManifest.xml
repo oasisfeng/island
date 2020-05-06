@@ -1,8 +1,8 @@
 <manifest package="com.oasisfeng.island.open" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:dist="http://schemas.android.com/apk/distribution" xmlns:tools="http://schemas.android.com/tools">
 
-    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon" android:process=":api"> <!-- Run in separate process to isolate potential global injection -->
+    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <service android:name="com.oasisfeng.island.SystemServiceBridge" android:exported="true">
+        <service android:name="com.oasisfeng.island.SystemServiceBridge" android:exported="true" android:process=":api"> <!-- Run in separate process to isolate potential global injection -->
             <intent-filter>
                 <action android:name="com.oasisfeng.island.api.action.BIND_SYSTEM_SERVICE" />
                 <data android:scheme="service" />
