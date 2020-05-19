@@ -16,11 +16,11 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager.*
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.O
-import android.os.Build.VERSION_CODES.P
+import android.os.Build.VERSION_CODES.*
 import android.os.Bundle
 import android.preference.Preference
 import android.preference.TwoStatePreference
+import android.util.Log
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
@@ -32,6 +32,7 @@ import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
+import com.oasisfeng.island.shuttle.PendingIntentShuttle
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Users
@@ -149,7 +150,10 @@ class IslandSettingsActivity: Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+	    if (SDK_INT >= M) {
+            val shuttle = PendingIntentShuttle.retrieveFromActivity(this)
+            if (shuttle != null) { return finish().also { Log.i(TAG, "Shuttle received: $shuttle") }}}
+
         title = intent?.getStringExtra(Intent.EXTRA_TITLE)
                 ?: getString(R.string.tab_island).let { if (Users.current() == Users.profile) it else "$it (${Users.toId(Users.current())})"}
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
@@ -168,3 +172,5 @@ class IslandSettingsActivity: Activity() {
 }
 
 private const val REQUEST_DEVICE_OWNER_ACTIVATION = 1
+
+private const val TAG = "Island.SA"
