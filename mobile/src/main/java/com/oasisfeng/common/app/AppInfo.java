@@ -9,6 +9,11 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
@@ -17,11 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
-
-import androidx.annotation.CallSuper;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
@@ -34,7 +34,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class AppInfo extends ApplicationInfo {
 
-	protected AppInfo(final AppListProvider provider, final ApplicationInfo base, final @Nullable AppInfo last) {
+	protected AppInfo(final AppListProvider<? extends AppInfo> provider, final ApplicationInfo base, final @Nullable AppInfo last) {
 		super(base);
 		mProvider = provider;
 		mLabel = nonLocalizedLabel != null ? nonLocalizedLabel.toString() : provider.getCachedOrTempLabel(this);
@@ -45,6 +45,7 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	public String getLabel() { return mLabel; }
+	public void setLabel(final String label) { this.mLabel = label; }
 
 	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
 	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
@@ -105,8 +106,7 @@ public class AppInfo extends ApplicationInfo {
 		// mLabel is not worth trimming and kept for performance
 	}
 
-	protected static <T> Supplier<T> lazyImmutable(final Supplier<T> supplier) { return Suppliers.memoize(supplier); }
-	protected static <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, SECONDS); }
+	private static <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, SECONDS); }
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
 		if (SDK_INT >= LOLLIPOP_MR1) try {
@@ -122,7 +122,7 @@ public class AppInfo extends ApplicationInfo {
 
 	@NonNull protected Context context() { return mProvider.context(); }
 
-	@Override public String toString() { return buildToString(AppInfo.class).append('}').toString(); }
+	@Override public @NonNull String toString() { return buildToString(AppInfo.class).append('}').toString(); }
 
 	protected StringBuilder buildToString(final Class<?> clazz) {
 		final StringBuilder builder = new StringBuilder(clazz.getSimpleName()).append('{').append(packageName);
@@ -132,8 +132,8 @@ public class AppInfo extends ApplicationInfo {
 		return builder;
 	}
 
-	protected final AppListProvider mProvider;
-	private final String mLabel;
+	protected final AppListProvider<? extends AppInfo> mProvider;
+	private String mLabel;
 	private Drawable mCachedIcon;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;

@@ -4,16 +4,18 @@ import android.annotation.SuppressLint;
 import android.content.ComponentCallbacks;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.island.util.Hacks;
 
 import java.util.Objects;
-
-import androidx.annotation.Nullable;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
@@ -28,7 +30,7 @@ class AppLabelCache implements ComponentCallbacks {
 	private static final boolean CLEAR_CACHE_UPON_START = Boolean.FALSE;
 
 	/** Get the cached label if valid. If not cached or invalid, trigger an asynchronous update. */
-	@Nullable String get(final AppInfo info) {
+	@Nullable String get(final ApplicationInfo info) {
 		if (info.nonLocalizedLabel != null) return filterString(info.nonLocalizedLabel.toString());
 
 		final String pkg = info.packageName;
@@ -48,8 +50,7 @@ class AppLabelCache implements ComponentCallbacks {
 			@Override protected void onPostExecute(final String label) {
 				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
 				if (Objects.equals(label, cached_label)) return;	// Unchanged
-				Log.v(TAG, "Loaded: " + info.packageName + " = " + label);
-				mCallback.onLabelUpdate(pkg);
+				mCallback.onLabelUpdate(pkg, label);
 			}
 		}.executeOnExecutor(AppInfo.TASK_THREAD_POOL);
 		return null;
@@ -67,7 +68,7 @@ class AppLabelCache implements ComponentCallbacks {
 		return buffer == null ? name : buffer.toString();
 	}
 
-	@Override public void onConfigurationChanged(final Configuration config) {
+	@Override public void onConfigurationChanged(final @NonNull Configuration config) {
 		final String language_tags;
 		if (SDK_INT < N) language_tags = config.locale.toLanguageTag();
 		else language_tags = config.getLocales().toLanguageTags();
@@ -79,7 +80,7 @@ class AppLabelCache implements ComponentCallbacks {
 
 	@Override public void onLowMemory() {}
 
-	interface Callback { void onLabelUpdate(String pkg); }
+	interface Callback { void onLabelUpdate(String pkg, String label); }
 
 	AppLabelCache(final Context context, final Callback callback) {
 		mStore = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);

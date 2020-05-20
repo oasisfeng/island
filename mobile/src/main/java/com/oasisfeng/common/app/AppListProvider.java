@@ -15,6 +15,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.CallbackRegistry;
+
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 
@@ -26,10 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import androidx.annotation.CallSuper;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.CallbackRegistry;
 import java9.util.stream.Stream;
 import java9.util.stream.StreamSupport;
 
@@ -147,14 +148,12 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	}
 
 	/** Called by {@link AppLabelCache} when app label is lazily-loaded or updated (changed from cache) */
-	protected void onAppLabelUpdate(final String pkg) {
+	protected void onAppLabelUpdate(final String pkg, final String label) {
 		final T entry = mAppMap.get().get(pkg);
 		if (entry == null) return;
-		Log.d(TAG, "Label updated: " + pkg);
-		final T new_entry = createEntry(entry, entry);	// In createEntry(), label is reloaded from the label cache.
-		mAppMap.get().put(pkg, new_entry);
-
-		notifyUpdate(Collections.singleton(new_entry));
+		Log.d(TAG, "Label updated for " + pkg + ": " + label);
+		entry.setLabel(label);
+		notifyUpdate(Collections.singleton(entry));
 	}
 
 	@Override public void onConfigurationChanged(final Configuration newConfig) {
@@ -167,7 +166,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		notifyUpdate(Collections.unmodifiableCollection(pkgs));
 	}
 
-	String getCachedOrTempLabel(final AppInfo info) {
+	String getCachedOrTempLabel(final ApplicationInfo info) {
 		final String cached = mAppLabelCache.get().get(info);
 		if (cached != null) return cached;
 		return info.nonLocalizedLabel != null ? info.nonLocalizedLabel.toString() : info.packageName;	// As temporary label

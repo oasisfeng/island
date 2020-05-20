@@ -11,6 +11,10 @@ import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
+
 import com.oasisfeng.android.content.pm.LauncherAppsCompat;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
@@ -31,9 +35,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 import java9.util.function.Consumer;
 import java9.util.function.Predicate;
 import java9.util.stream.Collectors;
@@ -68,20 +69,19 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		return opposite == null || ! opposite.isInstalled() || ! opposite.shouldShowAsEnabled();
 	}
 
-	@Override protected IslandAppInfo createEntry(final ApplicationInfo base, final IslandAppInfo last) {
-		return new IslandAppInfo(this, Users.current(), base, last);
+	@Override protected IslandAppInfo createEntry(final ApplicationInfo current, final IslandAppInfo last) {
+		return current instanceof IslandAppInfo ? (IslandAppInfo) current
+				: new IslandAppInfo(this, Users.current(), current, last);
 	}
 
-	@Override protected void onAppLabelUpdate(final String pkg) {
-		super.onAppLabelUpdate(pkg);
+	@Override protected void onAppLabelUpdate(final String pkg, final String label) {
+		super.onAppLabelUpdate(pkg, label);
 		// The implementation in super method only updates entries for apps in owner user, here we update entries for apps in Island.
 		final IslandAppInfo entry = mIslandAppMap.get().get(pkg);
 		if (entry == null) return;
-		Log.d(TAG, "Label updated: " + pkg);
-		final IslandAppInfo new_entry = new IslandAppInfo(this, Users.profile, entry, null);
-		mIslandAppMap.get().put(pkg, new_entry);
-
-		notifyUpdate(Collections.singleton(new_entry));
+		entry.setLabel(label);
+		Log.d(TAG, "Label updated for " + pkg + " in profile: " + label);
+		notifyUpdate(Collections.singleton(entry));
 	}
 
 	@Override public Stream<IslandAppInfo> installedApps() {
@@ -174,7 +174,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		} else MethodShuttle.runInProfile(context, () -> {
 			try {
 				final ApplicationInfo info = context.getPackageManager().getApplicationInfo(pkg, PM_FLAGS_APP_INFO);
-				return info != null && (info.flags & FLAG_INSTALLED) != 0 ? info : null;
+				return (info.flags & FLAG_INSTALLED) != 0 ? info : null;
 			} catch (PackageManager.NameNotFoundException e) {
 				return null;
 			}
