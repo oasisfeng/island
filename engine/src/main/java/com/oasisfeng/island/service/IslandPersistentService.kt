@@ -1,53 +1,71 @@
 package com.oasisfeng.island.service
 
-import android.app.AppOpsManager
+import android.annotation.SuppressLint
 import android.app.admin.DeviceAdminService
-import android.content.BroadcastReceiver
-import android.content.Context
+import android.content.ComponentName
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.ApplicationInfo
+import android.content.ServiceConnection
+import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
-import android.os.Handler
+import android.os.Build.VERSION_CODES.Q
+import android.os.IBinder
 import android.os.Looper
 import android.os.Process
-import android.widget.Toast
+import android.util.Log
 import androidx.annotation.RequiresApi
-import com.oasisfeng.island.appops.AppOpsCompat
-import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.PersistentService
+import com.oasisfeng.island.util.toId
+import java.lang.RuntimeException
 
 /**
  * Persistent helper service.
  *
  * Created by Oasis on 2019-10-12.
  */
-@RequiresApi(O) class IslandPersistentService: DeviceAdminService() {
+@RequiresApi(O) class IslandPersistentService: DeviceAdminService() {       // TODO: Fallback to foreground service for unmanaged user.
 
     override fun onCreate() {
-        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return      // TODO: Remove before release
-
-        Toast.makeText(this@IslandPersistentService, "Starting PService in user ${Users.toId(Process.myUserHandle())}...", Toast.LENGTH_LONG).show()
-        getSystemService(AppOpsManager::class.java).startWatchingMode(AppOpsCompat.OPSTR_REQUEST_INSTALL_PACKAGES, null, mListener)
-        registerReceiver(mPackageRestartQueryReceiver, IntentFilter(ACTION_QUERY_PACKAGE_RESTART).apply { addDataScheme("package") })
+        Looper.getMainLooper().queue.addIdleHandler { false.also { bindPersistentServices() }}
     }
 
-    private val mPackageRestartQueryReceiver: BroadcastReceiver = object: BroadcastReceiver() { override fun onReceive(context: Context, intent: Intent) {
-        val pkg = intent.data?.schemeSpecificPart ?: return
-        val pkgs = intent.getStringArrayExtra(EXTRA_PACKAGES) ?: return
-        if (pkgs.size == 1 && pkgs[0] == pkg) Toast.makeText(context, "QUERY_PACKAGE_RESTART: $pkg", Toast.LENGTH_LONG).show()
-    }}
+    private fun bindPersistentServices() {
+        val intent = Intent(PersistentService.SERVICE_INTERFACE)
+        val uid = Process.myUid()
+        val candidates = packageManager.queryIntentServices(intent, 0)
+        candidates.forEach {
+            val service = it.serviceInfo
+            val component = ComponentName(service.packageName, service.name)
+            val componentName = component.flattenToShortString()
+            if (service.applicationInfo.uid != uid)
+                return@forEach Unit.also { Log.d(TAG, "Skip non-Island service: $componentName") }
+            Log.i(TAG, "Starting persistent service: $componentName in user ${Process.myUserHandle().toId()}")
+
+            val connection = PersistentServiceConnection(componentName)
+            mConnections.add(connection)
+            @SuppressLint("WrongConstant") val result = bindService(intent.setComponent(component), connection,
+                    BIND_AUTO_CREATE or BIND_NOT_FOREGROUND or (if (SDK_INT >= Q) BIND_INCLUDE_CAPABILITIES else 0))
+            if (! result) Log.e(TAG, "Failed to start persistent service: $componentName")
+        }
+    }
 
     override fun onDestroy() {
-        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return      // TODO: Remove before release
-        try { unregisterReceiver(mPackageRestartQueryReceiver) } catch (e: IllegalArgumentException) {}
-        getSystemService(AppOpsManager::class.java).stopWatchingMode(mListener)
+        mConnections.forEach {
+            try { unbindService(it) }
+            catch (e: RuntimeException) { Log.e(TAG, "Error disconnecting ${it.mComponentName}", e) }}
     }
 
-    private val mHandler = Handler(Looper.getMainLooper())
-    private val mListener = AppOpsManager.OnOpChangedListener { op, pkg ->
-        mHandler.post { Toast.makeText(this@IslandPersistentService, "Changed: $op - $pkg", Toast.LENGTH_LONG).show() }}
+    private val mConnections = ArrayList<PersistentServiceConnection>()
+
+    private inner class PersistentServiceConnection(val mComponentName: String) : ServiceConnection {
+        override fun onServiceConnected(component: ComponentName, binder: IBinder) {
+            Log.i(TAG, "Connected: ${component.flattenToShortString()}") }
+        override fun onServiceDisconnected(name: ComponentName) {
+            Log.w(TAG, "Disconnected: ${name.flattenToShortString()}") }
+        override fun onNullBinding(name: ComponentName) {
+            Log.i(TAG, "Quited: ${name.flattenToShortString()}")
+            mConnections.remove(this)
+            unbindService(this) }
+    }
 }
 
-private const val ACTION_QUERY_PACKAGE_RESTART = "android.intent.action.QUERY_PACKAGE_RESTART"  // Intent.ACTION_QUERY_PACKAGE_RESTART
-private const val EXTRA_PACKAGES = "android.intent.extra.PACKAGES"                              // Intent.EXTRA_PACKAGES
-
+private const val TAG = "Island.PS"
