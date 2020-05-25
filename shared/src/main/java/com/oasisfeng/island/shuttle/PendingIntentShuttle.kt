@@ -4,11 +4,9 @@ import android.annotation.SuppressLint
 import android.app.*
 import android.app.PendingIntent.FLAG_NO_CREATE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
@@ -99,6 +97,7 @@ import java.lang.reflect.Field
 			val la = context.getSystemService(LauncherApps::class.java)!!
 			la.getActivityList(context.packageName, profile).getOrNull(0)?.also {
 				la.startMainActivity(it.componentName, profile, null, buildShuttleActivityOptions(context))
+				Log.i(TAG, "Initializing shuttle to profile ${profile.toId()}...")
 				return true } ?: Log.e(TAG, "No launcher activity in profile user ${profile.toId()}")
 			return false
 		}
@@ -160,15 +159,19 @@ import java.lang.reflect.Field
 		}
 	}
 
-	class StarterService: Service() {
+	class StarterService: Service() {   // TODO: PersistentService is unavailable if owner user is not managed by Island.
 
 		override fun onCreate() {
-			if (! Users.isOwner()) return
+			if (! Users.isOwner())
+				return packageManager.setComponentEnabledSetting(ComponentName(this, javaClass),
+						PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+			Log.i(TAG, "Initializing shuttles...")
 			sendToAllUnlockedProfiles(this)
 			if (SDK_INT >= N) mReceiver = waitForProfileUnlockAndSend(this)
 		}
 
 		override fun onDestroy() {
+			if (! Users.isOwner()) return
 			if (SDK_INT >= N) unregisterReceiver(mReceiver)
 		}
 
@@ -233,4 +236,5 @@ import java.lang.reflect.Field
 		override fun openPanel(featureId: Int, event: KeyEvent?) {}
 	}
 }
+
 private const val TAG = "Island.PIS"

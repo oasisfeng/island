@@ -19,6 +19,11 @@
                   android:exported="false" />
 
         <receiver android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle" />
+        <service android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$StarterService" android:exported="false">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.PersistentService" />
+            </intent-filter>
+        </service>
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"
