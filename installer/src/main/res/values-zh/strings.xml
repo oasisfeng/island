@@ -25,6 +25,7 @@
     <string name="action_show_app_settings">应用设置</string>
 
     <string name="app_info_forwarder_title">在哪一个应用中显示关于 %1$s (%2$s) 的信息</string>
+    <string name="app_settings_helper_prompt">点击“强制停止”可打开其它工具中针对此应用的设置</string>
     <string name="fallback_to_sys_installer">尝试传统安装方式</string>
     <string name="toast_split_apk_clone_fallback_warning">此应用含有附加组件，可能无法以这种方式正常克隆。如果遇到故障，请尝试重新从应用市场安装。</string>
 </resources>

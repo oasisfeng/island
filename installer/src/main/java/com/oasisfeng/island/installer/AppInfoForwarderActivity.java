@@ -14,6 +14,8 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
 
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Apps;
@@ -26,13 +28,13 @@ import com.oasisfeng.island.util.Users;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.annotation.Nullable;
 import java9.util.Optional;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static java9.util.stream.StreamSupport.stream;
@@ -41,6 +43,8 @@ import static java9.util.stream.StreamSupport.stream;
  * Created by Oasis on 2018-11-16.
  */
 public class AppInfoForwarderActivity extends CallerAwareActivity {
+
+	public static final String CALLER_PLACEHOLDER_FOR_SETTINGS = "settings";
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -52,6 +56,8 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 
 	private Intent buildTargetIntent(final String pkg, final @Nullable UserHandle user, final Intent target) {
 		final PackageManager pm = getPackageManager();
+		final Uri referrer = SDK_INT >= LOLLIPOP_MR1 ? getReferrer() : null;
+		final String referrer_pkg = referrer != null && "android-app".equals(referrer.getScheme()) ? referrer.getAuthority() : null;
 		final String caller = getCallingPackage();
 		Intent app_detail = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null));
 		ResolveInfo app_detail_resolve;
@@ -65,7 +71,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		boolean caller_is_settings = false;
 		final Supplier<List<ResolveInfo>> target_resolves = Suppliers.memoize(() -> pm.queryIntentActivities(target, MATCH_DEFAULT_ONLY/* Excluding this activity */));
 		if (app_detail_resolve != null) {
-			caller_is_settings = app_detail_resolve.activityInfo.packageName.equals(caller);
+			caller_is_settings = CALLER_PLACEHOLDER_FOR_SETTINGS.equals(referrer_pkg) || app_detail_resolve.activityInfo.packageName.equals(caller);
 			if (! caller_is_settings && ! isCallerIslandButNotForwarder(caller)) {	// Started by 3rd-party app or this forwarder itself
 				final Intent intent = new Intent(Intent.ACTION_SEARCH).putExtra(SearchManager.QUERY, "package:" + pkg).setPackage(getPackageName());
 				if (user != null) intent.putExtra(Intent.EXTRA_USER, user);
@@ -112,7 +118,8 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 			});
 		}
 		if (SDK_INT >= N) {
-			if (isCallerIslandButNotForwarder(caller)) exclude_components.add(new ComponentName(this, AppInfoForwarderActivity.class));
+			if (! caller_is_settings && isCallerIslandButNotForwarder(caller))
+				exclude_components.add(new ComponentName(this, AppInfoForwarderActivity.class));
 			if (! exclude_components.isEmpty()) chooser.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, exclude_components.toArray(new ComponentName[0]));
 		}
 		if (! initial_intents.isEmpty()) chooser.putExtra(EXTRA_INITIAL_INTENTS, initial_intents.toArray(new Parcelable[0]));

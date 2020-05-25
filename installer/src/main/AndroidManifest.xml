@@ -39,6 +39,12 @@
             </intent-filter>
         </activity>
 
+        <service android:name=".AppSettingsHelperService" android:exported="false" android:label="App Settings Helper">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.PersistentService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>
