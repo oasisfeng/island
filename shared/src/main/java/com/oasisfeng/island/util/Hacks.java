@@ -1,5 +1,6 @@
 package com.oasisfeng.island.util;
 
+import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,6 +19,11 @@ import android.os.UserManager;
 import android.print.PrintManager;
 import android.util.Log;
 
+import androidx.annotation.Keep;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.RequiresPermission;
+
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.hack.Hack.Unchecked;
@@ -30,11 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import androidx.annotation.Keep;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.RequiresPermission;
 
 import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
@@ -139,6 +140,15 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod3<Void, Object, Hack.Unchecked, Hack.Unchecked, Hack.Unchecked, String, Integer, InetAddress[]>
 			AddressCache_put = Hack.onlyIf(SDK_INT <= P).into("java.net.AddressCache").method("put")
 			.withParams(String.class, int.class, InetAddress[].class);
+	static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked>
+			ActivityManagerNative_getDefault = Hack.into("android.app.ActivityManagerNative")
+			.staticMethod("getDefault").fallbackReturning(null).withoutParams();
+	static final Hack.HackedMethod0<IBinder, Activity, Unchecked, Unchecked, Unchecked>
+			Activity_getActivityToken = Hack.into(Activity.class).method("getActivityToken")
+			.returning(IBinder.class).fallbackReturning(null).withoutParams();
+	static final Hack.HackedMethod1<String, Object, RemoteException, Unchecked, Unchecked, IBinder>
+			IActivityManager_getLaunchedFromPackage = Hack.into("android.app.IActivityManager")
+			.method("getLaunchedFromPackage").returning(String.class).throwing(RemoteException.class).withParam(IBinder.class);
 
 	@Keep @ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 

@@ -1,6 +1,5 @@
 package com.oasisfeng.island.util;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -38,10 +37,12 @@ public abstract class CallerAwareActivity extends Activity {
 				if (original_intent != null) setIntent(original_intent);
 			}
 		}
-		try {
-			@SuppressLint("PrivateApi") final Object am = Class.forName("android.app.ActivityManagerNative").getMethod("getDefault").invoke(null);
-			@SuppressWarnings("JavaReflectionMemberAccess") final Object token = Activity.class.getMethod("getActivityToken").invoke(this);
-			return (String) am.getClass().getMethod("getLaunchedFromPackage", IBinder.class).invoke(am, (IBinder) token);
+		if (Hacks.IActivityManager_getLaunchedFromPackage != null) try {
+			final Object am = Hacks.ActivityManagerNative_getDefault.invoke().statically();
+			if (am != null) {
+				final IBinder token = Hacks.Activity_getActivityToken.invoke().on(this);
+				return token != null ? Hacks.IActivityManager_getLaunchedFromPackage.invoke(token).on(am) : null;
+			}
 		} catch (final Exception e) {
 			Log.e(TAG, "Error detecting caller", e);
 		}
