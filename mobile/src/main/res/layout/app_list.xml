@@ -42,7 +42,8 @@
                 android:paddingBottom="@dimen/margin_small"
                 android:paddingStart="@dimen/margin_medium"
                 android:paddingEnd="@dimen/margin_medium"
-                app:chipSpacing="@dimen/margin_medium"
+                app:chipSpacingHorizontal="@dimen/margin_medium"
+                app:chipSpacingVertical="0dp"
                 bind:shown="@{apps.mChipsVisible &amp;&amp; ! featured.visible}">
 
                 <com.google.android.material.chip.Chip
