@@ -24,6 +24,12 @@ import android.view.animation.Interpolator;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import androidx.annotation.MenuRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.os.HandlerCompat;
+import androidx.lifecycle.MutableLiveData;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.oasisfeng.android.app.Activities;
@@ -56,11 +62,6 @@ import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import androidx.annotation.MenuRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.os.HandlerCompat;
-import androidx.lifecycle.MutableLiveData;
 import java9.util.concurrent.CompletableFuture;
 import java9.util.concurrent.CompletionStage;
 import java9.util.function.BooleanSupplier;
@@ -194,7 +195,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public void attach(final Context context, final Menu actions, final BottomNavigationView tabs, final @Nullable Bundle state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
-		mDeviceOwner = new DevicePolicies(context).isActiveDeviceOwner();
+		mOwnerUserManaged = new DevicePolicies(context).isProfileOrDeviceOwnerOnCallingUser();
 		mActions = actions;
 		mFilterShared = IslandAppListProvider.excludeSelf(context);
 
@@ -255,7 +256,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final UserHandle profile = Users.profile;
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 
-		final boolean system = app.isSystem(), installed = app.isInstalled(), in_owner = Users.isOwner(app.user), is_managed = mDeviceOwner || ! in_owner;
+		final boolean system = app.isSystem(), installed = app.isInstalled(),
+				in_owner = Users.isOwner(app.user), is_managed = ! in_owner || mOwnerUserManaged;
 		mActions.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		mActions.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
 		mActions.findItem(R.id.menu_clone).setVisible(in_owner && profile != null && exclusive);
@@ -553,7 +555,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	/* Transient fields */
 	public final NonNullMutableLiveData<Boolean> mChipsVisible = new NonNullMutableLiveData<>(false);
 	private Predicate<IslandAppInfo> mFilterShared;			// All other filters to apply always
-	private boolean mDeviceOwner;
+	private boolean mOwnerUserManaged;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
 	private final Handler mHandler = new Handler();
 

@@ -15,6 +15,9 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.oasisfeng.android.content.pm.LauncherAppsCompat;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.widget.Toasts;
@@ -24,8 +27,6 @@ import com.oasisfeng.island.shared.R;
 
 import java.util.Objects;
 
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import java9.util.Optional;
 import java9.util.function.BiConsumer;
 import java9.util.function.BiFunction;
@@ -196,7 +197,7 @@ public class DevicePolicies {
 	}
 
 	public boolean isProfileOrDeviceOwnerOnCallingUser() {
-		return Users.isOwner() ? isActiveDeviceOwner() : isProfileOwner();
+		return isProfileOwner() || Users.isOwner() && isActiveDeviceOwner();
 	}
 
 	public DevicePolicies(final Context context) {
