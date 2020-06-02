@@ -35,9 +35,9 @@ private const val PREFS_NAME = "app_ops"
 @RequiresApi(28) class AppOpsHelper(private val context: Context) {
 
     fun setMode(pkg: String, op: Int, mode: Int, uid: Int = getPackageUid(pkg)) {
-        if (DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg))
-            saveAppOp(pkg, op, mode, uid)    // Ops cannot be set if app is hidden, thus postpone to the next unfreezing.
-        else mAppOps.setMode(op, uid, pkg, mode)
+        if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg))
+            mAppOps.setMode(op, uid, pkg, mode)     // If app is hidden, just save and postpone the change to the next unfreezing.
+        saveAppOp(pkg, op, mode, uid)
     }
 
     @ProfileUser @OwnerUser @RequiresPermission(GET_APP_OPS_STATS) @Throws(NameNotFoundException::class)
