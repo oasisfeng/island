@@ -160,8 +160,9 @@
     <string name="pref_privacy_location_summary">将影响应用扫描附近设备的能力</string>
     <string name="label_prefix_for_system_app">[内置]</string>
     <string name="label_suffix_permission_not_granted">(用户未授权)</string>
-    <string name="action_revoke_all">全部撤销</string>
+    <string name="action_revoke_all">批量撤销…</string>
     <string name="action_done">完成</string>
+    <string name="prompt_appops_revoke_for_all_users_apps">确认对所有用户应用（不涉及系统应用）撤销此权限？</string>
     <string name="pref_quick_controls_header">通知区快捷控制</string>
     <string name="pref_island_watcher_summary">可封印诸界，中止其中所有应用的后台活动。再次启动其中的任何应用将会重新激活。</string>
     <string name="pref_app_watcher_summary">可重新冻结最近解冻的应用，撤销临时授予的权限。</string>

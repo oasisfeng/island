@@ -14,6 +14,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.ApplicationInfo.FLAG_SYSTEM
+import android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP
 import android.content.pm.PackageManager.*
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.*
@@ -46,8 +48,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
     override fun onResume() {
         super.onResume()
-        val isDeviceOwner = DevicePolicies(activity).isActiveDeviceOwner
-        if (Users.isOwner() && ! isDeviceOwner) {
+        val isProfileOrDeviceOwner = DevicePolicies(activity).isProfileOrDeviceOwnerOnCallingUser
+        if (Users.isOwner() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
                 setOnPreferenceClickListener { true.also {
@@ -68,13 +70,13 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
         setup<Preference>(R.string.key_reprovision) {
-            if (Users.isOwner() && ! isDeviceOwner) return@setup remove(this)
+            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
             setOnPreferenceClickListener { true.also {
                 @SuppressLint("InlinedApi") val action = if (Users.isOwner()) ACTION_PROVISION_MANAGED_DEVICE else ACTION_PROVISION_MANAGED_PROFILE
                 ContextCompat.startForegroundService(activity, Intent(action).setPackage(Modules.MODULE_ENGINE)) }}}
         setup<Preference>(R.string.key_destroy) {
             if (Users.isOwner()) {
-                if (! isDeviceOwner) return@setup remove(this)
+                if (! isProfileOrDeviceOwner) return@setup remove(this)
                 setTitle(R.string.pref_rescind_title)
                 summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_device_owner_featurs) + "\n" }
             setOnPreferenceClickListener { true.also {
@@ -86,39 +88,46 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         setup<Preference>(key) {
             if (SDK_INT < P || ! precondition) return@setup remove(this)
             setOnPreferenceClickListener { true.also {      // TODO: Use worker thread to avoid ANR
-                val entriesUnsorted = LinkedHashMap<String, CharSequence>(); val pm = context.packageManager; val apps = Apps.of(context)
-                val pkgs = context.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
-                        .filter { Apps.isInstalledInCurrentUser(it.applicationInfo) && it.requestedPermissions?.contains(permission) == true }
+                val entriesUnsorted = LinkedHashMap<String, CharSequence>(); val pm = context.packageManager
                 // Apps with permission granted
-                val systemPrefix = getString(R.string.label_prefix_for_system_app)
-                val buildBaseLabel = { info: ApplicationInfo -> (if (Apps.isSystem(info)) systemPrefix else "") + " " + apps.getAppName(info).trim().toString() }
-                pm.getPackagesHoldingPermissions(arrayOf(permission), GET_PERMISSIONS).forEach {
-                    if (! Apps.isPrivileged(it.applicationInfo)) entriesUnsorted[it.packageName] = buildBaseLabel(it.applicationInfo) }
-                // Apps with app-op revoked
-                val appops = AppOpsHelper(context)
-                val pkgOpsMap = appops.getPackageOps(op)
+                val systemPrefix = getString(R.string.label_prefix_for_system_app); val helper = Apps.of(context)
+                val buildBaseLabel = { info: ApplicationInfo ->
+                    (if (Apps.isSystem(info)) "$systemPrefix " else "") + helper.getAppName(info).trim().toString() }
+                pm.getPackagesHoldingPermissions(arrayOf(permission), 0).forEach {
+                    if (isUserAppOrUpdatedNonPrivilegeSystemApp(it.applicationInfo))
+                        entriesUnsorted[it.packageName] = buildBaseLabel(it.applicationInfo) }
+                // Apps with explicit app-op revoked
+                val ops = AppOpsHelper(context)
+                val opsRevokedPkgs = ops.getPackageOps(op).mapNotNull { entry -> entry.key.takeIf {
+                    entry.value.ops?.getOrNull(0)?.mode ?: MODE_ALLOWED != MODE_ALLOWED }}
                 val hiddenSuffix = getString(R.string.default_launch_shortcut_prefix).trimEnd(); val notGrantedSuffix = getString(R.string.label_suffix_permission_not_granted)
-                pkgs.forEach { info ->
-                    val pkg = info.packageName
-                    if (entriesUnsorted.contains(pkg)) return@forEach
-                    val app = info.applicationInfo
-                    if (Apps.isInstalledInCurrentUser(app) && ! Apps.isPrivileged(app)) {   // Result of getPackageOps() may contains uninstalled packages.
+                val apps = context.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES).mapNotNull {
+                    it.applicationInfo.takeIf { app -> Apps.isInstalledInCurrentUser(app)
+                            && (it.packageName in opsRevokedPkgs || it.requestedPermissions?.contains(permission) == true) }}
+                apps.forEach { app -> val pkg = app.packageName
+                    if (pkg !in entriesUnsorted && Apps.isInstalledInCurrentUser(app) && isUserAppOrUpdatedNonPrivilegeSystemApp(app)) {   // Result of getPackageOps() may contains uninstalled packages.
                         entriesUnsorted[pkg] = buildBaseLabel(app) + " " + if (IslandAppInfo.isHidden(app) == true) hiddenSuffix else notGrantedSuffix }}
 
-                val sortedPair = entriesUnsorted.toList().asSequence().sortedBy { (_, value) -> value.toString()/* App label TODO: User apps first */}.partition {
-                    when (pkgOpsMap[it.first]?.ops?.getOrNull(0)?.mode) { null, MODE_ALLOWED -> true; else -> false }}
-                val entriesSorted = sortedPair.first.asSequence().plus(sortedPair.second).toMap()   // Allowed first
-                val numAllowed = sortedPair.first.size
-                val checkedItems = BooleanArray(entriesSorted.size) { i -> i < numAllowed }
+                val sortedPair/* revoked + allowed */ = entriesUnsorted.toList().asSequence()
+                        .sortedWith(compareBy( { it.second[0] == '[' }/* System apps last */, { it.second.toString() } ))
+                        .partition { opsRevokedPkgs.contains(it.first) }
+                val entriesSorted = sortedPair.first.asSequence().plus(sortedPair.second).toMap()   // Revoked first
+                val numRevoked = sortedPair.first.size
+                val checkedItems = BooleanArray(entriesSorted.size) { i -> i >= numRevoked }
                 val pkgList by lazy { entriesSorted.keys.toList() }
                 Dialogs.buildCheckList(activity, getString(prompt), entriesSorted.values.toTypedArray(), checkedItems) { _, which, checked ->
-                    appops.setMode(pkgList[which], op, if (checked) MODE_ALLOWED else MODE_IGNORED)
+                    ops.setMode(pkgList[which], op, if (checked) MODE_ALLOWED else MODE_IGNORED)
                 }.setNeutralButton(R.string.action_revoke_all) { _,_ ->
-                    sortedPair.first.forEach { appops.setMode(it.first/* pkg */, op, MODE_IGNORED) }
+                    Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.prompt_appops_revoke_for_all_users_apps)
+                            .withOkButton { sortedPair.second.forEach { ops.setMode(it.first, op, MODE_IGNORED) }}
+                            .withCancelButton().show()
                 }.setPositiveButton(R.string.action_done, null).show()
             }}
         }
     }
+
+    private fun isUserAppOrUpdatedNonPrivilegeSystemApp(app: ApplicationInfo)   // Limited to "updated" to filter out unwanted system apps but still keep possible bloatware
+            = app.flags and FLAG_SYSTEM == 0 || (app.flags and FLAG_UPDATED_SYSTEM_APP != 0 && ! Apps.isPrivileged(app))
 
     private fun setupNotificationChannelTwoStatePreference(@StringRes key: Int, visible: Boolean, notificationId: NotificationIds) {
         setup<TwoStatePreference>(key) {
