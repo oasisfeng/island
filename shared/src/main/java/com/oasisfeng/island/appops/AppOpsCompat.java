@@ -3,14 +3,14 @@ package com.oasisfeng.island.appops;
 import android.app.AppOpsManager;
 import android.content.Context;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.RequiresPermission;
+
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.util.Hacks;
 
 import java.util.List;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.RequiresPermission;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
@@ -26,6 +26,8 @@ public class AppOpsCompat {
 	public static final int OP_READ_SMS = 14;
 	public static final int OP_SYSTEM_ALERT_WINDOW = 24;
 	public static final int OP_READ_PHONE_STATE = 51;
+	public static final int OP_READ_EXTERNAL_STORAGE = 59;
+	public static final int OP_WRITE_EXTERNAL_STORAGE = 60;
 	public static final int OP_REQUEST_INSTALL_PACKAGES = 66;
 
 	public static final String OPSTR_RUN_IN_BACKGROUND = "android:run_in_background";
@@ -67,7 +69,13 @@ public class AppOpsCompat {
 	public int opToDefaultMode(final int op) {
 		final int default_mode = mAppOpsManager.opToDefaultMode(op);
 		if (default_mode >= 0) return default_mode;
-		return sOpDefaultMode[op];	// Fallback local map
+		return op >= sOpDefaultMode.length ? AppOpsManager.MODE_ALLOWED : sOpDefaultMode[op];	// Fallback local map
+	}
+
+	public String opToPermission(final int op) {
+		final String permission = mAppOpsManager.opToPermission(op);
+		if (permission != null) return permission;
+		return op >= sOpPerms.length ? null : sOpPerms[op];	    // Fallback local map
 	}
 
 	public AppOpsCompat(final Context context) {
@@ -174,5 +182,98 @@ public class AppOpsCompat {
 			AppOpsManager.MODE_DEFAULT, // LEGACY_STORAGE
 			AppOpsManager.MODE_ALLOWED, // ACCESS_ACCESSIBILITY
 			AppOpsManager.MODE_ERRORED, // READ_DEVICE_IDENTIFIERS
+	};
+
+	private static String[] sOpPerms = new String[] {
+			android.Manifest.permission.ACCESS_COARSE_LOCATION,
+			android.Manifest.permission.ACCESS_FINE_LOCATION,
+			null,
+			android.Manifest.permission.VIBRATE,
+			android.Manifest.permission.READ_CONTACTS,
+			android.Manifest.permission.WRITE_CONTACTS,
+			android.Manifest.permission.READ_CALL_LOG,
+			android.Manifest.permission.WRITE_CALL_LOG,
+			android.Manifest.permission.READ_CALENDAR,
+			android.Manifest.permission.WRITE_CALENDAR,
+			android.Manifest.permission.ACCESS_WIFI_STATE,
+			null, // no permission required for notifications
+			null, // neighboring cells shares the coarse location perm
+			android.Manifest.permission.CALL_PHONE,
+			android.Manifest.permission.READ_SMS,
+			null, // no permission required for writing sms
+			android.Manifest.permission.RECEIVE_SMS,
+			"android.permission.RECEIVE_EMERGENCY_BROADCAST",   // android.Manifest.permission.RECEIVE_EMERGENCY_BROADCAST
+			android.Manifest.permission.RECEIVE_MMS,
+			android.Manifest.permission.RECEIVE_WAP_PUSH,
+			android.Manifest.permission.SEND_SMS,
+			android.Manifest.permission.READ_SMS,
+			null, // no permission required for writing icc sms
+			android.Manifest.permission.WRITE_SETTINGS,
+			android.Manifest.permission.SYSTEM_ALERT_WINDOW,
+			"android.permission.ACCESS_NOTIFICATIONS",          // android.Manifest.permission.ACCESS_NOTIFICATIONS
+			android.Manifest.permission.CAMERA,
+			android.Manifest.permission.RECORD_AUDIO,
+			null, // no permission for playing audio
+			null, // no permission for reading clipboard
+			null, // no permission for writing clipboard
+			null, // no permission for taking media buttons
+			null, // no permission for taking audio focus
+			null, // no permission for changing master volume
+			null, // no permission for changing voice volume
+			null, // no permission for changing ring volume
+			null, // no permission for changing media volume
+			null, // no permission for changing alarm volume
+			null, // no permission for changing notification volume
+			null, // no permission for changing bluetooth volume
+			android.Manifest.permission.WAKE_LOCK,
+			null, // no permission for generic location monitoring
+			null, // no permission for high power location monitoring
+			android.Manifest.permission.PACKAGE_USAGE_STATS,
+			null, // no permission for muting/unmuting microphone
+			null, // no permission for displaying toasts
+			null, // no permission for projecting media
+			null, // no permission for activating vpn
+			null, // no permission for supporting wallpaper
+			null, // no permission for receiving assist structure
+			null, // no permission for receiving assist screenshot
+			android.Manifest.permission.READ_PHONE_STATE,
+			android.Manifest.permission.ADD_VOICEMAIL,
+			android.Manifest.permission.USE_SIP,
+			android.Manifest.permission.PROCESS_OUTGOING_CALLS,
+			android.Manifest.permission.USE_FINGERPRINT,
+			android.Manifest.permission.BODY_SENSORS,
+			"android.permission.READ_CELL_BROADCASTS",          // android.Manifest.permission.READ_CELL_BROADCASTS
+			null,
+			android.Manifest.permission.READ_EXTERNAL_STORAGE,
+			android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+			null, // no permission for turning the screen on
+			android.Manifest.permission.GET_ACCOUNTS,
+			null, // no permission for running in background
+			null, // no permission for changing accessibility volume
+			android.Manifest.permission.READ_PHONE_NUMBERS,
+			android.Manifest.permission.REQUEST_INSTALL_PACKAGES,
+			null, // no permission for entering picture-in-picture on hide
+			android.Manifest.permission.INSTANT_APP_FOREGROUND_SERVICE,
+			android.Manifest.permission.ANSWER_PHONE_CALLS,
+			null, // no permission for OP_RUN_ANY_IN_BACKGROUND
+			android.Manifest.permission.CHANGE_WIFI_STATE,
+			android.Manifest.permission.REQUEST_DELETE_PACKAGES,
+			android.Manifest.permission.BIND_ACCESSIBILITY_SERVICE,
+			android.Manifest.permission.ACCEPT_HANDOVER,
+			null, // no permission for OP_MANAGE_IPSEC_TUNNELS
+			android.Manifest.permission.FOREGROUND_SERVICE,
+			null, // no permission for OP_BLUETOOTH_SCAN
+			android.Manifest.permission.USE_BIOMETRIC,
+			android.Manifest.permission.ACTIVITY_RECOGNITION,
+			android.Manifest.permission.SMS_FINANCIAL_TRANSACTIONS,
+			null,
+			null, // no permission for OP_WRITE_MEDIA_AUDIO
+			null,
+			null, // no permission for OP_WRITE_MEDIA_VIDEO
+			null,
+			null, // no permission for OP_WRITE_MEDIA_IMAGES
+			null, // no permission for OP_LEGACY_STORAGE
+			null, // no permission for OP_ACCESS_ACCESSIBILITY
+			null, // no direct permission for OP_READ_DEVICE_IDENTIFIERS
 	};
 }

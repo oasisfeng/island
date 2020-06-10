@@ -2,6 +2,8 @@ package com.oasisfeng.island.appops
 
 import android.app.AppOpsManager
 import android.app.admin.DevicePolicyManager
+import android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT
+import android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,7 +15,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import com.oasisfeng.android.os.UserHandles
-import com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS
+import com.oasisfeng.island.appops.AppOpsCompat.*
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Hacks.AppOpsManager.OpEntry
 import com.oasisfeng.island.util.Hacks.AppOpsManager.PackageOps
@@ -34,10 +36,45 @@ private const val PREFS_NAME = "app_ops"
 
 @RequiresApi(28) class AppOpsHelper(private val context: Context) {
 
-    fun setMode(pkg: String, op: Int, mode: Int, uid: Int = getPackageUid(pkg)) {
-        if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg))
+    fun revokeAndLockPermission(pkg: String, op: Int, uid: Int = getPackageUid(pkg)): Boolean {
+        return setMode(pkg, op, AppOpsManager.MODE_IGNORED, uid).also { done ->
+            if (done) setRelatedPermissionsLockedState(pkg, op, true) }
+    }
+
+    fun restoreAndUnlockPermission(pkg: String, op: Int, uid: Int = getPackageUid(pkg)): Boolean {
+        return setMode(pkg, op, mAppOps.opToDefaultMode(op), uid).also { done ->
+            if (done) {
+                setRelatedPermissionsLockedState(pkg, op, false)
+                getRelatedOp(op)?.also { setRelatedPermissionsLockedState(pkg, it, false) }}}   // For extreme case (e.g. altered by 3rd-party app "Storage Redirect")
+    }
+
+    fun setMode(pkg: String, op: Int, mode: Int, uid: Int = getPackageUid(pkg)): Boolean {
+        if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg)) {
             mAppOps.setMode(op, uid, pkg, mode)     // If app is hidden, just save and postpone the change to the next unfreezing.
-        saveAppOp(pkg, op, mode, uid)
+            if (getMode(pkg, op, mode, uid) != mode) return false.also { Log.e(TAG, "Failed to set mode of op $op to $mode for $pkg") }
+            syncPermissionLockedState(pkg, op, mode) }
+        saveAppOp(pkg, op, mode, uid)       // After successful operations
+        return true
+    }
+
+    fun getMode(pkg: String, op: Int, mode: Int, uid: Int = getPackageUid(pkg)): Int? {
+        return mAppOps.getOpsForPackage(uid, pkg, intArrayOf(op))?.getOrNull(0)?.ops?.getOrNull(0)?.mode
+    }
+
+    fun syncPermissionLockedState(pkg: String, op: Int, mode: Int) {
+        setRelatedPermissionsLockedState(pkg, op, mode != mAppOps.opToDefaultMode(op))
+    }
+
+    private fun setRelatedPermissionsLockedState(pkg: String, op: Int, locked: Boolean) {
+        val permission = mAppOps.opToPermission(op) ?: return
+        val state = if (locked) PERMISSION_GRANT_STATE_GRANTED else PERMISSION_GRANT_STATE_DEFAULT
+        if (mPolicies.invoke(DevicePolicyManager::getPermissionGrantState, pkg, permission) != state)
+            mPolicies.invoke(DevicePolicyManager::setPermissionGrantState, pkg, permission, state)
+    }
+
+    private fun getRelatedOp(op: Int): Int? = when(op) {
+        OP_READ_EXTERNAL_STORAGE -> OP_WRITE_EXTERNAL_STORAGE
+        else -> null
     }
 
     @ProfileUser @OwnerUser @RequiresPermission(GET_APP_OPS_STATS) @Throws(NameNotFoundException::class)
@@ -91,6 +128,7 @@ private const val PREFS_NAME = "app_ops"
     private val mStore = (if (context.isDeviceProtectedStorage) context else context.createDeviceProtectedStorageContext()).getSharedPreferences(PREFS_NAME, 0)    // No lazy, since the async loading takes time.
     private val mAppOpsManager = context.getSystemService(AppOpsManager::class.java) !!
     private val mAppOps by lazy { AppOpsCompat(mAppOpsManager) }
+    private val mPolicies by lazy { DevicePolicies(context) }
 
     companion object {
 

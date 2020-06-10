@@ -170,6 +170,8 @@ public class Hacks {
 
 		/** Retrieve the default mode for the operation. */
 		@Hack.Fallback(-1) int opToDefaultMode(final int op);
+		/** Retrieve the permission associated with an operation, or null if there is not one. */
+		@Nullable String opToPermission(int op);
 	}
 
 	public interface UserManagerHack extends Hack.Mirror<UserManager> {

@@ -30,6 +30,11 @@
             android:title="@string/pref_privacy_location_title"
             android:summary="@string/pref_privacy_location_summary" />
 
+        <Preference
+            android:key="@string/key_manage_storage"
+            android:title="@string/pref_privacy_storage_title"
+            android:summary="@string/pref_privacy_storage_summary" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:key="@string/key_watcher" android:title="@string/pref_quick_controls_header">
