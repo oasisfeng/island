@@ -1,15 +1,11 @@
 package com.oasisfeng.island.settings
 
 import android.app.admin.DevicePolicyManager
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context.CLIPBOARD_SERVICE
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.N
 import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
 import android.preference.TwoStatePreference
-import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.util.DevicePolicies
@@ -25,6 +21,7 @@ import kotlinx.coroutines.launch
  *
  * Extracted from SettingsActivity by Oasis on 2019/7/17.
  */
+@Suppress("DEPRECATION")
 class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.pref_general, R.string.key_launch_shortcut_prefix) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,27 +41,10 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
 
         setup<TwoStatePreference>(R.string.key_preserve_app_ops) {
             if (SDK_INT < P) return@setup remove(this)
-            if (Permissions.has(activity, GET_APP_OPS_STATS)) return@setup lock(true)
-
-            summary = getString(R.string.pref_preserve_app_ops_description) + getString(R.string.pref_preserve_app_ops_adb_footnote)
-            onChange { enabled ->
-                if (! enabled) return@onChange true
-                if (SDK_INT < P) return@onChange false      // Should never happen as this Preference is already removed
-                if (Permissions.has(activity, GET_APP_OPS_STATS)) return@onChange true
-
-                false.also { GlobalScope.launch(Dispatchers.Default) {      // Toggle it after successful root execution
-                    val cmd = "pm grant " + Modules.MODULE_ENGINE + " " + GET_APP_OPS_STATS
-                    Shell.SU.run(cmd)
-                    launch(Dispatchers.Main) { activity?.also { activity ->
-                        if (Permissions.has(activity, GET_APP_OPS_STATS)) lock(true)
-                        else Dialogs.buildAlert(activity, null, getString(R.string.prompt_adb_app_ops_command) + "\n\n" + cmd)
-                                .withOkButton(null).setNeutralButton(R.string.action_copy) { _,_ ->
-                                    val cm = activity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                                    cm.setPrimaryClip(ClipData.newPlainText(null, cmd))
-                                }.show()
-                    }}
-                }}
-            }
+            onChange { enabled -> true.also {
+                if (enabled && ! Permissions.has(activity, GET_APP_OPS_STATS)) GlobalScope.launch(Dispatchers.Default) {
+                    Shell.SU.run("pm grant " + Modules.MODULE_ENGINE + " " + GET_APP_OPS_STATS) }
+            }}
         }
     }
 }
