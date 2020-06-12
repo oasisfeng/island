@@ -75,10 +75,12 @@ import com.oasisfeng.island.util.Hacks
 
 	private inner class AppInfoWithOps(private val info: ApplicationInfo, val mGranted: Boolean) {
 
-		fun revoke() = mAppOps.revokeAndLockPermission(pkg, op).also {
-			if (! it) Toast.makeText(activity, R.string.prompt_appops_failure, Toast.LENGTH_LONG).show() }
-		fun restore() = mAppOps.restoreAndUnlockPermission(pkg, op).also {
-			if (! it) Toast.makeText(activity, R.string.prompt_appops_failure, Toast.LENGTH_LONG).show() }
+		fun revoke() = mAppOps.revokeAndLockPermission(pkg, op).showToastIfFalse()
+		fun restore() = mAppOps.restoreAndUnlockPermission(pkg, op).showToastIfFalse()
+
+		private fun Boolean.showToastIfFalse() {
+			if (! this) Toast.makeText(activity, R.string.prompt_operation_failure_due_to_incompatibility, Toast.LENGTH_LONG).show()
+		}
 
 		val mLabel by lazy {
 			StringBuilder().apply {

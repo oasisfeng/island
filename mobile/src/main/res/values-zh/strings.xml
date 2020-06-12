@@ -129,6 +129,7 @@
     <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>
     <string name="toast_setup_mainland_root_failed">通过 ROOT 权限启用“黄帝之名”时出现了异常。</string>
     <string name="toast_app_launch_failure">未能启动“%s”</string>
+    <string name="prompt_operation_failure_due_to_incompatibility">操作失败\n(可能由于 ROM 兼容性)</string>
 
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>
@@ -167,7 +168,6 @@
     <string name="prompt_appops_loading">正在载入应用列表…</string>
     <string name="prompt_appops_no_such_apps">没有应用使用此权限</string>
     <string name="prompt_appops_revoke_for_all_users_apps">确认对所有用户应用（不涉及系统应用）撤销此权限？</string>
-    <string name="prompt_appops_failure">操作失败\n(可能由于 ROM 兼容性)</string>
     <string name="pref_quick_controls_header">通知区快捷控制</string>
     <string name="pref_island_watcher_summary">可封印诸界，中止其中所有应用的后台活动。再次启动其中的任何应用将会重新激活。</string>
     <string name="pref_app_watcher_summary">可重新冻结最近解冻的应用，撤销临时授予的权限。</string>
@@ -196,6 +196,7 @@
     <string name="prompt_security_confirmation_to_disable">是否停用这个功能？</string>
     <string name="prompt_security_confirmation_activating">激活安全确认？</string>
     <string name="prompt_security_confirmation_deactivating">解除安全确认？</string>
+    <string name="prompt_enable_adb_debug">一并启用 ADB 调试？</string>
     <string name="toast_security_confirmation_activated">安全确认已激活</string>
     <string name="toast_security_confirmation_deactivated">安全确认已解除</string>
     <string name="toast_security_confirmation_failure">安全确认失败，请重试。</string>

@@ -1,5 +1,6 @@
 package com.oasisfeng.island.util;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,14 +10,14 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import androidx.annotation.Nullable;
 
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
@@ -43,8 +44,8 @@ public abstract class Users extends PseudoContentProvider {
 
 	@Override public boolean onCreate() {
 		final int priority = IntentFilter.SYSTEM_HIGH_PRIORITY - 1;
-		context().registerReceiver(mProfileChangeObserver,		// ACTION_MANAGED_PROFILE_ADDED is sent by DevicePolicyManagerService.setProfileEnabled()
-				IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED, Intent.ACTION_MANAGED_PROFILE_REMOVED).inPriority(priority));
+		context().registerReceiver(mProfileChangeObserver, IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED,        // ACTION_MANAGED_PROFILE_ADDED is sent by DevicePolicyManagerService.setProfileEnabled()
+				Intent.ACTION_MANAGED_PROFILE_REMOVED, DevicePolicyManager.ACTION_PROFILE_OWNER_CHANGED).inPriority(priority)); // ACTION_PROFILE_OWNER_CHANGED is sent after "dpm set-profile-owner ..."
 		refreshUsers(context());
 		return true;
 	}
@@ -84,7 +85,7 @@ public abstract class Users extends PseudoContentProvider {
 
 	public static boolean isProfileManagedByIsland() { return isProfileManagedByIsland(CURRENT); }
 	public static boolean isProfileManagedByIsland(final UserHandle user) {
-		return user.equals(profile)/* fast path for first profile */ || sProfilesManagedByIsland.contains(user);
+		return sProfilesManagedByIsland.contains(user);
 	}
 	public static List<UserHandle> getProfilesManagedByIsland() { return Collections.unmodifiableList(sProfilesManagedByIsland); }
 

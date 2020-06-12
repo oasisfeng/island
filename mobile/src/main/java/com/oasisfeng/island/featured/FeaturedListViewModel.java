@@ -8,6 +8,14 @@ import android.net.Uri;
 import android.os.Handler;
 import android.provider.Settings;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LiveData;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.base.Scopes;
@@ -46,13 +54,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import androidx.annotation.DrawableRes;
-import androidx.annotation.StringRes;
-import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LiveData;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.RecyclerView;
 import eu.chainfire.libsuperuser.Shell;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -99,7 +100,8 @@ public class FeaturedListViewModel extends AndroidViewModel {
 	public void update(final Context context) {
 		final LifecycleActivity activity = (LifecycleActivity) Objects.requireNonNull(Activities.findActivityFrom(context));
 		final Application app = getApplication();
-		final boolean is_device_owner = new DevicePolicies(context).isActiveDeviceOwner(), has_profile = Users.hasProfile();
+		final DevicePolicies policies = new DevicePolicies(context);
+		final boolean is_mainland_owner = policies.isProfileOrDeviceOwnerOnCallingUser(), has_profile = Users.hasProfile();
 		features.beginBatchedUpdates();
 		features.clear();
 
@@ -118,15 +120,15 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		}
 
 		final boolean adb_enabled = "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.ADB_ENABLED));
-		final LiveUserRestriction adb_secure = ! is_device_owner && ! has_profile ? null
-				: new LiveUserRestriction(app, DISALLOW_DEBUGGING_FEATURES, is_device_owner ? Users.owner : Users.profile);
+		final LiveUserRestriction adb_secure = ! is_mainland_owner && ! has_profile ? null
+				: new LiveUserRestriction(app, DISALLOW_DEBUGGING_FEATURES, is_mainland_owner ? Users.owner : Users.profile);
 		if (adb_secure != null && (SHOW_ALL || adb_enabled || adb_secure.query(activity))) {	// ADB is disabled so long as ADB secure is enabled.
-			addFeatureRaw(app, "adb_secure", is_device_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
+			addFeatureRaw(app, "adb_secure", is_mainland_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
 					R.string.featured_adb_secure_description,0, map(adb_secure, enabled -> enabled ? R.string.action_disable : R.string.action_enable),
 					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
 
-		if (SHOW_ALL || is_device_owner && ! Users.hasProfile())
+		if (SHOW_ALL || is_mainland_owner && ! Users.hasProfile())
 			addFeature(app, "setup_island", R.string.featured_setup_island_title, R.string.setup_island_intro, 0, R.string.featured_button_setup, c -> {
 				if (SetupViewModel.checkManagedProvisioningPrerequisites(c, true) == null) {
 					startSetupActivityCleanly(c);		// Prefer ManagedProvision, which could also fallback to root routine.
@@ -136,7 +138,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 				});
 			});
 
-		if (SHOW_ALL || ! is_device_owner)
+		if (SHOW_ALL || ! policies.isActiveDeviceOwner())
 			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
 					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(activity, IslandSettingsFragment.class));
 

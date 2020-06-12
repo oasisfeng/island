@@ -131,6 +131,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>
     <string name="toast_setup_mainland_root_failed">Error activating God mode with root.</string>
     <string name="toast_app_launch_failure">Could not launch \"%s\"</string>
+    <string name="prompt_operation_failure_due_to_incompatibility">Operation failed.\n(probably due to ROM compatibility)</string>
 
     <!-- General words -->
     <string name="open_settings">Open Settings</string>
@@ -169,7 +170,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="prompt_appops_loading">Loading app list…</string>
     <string name="prompt_appops_no_such_apps">No apps with this permission</string>
     <string name="prompt_appops_revoke_for_all_users_apps">Are you sure to revoke this permission for all user apps (system apps excluded)?</string>
-    <string name="prompt_appops_failure">Operation failed.\n(probably due to ROM compatibility)</string>
     <string name="pref_quick_controls_header">Quick controls in notification</string>
     <string name="pref_island_watcher_summary">Shortcut to deactivate Island, ceasing all the background activities inside. Island can then be activated on-demand by launching any of the apps inside.</string>
     <string name="pref_app_watcher_summary">Shortcut to freeze app recently unfrozen and revoke permissions temporarily granted.</string>
@@ -201,6 +201,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="prompt_security_confirmation_to_disable">Do you want to disable this feature?</string>
     <string name="prompt_security_confirmation_activating">Activating security confirmation?</string>
     <string name="prompt_security_confirmation_deactivating">Deactivating security confirmation?</string>
+    <string name="prompt_enable_adb_debug">Enable ADB debugging also?</string>
     <string name="toast_security_confirmation_activated">Security confirmation is activated</string>
     <string name="toast_security_confirmation_deactivated">Security confirmation is deactivated</string>
     <string name="toast_security_confirmation_failure">Failed to verify, please try again.</string>
