@@ -76,7 +76,7 @@ public class AdbSecure {
 	private static void showPromptForAdbSecureProtection(final LifecycleActivity activity, final boolean enabled) {
 		if (SDK_INT < M || ! enabled || activity.isDestroyed()) return;
 		if (isAdbSecureProtected(activity)) Snackbars.make(activity, R.string.prompt_security_confirmation_activated)
-				.setAction(R.string.action_deactivate, v -> disableSecurityConfirmationForAdbSecure(activity)).show();
+				.setDuration(3_000).setAction(R.string.action_deactivate, v -> disableSecurityConfirmationForAdbSecure(activity)).show();
 		else Snackbars.make(activity, R.string.prompt_security_confirmation_suggestion)
 				.setAction(R.string.action_activate, v -> enableSecurityConfirmationForAdbSecure(activity)).show();
 	}

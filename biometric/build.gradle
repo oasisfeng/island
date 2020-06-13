@@ -16,5 +16,5 @@ android {
 
 dependencies {
     implementation project(path: ':deagle')             // class LifecycleActivity
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.0.0'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.2.0'
 }

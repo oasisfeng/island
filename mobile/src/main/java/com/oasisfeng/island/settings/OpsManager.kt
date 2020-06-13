@@ -38,7 +38,7 @@ import com.oasisfeng.island.util.Hacks
 			apps[which].also { if (checked) it.restore() else it.revoke() }
 		}.setNeutralButton(R.string.action_revoke_all) { _, _ ->
 			Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.prompt_appops_revoke_for_all_users_apps)
-					.withOkButton { apps.forEach { if (!it.mSystem) it.revoke() } }
+					.withOkButton { apps.forEach { if (! it.mSystem) it.revoke() } }
 					.withCancelButton().show()
 		}.setPositiveButton(R.string.action_done) { _,_ -> AsyncTask.execute {
 			syncPermissionsLockedStateForApps(op, apps.map { it.pkg }) }    // To migrate legacy ops without permission lock

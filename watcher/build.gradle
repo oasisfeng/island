@@ -18,5 +18,5 @@ dependencies {
     implementation project(':shared')
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.1.1'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
 }

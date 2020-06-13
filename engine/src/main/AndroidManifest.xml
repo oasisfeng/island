@@ -166,7 +166,7 @@
 
         <receiver android:name="com.oasisfeng.island.shuttle.ShortcutShuttle" tools:ignore="ExportedReceiver"> <!-- Exported without permission requirement, for wider compatibility -->
             <intent-filter>
-                <action android:name="com.android.launcher.action.INSTALL_SHORTCUT"/>
+                <action android:name="com.android.launcher.action.INSTALL_SHORTCUT" />
             </intent-filter>
         </receiver>
 

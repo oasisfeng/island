@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.oasisfeng.island.settings
 
 import android.os.Build.VERSION.SDK_INT
@@ -7,10 +9,7 @@ import android.preference.PreferenceGroup
 import android.preference.TwoStatePreference
 import androidx.annotation.StringRes
 
-/**
- * Created by Oasis on 2019-10-13.
- */
-@Suppress("DEPRECATION") inline fun <T: Preference> android.preference.PreferenceFragment.setup(@StringRes key: Int, crossinline block: T.() -> Unit)
+inline fun <T: Preference> android.preference.PreferenceFragment.setup(@StringRes key: Int, crossinline block: T.() -> Unit)
         = @Suppress("UNCHECKED_CAST") (findPreference(getString(key)) as? T)?.apply { block() }
 
 @Suppress("DEPRECATION") fun android.preference.PreferenceFragment.remove(preference: Preference) {

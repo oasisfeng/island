@@ -163,7 +163,7 @@ public class Hacks {
 			int getMode();
 		}
 
-		@Hack.Fallback(-1) int checkOpNoThrow(final int op, final int uid, final String pkg);
+		@Hack.Fallback(-1) int checkOpNoThrow(int op, int uid, String pkg);
 		@Nullable List<PackageOps> getOpsForPackage(int uid, String pkg, @Nullable int[] ops);
 		@Nullable List<PackageOps> getPackagesForOps(@Nullable int[] ops);
 		void setMode(int code, int uid, String packageName, int mode);
@@ -174,9 +174,9 @@ public class Hacks {
 		@Nullable String opToPermission(int op);
 	}
 
-	public interface UserManagerHack extends Hack.Mirror<UserManager> {
+	@Keep public interface UserManagerHack extends Hack.Mirror<UserManager> {
 
-		@Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror {
+		@Keep @Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror {
 			int getId();
 			UserHandle getUserHandle();
 		}

@@ -34,6 +34,9 @@ import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
@@ -59,8 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import java9.util.Optional;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
@@ -397,7 +398,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			unregisterReceiver(this);
 			if (mResultNeeded)		// Implement the exact same result data as InstallSuccess in PackageInstaller
 				activity.setResult(Activity.RESULT_OK, new Intent().putExtra(EXTRA_INSTALL_RESULT, INSTALL_SUCCEEDED));
-			AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), pkg);
+			if (pkg != null) AppInstallationNotifier.onPackageInstalled(context, mCallerPackage, mCallerAppLabel.get(), pkg, Users.current());
 			finish();
 			break;
 		case PackageInstaller.STATUS_PENDING_USER_ACTION:

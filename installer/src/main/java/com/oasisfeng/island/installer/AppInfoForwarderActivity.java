@@ -64,7 +64,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		final int flags = SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0;
 		try {
 			final List<ResolveInfo> app_detail_resolves = pm.queryIntentActivities(app_detail, flags);
-			app_detail_resolve = app_detail_resolves == null || app_detail_resolves.isEmpty() ? null : app_detail_resolves.get(0);
+			app_detail_resolve = app_detail_resolves.isEmpty() ? null : app_detail_resolves.get(0);
 		} catch (final NullPointerException e) {	// Huawei-specific issue, only reported on Android 8
 			app_detail_resolve = pm.resolveActivity(app_detail, flags);
 		}
@@ -104,19 +104,17 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		final Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg));
 		final List<ResolveInfo> market_apps = getPackageManager().queryIntentActivities(market_intent, 0);
 		final List<ComponentName> exclude_components = new ArrayList<>();
-		if (market_apps != null) {
-			stream(market_apps).map(r -> r.activityInfo).filter(ai -> ! ai.packageName.equals(caller)).forEachOrdered(market_activity -> {
-				final Optional<ActivityInfo> dup_target = stream(target_resolves.get()).map(r -> r.activityInfo).filter(target_activity ->
-						market_activity.packageName.equals(target_activity.packageName) && market_activity.labelRes == target_activity.labelRes
-						&& TextUtils.equals(market_activity.nonLocalizedLabel, target_activity.nonLocalizedLabel)).findFirst();
-				if (dup_target.isPresent()) {
-					if (SDK_INT < N) return;	// Let alone in target list, due to EXTRA_EXCLUDE_COMPONENTS not supported before Android N.
-					final ActivityInfo dup_target_activity = dup_target.get();
-					exclude_components.add(new ComponentName(dup_target_activity.packageName, dup_target_activity.name));
-				}
-				initial_intents.add(new Intent(market_intent).setClassName(market_activity.packageName, market_activity.name));
-			});
-		}
+		stream(market_apps).map(r -> r.activityInfo).filter(ai -> ! ai.packageName.equals(caller)).forEachOrdered(market_activity -> {
+			final Optional<ActivityInfo> dup_target = stream(target_resolves.get()).map(r -> r.activityInfo).filter(target_activity ->
+					market_activity.packageName.equals(target_activity.packageName) && market_activity.labelRes == target_activity.labelRes
+					&& TextUtils.equals(market_activity.nonLocalizedLabel, target_activity.nonLocalizedLabel)).findFirst();
+			if (dup_target.isPresent()) {
+				if (SDK_INT < N) return;	// Let alone in target list, due to EXTRA_EXCLUDE_COMPONENTS not supported before Android N.
+				final ActivityInfo dup_target_activity = dup_target.get();
+				exclude_components.add(new ComponentName(dup_target_activity.packageName, dup_target_activity.name));
+			}
+			initial_intents.add(new Intent(market_intent).setClassName(market_activity.packageName, market_activity.name));
+		});
 		if (SDK_INT >= N) {
 			if (! caller_is_settings && isCallerIslandButNotForwarder(caller))
 				exclude_components.add(new ComponentName(this, AppInfoForwarderActivity.class));
