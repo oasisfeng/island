@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.widget.Toast;
@@ -45,7 +46,7 @@ public class AdbSecure {
 		if (policies.isProfileOrDeviceOwnerOnCallingUser()) {
 			if (! enabling) {
 				policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-				showPromptForEnablingAdbDebuggingIfPossible(activity, policies);    // DISALLOW_DEBUGGING_FEATURES also disables ADB.
+				showPromptForEnablingAdbDebugging(activity);    // DISALLOW_DEBUGGING_FEATURES also disables ADB.
 			} else policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 		}
 		if (! Users.hasProfile()) {
@@ -80,15 +81,17 @@ public class AdbSecure {
 				.setAction(R.string.action_activate, v -> enableSecurityConfirmationForAdbSecure(activity)).show();
 	}
 
-	private static void showPromptForEnablingAdbDebuggingIfPossible(final LifecycleActivity activity, final DevicePolicies policies) {
+	private static void showPromptForEnablingAdbDebugging(final LifecycleActivity activity) {
 		if (activity.isDestroyed()) return;
-		final boolean isDeviceOwner = policies.isActiveDeviceOwner();
-		if (! isDeviceOwner && ! Permissions.has(activity, Manifest.permission.WRITE_SECURE_SETTINGS)) return;
 
 		Snackbars.make(activity, R.string.prompt_enable_adb_debug).setAction(R.string.action_enable, v -> {
+			final DevicePolicies policies = new DevicePolicies(activity);
 			try {
-				if (isDeviceOwner) policies.execute(DevicePolicyManager::setGlobalSetting, Settings.Global.ADB_ENABLED, "1");
-				else Settings.Global.putInt(activity.getContentResolver(), Settings.Global.ADB_ENABLED, 1);
+				if (policies.isActiveDeviceOwner())
+					policies.execute(DevicePolicyManager::setGlobalSetting, Settings.Global.ADB_ENABLED, "1");
+				else if (Permissions.has(activity, Manifest.permission.WRITE_SECURE_SETTINGS))
+					Settings.Global.putInt(activity.getContentResolver(), Settings.Global.ADB_ENABLED, 1);
+				else activity.startActivity(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
 			} catch (final RuntimeException e) {
 				Toast.makeText(activity, R.string.prompt_operation_failure_due_to_incompatibility, Toast.LENGTH_LONG).show();
 				Analytics.$().logAndReport(TAG, "Error enabling ADB debugging", e);
