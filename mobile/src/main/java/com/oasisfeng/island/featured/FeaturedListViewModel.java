@@ -119,10 +119,10 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			}
 		}
 
-		final boolean adb_enabled = "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.ADB_ENABLED));
+		final boolean dev_enabled = "1".equals(Settings.Global.getString(app.getContentResolver(), Settings.Global.DEVELOPMENT_SETTINGS_ENABLED));
 		final LiveUserRestriction adb_secure = ! is_mainland_owner && ! has_profile ? null
 				: new LiveUserRestriction(app, DISALLOW_DEBUGGING_FEATURES, is_mainland_owner ? Users.owner : Users.profile);
-		if (adb_secure != null && (SHOW_ALL || adb_enabled || adb_secure.query(activity))) {	// ADB is disabled so long as ADB secure is enabled.
+		if (adb_secure != null && (SHOW_ALL || dev_enabled || adb_secure.query(activity))) {	// ADB is disabled so long as ADB secure is enabled.
 			addFeatureRaw(app, "adb_secure", is_mainland_owner ? R.string.featured_adb_secure_title : R.string.featured_adb_secure_island_title,
 					R.string.featured_adb_secure_description,0, map(adb_secure, enabled -> enabled ? R.string.action_disable : R.string.action_enable),
 					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
