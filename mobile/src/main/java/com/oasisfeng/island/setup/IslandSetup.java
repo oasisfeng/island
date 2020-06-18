@@ -1,5 +1,6 @@
 package com.oasisfeng.island.setup;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -17,6 +18,8 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
@@ -40,7 +43,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import androidx.annotation.Nullable;
 import eu.chainfire.libsuperuser.Shell;
 import java9.util.Optional;
 import java9.util.stream.Collectors;
@@ -221,13 +223,19 @@ public class IslandSetup {
 	private static void deactivateDeviceOwner(final Activity activity) {
 		Analytics.$().event("action_deactivate").send();
 		final DevicePolicies policies = new DevicePolicies(activity);
-		policies.getManager().clearDeviceOwnerApp(activity.getPackageName());
+		if (policies.isActiveDeviceOwner())
+			policies.getManager().clearDeviceOwnerApp(activity.getPackageName());
+		else clearProfileOwner(policies);
 		try {	// Since Android 7.1, clearDeviceOwnerApp() itself does remove active device-admin,
 			policies.execute(DevicePolicyManager::removeActiveAdmin);
 		} catch (final SecurityException ignored) {}		//   thus SecurityException will be thrown here.
 
 		activity.finishAffinity();	// Finish the whole activity stack.
 		System.exit(0);		// Force termination of the whole app, to avoid potential inconsistency.
+	}
+
+	@SuppressLint("NewApi"/* hidden before N */) private static void clearProfileOwner(final DevicePolicies policies) {
+		policies.execute(DevicePolicyManager::clearProfileOwner);
 	}
 
 	@ProfileUser public static void requestProfileRemoval(final Activity activity) {
