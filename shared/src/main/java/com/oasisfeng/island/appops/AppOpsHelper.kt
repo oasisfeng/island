@@ -36,19 +36,19 @@ private const val PREFS_NAME = "app_ops"
 
 @RequiresApi(28) class AppOpsHelper(private val context: Context) {
 
-    fun revokeAndLockPermission(pkg: String, op: Int, uid: Int = getPackageUid(pkg)): Boolean {
+    fun revokeAndLockPermission(pkg: String, op: Int, uid: Int): Boolean {
         return setMode(pkg, op, AppOpsManager.MODE_IGNORED, uid).also { done ->
             if (done) setRelatedPermissionsLockedState(pkg, op, true) }
     }
 
-    fun restoreAndUnlockPermission(pkg: String, op: Int, uid: Int = getPackageUid(pkg)): Boolean {
+    fun restoreAndUnlockPermission(pkg: String, op: Int, uid: Int): Boolean {
         return setMode(pkg, op, mAppOps.opToDefaultMode(op), uid).also { done ->
             if (done) {
                 setRelatedPermissionsLockedState(pkg, op, false)
                 getRelatedOp(op)?.also { setRelatedPermissionsLockedState(pkg, it, false) }}}   // For extreme case (e.g. altered by 3rd-party app "Storage Redirect")
     }
 
-    fun setMode(pkg: String, op: Int, mode: Int, uid: Int = getPackageUid(pkg)): Boolean {
+    fun setMode(pkg: String, op: Int, mode: Int, uid: Int): Boolean {
         if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg)) {
             mAppOps.setMode(op, uid, pkg, mode)     // If app is hidden, just save and postpone the change to the next unfreezing.
             if (getMode(pkg, op, mode, uid) != mode) return false.also { Log.e(TAG, "Failed to set mode of op $op to $mode for $pkg") }
