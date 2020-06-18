@@ -9,8 +9,10 @@ import android.content.pm.PackageManager.GET_PERMISSIONS
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.os.AsyncTask
 import android.os.Build.VERSION_CODES.P
+import android.os.Process
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.util.Apps
 import com.oasisfeng.android.util.SafeAsyncTask
@@ -71,7 +73,8 @@ import com.oasisfeng.island.util.Hacks
 	}
 
 	private fun isUserAppOrUpdatedNonPrivilegeSystemApp(app: ApplicationInfo)   // Limited to "updated" to filter out unwanted system apps but still keep possible bloatware
-			= app.flags and FLAG_SYSTEM == 0 || (app.flags and FLAG_UPDATED_SYSTEM_APP != 0 && ! Apps.isPrivileged(app))
+			= (app.flags and FLAG_SYSTEM == 0 || (app.flags and FLAG_UPDATED_SYSTEM_APP != 0 && ! Apps.isPrivileged(app)))
+			&& UserHandles.getAppId(app.uid) != mAppId
 
 	private inner class AppInfoWithOps(private val info: ApplicationInfo, val mGranted: Boolean) {
 
@@ -100,6 +103,7 @@ import com.oasisfeng.island.util.Hacks
 	private val mAppsHelper = Apps.of(activity)
 	private val mAppOps = AppOpsHelper(activity)
 	private val mOpsRevokedPkgs by lazy { mAppOps.getPackageOps(op).mapNotNull { entry -> entry.key.takeIf { isOpRevoked(entry.value) }}}
+	private val mAppId = UserHandles.getAppId(Process.myUid())
 	private var mCanceled = false
 
 	private val mSystemPrefix = activity.getString(R.string.label_prefix_for_system_app)
