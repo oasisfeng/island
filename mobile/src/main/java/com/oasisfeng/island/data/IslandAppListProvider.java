@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
 import com.oasisfeng.android.content.pm.LauncherAppsCompat;
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppListProvider;
@@ -70,7 +71,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	@Override protected IslandAppInfo createEntry(final ApplicationInfo current, final IslandAppInfo last) {
-		return new IslandAppInfo(this, Users.current(), current, last);
+		return new IslandAppInfo(this, UserHandles.getUserHandleForUid(current.uid), current, last);
 	}
 
 	@Override protected void onAppLabelUpdate(final String pkg, final String label) {
