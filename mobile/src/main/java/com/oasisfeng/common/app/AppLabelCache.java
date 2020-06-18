@@ -42,13 +42,16 @@ class AppLabelCache implements ComponentCallbacks {
 
 		// Load label asynchronously
 		Log.v(TAG, (cached_version == -1 ? "Load: " : "Reload: ") + info.packageName);
-		@SuppressWarnings("unused") @SuppressLint("StaticFieldLeak") final AsyncTask unused = new AsyncTask<Void, Void, String>() {
-			@Override protected String doInBackground(final Void... params) {
-				return filterString(info.loadLabel(mPackageManager).toString());
+		@SuppressWarnings("unused") @SuppressLint("StaticFieldLeak") final AsyncTask<Void, Void, CharSequence> unused = new AsyncTask<Void, Void, CharSequence>() {
+
+			@Override protected CharSequence doInBackground(final Void... params) {
+				return info.loadLabel(mPackageManager);
 			}
 
-			@Override protected void onPostExecute(final String label) {
-				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
+			@Override protected void onPostExecute(final CharSequence raw_label) {
+				final String label = filterString(raw_label.toString());
+				if (raw_label != info.nonLocalizedLabel && raw_label != info.name && raw_label != info.packageName) // Trivial to cache non-localized label
+					mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
 				if (Objects.equals(label, cached_label)) return;	// Unchanged
 				mCallback.onLabelUpdate(pkg, label);
 			}
