@@ -58,7 +58,7 @@ import com.oasisfeng.island.util.Hacks
 		// Apps with permission granted
 		activity.packageManager.getPackagesHoldingPermissions(arrayOf(permission), 0).forEach {
 			if (isUserAppOrUpdatedNonPrivilegeSystemApp(it.applicationInfo))
-				entries[it.packageName] = AppInfoWithOps(it.applicationInfo, true) }
+				entries[it.packageName] = AppInfoWithOps(it.applicationInfo, it.packageName !in mOpsRevokedPkgs) }
 		if (mCanceled) return null
 		// Frozen apps and apps with explicit app-op revoked
 		val apps = activity.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
