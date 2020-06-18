@@ -51,14 +51,15 @@ private const val PREFS_NAME = "app_ops"
     fun setMode(pkg: String, op: Int, mode: Int, uid: Int): Boolean {
         if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg)) {
             mAppOps.setMode(op, uid, pkg, mode)     // If app is hidden, just save and postpone the change to the next unfreezing.
-            if (getMode(pkg, op, mode, uid) != mode) return false.also { Log.e(TAG, "Failed to set mode of op $op to $mode for $pkg") }
+            if (getMode(pkg, op, uid) ?: mode != mode) return false.also { Log.e(TAG, "Failed to set mode of op $op to $mode for $pkg") }
             syncPermissionLockedState(pkg, op, mode) }
         saveAppOp(pkg, op, mode, uid)       // After successful operations
         return true
     }
 
-    fun getMode(pkg: String, op: Int, mode: Int, uid: Int = getPackageUid(pkg)): Int? {
-        return mAppOps.getOpsForPackage(uid, pkg, intArrayOf(op))?.getOrNull(0)?.ops?.getOrNull(0)?.mode
+    private fun getMode(pkg: String, op: Int, uid: Int): Int? {
+        return if (! Permissions.has(context, GET_APP_OPS_STATS)) null
+        else mAppOps.getOpsForPackage(uid, pkg, intArrayOf(op))?.getOrNull(0)?.ops?.getOrNull(0)?.mode
     }
 
     fun syncPermissionLockedState(pkg: String, op: Int, mode: Int) {
