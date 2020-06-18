@@ -45,7 +45,6 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	public String getLabel() { return mLabel; }
-	public void setLabel(final String label) { this.mLabel = label; }
 
 	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
 	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
@@ -133,7 +132,7 @@ public class AppInfo extends ApplicationInfo {
 	}
 
 	protected final AppListProvider<? extends AppInfo> mProvider;
-	private String mLabel;
+	private final String mLabel;
 	private Drawable mCachedIcon;
 	/** The information about the same package before its state is changed to this instance, may not always be kept over time */
 	private AppInfo mLastInfo;

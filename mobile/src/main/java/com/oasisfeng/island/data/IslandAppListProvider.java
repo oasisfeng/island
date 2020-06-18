@@ -70,8 +70,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	@Override protected IslandAppInfo createEntry(final ApplicationInfo current, final IslandAppInfo last) {
-		return current instanceof IslandAppInfo ? (IslandAppInfo) current
-				: new IslandAppInfo(this, Users.current(), current, last);
+		return new IslandAppInfo(this, Users.current(), current, last);
 	}
 
 	@Override protected void onAppLabelUpdate(final String pkg, final String label) {
@@ -79,9 +78,10 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 		// The implementation in super method only updates entries for apps in owner user, here we update entries for apps in Island.
 		final IslandAppInfo entry = mIslandAppMap.get().get(pkg);
 		if (entry == null) return;
-		entry.setLabel(label);
 		Log.d(TAG, "Label updated for " + pkg + " in profile: " + label);
-		notifyUpdate(Collections.singleton(entry));
+		final IslandAppInfo new_entry = new IslandAppInfo(this, Users.profile, entry, null);
+		mIslandAppMap.get().put(pkg, new_entry);
+		notifyUpdate(Collections.singleton(new_entry));
 	}
 
 	@Override public Stream<IslandAppInfo> installedApps() {
