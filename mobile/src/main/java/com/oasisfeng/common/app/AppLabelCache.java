@@ -50,8 +50,7 @@ class AppLabelCache implements ComponentCallbacks {
 
 			@Override protected void onPostExecute(final CharSequence raw_label) {
 				final String label = filterString(raw_label.toString());
-				if (raw_label != info.nonLocalizedLabel && raw_label != info.name && raw_label != info.packageName) // Trivial to cache non-localized label
-					mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
+				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
 				if (Objects.equals(label, cached_label)) return;	// Unchanged
 				mCallback.onLabelUpdate(pkg, label);
 			}
