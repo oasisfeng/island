@@ -38,13 +38,5 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
                 true
             }
         }
-
-        setup<TwoStatePreference>(R.string.key_preserve_app_ops) {
-            if (SDK_INT < P) return@setup remove(this)
-            onChange { enabled -> true.also {
-                if (enabled && ! Permissions.has(activity, GET_APP_OPS_STATS)) GlobalScope.launch(Dispatchers.Default) {
-                    Shell.SU.run("pm grant " + Modules.MODULE_ENGINE + " " + GET_APP_OPS_STATS) }
-            }}
-        }
     }
 }
