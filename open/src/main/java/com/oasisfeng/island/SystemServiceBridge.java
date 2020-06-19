@@ -8,13 +8,14 @@ import android.os.IBinder;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.island.api.DelegatedAppOpsManager;
 import com.oasisfeng.island.api.DelegatedDevicePolicyManager;
 import com.oasisfeng.island.api.PermissionForwardingRestrictionsManager;
+import com.oasisfeng.island.util.Users;
 
 import java.util.Objects;
-
-import androidx.annotation.Nullable;
 
 /**
  * Created by Oasis on 2019-6-5.
@@ -57,6 +58,10 @@ public class SystemServiceBridge extends Service {
 		default: Log.w(TAG, "Unsupported system service: " + ssp);
 		}
 		return null;
+	}
+
+	@Override public void onCreate() {
+		Users.refreshUsers(this);       // Not initialized automatically due to separate process
 	}
 
 	private static final String TAG = "Island.SSB";
