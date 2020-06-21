@@ -81,7 +81,7 @@ private const val PREFS_NAME = "app_ops"
     @ProfileUser @OwnerUser @RequiresPermission(GET_APP_OPS_STATS) @Throws(NameNotFoundException::class)
     fun saveAppOps(pkg: String) {
         val uid = context.packageManager.getPackageUid(pkg, PackageManager.MATCH_DISABLED_COMPONENTS)
-        val pkgOps = getOpsForPackage(uid, pkg)
+        val pkgOps = getOpsForPackageWithPermission(uid, pkg)
         if (pkgOps != null) saveAppOps(pkgOps) else Log.w(TAG, "No ops for $pkg (uid: $uid)")
     }
 
@@ -103,11 +103,14 @@ private const val PREFS_NAME = "app_ops"
     }
 
     private fun getOpsForPackage(uid: Int, pkg: String): PackageOps? {
-        if (Permissions.has(context, GET_APP_OPS_STATS))
-            return mAppOps.getOpsForPackage(uid, pkg, null).let { if (it.isNullOrEmpty()) null else it[0] }     // At most one element in list
+        if (Permissions.has(context, GET_APP_OPS_STATS)) return getOpsForPackageWithPermission(uid, pkg)
         val flat = mStore.getString(pkg, null)
         if (flat.isNullOrEmpty()) return null
         return PackageOpsData(pkg, uid, unflattenPackageOps(mAppOps, flat).toList())
+    }
+
+    @RequiresPermission(GET_APP_OPS_STATS) private fun getOpsForPackageWithPermission(uid: Int, pkg: String): PackageOps? {
+        return mAppOps.getOpsForPackage(uid, pkg, null).let { if (it.isNullOrEmpty()) null else it[0] }     // At most one element in list
     }
 
     @ProfileUser @OwnerUser @Throws(NameNotFoundException::class)

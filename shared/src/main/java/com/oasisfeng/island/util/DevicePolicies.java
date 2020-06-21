@@ -36,6 +36,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O_MR1;
+import static android.os.Build.VERSION_CODES.P;
 import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 /**
@@ -169,7 +170,7 @@ public class DevicePolicies {
 	}
 
 	public boolean setApplicationHidden(final String pkg, final boolean hidden) {
-		if (SDK_INT > O_MR1 && hidden && Permissions.has(mAppContext, GET_APP_OPS_STATS)) try {
+		if (SDK_INT >= P && hidden && Permissions.has(mAppContext, GET_APP_OPS_STATS)) try {     // Without GET_APP_OPS_STATS, app-op is saved upon change.
 			new AppOpsHelper(mAppContext).saveAppOps(pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
 			Toasts.showLong(mAppContext, R.string.prompt_failed_preserving_app_ops);
@@ -177,7 +178,7 @@ public class DevicePolicies {
 		}
 		final boolean changed = setApplicationHiddenWithoutAppOpsSaver(pkg, hidden);
 
-		if (changed && SDK_INT > O_MR1 && ! hidden) try {
+		if (changed && SDK_INT >= P && ! hidden) try {
 			new AppOpsHelper(mAppContext).restoreAppOps(pkg);
 		} catch (final PackageManager.NameNotFoundException | RuntimeException e) {
 			Toasts.showLong(mAppContext, R.string.prompt_failed_preserving_app_ops);

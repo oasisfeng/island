@@ -33,7 +33,7 @@
     <string name="featured_icebox_title">冰箱</string>
     <string name="featured_icebox_description">轻松愉悦的应用冻结和启动体验。请确保在冰箱的工作模式设置中选择“炼妖壶”。将其克隆至壶中界即可管理和启动壶中界的应用。</string>
     <string name="featured_appops_title">App Ops</string>
-    <string name="featured_appops_description">App Ops 拥有选择性剥夺指定应用各项能力的强大法力。</string>
+    <string name="featured_appops_description">App Ops 可选择性剥夺指定应用的部分能力，即使授予了相关权限。</string>
     <string name="featured_coolapk_title">酷安</string>
     <string name="featured_coolapk_description">轻松升级冻结的应用，无需事先解冻。（需在酷安的设置 - 实验室中开启“显示隐藏应用”）\n\n升级壶中界的应用需要在壶中界运行酷安。</string>
     <string name="featured_setup_island_title">创建一个独立的壶中界</string>
