@@ -18,7 +18,7 @@ public class AutoIncrementalProvision extends PseudoContentProvider {
 	@Override public boolean onCreate() {
 		final Stopwatch stopwatch = Performances.startUptimeStopwatch();
 		if (Users.isOwner()) {
-			Loopers.addIdleTask(() -> IslandProvisioning.startDeviceOwnerPostProvisioning(context()));	// isDeviceOwner() is checked inside.
+			Loopers.addIdleTask(() -> IslandProvisioning.startOwnerUserPostProvisioningIfNeeded(context()));
 		} else if (Users.isProfileManagedByIsland()) {	// False if profile is not enabled yet. (during the broadcast ACTION_PROFILE_PROVISIONING_COMPLETE)
 			final Thread thread = new Thread(this::startInProfile);
 			thread.setPriority(Thread.MIN_PRIORITY);

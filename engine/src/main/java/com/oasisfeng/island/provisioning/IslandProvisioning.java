@@ -120,7 +120,7 @@ public class IslandProvisioning extends IntentService {
 		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE.equals(intent.getAction())) {
 			Log.d(TAG, "Re-provisioning Mainland.");
 			if (! Users.isOwner()) throw new IllegalStateException("Not running in owner user");
-			startDeviceOwnerPostProvisioning(context);
+			startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
 			Toasts.show(context, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
 		}
@@ -132,7 +132,7 @@ public class IslandProvisioning extends IntentService {
 		}
 		if (Users.isOwner() && DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
-			startDeviceOwnerPostProvisioning(context);
+			startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
 			return;
 		}
 
@@ -182,7 +182,7 @@ public class IslandProvisioning extends IntentService {
 	@ProfileUser private static void hideUnnecessaryAppsInManagedProfile(final Context context) {
 		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),
 				SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);		// Do not use resolveActivity(), which will return ResolverActivity.
-		if (resolves != null) for (final ResolveInfo resolve : resolves) {
+		for (final ResolveInfo resolve : resolves) {
 			final String pkg = resolve.activityInfo.packageName;
 			if ((resolve.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || "android".equals(pkg)) continue;
 			if (context.getPackageManager().resolveActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(pkg), 0) != null)
@@ -260,6 +260,28 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	public static void startDeviceAndProfileOwnerSharedPostProvisioning(final Context context, final DevicePolicies policies) {
+		final boolean owner = Users.isOwner();
+		if (SDK_INT >= O) {
+			final Set<String> ids = Collections.singleton(AFFILIATION_ID);
+			final Set<String> current_ids = policies.invoke(DevicePolicyManager::getAffiliationIds);
+			if (! ids.equals(current_ids)) try {
+				policies.execute(DevicePolicyManager::setAffiliationIds, ids);
+			} catch (final SecurityException ignored) {}	// SecurityException will be thrown if profile is not managed by Island.
+
+			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);    // Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_MANAGED_PROFILES
+		}
+		if (owner) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
+
+		try {
+			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
+				policies.setBackupServiceEnabled(true);     // Ref: DevicePolicyManagerService.toggleBackupServiceActive()
+		} catch (final SecurityException e) {
+			if (SDK_INT != N_MR1 || ! owner && ! "There should only be one user, managed by Device Owner".equals(e.getMessage()))
+				Analytics.$().report(e);
+		} catch (final IllegalStateException e) {
+			Analytics.$().report(e);
+		}
+
 		if (SDK_INT >= N) {
 			policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
 			policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
@@ -270,49 +292,43 @@ public class IslandProvisioning extends IntentService {
 			policies.execute(DevicePolicyManager::setAccountManagementDisabled, account_type, false);
 	}
 
-	/** All the preparations after the provisioning procedure of system ManagedProvisioning */
-	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context) {
+	/** Mainland can be activated as either profile owner or device owner. */
+	@OwnerUser public static void startOwnerUserPostProvisioningIfNeeded(final Context context) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		if (! policies.isActiveDeviceOwner()) return;
-		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
+		if (policies.isActiveDeviceOwner()) startDeviceOwnerPostProvisioning(context, policies);
+		else if (policies.isProfileOwner()) startProfileOwnerPostProvisioning(context, policies);
+	}
 
-		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
-		if (SDK_INT >= O) {
-			final Set<String> ids = Collections.singleton(AFFILIATION_ID);
-			final Set<String> current_ids = policies.invoke(DevicePolicyManager::getAffiliationIds);
-			if (! ids.equals(current_ids)) try {
-				policies.execute(DevicePolicyManager::setAffiliationIds, ids);
-			} catch (final SecurityException ignored) {}	// SecurityException will be thrown if profile is not managed by Island.
-			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
-		}
-		try {
-			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
-				policies.setBackupServiceEnabled(true);
-		} catch (final SecurityException e) {
-			if (SDK_INT != N_MR1 || ! e.getMessage().equals("There should only be one user, managed by Device Owner")) Analytics.$().report(e);
-		} catch (final IllegalStateException e) {
-			Analytics.$().report(e);
-		}
+	/** All the initializations for mainland as device owner. */
+	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
+		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
+		if (SDK_INT >= O) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual and incremental provisioning. */
-	@ProfileUser @WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
-		if (SDK_INT >= O) {
-			policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
-			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);
-		}
-		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+	@WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
+		final boolean owner = Users.isOwner();
+		if (SDK_INT >= O) policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
 
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
 
-		enableAdditionalForwarding(context, policies);
-
 		// Acquire SYSTEM_ALERT_WINDOW permission to overcome "background activity start" blocking on Android Q+.
 		if (SDK_INT > P && ! Settings.canDrawOverlays(context))
 			new AppOpsCompat(context).setMode(AppOpsCompat.OP_SYSTEM_ALERT_WINDOW, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
 
+		// Some Samsung devices default to restrict all 3rd-party cross-profile services (IMEs, accessibility and etc).
+		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
+		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
+		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
+
+		if (! owner) startProfileOwnerPostProvisioningForNonOwnerProfile(context, policies);
+	}
+
+	@ProfileUser private static void startProfileOwnerPostProvisioningForNonOwnerProfile(final Context context, final DevicePolicies policies) {
+		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		enableAdditionalForwarding(context, policies);
 		// Prepare AppLaunchShortcut
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")
 				.withCategories(Intent.CATEGORY_DEFAULT, CATEGORY_LAUNCHER), FLAG_MANAGED_CAN_ACCESS_PARENT);
@@ -327,14 +343,9 @@ public class IslandProvisioning extends IntentService {
 
 		// For Greenify (non-root automated hibernation for apps in Island)
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).withDataScheme("package"), FLAG_MANAGED_CAN_ACCESS_PARENT);
-
-		// Some Samsung devices default to restrict all 3rd-party cross-profile services (IMEs, accessibility and etc).
-		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
-		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
-		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
 	}
 
-	private static void enableAdditionalForwarding(final Context context, final DevicePolicies policies) {
+	@ProfileUser private static void enableAdditionalForwarding(final Context context, final DevicePolicies policies) {
 		final int FLAGS_BIDIRECTIONAL = FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED;
 		// For sharing across Island (bidirectional)
 		policies.addCrossProfileIntentFilter(new IntentFilter(ACTION_SEND), FLAGS_BIDIRECTIONAL);		// Keep for historical compatibility reason
