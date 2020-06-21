@@ -47,7 +47,7 @@ public class MainActivity extends LifecycleActivity {
 			} else startSetupWizard();		// Running in non-primary user or profile not managed by Island. TODO: Proper handling?
 			return;
 		}
-		if (mIsDeviceOwner = new DevicePolicies(this).isActiveDeviceOwner()) {
+		if (mIsDeviceOwner = new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) {
 			startMainUi(savedInstanceState);	// As device owner, always show main UI.
 			return;
 		}
