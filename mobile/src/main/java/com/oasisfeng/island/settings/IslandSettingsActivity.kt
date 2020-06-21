@@ -40,7 +40,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
     override fun onResume() {
         super.onResume()
-        val isProfileOrDeviceOwner = DevicePolicies(activity).isProfileOrDeviceOwnerOnCallingUser
+        val policies = DevicePolicies(activity)
+        val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
@@ -67,8 +68,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
         setup<Preference>(R.string.key_reprovision) {
             if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
-            setOnPreferenceClickListener { true.also {
-                @SuppressLint("InlinedApi") val action = if (Users.isOwner()) ACTION_PROVISION_MANAGED_DEVICE else ACTION_PROVISION_MANAGED_PROFILE
+            setOnPreferenceClickListener { true.also { @SuppressLint("InlinedApi")
+                val action = if (policies.isActiveDeviceOwner) ACTION_PROVISION_MANAGED_DEVICE else ACTION_PROVISION_MANAGED_PROFILE
                 ContextCompat.startForegroundService(activity, Intent(action).setPackage(Modules.MODULE_ENGINE)) }}}
         setup<Preference>(R.string.key_destroy) {
             if (Users.isOwner()) {
@@ -76,7 +77,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                 setTitle(R.string.pref_rescind_title)
                 summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_device_owner_featurs) + "\n" }
             setOnPreferenceClickListener { true.also {
-                if (Users.isOwner()) IslandSetup.requestDeviceOwnerDeactivation(activity)
+                if (Users.isOwner()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}
     }
 

@@ -138,7 +138,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 				});
 			});
 
-		if (SHOW_ALL || ! policies.isActiveDeviceOwner())
+		if (SHOW_ALL || ! is_mainland_owner)
 			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
 					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(activity, IslandSettingsFragment.class));
 

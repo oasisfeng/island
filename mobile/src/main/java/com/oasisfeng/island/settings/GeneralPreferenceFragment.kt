@@ -12,9 +12,7 @@ import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Permissions
 import eu.chainfire.libsuperuser.Shell
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 /**
  * General preferences in Settings
@@ -29,7 +27,7 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(activity) }
-            if (SDK_INT < N || ! policies.isActiveDeviceOwner) return@setup remove(this)
+            if (SDK_INT < N || ! policies.isProfileOrDeviceOwnerOnCallingUser) return@setup remove(this)
 
             isChecked = policies.invoke(DevicePolicyManager::getShortSupportMessage) != null
             onChange { enabled ->

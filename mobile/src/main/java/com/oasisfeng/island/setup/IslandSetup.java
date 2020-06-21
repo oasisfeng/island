@@ -202,7 +202,7 @@ public class IslandSetup {
 				.setPositiveButton(R.string.action_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
 	}
 
-	public static void requestDeviceOwnerDeactivation(final Activity activity) {
+	public static void requestDeviceOrProfileOwnerDeactivation(final Activity activity) {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_rescind_message)
 				.setPositiveButton(android.R.string.no, null)
 				.setNeutralButton(R.string.action_deactivate, (d, w) -> {
@@ -215,12 +215,12 @@ public class IslandSetup {
 								policies.setApplicationHidden(pkg, false);
 						}
 					} finally {
-						deactivateDeviceOwner(activity);
+						deactivateDeviceOrProfileOwner(activity);
 					}
 				}).show();
 	}
 
-	private static void deactivateDeviceOwner(final Activity activity) {
+	private static void deactivateDeviceOrProfileOwner(final Activity activity) {
 		Analytics.$().event("action_deactivate").send();
 		final DevicePolicies policies = new DevicePolicies(activity);
 		if (policies.isActiveDeviceOwner())

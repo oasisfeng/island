@@ -66,8 +66,8 @@ public class SettingsActivity extends PreferenceActivity {
 
 	@Override protected void onResume() {
 		super.onResume();
-		if (! new DevicePolicies(this).isActiveDeviceOwner()) {
-			final List<UserHandle> profiles = ((UserManager) getSystemService(Context.USER_SERVICE)).getUserProfiles();
+		if (! new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) {
+			final List<UserHandle> profiles = requireNonNull((UserManager) getSystemService(Context.USER_SERVICE)).getUserProfiles();
 			if (profiles.size() == 1) {     // The last Island is just destroyed
 				Log.i(TAG, "Nothing left, back to initial setup.");
 				finishAffinity();
