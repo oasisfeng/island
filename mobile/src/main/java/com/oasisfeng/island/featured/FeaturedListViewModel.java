@@ -22,7 +22,6 @@ import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
-import com.oasisfeng.android.google.GooglePlayStore;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Consumer;
@@ -71,7 +70,6 @@ import static androidx.recyclerview.widget.ItemTouchHelper.START;
 public class FeaturedListViewModel extends AndroidViewModel {
 
 	private static final String SCOPE_TAG_PREFIX_FEATURED = "featured_";
-	private static final String PACKAGE_COOLAPK = "com.coolapk.market";
 	private static final String PACKAGE_ICEBOX = "com.catchingnow.icebox";
 	private static final boolean SHOW_ALL = false;		// For debugging purpose
 
@@ -160,12 +158,6 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 		addFeaturedApp(R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,
 				"rikka.appops", "rikka.appops.pro");
-
-		if (SHOW_ALL || ! mApps.isInstalledBy(GooglePlayStore.PACKAGE_NAME)) {
-			final boolean installed = Apps.of(context).isInstalledOnDevice(PACKAGE_COOLAPK);
-			addFeature(app, "coolapk", R.string.featured_coolapk_title, R.string.featured_coolapk_description, R.drawable.ic_launcher_coolapk,
-					installed ? 0 : R.string.action_install, installed ? c -> Apps.of(c).launch(PACKAGE_COOLAPK) : c -> WebContent.view(c, Config.URL_COOLAPK.get()));
-		}
 
 		features.endBatchedUpdates();
 	}

@@ -21,10 +21,6 @@
         <value>https://island.oasisfeng.com/files</value>
     </entry>
     <entry>
-        <key>url_coolapk</key>
-        <value>https://www.coolapk.com/apk/com.coolapk.market?utm_source=island&amp;utm_campaign=featured</value>
-    </entry>
-    <entry>
         <key>permission_allowed_apps</key>
         <value>com.oasisfeng.greenify,com.oasisfeng.nevo</value>
     </entry>
