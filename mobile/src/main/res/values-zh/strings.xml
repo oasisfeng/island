@@ -30,8 +30,6 @@
     <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_saf_enhancer_title">SAF 增强器 Lite</string>
     <string name="featured_saf_enhancer_description">为不兼容存储访问框架，但支持通过外部相机应用拍照的应用（如“微信”）提供跨界的图片访问能力。</string>
-    <string name="featured_icebox_title">冰箱</string>
-    <string name="featured_icebox_description">轻松愉悦的应用冻结和启动体验。请确保在冰箱的工作模式设置中选择“炼妖壶”。将其克隆至壶中界即可管理和启动壶中界的应用。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops 可选择性剥夺指定应用的部分能力，即使授予了相关权限。</string>
     <string name="featured_setup_island_title">创建一个独立的壶中界</string>
