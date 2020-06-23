@@ -246,17 +246,18 @@ public class IslandProvisioning extends IntentService {
 		} catch (final IllegalArgumentException ignored) {}		// Ignore non-existent packages.
 	}
 
-	@ProfileUser @WorkerThread public static void reprovisionManagedProfile(final Context context) {
-		// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
-		// This is also required for manual provision via ADB shell.
+	@OwnerUser @ProfileUser @WorkerThread public static void reprovisionManagedProfile(final Context context) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);
-
-		final int provision_type = PreferenceManager.getDefaultSharedPreferences(context).getInt(PREF_KEY_PROFILE_PROVISION_TYPE, 0);
-		if (provision_type == 1) ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
-
+		final boolean owner = Users.isOwner();
+		if (! owner) {
+			// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
+			// This is also required for manual provision via ADB shell.
+			policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);
+			final int provision_type = PreferenceManager.getDefaultSharedPreferences(context).getInt(PREF_KEY_PROFILE_PROVISION_TYPE, 0);
+			if (provision_type == 1) ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
+		}
 		startProfileOwnerPostProvisioning(context, policies);
-		disableLauncherActivity(context);
+		if (! owner) disableLauncherActivity(context);
 	}
 
 	public static void startDeviceAndProfileOwnerSharedPostProvisioning(final Context context, final DevicePolicies policies) {
@@ -294,6 +295,9 @@ public class IslandProvisioning extends IntentService {
 
 	/** Mainland can be activated as either profile owner or device owner. */
 	@OwnerUser public static void startOwnerUserPostProvisioningIfNeeded(final Context context) {
+		try {   // Re-enable the accidentally disabled main UI activity. (due to a bug introduced in v4.5.3 when re-provisioning owner user in profile owner mode)
+			context.getPackageManager().setComponentEnabledSetting(Modules.getMainLaunchActivity(context), PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, DONT_KILL_APP);
+		} catch (final SecurityException ignored) {}
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (policies.isActiveDeviceOwner()) startDeviceOwnerPostProvisioning(context, policies);
 		else if (policies.isProfileOwner()) startProfileOwnerPostProvisioning(context, policies);
