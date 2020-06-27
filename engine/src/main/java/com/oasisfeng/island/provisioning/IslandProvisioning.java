@@ -41,6 +41,7 @@ import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
+import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -68,6 +69,8 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
+import static android.content.Intent.getIntent;
+import static android.content.Intent.parseIntent;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
@@ -326,6 +329,27 @@ public class IslandProvisioning extends IntentService {
 		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
 		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
 		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
+
+		//dg
+		Log.d(TAG, "Setting Wipe Policy");
+		try {
+			policies.setMaximumFailedPasswordsForWipe(0);
+			policies.setMaximumFailedParentPasswordsForWipe(0);
+		}catch (Exception e){
+			Log.d(TAG, "Set Wipe Exception: " + e.toString());
+		}
+		Log.d(TAG, "End Setting Wipe Policy");
+
+		Log.d(TAG, "Setting Clipboard Policy");
+		try {
+			policies.addUserRestrictionIfNeeded(context, UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE);
+			final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+			prefs.edit().putBoolean("disallow-copy-paste", true).apply();
+		}catch (Exception e){
+			Log.d(TAG, "Set Clipboard Exception: " + e.toString());
+		}
+		Log.d(TAG, "End Clipboard Policy");
+
 
 		if (! owner) startProfileOwnerPostProvisioningForNonOwnerProfile(context, policies);
 	}

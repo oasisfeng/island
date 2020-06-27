@@ -34,6 +34,15 @@
     <string name="featured_appops_description">App Ops is a powerful tool to selectively block some data access capabilities of apps gracefully, even if related permission is granted by user.</string>
     <string name="featured_setup_island_title">Setup a separate Island</string>
 
+    <string name="pref_password_title">Set Password</string>
+    <string name="pref_password_summary">Set a password for the profile.</string>
+    <string name="pref_password_failure_title">Set Island Password Failures Before Wipe</string>
+    <string name="pref_password_failure_summary">Set number of allowed password failures before profile wiped.</string>
+    <string name="pref_parent_password_failure_title">Set Main Password Failures Before Wipe</string>
+    <string name="pref_parent_password_failure_summary">Set number of allowed password failures before profile wiped.</string>
+    <string name="pref_disallow_copy_paste_summary">Disable copy/paste between profiles.</string>
+
+
     <string name="setup_profile_welcome">Welcome</string>
     <string name="setup_island_intro">\"Island\" is a sandbox environment to clone selected apps and isolate them from accessing your personal data
 outside (including call logs, contacts and etc) even if permissions are granted.

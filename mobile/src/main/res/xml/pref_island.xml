@@ -49,6 +49,11 @@
             android:title="@string/notification_channel_app_watcher"
             android:summary="@string/pref_app_watcher_summary" />
 
+        <SwitchPreference
+            android:key="disallow-copy-paste"
+            android:title="Disallow Cross-Profile Copy/Paste"
+            android:summary="@string/pref_disallow_copy_paste_summary" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:key="@string/key_setup" android:title="@string/pref_setup_header">
@@ -62,6 +67,21 @@
             android:key="@string/key_destroy"
             android:title="@string/pref_destroy_title"
             android:summary="@string/pref_destroy_summary" />
+
+        <Preference
+            android:key="@string/key_password"
+            android:title="@string/pref_password_title"
+            android:summary="@string/pref_password_summary" />
+
+        <Preference
+            android:key="@string/key_password_failures"
+            android:title="@string/pref_password_failure_title"
+            android:summary="@string/pref_password_failure_summary" />
+
+        <Preference
+            android:key="@string/key_parent_password_failures"
+            android:title="@string/pref_parent_password_failure_title"
+            android:summary="@string/pref_parent_password_failure_summary" />
 
     </PreferenceCategory>
 

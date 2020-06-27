@@ -39,6 +39,10 @@ import static android.os.Build.VERSION_CODES.O_MR1;
 import static android.os.Build.VERSION_CODES.P;
 import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
+import static android.os.UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE;
+
+
+
 /**
  * Utility to ease the use of {@link android.app.admin.DevicePolicyManager}
  *
@@ -200,6 +204,31 @@ public class DevicePolicies {
 	public boolean isProfileOrDeviceOwnerOnCallingUser() {
 		return isProfileOwner() || Users.isOwner() && isActiveDeviceOwner();
 	}
+
+	public void setMaximumFailedPasswordsForWipe(int maxAttempts){
+		mDevicePolicyManager.setMaximumFailedPasswordsForWipe(sCachedComponent, maxAttempts);
+	}
+
+	public int getMaximumFailedPasswordsForWipe(){
+		return mDevicePolicyManager.getMaximumFailedPasswordsForWipe(sCachedComponent);
+	}
+
+	public int getMaximumFailedParentPasswordsForWipe(){
+		DevicePolicyManager parentDevicePolicyManager = mDevicePolicyManager.getParentProfileInstance(sCachedComponent);
+		return parentDevicePolicyManager.getMaximumFailedPasswordsForWipe(sCachedComponent);
+	}
+
+	public void setMaximumFailedParentPasswordsForWipe(int maxAttempts){
+		DevicePolicyManager parentDevicePolicyManager = mDevicePolicyManager.getParentProfileInstance(sCachedComponent);
+		parentDevicePolicyManager.setMaximumFailedPasswordsForWipe(sCachedComponent, maxAttempts);
+	}
+
+	public void getClipboardSafetyPolicy(final Context context) {
+		final UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
+		Bundle restrictions = um.getUserRestrictions();
+		Log.d(TAG, "Current copy/paste policy: " + restrictions.getBoolean(DISALLOW_CROSS_PROFILE_COPY_PASTE));
+	}
+
 
 	public DevicePolicies(final Context context) {
 		mAppContext = context.getApplicationContext();

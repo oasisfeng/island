@@ -21,4 +21,9 @@
     <string translatable="false" name="key_privacy_notification_for_clone">privacy_notification_clone</string>
     <!-- About -->
     <string translatable="false" name="key_version">version</string>
+
+    <string translatable="false" name="key_password">password</string>
+    <string translatable="false" name="key_password_failures">password-failures</string>
+    <string translatable="false" name="key_parent_password_failures">parent-password-failures</string>
+    <string translatable="false" name="key_disallow_copy_paste">disallow-copy-paste</string>
 </resources>

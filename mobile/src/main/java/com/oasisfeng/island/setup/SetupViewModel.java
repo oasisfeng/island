@@ -16,7 +16,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-
+import android.app.admin.DeviceAdminInfo;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.WebContent;

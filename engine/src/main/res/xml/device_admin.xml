@@ -6,7 +6,7 @@
         <disable-camera/>
         <disable-keyguard-features/>
         <!--<encrypted-storage/>-->
-        <!--<watch-login/>-->
+        <watch-login/>
         <!--<limit-password/>-->
         <!--<expire-password/>-->
         <!--<reset-password/>-->

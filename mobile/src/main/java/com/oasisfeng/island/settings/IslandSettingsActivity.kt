@@ -4,7 +4,9 @@ package com.oasisfeng.island.settings
 
 import android.Manifest.permission.*
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.Activity
+import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
 import android.content.BroadcastReceiver
@@ -18,6 +20,9 @@ import android.os.Bundle
 import android.preference.Preference
 import android.preference.TwoStatePreference
 import android.provider.Settings
+import android.preference.SwitchPreference
+import android.widget.EditText
+import java.lang.Exception
 import android.util.Log
 import android.view.MenuItem
 import androidx.annotation.StringRes
@@ -79,6 +84,34 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             setOnPreferenceClickListener { true.also {
                 if (Users.isOwner()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}
+
+        setup<Preference>(R.string.key_password) {
+            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            setOnPreferenceClickListener { true.also {
+                @SuppressLint("InlinedApi") val action = if (Users.isOwner()) DevicePolicyManager.ACTION_SET_NEW_PASSWORD else DevicePolicyManager.ACTION_SET_NEW_PASSWORD
+                ContextCompat.startActivity(this.context, Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD),null)
+            }}}
+
+        setup<Preference>(R.string.key_password_failures) {
+            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            setOnPreferenceClickListener { true.also {
+                IslandSetup.setFailedPasswordAttempts(activity)
+            }}}
+
+        setup<Preference>(R.string.key_parent_password_failures) {
+            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            setOnPreferenceClickListener { true.also {
+                IslandSetup.setFailedParentPasswordAttempts(activity)
+            }}}
+
+        setup<SwitchPreference>(R.string.key_disallow_copy_paste){
+            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            setOnPreferenceChangeListener { _, enabled -> true.also {
+                Log.d("DG-Test", "toggle set to: " + enabled)
+                IslandSetup.setClipboardSafety(activity, enabled.toString().toBoolean())
+            }
+            }
+        }
     }
 
     private fun setupPreferenceForManagingAppOps(key: Int, permission: String, op: Int, @StringRes prompt: Int, precondition: Boolean = true) {
