@@ -107,7 +107,6 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         setup<SwitchPreference>(R.string.key_disallow_copy_paste){
             if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
             setOnPreferenceChangeListener { _, enabled -> true.also {
-                Log.d("DG-Test", "toggle set to: " + enabled)
                 IslandSetup.setClipboardSafety(activity, enabled.toString().toBoolean())
             }
             }
