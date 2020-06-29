@@ -35,11 +35,11 @@
     <string name="featured_setup_island_title">Setup a separate Island</string>
 
     <string name="pref_password_title">Set Password</string>
-    <string name="pref_password_summary">Set a password for the profile.</string>
+    <string name="pref_password_summary">Set a password for the Island profile. Make sure you disable \"Use One Lock\" in Work Profile settings or this will change the Mainland password too.</string>
     <string name="pref_password_failure_title">Set Island Password Failures Before Wipe</string>
-    <string name="pref_password_failure_summary">Set number of allowed password failures before profile wiped.</string>
+    <string name="pref_password_failure_summary">Set number of allowed Island password failures before Island profile wiped.</string>
     <string name="pref_parent_password_failure_title">Set Main Password Failures Before Wipe</string>
-    <string name="pref_parent_password_failure_summary">Set number of allowed password failures before profile wiped.</string>
+    <string name="pref_parent_password_failure_summary">Set number of allowed Mainland password failures before Island profile wiped.</string>
     <string name="pref_disallow_copy_paste_summary">Disable copy/paste between profiles.</string>
 
 

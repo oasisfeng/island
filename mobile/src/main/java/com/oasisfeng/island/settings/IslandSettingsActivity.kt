@@ -9,10 +9,8 @@ import android.app.Activity
 import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
-import android.content.BroadcastReceiver
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
+import android.bluetooth.BluetoothClass
+import android.content.*
 import android.content.pm.PackageManager.*
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.*
@@ -87,19 +85,25 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
         setup<Preference>(R.string.key_password) {
             if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            if(Users.toId(Users.current()) == 0) {
+                summary = "Set a password for the Mainland profile."
+            }
             setOnPreferenceClickListener { true.also {
-                @SuppressLint("InlinedApi") val action = if (Users.isOwner()) DevicePolicyManager.ACTION_SET_NEW_PASSWORD else DevicePolicyManager.ACTION_SET_NEW_PASSWORD
                 ContextCompat.startActivity(this.context, Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD),null)
             }}}
 
         setup<Preference>(R.string.key_password_failures) {
             if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            if(Users.toId(Users.current()) == 0) {
+                title = "Set Main Password Failures Before Wipe"
+                summary = "Set number of failed password attempts for Mainland profile before full device wipe (DANGEROUS)."
+            }
             setOnPreferenceClickListener { true.also {
                 IslandSetup.setFailedPasswordAttempts(activity)
             }}}
 
         setup<Preference>(R.string.key_parent_password_failures) {
-            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            if ((Users.isOwner() && ! isProfileOrDeviceOwner) || Users.toId(Users.current()) == 0)  return@setup remove(this)
             setOnPreferenceClickListener { true.also {
                 IslandSetup.setFailedParentPasswordAttempts(activity)
             }}}
