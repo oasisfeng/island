@@ -226,7 +226,8 @@ public class IslandSetup {
 					}
 				}).show();
 	}
-
+	
+	// Logic for configuring wiping of profile after user-defined failed auth attempts to Island profile
 	public static void setFailedPasswordAttempts(final Activity activity) {
 		final EditText failedPasswordAttemptsInput = new EditText(activity);
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -249,7 +250,8 @@ public class IslandSetup {
 		alertDialog.setNegativeButton("Cancel", null);
 		alertDialog.show();
 	}
-
+	
+	// Logic for configuring wiping of profile after user-defined failed auth attempts to Mainland profile
 	public static void setFailedParentPasswordAttempts(final Activity activity) {
 		final EditText failedPasswordAttemptsInput = new EditText(activity);
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -271,7 +273,8 @@ public class IslandSetup {
 		alertDialog.setNegativeButton("Cancel", null);
 		alertDialog.show();
 	}
-
+	
+	// Logic for toggling disablement of clipboard sharing
 	public static void setClipboardSafety(final Activity activity, boolean enabled){
 		DevicePolicies dp = new DevicePolicies(activity);
 		dp.setUserRestriction(UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE, enabled);
