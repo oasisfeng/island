@@ -204,29 +204,34 @@ public class DevicePolicies {
 	public boolean isProfileOrDeviceOwnerOnCallingUser() {
 		return isProfileOwner() || Users.isOwner() && isActiveDeviceOwner();
 	}
-
+	
+	// Method to set limit for failures of Island PIN before wiping Island profile
 	public void setMaximumFailedPasswordsForWipe(int maxAttempts){
 		mDevicePolicyManager.setMaximumFailedPasswordsForWipe(sCachedComponent, maxAttempts);
 	}
-
+	
+	// Method to get limit for failures of Island PIN before wiping Island profile
 	public int getMaximumFailedPasswordsForWipe(){
 		return mDevicePolicyManager.getMaximumFailedPasswordsForWipe(sCachedComponent);
 	}
-
+	
+	// Method to get limit for failures of Mainland PIN before wiping Island profile
 	public int getMaximumFailedParentPasswordsForWipe(){
 		DevicePolicyManager parentDevicePolicyManager = mDevicePolicyManager.getParentProfileInstance(sCachedComponent);
 		return parentDevicePolicyManager.getMaximumFailedPasswordsForWipe(sCachedComponent);
 	}
-
+	
+	// Method to set limit for failures of Mainland PIN before wiping Island profile
 	public void setMaximumFailedParentPasswordsForWipe(int maxAttempts){
 		DevicePolicyManager parentDevicePolicyManager = mDevicePolicyManager.getParentProfileInstance(sCachedComponent);
 		parentDevicePolicyManager.setMaximumFailedPasswordsForWipe(sCachedComponent, maxAttempts);
 	}
 
+	// Method to get current policy of copy/paste between profiles (used for debugging)
 	public void getClipboardSafetyPolicy(final Context context) {
 		final UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
 		Bundle restrictions = um.getUserRestrictions();
-		Log.d(TAG, "Current copy/paste policy: " + restrictions.getBoolean(DISALLOW_CROSS_PROFILE_COPY_PASTE));
+		//Log.d(TAG, "Current copy/paste policy: " + restrictions.getBoolean(DISALLOW_CROSS_PROFILE_COPY_PASTE));
 	}
 
 
