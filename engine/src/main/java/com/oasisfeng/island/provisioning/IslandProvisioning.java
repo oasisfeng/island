@@ -330,7 +330,7 @@ public class IslandProvisioning extends IntentService {
 		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
 		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
 
-		//dg
+		// Initial privisioning to set Island-wipe policy (defaults to disabled)
 		Log.d(TAG, "Setting Wipe Policy");
 		try {
 			policies.setMaximumFailedPasswordsForWipe(0);
@@ -339,7 +339,8 @@ public class IslandProvisioning extends IntentService {
 			Log.d(TAG, "Set Wipe Exception: " + e.toString());
 		}
 		Log.d(TAG, "End Setting Wipe Policy");
-
+		
+		// Initial provisioning to set clipboard-sharing (from Island copy to Mainland paste) policy (defaults to enabled) 
 		Log.d(TAG, "Setting Clipboard Policy");
 		try {
 			policies.addUserRestrictionIfNeeded(context, UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE);
