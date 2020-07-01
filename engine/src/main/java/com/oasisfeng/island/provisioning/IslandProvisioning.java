@@ -355,13 +355,14 @@ public class IslandProvisioning extends IntentService {
 		policies.addCrossProfileIntentFilter(new IntentFilter(ACTION_SEND), FLAGS_BIDIRECTIONAL);		// Keep for historical compatibility reason
 		try {
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_SEND).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
+			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_SEND_MULTIPLE).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
 		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
 		// For web browser
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withCategory(CATEGORY_BROWSABLE).withDataSchemes("http", "https", "ftp"),
 				FLAG_PARENT_CAN_ACCESS_MANAGED);
 		try {	// For Package Installer
-			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_VIEW, ACTION_INSTALL_PACKAGE)
+			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_INSTALL_PACKAGE)   // ACTION_VIEW is already covered above for */*.
 					.withDataScheme(ContentResolver.SCHEME_CONTENT).withDataType("application/vnd.android.package-archive"), FLAGS_BIDIRECTIONAL);
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE).withCategory(context.getPackageName())	// Additional category to bypass system package installer
 					.withDataSchemes(ContentResolver.SCHEME_CONTENT, SCHEME_PACKAGE), FLAG_MANAGED_CAN_ACCESS_PARENT);	// One-way only
