@@ -15,6 +15,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
 
+import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.oasisfeng.android.app.LifecycleViewModelFragment;
 import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.androidx.lifecycle.ViewModelProviders;
@@ -36,8 +39,6 @@ import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import androidx.annotation.Nullable;
-import androidx.lifecycle.ViewModelProvider;
 import java9.util.Optional;
 
 /** The main UI - App list */
@@ -111,7 +112,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
-		mViewModel.attach(activity, mBinding.toolbar.getMenu(), mBinding.bottomNavigation, saved_state != null ? saved_state : getArguments());
+		mViewModel.attach(activity, mBinding.toolbar.getMenu(), mBinding.tabs, saved_state != null ? saved_state : getArguments());
 		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored

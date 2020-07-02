@@ -19,8 +19,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Interpolator;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -30,8 +28,8 @@ import androidx.annotation.Nullable;
 import androidx.core.os.HandlerCompat;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.tabs.TabLayout;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.content.IntentCompat;
@@ -174,37 +172,41 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mSelection.observeForever(selection -> updateActions());
 	}
 
-	public boolean onTabSwitched(final Context context, final MenuItem tab) {
-		setTitle(context, tab);
-		final int tab_menu_id = tab.getItemId();
-		if (tab_menu_id == R.id.tab_discovery) {
+	public void onTabSwitched(final Context context, final TabLayout tabs, final TabLayout.Tab tab) {
+		final int position = tab.getPosition();
+		if (position == 0) {    // Discovery
 			mPrimaryFilter.setValue(null);
 			mFeatured.visible.setValue(Boolean.TRUE);
 			mFeatured.update(context);
-			return true;
+			mChipsVisible.setValue(false);
+			return;
 		} else mFeatured.visible.setValue(Boolean.FALSE);
 
-		if (tab_menu_id == R.id.tab_island) {
-			if (! Filter.Island.available()) return false;
-			mPrimaryFilter.setValue(Filter.Island);
-		} else if (tab_menu_id == R.id.tab_mainland) {
-			mPrimaryFilter.setValue(Filter.Mainland);
-		} else return false;
-		return true;
+		if (position >= 2) {
+			if (Filter.Island.available()) {
+				mPrimaryFilter.setValue(Filter.Island);
+				return;
+			} else tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
+		}
+		mPrimaryFilter.setValue(Filter.Mainland);
 	}
 
-	public void attach(final Context context, final Menu actions, final BottomNavigationView tabs, final @Nullable Bundle state) {
+	public void attach(final Context context, final Menu actions, final TabLayout tabs, final @Nullable Bundle state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mOwnerUserManaged = new DevicePolicies(context).isProfileOrDeviceOwnerOnCallingUser();
 		mActions = actions;
 		mFilterShared = IslandAppListProvider.excludeSelf(context);
 
-		if (! Filter.Island.available()) {		// Island is unavailable
-			tabs.getMenu().removeItem(R.id.tab_island);
-			tabs.setSelectedItemId(R.id.tab_mainland);
-			mPrimaryFilter.setValue(Filter.Mainland);
-			setTitle(context, tabs.getMenu().findItem(R.id.tab_mainland));
-		} else {
+		tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+			@Override public void onTabSelected(final TabLayout.Tab tab) { onTabSwitched(context, tabs, tab); }
+			@Override public void onTabUnselected(final TabLayout.Tab tab) {}
+			@Override public void onTabReselected(final TabLayout.Tab tab) {}
+		});
+		// Tab "Discovery" and "Mainland" are always present
+		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery));
+		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland));
+		if (Filter.Island.available()) {
+			tabs.addTab(tabs.newTab().setText(context.getString(R.string.tab_island)));
 			Filter primary_filter = Filter.Island;		// Default
 			if (state != null) {
 				final int ordinal = state.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE, -1);
@@ -215,11 +217,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 					if (user.equals(Users.owner)) primary_filter = Filter.Mainland;
 				}
 			}
-			tabs.setSelectedItemId(primary_filter == Filter.Mainland ? R.id.tab_mainland : R.id.tab_island);
 			mPrimaryFilter.setValue(primary_filter);
 			mFilterIncludeHiddenSystemApps.setValue(state != null && state.getBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS));
-			setTitle(context, tabs.getMenu().findItem(tabs.getSelectedItemId()));
-		}
+		} else mPrimaryFilter.setValue(Filter.Mainland);
+		tabs.selectTab(tabs.getTabAt(mPrimaryFilter.getValue() == Filter.Mainland ? 1 : 2));
+
 		if (state != null) {
 			final String filter_text = state.getString(SearchManager.QUERY);
 			if (filter_text != null && ! filter_text.isEmpty()) onQueryTextSubmit(filter_text);
@@ -228,15 +230,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mPrimaryFilter.observeForever(filter -> updateActiveFilters());
 		mFilterIncludeHiddenSystemApps.observeForever(filter -> updateActiveFilters());
 		mFilterText.observeForever(text -> updateActiveFilters());
-		mSelection.observeForever(selection -> {
-			final Interpolator interpolator = new AccelerateDecelerateInterpolator();
-			if (selection != null) tabs.animate().alpha(0).translationZ(-10).scaleX(0.95f).scaleY(0.95f).setDuration(200).setInterpolator(interpolator);
-			else tabs.animate().alpha(1).translationZ(0).scaleX(1).scaleY(1).setDuration(200).setInterpolator(interpolator);
-		});
-	}
-
-	private static void setTitle(final Context context, final MenuItem tab) {
-		if (context instanceof Activity) requireNonNull(((Activity) context).getActionBar()).setTitle(tab.getTitle());
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
