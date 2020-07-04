@@ -6,6 +6,11 @@
     <string name="tab_mainland">Mainland</string>
     <string name="tab_island">Island</string>
     <string name="tab_discovery">Discovery</string>
+    <string name="default_island_name">Island %d</string>
+    <string name="default_island0_name">Island</string>
+    <string name="default_island1_name">Neverland</string>
+    <string name="default_island2_name">Atlantis</string>
+    <string name="default_island3_name">Penglai</string>
 
     <string name="status_alive">Alive</string>
     <string name="status_frozen">Frozen</string>
@@ -131,6 +136,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <!-- General words -->
     <string name="open_settings">Open Settings</string>
+    <string name="prompt_invalid_input">Invalid input</string>
 
     <!-- Settings -->
 
@@ -148,6 +154,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="pref_scoped_settings_header">Scoped Settings</string>
     <string name="prompt_island_not_yet_setup">Island is not yet setup.</string>
+    <string name="action_rename">Rename</string>
     <string name="pref_privacy_header">Privacy Protection</string>
     <string name="pref_privacy_summary">Apps in Island cannot access your private data and apps in Mainland (e.g. contacts, call log, photos, documents) except device global data: (including but not limited to)
         \n\n· Device identifiers (forbidden on Android 10+)\n· SMS\n· Device location</string>

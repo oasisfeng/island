@@ -6,6 +6,11 @@
     <string name="tab_mainland">界外</string>
     <string name="tab_island">壶中界</string>
     <string name="tab_discovery">天书</string>
+    <string name="default_island_name">界 %d</string>
+    <string name="default_island0_name">壶中界</string>
+    <string name="default_island1_name">山海界</string>
+    <string name="default_island2_name">云中界</string>
+    <string name="default_island3_name">昊天界</string>
 
     <string name="status_alive">正常</string>
     <string name="status_frozen">冻结</string>
@@ -129,6 +134,7 @@
 
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>
+    <string name="prompt_invalid_input">输入无效</string>
 
     <!-- Settings -->
 
@@ -146,6 +152,7 @@
 
     <string name="pref_scoped_settings_header">分空间的独立设置</string>
     <string name="prompt_island_not_yet_setup">壶中界尚未创建</string>
+    <string name="action_rename">更名</string>
     <string name="pref_privacy_header">隐私保护</string>
     <string name="pref_privacy_summary">壶中界里的应用无法访问您在外部的应用和私人数据（如 联系人、通话记录、照片、文档等），除了设备全局的数据：（包括但不限于）
         \n\n· 设备唯一标识（Android 10 已禁止）\n· 短信\n· 设备的地理位置</string>

@@ -5,6 +5,7 @@ package com.oasisfeng.island.settings
 import android.Manifest.permission.*
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
 import android.content.BroadcastReceiver
@@ -15,10 +16,15 @@ import android.content.pm.PackageManager.*
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.*
 import android.os.Bundle
+import android.preference.EditTextPreference
 import android.preference.Preference
 import android.preference.TwoStatePreference
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
@@ -40,6 +46,10 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
     override fun onResume() {
         super.onResume()
+        val activity = activity
+        activity.title = preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
+                ?: IslandNameManager.getDefaultName(activity)
+
         val policies = DevicePolicies(activity)
         val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
@@ -97,15 +107,54 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         }
     }
 
+    private fun onIslandRenamed(name: String) {
+        val activity = activity
+        DevicePolicies(activity).invoke(DevicePolicyManager::setProfileName, name)
+        activity.title = name
+        IslandNameManager.syncNameToOwnerUser(activity, name)
+    }
+
+    private fun requestRenaming() {
+        val activity = activity
+        object: EditTextPreference(activity) {
+            init {
+                key = getString(R.string.key_island_name)
+                onAttachedToHierarchy(this@IslandSettingsFragment.preferenceManager)
+                if (text.isNullOrEmpty()) text = IslandNameManager.getDefaultName(activity)
+                editText.also { editText ->
+                    editText.addTextChangedListener(object: TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+
+                    override fun afterTextChanged(s: Editable) {
+                        if (editText.text.any { it < ' ' }) editText.error = getString(R.string.prompt_invalid_input) }})
+
+                setOnPreferenceChangeListener { _, name -> (editText.error == null).also { if (it)
+                    onIslandRenamed(name.toString()) }}
+
+                showDialog(null) }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         activity.actionBar?.setDisplayHomeAsUpEnabled(true)
+        if (SDK_INT >= N) preferenceManager.setStorageDeviceProtected()
         addPreferencesFromResource(R.xml.pref_island)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        if (! Users.isOwner()) inflater.inflate(R.menu.pref_island_actions, menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return if (item.itemId != android.R.id.home) super.onOptionsItemSelected(item) else true.also { activity.finish() }
+        return when (item.itemId) {
+            R.id.menu_rename -> true.also{ requestRenaming() }
+            android.R.id.home -> true.also { activity.finish() }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -121,9 +170,6 @@ class IslandSettingsActivity: Activity() {
 	    if (SDK_INT >= M) {
             val shuttle = PendingIntentShuttle.retrieveFromActivity(this)
             if (shuttle != null) { return finish().also { Log.i(TAG, "Shuttle received: $shuttle") }}}
-
-        title = intent?.getStringExtra(Intent.EXTRA_TITLE)
-                ?: getString(R.string.tab_island).let { if (Users.current() == Users.profile) it else "$it (${Users.toId(Users.current())})"}
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
 

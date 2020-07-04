@@ -26,6 +26,7 @@ import androidx.annotation.XmlRes;
 import androidx.core.app.NavUtils;
 
 import com.oasisfeng.android.app.Activities;
+import com.oasisfeng.android.base.SparseArray;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.mobile.R;
@@ -38,7 +39,6 @@ import com.oasisfeng.island.util.Users;
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.content.Intent.EXTRA_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
@@ -135,15 +135,16 @@ public class SettingsActivity extends PreferenceActivity {
 			switchToHeader(header);
 			return;
 		}
+		final SparseArray<String> names = IslandNameManager.getAllNames(this);
 		final String[] profile_labels = stream(users).map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
-				: user.equals(Users.profile) ? getText(R.string.tab_island) : "Island " + Users.toId(user)).toArray(String[]::new);	// TODO: Use actual name for Islands
+				: names.get(Users.toId(user))).toArray(String[]::new);
 		Dialogs.buildList(this, null, profile_labels, (d, which) -> {
-			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which), profile_labels[which]);
+			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which));
 		}).show();
 	}
 
-	private void launchSettingsActivityAsUser(final UserHandle user, final String title) {
-		final LauncherApps la = ((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE));
+	private void launchSettingsActivityAsUser(final UserHandle user) {
+		final LauncherApps la = requireNonNull((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE));
 		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), user);
 		if (! activities.isEmpty()) {
 			for (final LauncherActivityInfo activity : activities)
@@ -152,13 +153,13 @@ public class SettingsActivity extends PreferenceActivity {
 					break;
 				}
 		} else {	// In case IslandSettingsActivity is not enabled, due to Island space is not yet activated after upgrading.
-			if (user.equals(Users.profile)) {
-				final ComponentName component = new ComponentName(this, IslandSettingsActivity.class);
-				MethodShuttle.runInProfile(this, (Context context) -> {
-					context.getPackageManager().setComponentEnabledSetting(component, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-					context.startActivity(new Intent().setComponent(component).putExtra(EXTRA_TITLE, title).addFlags(FLAG_ACTIVITY_NEW_TASK));
-				});
-			} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+			if (! user.equals(Users.profile)) {
+				Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+			} else MethodShuttle.runInProfile(this, (Context context) -> {
+				final ComponentName component = new ComponentName(context, IslandSettingsActivity.class);
+				context.getPackageManager().setComponentEnabledSetting(component, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+				context.startActivity(new Intent().setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK));
+			});
 		}
 	}
 
