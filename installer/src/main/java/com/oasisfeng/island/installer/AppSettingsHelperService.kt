@@ -57,7 +57,8 @@ class AppSettingsHelperService: Service() {
 		val uptimeMillis = SystemClock.uptimeMillis()
 		if (intent.action == Intent.ACTION_PACKAGE_RESTARTED) {     // If triggered by system Settings, it will be followed by ACTION_QUERY_PACKAGE_RESTART immediately.
 			if (Users.isOwner()) onPackageRestarted(pkg, uid, uptimeMillis)
-			else PendingIntentShuttle.shuttle(context, Users.owner) { onPackageRestarted(pkg, uid, uptimeMillis) }
+			else PendingIntentShuttle.shuttle(context, Users.owner, pkg, uid, uptimeMillis) @Suppress("NAME_SHADOWING") { pkg, uid, uptimeMillis ->
+				onPackageRestarted(pkg, uid, uptimeMillis) }
 			return }
 
 		if (intent.action == ACTION_QUERY_PACKAGE_RESTART) {

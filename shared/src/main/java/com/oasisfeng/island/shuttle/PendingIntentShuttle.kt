@@ -2,8 +2,7 @@ package com.oasisfeng.island.shuttle
 
 import android.annotation.SuppressLint
 import android.app.*
-import android.app.PendingIntent.FLAG_NO_CREATE
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
+import android.app.PendingIntent.*
 import android.content.*
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
@@ -47,11 +46,17 @@ import java.lang.reflect.Field
 
 	companion object {
 
-		fun shuttle(context: Context, profile: UserHandle, procedure: Context.() -> Unit): Boolean {
+		fun <A, B> shuttle(context: Context, profile: UserHandle, a: A, b: B, procedure: Context.(A, B) -> Unit)
+				= shuttle(context, profile) { procedure(a, b) }
+
+		fun <A, B, C> shuttle(context: Context, profile: UserHandle, a: A, b: B, c: C, procedure: Context.(A, B, C) -> Unit)
+				= shuttle(context, profile) { procedure(a, b, c) }
+
+		private fun shuttle(context: Context, profile: UserHandle, procedure: Context.() -> Unit): Boolean {
 			return load(context, profile) { shuttle -> shuttle(context, shuttle, procedure) }
 		}
 
-		fun shuttle(context: Context, shuttle: PendingIntent, procedure: Context.() -> Unit) {
+		private fun shuttle(context: Context, shuttle: PendingIntent, procedure: Context.() -> Unit) {
 			val javaClass = procedure.javaClass
 			val constructors: Array<Constructor<*>> = javaClass.declaredConstructors
 			require(constructors.isNotEmpty()) { "The method must have at least one constructor" }
@@ -60,11 +65,12 @@ import java.lang.reflect.Field
 			val fields: Array<Field> = javaClass.declaredFields
 			val args: Array<Any?>
 			if (params.isNotEmpty()) {
-				require(fields.size >= params.size) { "Parameter types mismatch: " + constructor + " / " + fields.contentDeepToString() }
-				args = arrayOfNulls(params.size)
+				val count = params.size
+				require(fields.size >= count) { "Parameter types mismatch: " + constructor + " / " + fields.contentDeepToString() }
+				args = arrayOfNulls(count)
 				params.forEachIndexed { i, param ->
 					try {
-						val field = fields[i]
+						val field = fields[(i + count - 1) % count] // Procedure is passed as last argument, but first field.
 						require(field.type == param) { "Parameter types mismatch: " + constructor + " / " + fields.contentDeepToString() }
 						field.isAccessible = true
 						val arg = field.get(procedure)
@@ -109,8 +115,7 @@ import java.lang.reflect.Field
 				if (create) FLAG_UPDATE_CURRENT else FLAG_NO_CREATE)
 
 		private fun buildShuttleActivityOptions(context: Context): Bundle
-				= ActivityOptions.makeSceneTransitionAnimation(context as? Activity ?: DummyActivity(context),
-				View(context), "")
+				= ActivityOptions.makeSceneTransitionAnimation(context as? Activity ?: DummyActivity(context), View(context), "")
 				.apply { requestUsageTimeReport(buildShuttle(context, create = true)) }.toBundle()
 
 		@JvmStatic fun retrieveFromActivity(activity: Activity): PendingIntent? {
@@ -133,7 +138,7 @@ import java.lang.reflect.Field
 		}
 
 		private fun load(context: Context, profile: UserHandle, block: (PendingIntent) -> Unit): Boolean {
-			require(profile != Users.current()) { "Not a profile: $profile" }
+			require(profile != Users.current()) { "Same profile: $profile" }
 			val locker = PendingIntent.getBroadcast(context, profile.toId(),
 					Intent(ACTION_SHUTTLE_LOCKER).setPackage(""), FLAG_NO_CREATE) ?: return false
 			locker.send(context, 0, null, { _, intent, _, _, _ ->
