@@ -70,7 +70,8 @@ Manual setup for Island in "God mode" / "Demigod mode"
 5. Execute the following command in ADB shell. (pick the right one for God / Demigod mode)
 
    Demigod mode:
-   `dpm set-profile-owner --user 0 --name Mainland com.oasisfeng.island/.IslandDeviceAdminReceiver`
+   `dpm set-profile-owner --user 0 --name Mainland com.oasisfeng.island/.IslandDeviceAdminReceiver`\
+   (For Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver 0`)
 
    or God mode:
    `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`
