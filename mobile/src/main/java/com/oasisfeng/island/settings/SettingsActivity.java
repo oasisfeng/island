@@ -45,7 +45,6 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
 import static java.util.Objects.requireNonNull;
-import static java9.util.stream.StreamSupport.stream;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On handset devices, settings are presented as a single list.
@@ -136,8 +135,8 @@ public class SettingsActivity extends PreferenceActivity {
 			return;
 		}
 		final SparseArray<String> names = IslandNameManager.getAllNames(this);
-		final String[] profile_labels = stream(users).map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
-				: names.get(Users.toId(user))).toArray(String[]::new);
+		final CharSequence[] profile_labels = users.stream().map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
+				: names.get(Users.toId(user))).toArray(CharSequence[]::new);
 		Dialogs.buildList(this, null, profile_labels, (d, which) -> {
 			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which));
 		}).show();

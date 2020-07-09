@@ -16,9 +16,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-
-import java9.util.concurrent.CompletableFuture;
-import java9.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Shuttle for general method invocation, on top of service shuttle.
@@ -105,7 +104,9 @@ public class MethodShuttle {
 		} catch (final DeadObjectException ignored) {}    // Fall-through to reconnect
 
 		if (Services.use(new ServiceShuttleContext(context), IMethodShuttle.class, IMethodShuttle.Stub::asInterface, procedure)) return future;
-		return CompletableFuture.failedFuture(new IllegalStateException("Error connecting " + MethodShuttleService.class.getCanonicalName()));
+		final CompletableFuture<Result> failure = new CompletableFuture<>();
+		failure.completeExceptionally(new IllegalStateException("Error connecting " + MethodShuttleService.class.getCanonicalName()));
+		return failure;
 	}
 
 	private MethodShuttle() {}

@@ -36,10 +36,9 @@ import com.oasisfeng.island.tip.Tip;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import java9.util.Optional;
 
 /** The main UI - App list */
 @ParametersAreNonnullByDefault

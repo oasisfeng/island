@@ -2,8 +2,6 @@ package com.oasisfeng.island.settings
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.N
 import com.oasisfeng.android.base.SparseArray
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.shuttle.PendingIntentShuttle
@@ -40,8 +38,7 @@ object IslandNameManager {
 	}
 
 	@Suppress("DEPRECATION") private fun getStore(context: Context): SharedPreferences {
-		return android.preference.PreferenceManager.getDefaultSharedPreferences(
-				if (SDK_INT >= N) context.createDeviceProtectedStorageContext() else context)
+		return android.preference.PreferenceManager.getDefaultSharedPreferences(context.createDeviceProtectedStorageContext())
 	}
 
 	@OwnerUser private fun buildIslandNameKey(context: Context, user: Int) = context.getString(R.string.key_island_name) + "." + user

@@ -47,7 +47,6 @@ vanished and its background behaviors completely blocked.
 \n\nBy creating the sandbox environment, you authorize Island to act as device administrator of \"Android for Work\", with the privilege to manage
 the sandbox environment. Island never collect data related to your privacy, please read our privacy policy on Google Play Store for more details.</string>
     <string name="setup_accept">Accept</string>
-    <string name="setup_error_multi_user_not_allowed">Sorry, the required \"Multi-User\" feature is not supported on this device.</string>
     <string name="setup_error_managed_profile_not_supported">Sorry, the required feature \"Managed Profile\" is not supported on this device.</string>
     <string name="setup_error_provisioning_incomplete">Island setup is incomplete, the previous attempt might be unsuccessful.\n\nIf your device ROM or 3rd-party tool enforce auto-start control (or similar background-restriction functionality), please whitelist Island in related settings, then continue the setup.</string>
     <string name="setup_error_managed_device">Sorry, Island cannot be setup due to device currently being managed by <b>%1$s</b>.</string>
@@ -87,7 +86,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_manual_setup"><b>For advanced user</b>:\nThis limitation could also be circumvented with one-time manual setup via USB-connected PC.</string>
-    <string name="dialog_encryption_required"><b>DEVICE ENCRYPTION</b> is required on your device to create the island, enforced by Android system prior to 7.0. Encrypting the device may degrade the overall performance on some low-end devices. Encryption can be skipped if root privilege is available and granted in the next step.</string>
     <string name="dialog_clone_via_install_explanation">Island will now launch the Android installer to \"install\" this app in Island.\n\nAlthough it looks like the regular installation confirmation, actually it takes no extra storage space.</string>
     <string name="dialog_clone_via_google_play_explanation">Island will now launch Google Play Store to clone this app, please then click the \"Install\" button there.\n\nAlthough it will look like the regular installation, actually it will take no extra storage space but just activates this app in Island.</string>
     <string name="dialog_clone_via_sys_market_explanation">Island will now launch the built-in app store on your device to clone this app, please follow the regular installation procedure.\n\nATTENTION: The built-in app store on your device may or may not support Android for Work properly. In case it fails to finish the installation, please refer to the FAQ for solutions.</string>

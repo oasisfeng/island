@@ -45,7 +45,6 @@ import java.util.Objects;
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.content.Context.CONTEXT_IGNORE_SECURITY;
 import static android.content.Context.CONTEXT_INCLUDE_CODE;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.provider.DocumentsContract.PROVIDER_INTERFACE;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
@@ -77,7 +76,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 		return processQuery(uri, () -> mDelegate.query(toTargetUri(uri), projection, selection, selectionArgs, sortOrder, cancellationSignal));
 	}
 
-	@RequiresApi(O) @Override public Cursor query(final Uri uri, final String[] projection, final Bundle queryArgs, final CancellationSignal cancellationSignal) {
+	@RequiresApi(O) @Override public Cursor query(final @NonNull Uri uri, final String[] projection, final Bundle queryArgs, final CancellationSignal cancellationSignal) {
 		return processQuery(uri, () -> mDelegate.query(toTargetUri(uri), projection, queryArgs, cancellationSignal));
 	}
 
@@ -197,7 +196,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 						resolver.notifyChange(toProxyUri(uri), observer);
 					}
 
-					@RequiresApi(N) @Override public void notifyChange(final @NonNull Uri uri, final @Nullable ContentObserver observer, final int flags) {
+					@Override public void notifyChange(final @NonNull Uri uri, final @Nullable ContentObserver observer, final int flags) {
 						resolver.notifyChange(toProxyUri(uri), observer, flags);
 					}
 
@@ -246,7 +245,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 			mDelegate.attachInfo(wrapWithResolverWrapper(context), target_provider);
 			// onCreate() is indirectly invoked by attachInfo().
 			return true;
-		} catch (PackageManager.NameNotFoundException/* Should not happen */| ReflectiveOperationException e) {
+		} catch (final PackageManager.NameNotFoundException/* Should not happen */| ReflectiveOperationException e) {
 			Analytics.$().logAndReport(TAG, "Failed to init due to incompatibility.", e);
 		} catch (final Throwable t) {	// No just RuntimeException, but also Error expected. (e.g. NoSuchFieldError thrown by ExternalStorageProvider)
 			Analytics.$().logAndReport(TAG, "Failed to init.", t);
@@ -268,7 +267,7 @@ public class ExternalStorageProviderProxy extends ContentProvider {
 
 		// In case authority cannot be found, try enumerating documents providers in package of its well-known name. (Fixed authority name is unnecessary for documents provider)
 		final List<ResolveInfo> resolves = pm.queryIntentContentProviders(new Intent(PROVIDER_INTERFACE).setPackage(TARGET_PACKAGE), 0);
-		if (resolves == null || resolves.isEmpty()) {
+		if (resolves.isEmpty()) {
 			Log.e(TAG, "Documents provider for external storage is missing.");
 			return null;
 		}

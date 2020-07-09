@@ -17,7 +17,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager.*
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.LOLLIPOP_MR1
 import android.os.Build.VERSION_CODES.O
 import android.os.PersistableBundle
 import android.os.UserHandle
@@ -47,7 +46,7 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
         if (delegation.isNullOrEmpty()) return logAndToast(context, pkg, "Missing delegation (REQUEST_KEY_DATA) in request")
         val user = UserHandles.of(request.getInt(ApiConstants.REQUEST_KEY_USER_SERIAL_NUMBER, -2))
 
-        if (SDK_INT >= LOLLIPOP_MR1 && BuildConfig.DEBUG && requestType == "-" + ApiConstants.TYPE_DELEGATION)
+        if (BuildConfig.DEBUG && requestType == "-" + ApiConstants.TYPE_DELEGATION)
             return DelegationManager.removeAuthorizedDelegation(DevicePolicies(context), pkg, user, delegation)
         if (requestType != ApiConstants.TYPE_DELEGATION) return logAndToast(context, pkg, "Unsupported request type: $requestType")
 

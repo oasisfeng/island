@@ -4,6 +4,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.LauncherApps;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
+import androidx.cardview.widget.CardView;
+
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.controller.IslandAppClones;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -17,14 +21,7 @@ import com.oasisfeng.ui.card.CardViewModel;
 
 import java.util.List;
 import java.util.Objects;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
-import androidx.cardview.widget.CardView;
-import java9.util.stream.Collectors;
-
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
+import java.util.stream.Collectors;
 
 /**
  * Hint to solve web-view related issues / crashes, by cloning or unfreezing the current provider package of web-view.
@@ -35,7 +32,7 @@ public class CriticalAppRequiredTip extends IgnorableTip {
 
 	@WorkerThread @Override protected @Nullable CardViewModel buildCardIfNotIgnored(final Context context) {
 		final String webview_pkg;
-		if (SDK_INT >= N && Users.hasProfile() && (webview_pkg = CriticalAppsManager.getCurrentWebViewPackageName()) != null) {
+		if (Users.hasProfile() && (webview_pkg = CriticalAppsManager.getCurrentWebViewPackageName()) != null) {
 			final IslandAppInfo app = IslandAppListProvider.getInstance(context).get(webview_pkg, Users.profile);
 			if (! shouldIgnoreTip(context, webview_pkg)) {
 				final CardViewModel card = buildCardIfActionRequired(context, webview_pkg, app);

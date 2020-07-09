@@ -45,7 +45,6 @@
 \n\n应用分身的数据也独立于外部的该应用，互不影响。壶中界的应用还可以在需要的时候被冻结，使其看起来完全消失无踪，也无法进行任何后台行为。
 \n\n开始创建壶中界，意味着你同意授予“工作资料”（壶中界底层机制）的管理权限。我们不会收集您的隐私数据，详情请参阅我们在 Google Play 市场中的隐私政策。</string>
     <string name="setup_accept">同意</string>
-    <string name="setup_error_multi_user_not_allowed">抱歉，此设备不支持必需的“Android 多用户”特性。</string>
     <string name="setup_error_managed_profile_not_supported">抱歉，此设备不支持必需的“Android 工作资料”特性。</string>
     <string name="setup_error_provisioning_incomplete">壶中界的创建不完整，此前的创建尝试可能并未成功。\n\n<b>如果您的设备或其它三方工具施加了“自启动”（或类似的）限制，请务必首先将壶中界解除限制或加入白名单，然后再次创建壶中界。</b></string>
     <string name="setup_error_managed_device">抱歉，由于此设备已被 <b>%1$s</b> 接管，壶中界无法创建。</string>
@@ -85,7 +84,6 @@
 
     <string name="dialog_title_warning">注意</string>
     <string name="dialog_manual_setup"><b>致高级用户</b>：\n这一限制可以通过在 USB 连接的电脑上进行手动操作绕过。</string>
-    <string name="dialog_encryption_required"><b>设备加密</b> 是 Android 7.0 之前版本系统对创建工作资料施加的前置要求。加密整个设备在中低端机型上可能显著降低设备性能。如果此设备已 ROOT，可在下一步授予 ROOT 权限以绕过此限制（不会触碰系统分区）。</string>
     <string name="dialog_clone_via_install_explanation">即将启动 Android 系统的应用安装界面开始分身。\n\n尽管它看起来像是通常的安装提示，实际并不会占用额外的空间。</string>
     <string name="dialog_clone_via_google_play_explanation">即将启动 Google Play 市场完成应用分身，届时请点击“安装”按钮。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。</string>
     <string name="dialog_clone_via_sys_market_explanation">即将启动设备内置的应用市场完成应用分身，届时请按照常规的应用安装步骤完成应用的安装。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。\n\n注意：无法确定此设备内置的应用市场是否支持 Android 工作资料机制。如果安装应用的分身失败，请参考“常见问题解答”中提供的解决方案。</string>

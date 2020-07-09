@@ -23,8 +23,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -108,7 +106,7 @@ public class AppInfo extends ApplicationInfo {
 	private static <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, SECONDS); }
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
-		if (SDK_INT >= LOLLIPOP_MR1) try {
+		try {
 			return loadUnbadgedIcon(pm);
 		} catch (final SecurityException e) {		// Appears on some Samsung devices (e.g. Galaxy S7, Note 8) with Android 8.0
 			Analytics.$().logAndReport(TAG, "Error loading unbadged icon for " + this, e);

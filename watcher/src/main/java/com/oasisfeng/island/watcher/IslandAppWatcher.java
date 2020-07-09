@@ -12,6 +12,9 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.api.Api;
@@ -23,10 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import java9.util.function.Consumer;
+import java.util.function.Consumer;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;

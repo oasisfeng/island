@@ -24,6 +24,13 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+
 import com.oasisfeng.android.app.LifecycleActivity;
 
 import java.lang.annotation.Retention;
@@ -33,15 +40,6 @@ import java.util.concurrent.Executor;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 
-import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-
-import static android.os.Build.VERSION_CODES.M;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 /**
@@ -52,7 +50,6 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
  * canceled by the client. For security reasons, the prompt will automatically dismiss when the
  * activity is no longer in the foreground.
  */
-@RequiresApi(M)
 public class BiometricPrompt implements BiometricConstants {
 
     private static final String TAG = "BiometricPromptCompat";

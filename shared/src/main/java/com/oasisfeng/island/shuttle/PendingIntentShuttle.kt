@@ -2,7 +2,8 @@ package com.oasisfeng.island.shuttle
 
 import android.annotation.SuppressLint
 import android.app.*
-import android.app.PendingIntent.*
+import android.app.PendingIntent.FLAG_NO_CREATE
+import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.*
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
@@ -11,18 +12,14 @@ import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.net.Uri
 import android.os.*
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.M
-import android.os.Build.VERSION_CODES.N
 import android.util.Log
 import android.view.*
-import androidx.annotation.RequiresApi
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.toId
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 
-@RequiresApi(M) class PendingIntentShuttle: BroadcastReceiver() {
+class PendingIntentShuttle: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
 		if (intent.getLongExtra(ActivityOptions.EXTRA_USAGE_TIME_REPORT, -1) >= 0) return   // Ignore usage report
@@ -90,7 +87,7 @@ import java.lang.reflect.Field
 				sendToProfileIfUnlocked(context, it) }
 		}
 
-		@RequiresApi(N) fun waitForProfileUnlockAndSend(context: Context): BroadcastReceiver {
+		fun waitForProfileUnlockAndSend(context: Context): BroadcastReceiver {
 			return object: BroadcastReceiver() { override fun onReceive(context: Context, intent: Intent) {
 				val profile: UserHandle = intent.getParcelableExtra(Intent.EXTRA_USER) ?: return
 				sendToProfileIfUnlocked(context, profile)
@@ -98,7 +95,7 @@ import java.lang.reflect.Field
 		}
 
 		private fun sendToProfileIfUnlocked(context: Context, profile: UserHandle): Boolean {
-			if (SDK_INT >= N && ! context.getSystemService(UserManager::class.java)!!.isUserUnlocked(profile))
+			if (! context.getSystemService(UserManager::class.java)!!.isUserUnlocked(profile))
 				return false.also { Log.i(TAG, "Skip stopped or locked user: $profile") }
 			val la = context.getSystemService(LauncherApps::class.java)!!
 			la.getActivityList(context.packageName, profile).getOrNull(0)?.also {
@@ -172,17 +169,17 @@ import java.lang.reflect.Field
 						PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
 			Log.i(TAG, "Initializing shuttles...")
 			sendToAllUnlockedProfiles(this)
-			if (SDK_INT >= N) mReceiver = waitForProfileUnlockAndSend(this)
+			mReceiver = waitForProfileUnlockAndSend(this)
 		}
 
 		override fun onDestroy() {
 			if (! Users.isOwner()) return
-			if (SDK_INT >= N) unregisterReceiver(mReceiver)
+			unregisterReceiver(mReceiver)
 		}
 
 		override fun onBind(intent: Intent?) = if (Users.isOwner()) Binder() else null
 
-		@RequiresApi(N) private lateinit var mReceiver: BroadcastReceiver
+		private lateinit var mReceiver: BroadcastReceiver
 	}
 
 	private class DummyActivity(context: Context): Activity() {

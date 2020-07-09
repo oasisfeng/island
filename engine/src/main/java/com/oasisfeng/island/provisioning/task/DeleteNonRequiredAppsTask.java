@@ -31,6 +31,9 @@ import android.util.Xml;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -50,12 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
-
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Deletes all system apps with a launcher that are not in the required set of packages.
@@ -404,8 +401,8 @@ public class DeleteNonRequiredAppsTask {
     private static class PackageManager extends PackageManagerWrapper {
 
         static final int MATCH_DISABLED_COMPONENTS = android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
-        static final int MATCH_DIRECT_BOOT_AWARE = SDK_INT >= N ? android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE : 0;
-        static final int MATCH_DIRECT_BOOT_UNAWARE = SDK_INT >= N ? android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE : 0;
+        static final int MATCH_DIRECT_BOOT_AWARE = android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
+        static final int MATCH_DIRECT_BOOT_UNAWARE = android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
         static final int DELETE_SYSTEM_APP = 0x00000004;
         static final int DELETE_SUCCEEDED = 1;
         static final int DELETE_FAILED_INTERNAL_ERROR = -1;
@@ -482,8 +479,8 @@ public class DeleteNonRequiredAppsTask {
 
     private static String getManagedProvisioningPackageName(final Context context) throws NameNotFoundException {
         @SuppressLint("WrongConstant") final List<ResolveInfo> candidates = context.getPackageManager().queryIntentActivities(
-                new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE), PackageManager.GET_DISABLED_COMPONENTS
-                        | PackageManager.GET_UNINSTALLED_PACKAGES | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0));
+                new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE), PackageManager.MATCH_DISABLED_COMPONENTS
+                        | PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_SYSTEM_ONLY);
         for (final ResolveInfo candidate : candidates)
             if ((candidate.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
                 return candidate.activityInfo.applicationInfo.packageName;

@@ -67,8 +67,6 @@ import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
@@ -180,8 +178,8 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static void hideUnnecessaryAppsInManagedProfile(final Context context) {
-		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),
-				SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);		// Do not use resolveActivity(), which will return ResolverActivity.
+		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(
+				new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI), PackageManager.MATCH_SYSTEM_ONLY);	// Do not use resolveActivity(), which will return ResolverActivity.
 		for (final ResolveInfo resolve : resolves) {
 			final String pkg = resolve.activityInfo.packageName;
 			if ((resolve.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || "android".equals(pkg)) continue;
@@ -283,10 +281,8 @@ public class IslandProvisioning extends IntentService {
 			Analytics.$().report(e);
 		}
 
-		if (SDK_INT >= N) {
-			policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
-			policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
-		}
+		policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
+		policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
 		// As reported by user, some account types are strangely unable to remove. Just make sure all account types are allowed.
 		final String[] restricted_account_types = policies.getManager().getAccountTypesWithManagementDisabled();
 		if (restricted_account_types != null && restricted_account_types.length > 0) for (final String account_type : restricted_account_types)
@@ -331,7 +327,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static void startProfileOwnerPostProvisioningForNonOwnerProfile(final Context context, final DevicePolicies policies) {
-		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		enableAdditionalForwarding(context, policies);
 		// Prepare AppLaunchShortcut
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")
@@ -376,8 +372,9 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> {
-		final Notification.Builder builder = new Notification.Builder(this).setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS)
-				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getResources().getColor(R.color.accent)).setUsesChronometer(true)
+		final Notification.Builder builder = new Notification.Builder(this)
+				.setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS).setUsesChronometer(true)
+				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getColor(R.color.accent))
 				.setContentTitle(getText(Users.isOwner() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
 				.setContentText(getText(R.string.notification_provisioning_text));
 		return SDK_INT < O ? builder : builder.setBadgeIconType(BADGE_ICON_SMALL).setColorized(true);

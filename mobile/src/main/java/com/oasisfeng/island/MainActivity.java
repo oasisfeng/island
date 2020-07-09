@@ -30,8 +30,7 @@ import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
-
-import java9.util.Optional;
+import java.util.Optional;
 
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
@@ -63,7 +62,7 @@ public class MainActivity extends LifecycleActivity {
 			if (owner == null) {
 				Log.w(TAG, "Not profile owner");
 				startMainUi(savedInstanceState);
-			} else if (owner.isEmpty()) {
+			} else if (! owner.isPresent()) {
 				Log.w(TAG, "Profile without owner");
 				if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
 				else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.

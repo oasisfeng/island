@@ -12,8 +12,6 @@ import com.oasisfeng.island.util.Hacks;
 
 import java.util.List;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -115,8 +113,8 @@ public class AppOpsCompat {
 			AppOpsManager.MODE_ALLOWED, // SEND_SMS
 			AppOpsManager.MODE_ALLOWED, // READ_ICC_SMS
 			AppOpsManager.MODE_ALLOWED, // WRITE_ICC_SMS
-			SDK_INT < M ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_DEFAULT, // OP_WRITE_SETTINGS
-			SDK_INT < M ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_DEFAULT, // OP_SYSTEM_ALERT_WINDOW  TODO: MODE_IGNORED on low ram phones on Q+
+			AppOpsManager.MODE_DEFAULT, // OP_WRITE_SETTINGS
+			AppOpsManager.MODE_DEFAULT, // OP_SYSTEM_ALERT_WINDOW  TODO: MODE_IGNORED on low ram phones on Q+
 			AppOpsManager.MODE_ALLOWED, // ACCESS_NOTIFICATIONS
 			AppOpsManager.MODE_ALLOWED, // CAMERA
 			AppOpsManager.MODE_ALLOWED, // RECORD_AUDIO

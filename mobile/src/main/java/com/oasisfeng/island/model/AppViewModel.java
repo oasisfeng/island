@@ -2,16 +2,16 @@ package com.oasisfeng.island.model;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.common.app.BaseAppViewModel;
 import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.Users;
-import com.oasisfeng.java.util.Comparator;
-import com.oasisfeng.java.util.Comparators;
 
-import androidx.annotation.NonNull;
+import java.util.Comparator;
 
 /**
  * View-model for app entry
@@ -84,9 +84,9 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		return info().buildToString(AppViewModel.class).append(", state=").append(state).append('}').toString();
 	}
 
-	private static final Comparator<AppViewModel> ORDERING = Comparators.<AppViewModel>
+	private static final Comparator<AppViewModel> ORDERING = Comparator.<AppViewModel>
 			comparingInt(app -> app.state.order)		// Order by state
 //			.thenCompare(AppViewModel::isExclusive)		// Exclusive clones first
-			.thenCompare(AppViewModel::isSystem)		// Non-system apps first
-			.thenCompare(app -> app.info.getLabel());	// Order by label
+			.thenComparing(AppViewModel::isSystem)		// Non-system apps first
+			.thenComparing(app -> app.info.getLabel());	// Order by label
 }

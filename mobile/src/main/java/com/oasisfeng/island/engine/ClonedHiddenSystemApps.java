@@ -22,13 +22,11 @@ import com.oasisfeng.island.util.Users;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import java9.util.function.Consumer;
-import java9.util.stream.Collectors;
-import java9.util.stream.StreamSupport;
-
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
+import static android.content.Context.USER_SERVICE;
+import static java.util.Objects.requireNonNull;
 
 /** Track explicitly "cloned" (unfrozen) system apps (previous frozen in post-provisioning). Other frozen system apps should be treated as "disabled" in UI. */
 @OwnerUser public class ClonedHiddenSystemApps {
@@ -64,11 +62,7 @@ import static android.os.Build.VERSION_CODES.M;
 	}
 
 	@OwnerUser private void initialize(final Context context) {
-		final UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
-		final long begin_time;
-		if (SDK_INT >= M && um != null) begin_time = um.getUserCreationTime(mUser);
-		else try { begin_time = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).firstInstallTime; }
-		catch (final PackageManager.NameNotFoundException e) { throw new IllegalStateException("Cannot retrieve package info"); }
+		final long begin_time = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserCreationTime(mUser);
 
 		MethodShuttle.runInProfile(context, () -> queryUsedPackagesDuring(context, begin_time, System.currentTimeMillis())).thenAccept(used_pkgs -> {
 			final SharedPreferences.Editor editor = mStore.edit().clear();
@@ -91,12 +85,12 @@ import static android.os.Build.VERSION_CODES.M;
 		if (usm == null) return Collections.emptySet();
 		final Map<String, UsageStats> stats = usm.queryAndAggregateUsageStats(begin_time, end_time);
 		if (stats == null) return Collections.emptySet();
-		return StreamSupport.stream(stats.values()).filter(usage -> usage.getLastTimeUsed() != 0).map(UsageStats::getPackageName)
+		return stats.values().stream().filter(usage -> usage.getLastTimeUsed() != 0).map(UsageStats::getPackageName)
 				.collect(Collectors.toList());
 	}
 
 	private static SharedPreferences getStore(final Context context, final UserHandle user) {
-		final UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
+		final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
 		final long usn = um != null ? um.getSerialNumberForUser(user) : Users.toId(user);
 		return SafeSharedPreferences.wrap(context.getSharedPreferences(SHARED_PREFS_PREFIX_ENABLED_SYSTEM_APPS + usn, Context.MODE_PRIVATE));
 	}

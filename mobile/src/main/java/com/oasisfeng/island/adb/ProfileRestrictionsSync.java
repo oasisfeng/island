@@ -7,15 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Process;
 import android.os.UserManager;
 import android.util.Log;
 
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
 
 /**
@@ -36,8 +33,7 @@ public class ProfileRestrictionsSync extends BroadcastReceiver {
 		}
 		final UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
 		final Bundle owner_restrictions = um.getUserRestrictions(Users.owner);
-		final Bundle profile_restrictions = SDK_INT >= N ? policies.invoke(DevicePolicyManager::getUserRestrictions)
-				: um.getUserRestrictions(Process.myUserHandle());
+		final Bundle profile_restrictions = policies.invoke(DevicePolicyManager::getUserRestrictions);
 		final boolean enabled_in_owner = owner_restrictions.getBoolean(DISALLOW_DEBUGGING_FEATURES);
 		if (profile_restrictions.getBoolean(DISALLOW_DEBUGGING_FEATURES) != enabled_in_owner) {
 			policies.setUserRestriction(DISALLOW_DEBUGGING_FEATURES, enabled_in_owner);

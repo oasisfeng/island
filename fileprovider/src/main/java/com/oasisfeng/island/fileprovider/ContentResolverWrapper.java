@@ -12,16 +12,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
-import static android.os.Build.VERSION_CODES.HONEYCOMB;
-import static android.os.Build.VERSION_CODES.KITKAT;
-import static android.os.Build.VERSION_CODES.N;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Delegation wrapper of {@link ContentResolver}
@@ -39,7 +34,7 @@ class ContentResolverWrapper extends ContentResolver {
 
 	/* Pure forwarding */
 
-	@Override @RequiresApi(HONEYCOMB) @Nullable public String[] getStreamTypes(@NonNull Uri url, @NonNull String mimeTypeFilter) {
+	@Override @Nullable public String[] getStreamTypes(@NonNull Uri url, @NonNull String mimeTypeFilter) {
 		return mBase.getStreamTypes(url, mimeTypeFilter);
 	}
 
@@ -55,23 +50,23 @@ class ContentResolverWrapper extends ContentResolver {
 		mBase.notifyChange(uri, observer, syncToNetwork);
 	}
 
-	@Override @RequiresApi(N) public void notifyChange(@NonNull Uri uri, @Nullable ContentObserver observer, int flags) {
+	@Override public void notifyChange(@NonNull Uri uri, @Nullable ContentObserver observer, int flags) {
 		mBase.notifyChange(uri, observer, flags);
 	}
 
-	@Override @RequiresApi(KITKAT) public void takePersistableUriPermission(@NonNull Uri uri, int modeFlags) {
+	@Override public void takePersistableUriPermission(@NonNull Uri uri, int modeFlags) {
 		mBase.takePersistableUriPermission(uri, modeFlags);
 	}
 
-	@Override @RequiresApi(KITKAT) public void releasePersistableUriPermission(@NonNull Uri uri, int modeFlags) {
+	@Override public void releasePersistableUriPermission(@NonNull Uri uri, int modeFlags) {
 		mBase.releasePersistableUriPermission(uri, modeFlags);
 	}
 
-	@Override @RequiresApi(KITKAT) @NonNull public List<UriPermission> getPersistedUriPermissions() {
+	@Override @NonNull public List<UriPermission> getPersistedUriPermissions() {
 		return mBase.getPersistedUriPermissions();
 	}
 
-	@Override @RequiresApi(KITKAT) @NonNull public List<UriPermission> getOutgoingPersistedUriPermissions() {
+	@Override @NonNull public List<UriPermission> getOutgoingPersistedUriPermissions() {
 		return mBase.getOutgoingPersistedUriPermissions();
 	}
 

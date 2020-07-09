@@ -29,7 +29,9 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
+import com.oasisfeng.android.base.SparseArray;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.common.app.BaseAppListViewModel;
@@ -43,6 +45,7 @@ import com.oasisfeng.island.featured.FeaturedListViewModel;
 import com.oasisfeng.island.greenify.GreenifyClient;
 import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.settings.IslandNameManager;
 import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
 import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
@@ -50,13 +53,12 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import java9.util.concurrent.CompletableFuture;
-import java9.util.function.BooleanSupplier;
-import java9.util.function.Predicate;
-import java9.util.stream.Collectors;
 
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static java.util.Objects.requireNonNull;
@@ -196,7 +198,13 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery));
 		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland));
 		if (Filter.Island.available()) {
-			tabs.addTab(tabs.newTab().setText(context.getString(R.string.tab_island)));
+			tabs.addTab(tabs.newTab().setText(R.string.tab_island));
+			tabs.addTab(tabs.newTab().setText("山海界"));
+			tabs.addTab(tabs.newTab().setText("轩辕界"));
+			tabs.addTab(tabs.newTab().setText("云中界"));
+			tabs.addTab(tabs.newTab().setText("昊天界"));
+			tabs.addTab(tabs.newTab().setText("昆仑界"));
+			tabs.setTabMode(TabLayout.MODE_SCROLLABLE);
 			Filter primary_filter = Filter.Island;		// Default
 			if (state != null) {
 				final int ordinal = state.getInt(STATE_KEY_FILTER_PRIMARY_CHOICE, -1);
@@ -273,7 +281,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		updateActions();
 	}
 
-	public void onItemLaunchIconClick(final Context context, final IslandAppInfo app) {
+	@SuppressWarnings("MethodMayBeStatic") public void onItemLaunchIconClick(final Context context, final IslandAppInfo app) {
 		IslandAppControl.launch(context, app);
 	}
 
@@ -285,18 +293,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 		final int id = item.getItemId();
 		if (id == R.id.menu_clone) {
-			final IslandAppInfo app_in_profile = IslandAppListProvider.getInstance(context).get(pkg, Users.profile);
-			if (app_in_profile != null && app_in_profile.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
-				MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false)).thenAccept(unfrozen -> {
-					if (unfrozen) {
-						app.stopTreatingHiddenSysAppAsDisabled();
-						Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-					}
-				}).exceptionally(t -> { reportAndShowToastForInternalException(context, "Error unfreezing app: " + pkg, t); return null; });
-			} else if (app_in_profile != null && app_in_profile.isInstalled() && ! app_in_profile.enabled) {	// Disabled system app is shown as "removed" (not cloned)
-				IslandAppControl.launchSystemAppSettings(context, app_in_profile);
-				Toast.makeText(context, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show();
-			} else IslandAppClones.cloneApp(context, app);
+			requestToCloneApp(context, app);
 			clearSelection();
 		} else if (id == R.id.menu_clone_back) {
 			Activities.startActivity(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
@@ -332,6 +329,34 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 //			launcher_apps.startAppDetailsActivity(new ComponentName(pkg, ""), selection.info().user, null, null);
 		}
 		return true;
+	}
+
+	private static void requestToCloneApp(final Context context, final IslandAppInfo app) {
+		final List<UserHandle> profiles = Users.getProfilesManagedByIsland();
+		if (profiles.isEmpty()) throw new IllegalStateException("No Island");
+
+		if (profiles.size() == 1) requestToCloneAppToProfile(context, app, profiles.get(0));
+		final SparseArray<String> targets = IslandNameManager.getAllNames(context);
+		final String[] names = new String[targets.size()];
+		for (int i = 0; i < names.length; i ++) names[i] = targets.valueAt(i);
+		Dialogs.buildList(requireNonNull(Activities.findActivityFrom(context)), "Clone app to…", names, (dialog, which) ->
+				requestToCloneAppToProfile(context, app, UserHandles.of(targets.keyAt(which)))).show();
+	}
+
+	private static void requestToCloneAppToProfile(final Context context, final IslandAppInfo app, final UserHandle profile) {
+		final String pkg = app.packageName;
+		final IslandAppInfo target = IslandAppListProvider.getInstance(context).get(pkg, profile);  // FIXME: get(pkg, profile) is not working
+		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
+FIXME:		MethodShuttle.runInProfile(context, () -> IslandManager.ensureAppHiddenState(context, pkg, false)).thenAccept(unfrozen -> {
+				if (unfrozen) {
+					app.stopTreatingHiddenSysAppAsDisabled();
+					Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+				}
+			}).exceptionally(t -> { reportAndShowToastForInternalException(context, "Error unfreezing app: " + pkg, t); return null; });
+		} else if (target != null && target.isInstalled() && ! target.enabled) {	// Disabled system app is shown as "removed" (not cloned)
+			IslandAppControl.launchSystemAppSettings(context, target);
+			Toast.makeText(context, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show();
+		} else IslandAppClones.cloneApp(context, app, profile);
 	}
 
 	private void freezeApp(final Context context, final AppViewModel app_vm) {

@@ -141,7 +141,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         activity.actionBar?.setDisplayHomeAsUpEnabled(true)
-        if (SDK_INT >= N) preferenceManager.setStorageDeviceProtected()
+        preferenceManager.setStorageDeviceProtected()
         addPreferencesFromResource(R.xml.pref_island)
     }
 
@@ -167,9 +167,8 @@ class IslandSettingsActivity: Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-	    if (SDK_INT >= M) {
-            val shuttle = PendingIntentShuttle.retrieveFromActivity(this)
-            if (shuttle != null) { return finish().also { Log.i(TAG, "Shuttle received: $shuttle") }}}
+        val shuttle = PendingIntentShuttle.retrieveFromActivity(this)
+        if (shuttle != null) { return finish().also { Log.i(TAG, "Shuttle received: $shuttle") }}
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
 

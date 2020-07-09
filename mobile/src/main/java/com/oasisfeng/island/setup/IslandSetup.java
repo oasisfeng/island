@@ -42,17 +42,13 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import eu.chainfire.libsuperuser.Shell;
-import java9.util.Optional;
-import java9.util.stream.Collectors;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
-import static android.os.Build.VERSION_CODES.M;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
-import static java9.util.stream.Collectors.joining;
-import static java9.util.stream.StreamSupport.stream;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Implementation of Island / Mainland setup & shutdown.
@@ -75,14 +71,14 @@ public class IslandSetup {
 		SafeAsyncTask.execute(activity, context -> Shell.SU.run(commands), (context, result) -> {
 			final List<Hacks.UserManagerHack.UserInfo> profiles = Hack.into(context.getSystemService(Context.USER_SERVICE))
 					.with(Hacks.UserManagerHack.class).getProfiles(Users.toId(Users.current()));
-			final Optional<UserHandle> profile_pending_setup = stream(profiles).map(Hacks.UserManagerHack.UserInfo::getUserHandle)
+			final Optional<UserHandle> profile_pending_setup = profiles.stream().map(Hacks.UserManagerHack.UserInfo::getUserHandle)
 					.filter(profile -> ! profile.equals(Users.current()) && isProfileWithoutOwner(context, profile)).findFirst();	// Not yet set up as profile owner
-			if (profile_pending_setup.isEmpty()) {		// Profile creation failed
+			if (! profile_pending_setup.isPresent()) {		// Profile creation failed
 				if (result == null || result.isEmpty()) return;		// Just root failure
-				Analytics.$().event("setup_island_root_failed").withRaw("commands", stream(commands).collect(joining("\n")))
+				Analytics.$().event("setup_island_root_failed").withRaw("commands", commands.stream().collect(joining("\n")))
 						.withRaw("fw_max_users", String.valueOf(getSysPropMaxUsers()))
 						.withRaw("config_multiuserMaximumUsers", String.valueOf(getResConfigMaxUsers()))
-						.with(CONTENT, stream(result).collect(joining("\n"))).send();
+						.with(CONTENT, result.stream().collect(joining("\n"))).send();
 				dismissProgressAndShowError(context, progress, 1);
 				return;
 			}
@@ -93,7 +89,7 @@ public class IslandSetup {
 
 	private static boolean isProfileWithoutOwner(final Context context, final UserHandle profile) {
 		final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(context, profile);
-		return owner == null || owner.isEmpty();
+		return owner == null || ! owner.isPresent();
 	}
 
 	// Phase 2: Install Island app inside
@@ -117,15 +113,14 @@ public class IslandSetup {
 
 		// All following commands must be executed all together with the above one, since this app process will be killed upon "pm install".
 		final String flat_admin_component = DeviceAdmins.getComponentName(activity).flattenToString();
-		commands.append(SDK_INT >= M ? "dpm set-profile-owner --user " + profile_id + " " + flat_admin_component
-				: "dpm set-profile-owner " + flat_admin_component + " " + profile_id);
+		commands.append("dpm set-profile-owner --user ").append(profile_id).append(" ").append(flat_admin_component);
 		commands.append(" && am start-user ").append(profile_id);
 
 		SafeAsyncTask.execute(activity, context -> Shell.SU.run(commands.toString()), (context, result) -> {
 			final LauncherApps launcher_apps = Objects.requireNonNull((LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE));
 			if (launcher_apps.getActivityList(context.getPackageName(), profile).isEmpty()) {
 				Analytics.$().event("setup_island_root_failed").withRaw("command", commands.toString())
-						.with(CONTENT, result == null ? "<null>" : stream(result).collect(joining("\n"))).send();
+						.with(CONTENT, result == null ? "<null>" : result.stream().collect(joining("\n"))).send();
 				dismissProgressAndShowError(context, progress, 2);
 			}
 		});
@@ -165,23 +160,20 @@ public class IslandSetup {
 				.replace("<", "\\<").replace(">", "\\>");
 
 		final String file = new File(getDataSystemDirectory(), "device_owner.xml").getAbsolutePath();
-		final StringBuilder command = new StringBuilder("echo ").append(content).append(" > ").append(file)
-				.append(" && chmod 600 ").append(file).append(" && chown system:system ").append(file);
-		if (SDK_INT >= LOLLIPOP_MR1) command.append(" && dpm set-active-admin ").append(admin_component).append(" ; echo DONE");
-		else command.append(" && echo DONE");
-
-		SafeAsyncTask.execute(activity, context -> Shell.SU.run(command.toString()), (context, output) -> {
+		final String command = "echo " + content + " > " + file + " && chmod 600 " + file
+				+ " && chown system:system " + file + " && dpm set-active-admin " + admin_component + " ; echo DONE";
+		SafeAsyncTask.execute(activity, context -> Shell.SU.run(command), (context, output) -> {
 			if (output == null || output.isEmpty()) {
 				Toast.makeText(context, R.string.toast_setup_mainland_non_root, Toast.LENGTH_LONG).show();
 				WebContent.view(context, Uri.parse(Config.URL_SETUP_GOD_MODE.get()));
 				return;
 			}
 			if (! "DONE".equals(output.get(output.size() - 1))) {
-				Analytics.$().event("setup_mainland_root").with(CONTENT, stream(output).collect(joining("\n"))).send();
+				Analytics.$().event("setup_mainland_root").with(CONTENT, output.stream().collect(joining("\n"))).send();
 				Toast.makeText(context, R.string.toast_setup_mainland_root_failed, Toast.LENGTH_LONG).show();
 				return;
 			}
-			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : stream(output).collect(joining("\n"))).send();
+			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : output.stream().collect(joining("\n"))).send();
 			// Start the device-admin activation UI (no-op if already activated with root above), since "dpm set-active-admin" is not supported on Android 5.0.
 			fragment.startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
 					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(context))
@@ -256,7 +248,7 @@ public class IslandSetup {
 						destroyProfile(activity);
 						return;
 					}
-					final String names = stream(exclusive_clones).limit(MAX_DESTROYING_APPS_LIST).collect(joining("\n"));
+					final String names = exclusive_clones.stream().limit(MAX_DESTROYING_APPS_LIST).collect(joining("\n"));
 					final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
 					new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 							.setMessage(activity.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))

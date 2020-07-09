@@ -8,9 +8,6 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
-
 /**
  * Activity with enhanced {@link #getCallingPackage()}, which detects caller even if not started by {@link #startActivityForResult(Intent, int)}.
  *
@@ -22,20 +19,18 @@ public abstract class CallerAwareActivity extends Activity {
 		final String caller = super.getCallingPackage();
 		if (caller != null) return caller;
 
-		if (SDK_INT >= LOLLIPOP_MR1) {
-			Intent original_intent = null;
-			final Intent intent = getIntent();
-			if (intent.hasExtra(Intent.EXTRA_REFERRER) || intent.hasExtra(Intent.EXTRA_REFERRER_NAME)) {
-				original_intent = new Intent(getIntent());
-				intent.removeExtra(Intent.EXTRA_REFERRER);
-				intent.removeExtra(Intent.EXTRA_REFERRER_NAME);
-			}
-			try {
-				final Uri referrer = getReferrer();		// getReferrer() returns real calling package if no referrer extras
-				if (referrer != null) return referrer.getAuthority();        // Referrer URI: android-app://<package name>
-			} finally {
-				if (original_intent != null) setIntent(original_intent);
-			}
+		Intent original_intent = null;
+		final Intent intent = getIntent();
+		if (intent.hasExtra(Intent.EXTRA_REFERRER) || intent.hasExtra(Intent.EXTRA_REFERRER_NAME)) {
+			original_intent = new Intent(getIntent());
+			intent.removeExtra(Intent.EXTRA_REFERRER);
+			intent.removeExtra(Intent.EXTRA_REFERRER_NAME);
+		}
+		try {
+			final Uri referrer = getReferrer();		// getReferrer() returns real calling package if no referrer extras
+			if (referrer != null) return referrer.getAuthority();        // Referrer URI: android-app://<package name>
+		} finally {
+			if (original_intent != null) setIntent(original_intent);
 		}
 		if (Hacks.IActivityManager_getLaunchedFromPackage != null) try {
 			final Object am = Hacks.ActivityManagerNative_getDefault.invoke().statically();

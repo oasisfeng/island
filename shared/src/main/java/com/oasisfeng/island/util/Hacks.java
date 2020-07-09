@@ -21,7 +21,6 @@ import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 
 import com.oasisfeng.android.annotation.UserIdInt;
@@ -39,8 +38,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O_MR1;
 import static android.os.Build.VERSION_CODES.P;
 
@@ -68,21 +65,20 @@ public class Hacks {
 	 *
 	 * See PackageManagerService.updateFlagsForPackage()
 	 */
-	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | (Users.isOwner() ? 0 : MATCH_ANY_USER);
-	public static final int RESOLVE_ANY_USER_AND_UNINSTALLED = PackageManager.GET_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
+	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isOwner() ? 0 : MATCH_ANY_USER);
+	public static final int RESOLVE_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer>
-			ApplicationInfo_privateFlags = Hack.onlyIf(SDK_INT >= M).into(ApplicationInfo.class).field("privateFlags").fallbackTo(null);
+			ApplicationInfo_privateFlags = Hack.into(ApplicationInfo.class).field("privateFlags").fallbackTo(null);
 	public static final Hack.HackedField<ApplicationInfo, Integer>
 			ApplicationInfo_versionCode = Hack.into(ApplicationInfo.class).field("versionCode").fallbackTo(0);
 	public static final Hack.HackedTargetField<String>
-			PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT >= N && SDK_INT <= O_MR1).into(PrintManager.class)
+			PrintManager_PRINT_SPOOLER_PACKAGE_NAME = Hack.onlyIf(SDK_INT <= O_MR1).into(PrintManager.class)
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
 	public static final Hack.HackedTargetField<Object> InetAddress_addressCache
-			= SDK_INT >= N ? Hack.into("java.net.Inet6AddressImpl").staticField("addressCache").fallbackTo(null)
-			: Hack.into(InetAddress.class).staticField("addressCache").fallbackTo(null);
+			= Hack.into("java.net.Inet6AddressImpl").staticField("addressCache").fallbackTo(null);
 	public static final Hack.HackedField<Object, Object> AddressCache_cache
 			= Hack.into("java.net.AddressCache").field("cache").fallbackTo(null);
 	public static final Hack.HackedField<Object, Map> BasicLruCache_map
@@ -92,9 +88,6 @@ public class Hacks {
 	public static final Hack.HackedField<Object, Object> AddressCacheEntry_expiryNanos
 			= Hack.into("java.net.AddressCache$AddressCacheEntry").field("expiryNanos").fallbackTo(null);
 
-	public static final Hack.HackedMethod2<Boolean, Void, Unchecked, Unchecked, Unchecked, String, Boolean>
-			SystemProperties_getBoolean = Hack.into("android.os.SystemProperties").staticMethod("getBoolean")
-			.returning(boolean.class).fallbackReturning(false).withParams(String.class, boolean.class);
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer>
 			SystemProperties_getInt = Hack.into("android.os.SystemProperties").staticMethod("getInt")
 			.returning(int.class).fallbackReturning(null).withParams(String.class, int.class);
@@ -110,8 +103,8 @@ public class Hacks {
 	public static final Hack.HackedMethod4<Boolean, Context, Unchecked, Unchecked, Unchecked, Intent, ServiceConnection, Integer, UserHandle>
 			Context_bindServiceAsUser = Hack.into(Context.class).method("bindServiceAsUser").returning(boolean.class)
 			.fallbackReturning(false).withParams(Intent.class, ServiceConnection.class, int.class, UserHandle.class);
-	@RequiresApi(N) public static final @Nullable Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
-			UserManager_getProfileIds = SDK_INT < N || SDK_INT > O_MR1 ? null : Hack.into(UserManager.class).method("getProfileIds")
+	public static final @Nullable Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
+			UserManager_getProfileIds = SDK_INT > O_MR1 ? null : Hack.into(UserManager.class).method("getProfileIds")
 			.returning(int[].class).withParams(int.class, boolean.class);
 	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle>
 			Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
@@ -126,13 +119,12 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod1<?, Void, Unchecked, Unchecked, Unchecked, IBinder>
 			IWebViewUpdateService$Stub_asInterface = Hack.into(IWebViewUpdateService + "$Stub").staticMethod("asInterface")
 			.returning(Hack.ANY_TYPE).withParam(IBinder.class);
-	@RequiresApi(N) public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
-			IWebViewUpdateService_getCurrentWebViewPackageName = SDK_INT < N ? null :
-			Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
+	public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
+			IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 			.returning(String.class).throwing(RemoteException.class).withoutParams();
 	public static final @Nullable Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked>
-			Environment_getDataSystemDirectory = Hack.into(Environment.class)
-			.staticMethod(SDK_INT < N ? "getSystemSecureDirectory" : "getDataSystemDirectory").returning(File.class).withoutParams();
+			Environment_getDataSystemDirectory = Hack.into(Environment.class).staticMethod("getDataSystemDirectory")
+			.returning(File.class).withoutParams();
 	public static final @Nullable Hack.HackedMethod0<AssetManager, Void, Unchecked, Unchecked, Unchecked>
 			AssetManager_constructor = Hack.into(AssetManager.class).constructor().withoutParams();
 	public static final @Nullable Hack.HackedMethod1<Integer, AssetManager, Unchecked, Unchecked, Unchecked, String>

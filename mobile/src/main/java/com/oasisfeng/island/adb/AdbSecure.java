@@ -9,8 +9,6 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
-
 import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.ui.Snackbars;
 import com.oasisfeng.island.analytics.Analytics;
@@ -22,9 +20,6 @@ import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static java.util.Objects.requireNonNull;
@@ -37,7 +32,7 @@ public class AdbSecure {
 	private static final String PREF_KEY_ADB_SECURE_PROTECTED = "adb_secure_protected";
 
 	public static void toggleAdbSecure(final LifecycleActivity activity, final boolean enabling, final boolean security_confirmed) {
-		if (! enabling && ! security_confirmed && SDK_INT >= M && isAdbSecureProtected(activity)) {
+		if (! enabling && ! security_confirmed && isAdbSecureProtected(activity)) {
 			requestSecurityConfirmationBeforeDisablingAdbSecure(activity);
 			return;
 		}
@@ -54,7 +49,7 @@ public class AdbSecure {
 			return;		// No managed profile, all done.
 		}
 
-		if (SDK_INT < N || ! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {
+		if (! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {
 			final Context app_context = activity.getApplicationContext();
 			MethodShuttle.runInProfile(activity, context -> {
 				final DevicePolicies device_policies = new DevicePolicies(context);	// The "policies" instance can not be passed into profile.
@@ -74,7 +69,7 @@ public class AdbSecure {
 	}
 
 	private static void showPromptForAdbSecureProtection(final LifecycleActivity activity, final boolean enabled) {
-		if (SDK_INT < M || ! enabled || activity.isDestroyed()) return;
+		if (! enabled || activity.isDestroyed()) return;
 		if (isAdbSecureProtected(activity)) Snackbars.make(activity, R.string.prompt_security_confirmation_activated)
 				.setDuration(3_000).setAction(R.string.action_deactivate, v -> disableSecurityConfirmationForAdbSecure(activity)).show();
 		else Snackbars.make(activity, R.string.prompt_security_confirmation_suggestion)
@@ -103,7 +98,7 @@ public class AdbSecure {
 		return getDefaultSharedPreferences(context).getBoolean(PREF_KEY_ADB_SECURE_PROTECTED, false);
 	}
 
-	@RequiresApi(M) private static void enableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
+	private static void enableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
 		if (activity.isDestroyed()) return;
 		final Application app = activity.getApplication();
 		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_activating, () -> {
@@ -112,7 +107,7 @@ public class AdbSecure {
 		});
 	}
 
-	@RequiresApi(M) private static void disableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
+	private static void disableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
 		if (activity.isDestroyed()) return;
 		final Application app = activity.getApplication();
 		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_deactivating, () -> {
@@ -121,7 +116,7 @@ public class AdbSecure {
 		});
 	}
 
-	@RequiresApi(M) private static void requestSecurityConfirmationBeforeDisablingAdbSecure(final LifecycleActivity activity) {
+	private static void requestSecurityConfirmationBeforeDisablingAdbSecure(final LifecycleActivity activity) {
 		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_to_disable,
 				() -> toggleAdbSecure(activity, false, true));
 	}

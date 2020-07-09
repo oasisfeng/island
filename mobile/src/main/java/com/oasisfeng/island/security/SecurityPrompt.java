@@ -5,15 +5,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
+
 import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.androidx.biometric.BiometricPrompt;
 import com.oasisfeng.island.mobile.R;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.StringRes;
-
-import static android.os.Build.VERSION_CODES.M;
 
 /**
  * Security protection based on biometric or lock-screen credentials.
@@ -22,8 +19,8 @@ import static android.os.Build.VERSION_CODES.M;
  */
 public class SecurityPrompt {
 
-	@RequiresApi(M) public static void showBiometricPrompt(final LifecycleActivity activity, final @StringRes int title,
-														   final @StringRes int description, final Runnable on_authenticated) {
+	public static void showBiometricPrompt(final LifecycleActivity activity, final @StringRes int title,
+										   final @StringRes int description, final Runnable on_authenticated) {
 		final Handler handler = new Handler(Looper.getMainLooper());
 		final Context app_context = activity.getApplication();
 		new BiometricPrompt(activity, handler::post, new BiometricPrompt.AuthenticationCallback() {

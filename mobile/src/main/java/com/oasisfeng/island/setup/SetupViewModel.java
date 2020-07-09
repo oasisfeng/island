@@ -8,7 +8,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -17,10 +16,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.databinding.ObservableInt;
+
 import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.WebContent;
-import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.engine.IslandManager;
@@ -28,24 +32,13 @@ import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
-import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
-import androidx.annotation.CheckResult;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.StringRes;
-import androidx.databinding.ObservableInt;
-import eu.chainfire.libsuperuser.Shell;
-import java9.util.Optional;
+import java.util.Optional;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
-import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_NAME;
@@ -83,33 +76,6 @@ public class SetupViewModel implements Parcelable {
 		final SetupViewModel result = checkManagedProvisioningPrerequisites(activity, mIncompleteSetupAcked);
 		if (result != null) return result;
 
-		final boolean encryption_required = isEncryptionRequired();
-		Analytics.$().setProperty(Analytics.Property.EncryptionRequired, encryption_required);
-		if (encryption_required) {
-			final boolean device_encrypted = isDeviceEncrypted(activity);
-			Analytics.$().setProperty(Analytics.Property.DeviceEncrypted, device_encrypted);
-			if (! device_encrypted) {
-				if (message == R.string.dialog_encryption_required) {	// "Next" is clicked in the "Encryption Required" step.
-					SafeAsyncTask.execute(activity, _a -> {
-						try {		// Worker thread
-							Shell.SU.run("setprop persist.sys.no_req_encrypt 1");
-							if (! isEncryptionRequired()) Analytics.$().event("encryption_skipped").send();
-						} catch (final Exception e) {
-							Log.e(TAG, "Error running root command", e);
-						}
-						return null;
-					}, (_a, _r) -> {		// Main thread
-						if (fragment.getActivity() == null) return;
-						startManagedProvisioning(fragment);
-					});
-					return null;
-				}
-				final SetupViewModel vm = buildErrorVM(R.string.dialog_encryption_required, null);
-				vm.button_next.set(0);		// Enable the "next" button.
-				return vm;
-			}
-		}
-
 		startManagedProvisioning(fragment);
 		return null;
 	}
@@ -121,7 +87,7 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
 		// Check for incomplete provisioning, before DPM.isProvisioningAllowed() check which returns true in this case.
-		if (SDK_INT >= N && Users.profile == null) for (final int profile_id : IslandManager.getProfileIdsIncludingDisabled(context)) {
+		if (Users.profile == null) for (final int profile_id : IslandManager.getProfileIdsIncludingDisabled(context)) {
 			if (Users.isOwner(profile_id)) continue;
 			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(context, UserHandles.of(profile_id));
 			if (owner == null || ! owner.isPresent()) continue;
@@ -136,59 +102,34 @@ public class SetupViewModel implements Parcelable {
 		}
 
 		// DPM.isProvisioningAllowed() is the one-stop prerequisites checking.
-		if (SDK_INT >= N) {
-			final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
-			if (dpm != null && dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE))
-				Analytics.$().event("device_provision_allowed").send();	// Special analytics
-			if (dpm != null && dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
-		}
+		final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+		if (dpm != null && dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE))
+			Analytics.$().event("device_provision_allowed").send();	// Special analytics
+		if (dpm != null && dpm.isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)) return null;
 
 		final boolean has_managed_users = pm.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
 		if (! has_managed_users)
 			return buildErrorVM(R.string.setup_error_managed_profile_not_supported, reason("lack_managed_users"));
 
-		if (SDK_INT < M) {		// The max-users limitation is no longer enforced since Android M.
-			final Integer sys_prop_max_users = IslandSetup.getSysPropMaxUsers();
-			if (sys_prop_max_users == null || sys_prop_max_users == -1) {
-				final Integer res_config_max_users = IslandSetup.getResConfigMaxUsers();
-				if (res_config_max_users == null || res_config_max_users < 2)
-					return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason(IslandSetup.RES_MAX_USERS).with(ITEM_ID, String.valueOf(res_config_max_users)));
-			} else if (sys_prop_max_users < 2) return buildErrorVM(R.string.setup_error_multi_user_not_allowed, reason("fw.max_users"));
+		final String device_owner = new DevicePolicies(context).getDeviceOwner();
+		if (device_owner != null) {
+			CharSequence owner_label = null;
+			try {
+				owner_label = pm.getApplicationInfo(device_owner, PackageManager.MATCH_UNINSTALLED_PACKAGES).loadLabel(pm);
+			} catch (final PackageManager.NameNotFoundException ignored) {}		// Should never happen.
+
+			final SetupViewModel error = buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));
+			error.message_params = new String[] { owner_label != null ? owner_label.toString() : device_owner };
+			error.action_extra = 0;		// Disable the manual-setup prompt, because device owner cannot be removed by 3rd-party.
+			return error;
 		}
 
-		if (SDK_INT >= M) {
-			final String device_owner = new DevicePolicies(context).getDeviceOwner();
-			if (device_owner != null) {
-				CharSequence owner_label = null;
-				try {
-					owner_label = pm.getApplicationInfo(device_owner, PackageManager.GET_UNINSTALLED_PACKAGES).loadLabel(pm);
-				} catch (final PackageManager.NameNotFoundException ignored) {}		// Should never happen.
-
-				final SetupViewModel error = buildErrorVM(R.string.setup_error_managed_device, reason("managed_device").with(ITEM_ID, device_owner));
-				error.message_params = new String[] { owner_label != null ? owner_label.toString() : device_owner };
-				error.action_extra = 0;		// Disable the manual-setup prompt, because device owner cannot be removed by 3rd-party.
-				return error;
-			}
-		}
-
-		if (SDK_INT >= N) reason("disallowed").send();		// Disallowed by DPC for unknown reason, just log this but let user have a try.
+		reason("disallowed").send();		// Disallowed by DPC for unknown reason, just log this but let user have a try.
 		return null;
 	}
 
 	private static Analytics.Event reason(final String reason) {
 		return Analytics.$().event("setup_island_failure").with(Analytics.Param.ITEM_CATEGORY, reason);
-	}
-
-	private static boolean isEncryptionRequired() {
-		return SDK_INT < N && ! Hacks.SystemProperties_getBoolean.invoke("persist.sys.no_req_encrypt", false).statically();
-	}
-
-	private static boolean isDeviceEncrypted(final Context context) {
-		final DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-		if (dpm == null) return false;
-		final int status = dpm.getStorageEncryptionStatus();
-		return status == ENCRYPTION_STATUS_ACTIVE // TODO: || (SDK_INT >= N && StorageManager.isEncrypted())
-				|| (SDK_INT >= M && status == DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY);
 	}
 
 	public void onExtraButtonClick(final View view) {
@@ -231,7 +172,6 @@ public class SetupViewModel implements Parcelable {
 		try {
 			fragment.startActivityForResult(intent, REQUEST_PROVISION_MANAGED_PROFILE);
 			Analytics.$().event("profile_provision_sys_activity_start").send();
-			if (SDK_INT < M) activity.finish();			// No activity result on Android 5.x, thus we have to finish the activity now.
 		} catch (final IllegalStateException e) {	// Fragment not in proper state
 			activity.startActivity(intent);				// Fall-back to starting activity without result observation.
 			activity.finish();
@@ -253,18 +193,16 @@ public class SetupViewModel implements Parcelable {
 
 	private static Intent buildManagedProfileProvisioningIntent(final Context context) {
 		final Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE);
-		if (SDK_INT >= M) {
-			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(context));
-			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
-		} else intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, Modules.MODULE_ENGINE);
-		if (BuildConfig.DEBUG && SDK_INT >= M)
+		intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(context));
+		intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
+		if (BuildConfig.DEBUG)			// TODO: Remove after testing
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE, new Account("default_account", "miui_yellowpage"));
 		if (SDK_INT >= O) intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
 		return intent;
 	}
 
 	/** Initiates the managed device provisioning */
-	@RequiresApi(M) private static Intent buildManagedDeviceProvisioningIntent(final @NonNull Fragment fragment, final int request_code) {
+	private static Intent buildManagedDeviceProvisioningIntent(final @NonNull Fragment fragment, final int request_code) {
 		return new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE)
 				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, DeviceAdmins.getComponentName(fragment.getContext()))
 				.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);		// Actually works on Android 7+.
@@ -273,11 +211,13 @@ public class SetupViewModel implements Parcelable {
 	private static CharSequence readOwnerLabel(final Context context, final ComponentName owner) {
 		final PackageManager pm = context.getPackageManager();
 		try {
-			final ActivityInfo owner_info = pm.getReceiverInfo(owner, PackageManager.GET_UNINSTALLED_PACKAGES);	// It should be a BroadcastReceiver
-			if (owner_info != null) return owner_info.loadLabel(pm);
-			return pm.getApplicationInfo(owner.getPackageName(), PackageManager.GET_UNINSTALLED_PACKAGES).loadLabel(pm);	// If not, use app label
-		} catch (final PackageManager.NameNotFoundException ignored) {
-			return null;
+			return pm.getReceiverInfo(owner, PackageManager.MATCH_UNINSTALLED_PACKAGES).loadLabel(pm);	// It should be a BroadcastReceiver
+		} catch (final PackageManager.NameNotFoundException e) {
+			try {
+				return pm.getApplicationInfo(owner.getPackageName(), PackageManager.MATCH_UNINSTALLED_PACKAGES).loadLabel(pm);    // If not, use app label
+			} catch (final PackageManager.NameNotFoundException ex) {
+				return null;
+			}
 		}
 	}
 

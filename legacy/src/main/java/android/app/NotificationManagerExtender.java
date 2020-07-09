@@ -3,13 +3,11 @@ package android.app;
 import android.content.Context;
 import android.service.notification.StatusBarNotification;
 
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
+import java.util.List;
+
 import static android.os.Build.VERSION_CODES.O;
 
 /**
@@ -39,15 +37,15 @@ public class NotificationManagerExtender extends NotificationManager {
 		delegate().cancelAll();
 	}
 
-	@RequiresApi(M) @Override public StatusBarNotification[] getActiveNotifications() {
+	@Override public StatusBarNotification[] getActiveNotifications() {
 		return delegate().getActiveNotifications();
 	}
 
-	@RequiresApi(N) @Override public int getImportance() {
+	@Override public int getImportance() {
 		return delegate().getImportance();
 	}
 
-	@RequiresApi(N) @Override public boolean areNotificationsEnabled() {
+	@Override public boolean areNotificationsEnabled() {
 		return delegate().areNotificationsEnabled();
 	}
 

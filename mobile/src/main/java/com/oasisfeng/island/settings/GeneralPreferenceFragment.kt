@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.oasisfeng.island.settings
 
 import android.app.admin.DevicePolicyManager
@@ -5,7 +7,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.N
 import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
 import android.preference.TwoStatePreference
@@ -16,14 +17,15 @@ import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Permissions
 import eu.chainfire.libsuperuser.Shell
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * General preferences in Settings
  *
  * Extracted from SettingsActivity by Oasis on 2019/7/17.
  */
-@Suppress("DEPRECATION")
 class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.pref_general, R.string.key_launch_shortcut_prefix) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +33,6 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(activity) }
-            if (SDK_INT < N || ! policies.isProfileOrDeviceOwnerOnCallingUser) return@setup remove(this)
 
             isChecked = policies.invoke(DevicePolicyManager::getShortSupportMessage) != null
             onChange { enabled ->

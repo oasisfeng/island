@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
@@ -24,27 +23,18 @@ import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.provisioning.CriticalAppsManager;
 import com.oasisfeng.island.provisioning.SystemAppsManager;
 import com.oasisfeng.island.shuttle.ContextShuttle;
-import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import java9.util.function.Consumer;
-import java9.util.function.Predicate;
-import java9.util.stream.Collectors;
-import java9.util.stream.Stream;
-import java9.util.stream.StreamSupport;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Island-specific {@link AppListProvider}
@@ -90,7 +80,7 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	private Stream<IslandAppInfo> installedAppsInIsland() {
-		return StreamSupport.stream(mIslandAppMap.get().values());
+		return mIslandAppMap.get().values().stream();
 	}
 
 	private void onStartLoadingIslandApps(final ConcurrentHashMap<String/* package */, IslandAppInfo> apps) {
@@ -119,35 +109,12 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 	}
 
 	private void refresh(final Map<String, IslandAppInfo> output_apps) {
-		if (Users.profile != null) {		// Collect Island-specific apps
-			if (SDK_INT >= N) {
-				final LauncherApps la = mLauncherApps.get();
-				super.installedApps().map(app -> LauncherAppsCompat.getApplicationInfoNoThrows(la, app.packageName, PM_FLAGS_APP_INFO, Users.profile))
-						.filter(info -> info != null && (info.flags & FLAG_INSTALLED) != 0)
-						.forEach(info -> output_apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
-				Log.d(TAG, "All apps loaded.");
-			} else {
-				final Context context = context();
-				// TODO: ParceledListSlice to avoid TransactionTooLargeException.
-				MethodShuttle.runInProfile(context,	() -> StreamSupport.stream(context.getPackageManager().getInstalledApplications(PM_FLAGS_APP_INFO))
-						.filter(app -> (app.flags & FLAG_INSTALLED) != 0).collect(Collectors.toList())).whenComplete((apps, e) -> {
-					if (e != null) {
-						Log.w(TAG, "Failed to query apps in Island", e);
-						return;
-					}
-					Log.v(TAG, "Connected to profile.");
-					final List<IslandAppInfo> updated = new ArrayList<>(apps.size());
-					final ConcurrentHashMap<String, IslandAppInfo> app_map = mIslandAppMap.get();
-					for (final ApplicationInfo app : apps) {
-						final IslandAppInfo info = new IslandAppInfo(this, Users.profile, app, null);
-						app_map.put(app.packageName, info);
-						updated.add(info);
-					}
-					Log.d(TAG, "All apps loaded.");
-					notifyUpdate(updated);
-				});
-			}
-		}
+		if (Users.profile == null) return;
+		final LauncherApps la = mLauncherApps.get();
+		super.installedApps().map(app -> LauncherAppsCompat.getApplicationInfoNoThrows(la, app.packageName, PM_FLAGS_APP_INFO, Users.profile))
+				.filter(info -> info != null && (info.flags & FLAG_INSTALLED) != 0)
+				.forEach(info -> output_apps.put(info.packageName, new IslandAppInfo(this, Users.profile, info, null)));
+		Log.d(TAG, "All Island apps loaded.");
 	}
 
 	/** @param callback will be invoked with the result, or null if not installed in profile.
@@ -165,21 +132,9 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 			return;
 		} catch (final SecurityException ignored) {}	// Fall-through. This should hardly happen as permission is checked.
 
-		final List<LauncherActivityInfo> activities;
-		if (SDK_INT >= N) {
-			// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
-			final ApplicationInfo info = LauncherAppsCompat.getApplicationInfoNoThrows(mLauncherApps.get(), pkg, PM_FLAGS_APP_INFO, Users.profile);
-			callback.accept(nullIfNotInstalled(info));
-		} else if (! (activities = mLauncherApps.get().getActivityList(pkg, profile)).isEmpty()) {	// In case it has launcher activity and not frozen
-			callback.accept(activities.get(0).getApplicationInfo());
-		} else MethodShuttle.runInProfile(context, () -> {
-			try {
-				final ApplicationInfo info = context.getPackageManager().getApplicationInfo(pkg, PM_FLAGS_APP_INFO);
-				return (info.flags & FLAG_INSTALLED) != 0 ? info : null;
-			} catch (PackageManager.NameNotFoundException e) {
-				return null;
-			}
-		}).thenAccept(callback);
+		// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
+		final ApplicationInfo info = LauncherAppsCompat.getApplicationInfoNoThrows(mLauncherApps.get(), pkg, PM_FLAGS_APP_INFO, Users.profile);
+		callback.accept(nullIfNotInstalled(info));
 	}
 
 	private @Nullable static ApplicationInfo nullIfNotInstalled(final ApplicationInfo info) {
@@ -208,12 +163,11 @@ public class IslandAppListProvider extends AppListProvider<IslandAppInfo> {
 
 	/** Freezing or disabling a critical app may cause malfunction to other apps or the whole system. */
 	public boolean isCritical(final String pkg) {
-		return (SDK_INT >= N && pkg.equals(CriticalAppsManager.getCurrentWebViewPackageName()))
-				|| mCriticalSystemPackages.get().contains(pkg);
+		return pkg.equals(CriticalAppsManager.getCurrentWebViewPackageName()) || mCriticalSystemPackages.get().contains(pkg);
 	}
 
 	public Stream<IslandAppInfo> getCriticalSystemPackages() {
-		return StreamSupport.stream(mIslandAppMap.get().values()).filter(app -> mCriticalSystemPackages.get().contains(app.packageName));
+		return mIslandAppMap.get().values().stream().filter(app -> mCriticalSystemPackages.get().contains(app.packageName));
 	}
 
 	public boolean isHiddenSysAppCloned(final String pkg) {

@@ -30,9 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import java9.util.stream.Stream;
-import java9.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * Provider for installed apps
@@ -46,7 +44,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	/** The implementation should be as fast as possible, since it may be called in mass. */
 	protected abstract T createEntry(final ApplicationInfo base, final T last);
 
-	protected static @NonNull <T extends AppListProvider> T getInstance(final Context context) {
+	protected static @NonNull <T extends AppListProvider<?>> T getInstance(final Context context) {
 		final String authority = context.getPackageName() + AUTHORITY_SUFFIX;		// Do not use BuildConfig.APPLICATION_ID
 		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(authority);
 		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + authority);
@@ -62,7 +60,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		}
 	}
 
-	public Stream<T> installedApps() { return StreamSupport.stream(mAppMap.get().values()); }
+	public Stream<T> installedApps() { return mAppMap.get().values().stream(); }
 
 	public T get(final String pkg) { return mAppMap.get().get(pkg); }
 
@@ -118,8 +116,8 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	// Eventual consistency strategy to improve performance
 	private void onPackagesEvent(final String[] pkgs, final boolean removed) {
 		final Map<String, T> apps = mAppMap.get();
+		final List<T> removed_apps = new ArrayList<>();
 		if (removed) {
-			final List<T> removed_apps = new ArrayList<>();
 			for (final String pkg : pkgs) {
 				final T removed_app = apps.remove(pkg);
 				if (removed_app != null) removed_apps.add(removed_app);
@@ -127,7 +125,6 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 			Log.i(TAG, "Removed: " + Arrays.toString(pkgs));
 			notifyRemoval(removed_apps);
 		} else {
-			final List<T> updated_apps = new ArrayList<>();
 			for (final String pkg : pkgs) {
 				ApplicationInfo info = null;
 				try { //noinspection WrongConstant
@@ -140,10 +137,10 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 
 				final T app = createEntry(info, apps.get(pkg)/* last entry */);
 				apps.put(pkg, app);
-				updated_apps.add(app);
+				removed_apps.add(app);
 				Log.i(TAG, "Added: " + pkg);
 			}
-			notifyUpdate(updated_apps);
+			notifyUpdate(removed_apps);
 		}
 	}
 
@@ -206,12 +203,12 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		case TRIM_MEMORY_UI_HIDDEN:
 		case TRIM_MEMORY_BACKGROUND:
 			Log.d(TAG, "Trim memory for level " + level);
-			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnUiHidden);
+			apps.values().forEach(AppInfo::trimMemoryOnUiHidden);
 			break;
 		case TRIM_MEMORY_MODERATE:
 		case TRIM_MEMORY_COMPLETE:
 			Log.i(TAG, "Clean memory for level " + level);
-			StreamSupport.stream(apps.values()).forEach(AppInfo::trimMemoryOnCritical);
+			apps.values().forEach(AppInfo::trimMemoryOnCritical);
 			break;
 		}
 	}

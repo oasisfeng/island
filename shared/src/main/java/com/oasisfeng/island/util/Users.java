@@ -21,7 +21,6 @@ import java.util.List;
 
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static java.util.Objects.requireNonNull;
 
@@ -69,7 +68,6 @@ public abstract class Users extends PseudoContentProvider {
 
 	public static boolean isProfileRunning(final Context context, final UserHandle user) {
 		if (CURRENT.equals(user)) return true;
-		if (SDK_INT < N) return true;		// TODO: Alternative for pre-N ?
 		final UserManager um = requireNonNull(context.getSystemService(UserManager.class));
 		if (SDK_INT >= N_MR1) try {
 			return um.isUserRunning(user);

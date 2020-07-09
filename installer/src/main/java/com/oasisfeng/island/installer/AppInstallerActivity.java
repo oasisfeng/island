@@ -60,9 +60,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-
-import java9.util.Optional;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
@@ -74,7 +73,6 @@ import static android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
@@ -309,8 +307,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			}
 		}
 
-		final int flags = PackageManager.MATCH_DEFAULT_ONLY | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);
-		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent, flags);
+		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent,
+				PackageManager.MATCH_DEFAULT_ONLY | PackageManager.MATCH_SYSTEM_ONLY);
 		for (final ResolveInfo candidate : candidates) {
 			final ActivityInfo activity = candidate.activityInfo;
 			if ((activity.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;

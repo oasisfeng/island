@@ -7,10 +7,9 @@ import android.os.IInterface;
 import com.oasisfeng.island.RestrictedBinderProxy;
 
 import java.lang.reflect.Field;
+import java.util.function.BiFunction;
 
 import javax.annotation.Nullable;
-
-import java9.util.function.BiFunction;
 
 /**
  * Created by Oasis on 2019-4-30.

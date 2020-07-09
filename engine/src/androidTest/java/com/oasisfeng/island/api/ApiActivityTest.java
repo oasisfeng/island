@@ -8,16 +8,16 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import androidx.test.filters.MediumTest;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.runner.AndroidJUnit4;
-import java9.util.concurrent.CompletableFuture;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static androidx.test.InstrumentationRegistry.getContext;
