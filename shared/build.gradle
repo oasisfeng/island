@@ -5,7 +5,7 @@ android {
     compileSdkVersion 29        // Not raised to 28 due to NotificationManagerExtender
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion this.minSdkVersion
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

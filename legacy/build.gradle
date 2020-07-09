@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 27
-    defaultConfig.minSdkVersion 21
+    defaultConfig.minSdkVersion this.minSdkVersion
 }
 
 dependencies {
