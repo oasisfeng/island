@@ -38,14 +38,6 @@
         </receiver>
         <service android:name="com.google.android.gms.analytics.AnalyticsService" android:exported="false" />
 
-        <!-- Override the original FirebaseInstanceIdService with explicit initialization due for lazy initialization of Firebase -->
-        <service tools:node="remove" android:name="com.google.firebase.iid.FirebaseInstanceIdService" />
-        <service android:name="com.oasisfeng.island.firebase.LazyFirebaseInstanceIdService" android:exported="true" tools:ignore="ExportedService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
-
         <!-- Workaround issue of Firebase Analytics - IllegalStateException: Not allowed to start service Intent ... app is in background uid ... -->
         <receiver android:name="com.google.android.gms.measurement.AppMeasurementReceiver" android:enabled="@bool/until_api_24" tools:replace="android:enabled" />
 
