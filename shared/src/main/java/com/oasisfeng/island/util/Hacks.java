@@ -30,16 +30,13 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O_MR1;
-import static android.os.Build.VERSION_CODES.P;
 
 /**
  * All reflection-based hacks should be defined here
@@ -77,16 +74,6 @@ public class Hacks {
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
-	public static final Hack.HackedTargetField<Object> InetAddress_addressCache
-			= Hack.into("java.net.Inet6AddressImpl").staticField("addressCache").fallbackTo(null);
-	public static final Hack.HackedField<Object, Object> AddressCache_cache
-			= Hack.into("java.net.AddressCache").field("cache").fallbackTo(null);
-	public static final Hack.HackedField<Object, Map> BasicLruCache_map
-			= Hack.into("libcore.util.BasicLruCache").field("map").fallbackTo(null);
-	public static final Hack.HackedField<Object, Object> AddressCacheKey_mHostname
-			= Hack.into("java.net.AddressCache$AddressCacheKey").field("mHostname").fallbackTo(null);
-	public static final Hack.HackedField<Object, Object> AddressCacheEntry_expiryNanos
-			= Hack.into("java.net.AddressCache$AddressCacheEntry").field("expiryNanos").fallbackTo(null);
 
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer>
 			SystemProperties_getInt = Hack.into("android.os.SystemProperties").staticMethod("getInt")
@@ -129,9 +116,6 @@ public class Hacks {
 			AssetManager_constructor = Hack.into(AssetManager.class).constructor().withoutParams();
 	public static final @Nullable Hack.HackedMethod1<Integer, AssetManager, Unchecked, Unchecked, Unchecked, String>
 			AssetManager_addAssetPath = Hack.into(AssetManager.class).method("addAssetPath").returning(int.class).withParam(String.class);
-	public static final @Nullable Hack.HackedMethod3<Void, Object, Hack.Unchecked, Hack.Unchecked, Hack.Unchecked, String, Integer, InetAddress[]>
-			AddressCache_put = Hack.onlyIf(SDK_INT <= P).into("java.net.AddressCache").method("put")
-			.withParams(String.class, int.class, InetAddress[].class);
 	static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked>
 			ActivityManagerNative_getDefault = Hack.into("android.app.ActivityManagerNative")
 			.staticMethod("getDefault").fallbackReturning(null).withoutParams();

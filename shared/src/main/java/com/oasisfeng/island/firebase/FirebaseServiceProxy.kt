@@ -1,12 +1,10 @@
 package com.oasisfeng.island.firebase
 
 import android.util.Log
-import androidx.annotation.WorkerThread
-import com.oasisfeng.island.util.Hacks
-import java.net.InetAddress
-import java.net.UnknownHostException
-import java.util.*
-import kotlin.concurrent.thread
+import io.fabric.sdk.android.services.network.HttpRequest
+import okhttp3.OkHttpClient
+import okhttp3.internal.huc.OkHttpsURLConnection
+import java.net.*
 
 /**
  * Inject reverse proxy for Firebase service hosts.
@@ -15,57 +13,32 @@ import kotlin.concurrent.thread
  */
 object FirebaseServiceProxy {
 
-    private val CRASHLYTICS_HOSTS = arrayOf(
+    private val FIREBASE_HOSTS = arrayOf(
             "api.crashlytics.com", "settings.crashlytics.com", "reports.crashlytics.com",   // Crashlytics
             "firebaseremoteconfig.googleapis.com"                                           // Remote Config
     )
 
-    @JvmStatic fun initialize(proxyHost: String) {
-        thread(start = true) { try { doInitialize(proxyHost) } catch (e: Exception) { Log.e(TAG, "Error initializing", e) }}
-    }
+    @JvmStatic fun initialize(altHost: String) = HttpRequest.setConnectionFactory(object: HttpRequest.ConnectionFactory {
 
-    @WorkerThread private fun doInitialize(proxyHost: String) {
-        val proxy = try { InetAddress.getByName(proxyHost) } catch (e: UnknownHostException) {
-            Log.w(TAG, "Failed to resolve host, skip initialization.")
-            return
+        override fun create(url: URL): HttpURLConnection {
+            Log.d(TAG, "Create connection: $url")
+            if (url.host !in FIREBASE_HOSTS) return url.openConnection() as HttpURLConnection
+            return OkHttpsURLConnection(url, OkHttpClient.Builder().dns { host ->
+                Log.d(TAG, "Resolving: $host")
+                InetAddress.getAllByName(host).toMutableList().apply {
+                    if (host in FIREBASE_HOSTS) try {
+                        val altIp = InetAddress.getByName(altHost)
+                        add(InetAddress.getByAddress(host, altIp.address))
+                        Log.d(TAG, "Attach alt address: ${altIp.hostAddress}") }
+                    catch (e: UnknownHostException) { Log.w(TAG, "Failed to resolve alt host.") }}
+            }.build())
         }
 
-        for (host in CRASHLYTICS_HOSTS) try {
-            var addresses = InetAddress.getAllByName(host)
-            addresses = Arrays.copyOf(addresses, addresses.size + 1)
-            addresses[addresses.size - 1] = proxy
-            DnsCacheInjector.inject(host, addresses)
-        } catch (e: UnknownHostException) {
-            Log.w(TAG, "Failed to resolve $host")
-            DnsCacheInjector.inject(host, arrayOf(proxy))
+        override fun create(url: URL, proxy: Proxy): HttpURLConnection {
+            Log.d(TAG, "Create connection with proxy: $url")
+            return url.openConnection(proxy) as HttpURLConnection
         }
-    }
+    })
 
     private const val TAG = "Island.FSP"
-
-    object DnsCacheInjector {
-
-        @WorkerThread fun inject(host: String, addresses: Array<InetAddress>): String? {
-            if (Hacks.InetAddress_addressCache.isAbsent) return "InetAddress.addressCache"
-            if (Hacks.AddressCache_put == null) return "AddressCache.put()"
-
-            val addressCache = Hacks.InetAddress_addressCache.get() ?: return "InetAddress.addressCache == null"
-            Hacks.AddressCache_put.invoke(host, 0, addresses).on(addressCache)
-
-            /* Extend the expiry, as default expiry 2s is too short for retries of failed connection. */
-            if (Hacks.AddressCache_cache.isAbsent) return "AddressCache.cache"
-            if (Hacks.BasicLruCache_map.isAbsent) return "BasicLruCache.map"
-            if (Hacks.AddressCacheKey_mHostname.isAbsent) return "AddressCacheKey.mHostname"
-            if (Hacks.AddressCacheEntry_expiryNanos.isAbsent) return "AddressCacheEntry.expiryNanos"
-            val cache = Hacks.AddressCache_cache.get(addressCache) ?: return "AddressCache.cache == null"
-            val map = Hacks.BasicLruCache_map.get(cache) ?: return "AddressCache.cache.map == null"
-            for (entry in map.entries) {
-                val hostname = Hacks.AddressCacheKey_mHostname.get(entry.key ?: continue)
-                if (host != hostname) continue
-                Hacks.AddressCacheEntry_expiryNanos.set(entry.value ?: continue, java.lang.Long.MAX_VALUE)
-                break
-            }
-            return null
-        }
-    }
 }
