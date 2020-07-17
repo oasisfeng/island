@@ -1,7 +1,6 @@
 package com.oasisfeng.island.settings;
 
 import android.app.ActionBar;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
@@ -15,7 +14,6 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
@@ -26,22 +24,18 @@ import androidx.annotation.XmlRes;
 import androidx.core.app.NavUtils;
 
 import com.oasisfeng.android.app.Activities;
-import com.oasisfeng.android.base.SparseArray;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
-import com.oasisfeng.island.shuttle.MethodShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
 import static java.util.Objects.requireNonNull;
@@ -50,7 +44,7 @@ import static java.util.Objects.requireNonNull;
  * A {@link PreferenceActivity} that presents a set of application settings. On handset devices, settings are presented as a single list.
  * On tablets, settings are split by category, with category headers shown to the left of the list of settings.
  */
-public class SettingsActivity extends PreferenceActivity {
+@SuppressWarnings("deprecation") public class SettingsActivity extends PreferenceActivity {
 
 	public static void startWithPreference(final Context context, final Class<? extends PreferenceFragment> fragment) {
 		final Intent intent = new Intent(context, SettingsActivity.class).putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, fragment.getName());
@@ -134,9 +128,9 @@ public class SettingsActivity extends PreferenceActivity {
 			switchToHeader(header);
 			return;
 		}
-		final SparseArray<String> names = IslandNameManager.getAllNames(this);
+		final Map<UserHandle, String> names = IslandNameManager.getAllNames(this);
 		final CharSequence[] profile_labels = users.stream().map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
-				: names.get(Users.toId(user))).toArray(CharSequence[]::new);
+				: names.get(user)).toArray(CharSequence[]::new);
 		Dialogs.buildList(this, null, profile_labels, (d, which) -> {
 			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which));
 		}).show();
@@ -151,15 +145,7 @@ public class SettingsActivity extends PreferenceActivity {
 					la.startMainActivity(activity.getComponentName(), activity.getUser(), null, null);
 					break;
 				}
-		} else {	// In case IslandSettingsActivity is not enabled, due to Island space is not yet activated after upgrading.
-			if (! user.equals(Users.profile)) {
-				Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
-			} else MethodShuttle.runInProfile(this, (Context context) -> {
-				final ComponentName component = new ComponentName(context, IslandSettingsActivity.class);
-				context.getPackageManager().setComponentEnabledSetting(component, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-				context.startActivity(new Intent().setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK));
-			});
-		}
+		} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
 	}
 
 	/** This method stops fragment injection in malicious applications. Make sure to deny any unknown fragments here. */
@@ -187,15 +173,6 @@ public class SettingsActivity extends PreferenceActivity {
 				startActivity(new Intent(getActivity(), SettingsActivity.class));
 				return true;
 			} else return super.onOptionsItemSelected(item);
-		}
-
-		protected static boolean removeLeafPreference(final PreferenceGroup root, final Preference preference) {
-			if (root.removePreference(preference)) return true;
-			for (int i = 0; i < root.getPreferenceCount(); i ++) {
-				final Preference child = root.getPreference(i);
-				if (child instanceof PreferenceGroup && removeLeafPreference((PreferenceGroup) child, preference)) return true;
-			}
-			return false;
 		}
 
 		private final int mPreferenceXml;

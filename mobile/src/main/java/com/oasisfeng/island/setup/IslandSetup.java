@@ -25,16 +25,17 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
-import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Modules;
+import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
@@ -43,12 +44,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import eu.chainfire.libsuperuser.Shell;
 
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Implementation of Island / Mainland setup & shutdown.
@@ -56,8 +58,6 @@ import static java.util.stream.Collectors.joining;
  * Created by Oasis on 2017/3/8.
  */
 public class IslandSetup {
-
-	private static final int MAX_DESTROYING_APPS_LIST = 8;
 
 	static final String RES_MAX_USERS = "config_multiuserMaximumUsers";
 	private static final String PACKAGE_VERIFIER_INCLUDE_ADB = "verifier_verify_adb_installs";
@@ -194,18 +194,20 @@ public class IslandSetup {
 				.setPositiveButton(R.string.action_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
 	}
 
-	public static void requestDeviceOrProfileOwnerDeactivation(final Activity activity) {
+	@OwnerUser public static void requestDeviceOrProfileOwnerDeactivation(final Activity activity) {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_rescind_message)
-				.setPositiveButton(android.R.string.no, null)
-				.setNeutralButton(R.string.action_deactivate, (d, w) -> {
+				.setPositiveButton(android.R.string.no, null).setNeutralButton(R.string.action_rescind, (d, w) -> {
 					try {
-						final List<String> frozen_pkgs = IslandAppListProvider.getInstance(activity).installedApps().filter(app -> app.isHidden())
-								.map(app -> app.packageName).collect(Collectors.toList());
-						if (! frozen_pkgs.isEmpty()) {
-							final DevicePolicies policies = new DevicePolicies(activity);
-							for (final String pkg : frozen_pkgs)
-								policies.setApplicationHidden(pkg, false);
-						}
+						final DevicePolicies policies = new DevicePolicies(activity);
+						final AppListProvider<AppInfo> provider = AppListProvider.getInstance(activity);
+						final Stream<AppInfo> apps = provider.installedAppsInOwnerUser();
+
+						final List<String> frozen_pkgs = apps.filter(AppInfo::isHidden).map(app -> app.packageName).collect(toList());
+						for (final String pkg : frozen_pkgs)
+							policies.setApplicationHidden(pkg, false);
+
+						final String[] suspended_pkgs = apps.filter(AppInfo::isSuspended).map(app -> app.packageName).toArray(String[]::new);
+						policies.invoke(DevicePolicyManager::setPackagesSuspended, suspended_pkgs, false);
 					} finally {
 						deactivateDeviceOrProfileOwner(activity);
 					}
@@ -236,25 +238,9 @@ public class IslandSetup {
 			showPromptForProfileManualRemoval(activity);
 			return;
 		}
-		final IslandAppListProvider provider = IslandAppListProvider.getInstance(activity);
-		final List<String> exclusive_clones = provider.installedApps()
-				.filter(app -> Users.isProfileManagedByIsland(app.user) && ! app.isSystem() && provider.isExclusive(app))
-				.map(AppInfo::getLabel).collect(Collectors.toList());
-		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
-				.setMessage(R.string.dialog_destroy_message)
+		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_destroy_message)
 				.setPositiveButton(android.R.string.no, null)
-				.setNeutralButton(R.string.action_destroy, (d, w) -> {
-					if (exclusive_clones.isEmpty()) {
-						destroyProfile(activity);
-						return;
-					}
-					final String names = exclusive_clones.stream().limit(MAX_DESTROYING_APPS_LIST).collect(joining("\n"));
-					final String names_ellipsis = exclusive_clones.size() <= MAX_DESTROYING_APPS_LIST ? names : names + "…\n";
-					new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
-							.setMessage(activity.getString(R.string.dialog_destroy_exclusives_message, exclusive_clones.size(), names_ellipsis))
-							.setNeutralButton(R.string.action_destroy, (dd, ww) -> destroyProfile(activity))
-							.setPositiveButton(android.R.string.no, null).show();
-				}).show();
+				.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity)).show();
 	}
 
 	private static void showPromptForProfileManualRemoval(final Activity activity) {

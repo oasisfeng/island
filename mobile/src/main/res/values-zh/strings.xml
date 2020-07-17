@@ -74,6 +74,7 @@
     <string name="action_disable">停用</string>
     <string name="action_activate">激活</string>
     <string name="action_deactivate">解除</string>
+    <string name="action_rescind">撤除</string>
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜索</string>
@@ -84,17 +85,13 @@
 
     <string name="dialog_title_warning">注意</string>
     <string name="dialog_manual_setup"><b>致高级用户</b>：\n这一限制可以通过在 USB 连接的电脑上进行手动操作绕过。</string>
-    <string name="dialog_clone_via_install_explanation">即将启动 Android 系统的应用安装界面开始分身。\n\n尽管它看起来像是通常的安装提示，实际并不会占用额外的空间。</string>
-    <string name="dialog_clone_via_google_play_explanation">即将启动 Google Play 市场完成应用分身，届时请点击“安装”按钮。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。</string>
-    <string name="dialog_clone_via_sys_market_explanation">即将启动设备内置的应用市场完成应用分身，届时请按照常规的应用安装步骤完成应用的安装。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。\n\n注意：无法确定此设备内置的应用市场是否支持 Android 工作资料机制。如果安装应用的分身失败，请参考“常见问题解答”中提供的解决方案。</string>
     <string name="dialog_clone_incapable_explanation">抱歉，在 Android 5.1 之前，缺少内置的应用市场（如 Google Play）将无法完成应用分身。请参考“常见问题解答”中提供的解决方案。</string>
     <string name="dialog_greenify_title">与绿色守护的协同</string>
     <string name="dialog_greenify_explanation">基于节省内存和电量的原则，壶中界自身是后台纯净的，因此需要借助绿色守护精巧的状态检测和休眠管理实现应用的自动冻结（以休眠之名）。</string>
     <string name="dialog_greenify_version_too_low">绿色守护需要升级到更新的版本</string>
     <string name="dialog_reactivate_message">通往壶中界的入口被意外关闭，请再次授予设备管理权限以重新开启。</string>
     <string name="dialog_destroy_message">确定希望毁灭整个壶中界？其中的应用分身和所有数据将会完全湮灭，无法恢复。\n\n别担心，外部的应用和数据不会受到任何影响。</string>
-    <string name="dialog_destroy_exclusives_message">以下 %1$d 个应用仅存与壶中界，因此将随着壶中界的毁灭而被完全卸载。\n\n%2$s\n\n确定要继续毁灭壶中界？</string>
-    <string name="dialog_rescind_message">确定希望解除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
+    <string name="dialog_rescind_message">确定希望撤除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壶中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
     <string name="dialog_critical_app_warning">这个应用（或组件）可能对于 Android 系统或其它应用的正常运作至关重要。如果继续此操作，部分应用甚至整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
     <string name="dialog_reinstall_system_app_warning">这个系统应用（或组件）因为某些原因并未安装。如果继续此操作，整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
@@ -111,6 +108,7 @@
     <string name="action_reboot">重启</string>
 
     <string name="prompt_disable_sys_app_as_removal">系统应用（或组件）只能被停用，与卸载安装的应用效果相似。\n\n由于没有权限直接停用应用，接下来即将打开系统的应用设置界面，届时请点击“停用”按钮。</string>
+    <string name="prompt_clone_app_to">将应用克隆至…</string>
     <string name="toast_enable_disabled_system_app">请重新启用此分身</string>
 
     <string name="toast_setup_in_progress">正在创建壶中界，请稍候…</string>

@@ -18,6 +18,7 @@ import com.oasisfeng.android.util.Apps
 import com.oasisfeng.android.util.SafeAsyncTask
 import com.oasisfeng.island.appops.AppOpsHelper
 import com.oasisfeng.island.data.IslandAppInfo
+import com.oasisfeng.island.data.helper.hidden
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.util.Hacks
 
@@ -90,7 +91,7 @@ import com.oasisfeng.island.util.Hacks
 				if (mSystem) append(mSystemPrefix).append(' ')
 				append(mAppsHelper.getAppName(info))
 				if (mGranted) append(' ').append(mGrantedSuffix)
-				if (IslandAppInfo.isHidden(info) == true) append(' ').append(mHiddenSuffix)
+				if (info.hidden) append(' ').append(mHiddenSuffix)
 			}.toString()
 		}
 

@@ -76,6 +76,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_disable">Disable</string>
     <string name="action_activate">Activate</string>
     <string name="action_deactivate">Deactivate</string>
+    <string name="action_rescind">Rescind</string>
 
     <string name="menu_tip">Tip…</string>
     <string name="menu_search">Search</string>
@@ -86,16 +87,12 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_manual_setup"><b>For advanced user</b>:\nThis limitation could also be circumvented with one-time manual setup via USB-connected PC.</string>
-    <string name="dialog_clone_via_install_explanation">Island will now launch the Android installer to \"install\" this app in Island.\n\nAlthough it looks like the regular installation confirmation, actually it takes no extra storage space.</string>
-    <string name="dialog_clone_via_google_play_explanation">Island will now launch Google Play Store to clone this app, please then click the \"Install\" button there.\n\nAlthough it will look like the regular installation, actually it will take no extra storage space but just activates this app in Island.</string>
-    <string name="dialog_clone_via_sys_market_explanation">Island will now launch the built-in app store on your device to clone this app, please follow the regular installation procedure.\n\nATTENTION: The built-in app store on your device may or may not support Android for Work properly. In case it fails to finish the installation, please refer to the FAQ for solutions.</string>
     <string name="dialog_clone_incapable_explanation">Sorry, Island cannot clone apps without a proper built-in app market on your device (preferable Google Play Store) until Android 5.1. Please refer to the FAQ for solutions.</string>
     <string name="dialog_greenify_title">Greenify integration</string>
     <string name="dialog_greenify_explanation">To save memory and avoid unnecessary battery consumption, Island has no background services in design. Instead it delegates the automatic freezing job to Greenify, taking advantage of its sophisticated automatic hibernation management.</string>
     <string name="dialog_greenify_version_too_low">Greenify needs to be upgraded to a newer version.</string>
     <string name="dialog_reactivate_message">Island was unexpectedly deactivated, please grant the Device Admin permission to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island? You will LOSE ALL THE DATA IN ISLAND.\n\nDon\'t worry, apps and data outside Island will NEVER be affected.</string>
-    <string name="dialog_destroy_exclusives_message">Since exclusively installed in Island, the following %1$d app(s) will be UNINSTALLED effectively from your device if Island is destroyed.\n\n%2$s\n\nAre you sure you want to proceed?</string>
     <string name="dialog_rescind_message">Are you sure to rescind?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_critical_app_warning">This app (or component) is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
@@ -113,6 +110,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_reboot">Reboot</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
+    <string name="prompt_clone_app_to">Clone app to…</string>
     <string name="toast_enable_disabled_system_app">Please re-enable this clone.</string>
 
     <string name="toast_setup_in_progress">Island setup in progress, please wait…</string>

@@ -88,7 +88,7 @@ public class DevicePolicies {
 	}
 
 	/** @return true if successfully enabled, false if package not found or not system app.
-	 * @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
+	 *  @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
 	public boolean enableSystemApp(final String pkg) {
 		try {
 			mDevicePolicyManager.enableSystemApp(sCachedComponent, pkg);
@@ -102,7 +102,7 @@ public class DevicePolicies {
 	}
 
 	/** @see DevicePolicyManager#enableSystemApp(ComponentName, Intent) */
-	public boolean enableSystemApp(final Intent intent) {
+	public boolean enableSystemAppByIntent(final Intent intent) {
 		try {
 			return mDevicePolicyManager.enableSystemApp(sCachedComponent, intent) > 0;
 		} catch (final IllegalArgumentException e) {

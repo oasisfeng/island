@@ -8,11 +8,10 @@ import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 
-import androidx.annotation.Nullable;
-
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
@@ -23,7 +22,6 @@ import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
-import static android.os.Process.myUserHandle;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toSet;
@@ -34,8 +32,6 @@ import static java.util.stream.Collectors.toSet;
  * Created by Oasis on 2016/8/10.
  */
 public class IslandAppInfo extends AppInfo {
-
-	private static final int PRIVATE_FLAG_HIDDEN = 1;
 
 	void setHidden(final boolean state) {
 		final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
@@ -49,28 +45,11 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	public boolean isHiddenSysIslandAppTreatedAsDisabled() {
-		return Users.isProfileManagedByIsland(user) && isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
+		return isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
 	}
 
 	private boolean shouldTreatHiddenSysAppAsDisabled() {
-		return ! ((IslandAppListProvider) mProvider).isHiddenSysAppCloned(packageName);
-	}
-
-	public void stopTreatingHiddenSysAppAsDisabled() {
-		if (isSystem()) ((IslandAppListProvider) mProvider).setHiddenSysAppCloned(packageName);
-	}
-
-	public boolean isHidden() {
-		final Boolean hidden = isHidden(this);
-		if (hidden != null) return hidden;
-		// The fallback implementation
-		return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, myUserHandle());
-	}
-
-	/** @return hidden state, or null if failed to */
-	public static @Nullable Boolean isHidden(final ApplicationInfo info) {
-		final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
-		return private_flags != null ? (private_flags & PRIVATE_FLAG_HIDDEN) != 0 : null;
+		return ! ClonedHiddenSystemApps.isCloned(this);
 	}
 
 	/** @return whether this package is critical to the system, thus should not be frozen or disabled. */

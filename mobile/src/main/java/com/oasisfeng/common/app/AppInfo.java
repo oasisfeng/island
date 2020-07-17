@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
@@ -17,12 +18,16 @@ import androidx.annotation.UiThread;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Users;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 
+import static android.content.Context.LAUNCHER_APPS_SERVICE;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -31,6 +36,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * Created by Oasis on 2016/8/5.
  */
 public class AppInfo extends ApplicationInfo {
+
+	protected static final int PRIVATE_FLAG_HIDDEN = 1;
 
 	protected AppInfo(final AppListProvider<? extends AppInfo> provider, final ApplicationInfo base, final @Nullable AppInfo last) {
 		super(base);
@@ -46,6 +53,20 @@ public class AppInfo extends ApplicationInfo {
 
 	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
 	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
+	public boolean isSuspended() { return (flags & ApplicationInfo.FLAG_SUSPENDED) != 0; }
+
+	public boolean isHidden() {
+		final Boolean hidden = isHidden(this);
+		if (hidden != null) return hidden;
+		// The fallback implementation
+		return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Users.current());
+	}
+
+	/** @return hidden state, or null if failed to */
+	private static @Nullable Boolean isHidden(final ApplicationInfo info) {
+		final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
+		return private_flags != null ? (private_flags & PRIVATE_FLAG_HIDDEN) != 0 : null;
+	}
 
 	/** Is launchable (and neither disabled nor hidden) */
 	public boolean isLaunchable() { return mIsLaunchable.get(); }
@@ -117,7 +138,7 @@ public class AppInfo extends ApplicationInfo {
 		return dr;
 	}
 
-	@NonNull protected Context context() { return mProvider.context(); }
+	@NonNull public Context context() { return mProvider.context(); }
 
 	@Override public @NonNull String toString() { return buildToString(AppInfo.class).append('}').toString(); }
 

@@ -1,11 +1,18 @@
 package com.oasisfeng.island.guide;
 
 import android.app.Activity;
+import android.os.UserHandle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ActionMenuView;
 import android.widget.Toolbar;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.databinding.BindingAdapter;
+import androidx.databinding.ObservableField;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.common.app.AppListProvider;
@@ -13,17 +20,11 @@ import com.oasisfeng.island.data.IslandAppInfo;
 import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.model.AppListViewModel;
-import com.oasisfeng.island.model.AppListViewModel.Filter;
 import com.oasisfeng.island.model.AppViewModel;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
 
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.databinding.BindingAdapter;
-import androidx.databinding.ObservableField;
-import androidx.lifecycle.LifecycleOwner;
 import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt;
 
 /**
@@ -36,10 +37,11 @@ public class UserGuide {
 	public final ObservableField<MaterialTapTargetPrompt.Builder> prompt_action = new ObservableField<>();
 
 	public MenuItem.OnMenuItemClickListener getAvailableTip() {
-		final Filter primary_filter = mAppListViewModel.mPrimaryFilter.getValue();
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && primary_filter == Filter.Mainland && mAppSelection != null && ! mAppSelection.isSystem())
+		final @Nullable UserHandle profile = mAppListViewModel.mProfile;
+		if (profile == null) return null;
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && Users.isOwner(profile) && mAppSelection != null && ! mAppSelection.isSystem())
 			return mTipClone;
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && primary_filter == Filter.Island && mAppSelection != null)
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && Users.isProfileManagedByIsland(profile) && mAppSelection != null)
 			return mTipFreeze;
 		return null;
 	}

@@ -44,7 +44,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	/** The implementation should be as fast as possible, since it may be called in mass. */
 	protected abstract T createEntry(final ApplicationInfo base, final T last);
 
-	protected static @NonNull <T extends AppListProvider<?>> T getInstance(final Context context) {
+	public static @NonNull <T extends AppListProvider<?>> T getInstance(final Context context) {
 		final String authority = context.getPackageName() + AUTHORITY_SUFFIX;		// Do not use BuildConfig.APPLICATION_ID
 		final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(authority);
 		if (client == null) throw new IllegalStateException("AppListProvider not associated with authority: " + authority);
@@ -60,7 +60,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		}
 	}
 
-	public Stream<T> installedApps() { return mAppMap.get().values().stream(); }
+	public Stream<T> installedAppsInOwnerUser() { return mAppMap.get().values().stream(); }
 
 	public T get(final String pkg) { return mAppMap.get().get(pkg); }
 

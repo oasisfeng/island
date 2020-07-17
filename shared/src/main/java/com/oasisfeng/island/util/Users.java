@@ -63,7 +63,7 @@ public abstract class Users extends PseudoContentProvider {
 			} else Log.i(TAG, "Profile not managed by Island: " + toId(user));
 		}
 		profile = first_profile_managed_by_island;
-		sProfilesManagedByIsland = profiles_managed_by_island;
+		sProfilesManagedByIsland = Collections.unmodifiableList(profiles_managed_by_island);
 	}
 
 	public static boolean isProfileRunning(final Context context, final UserHandle user) {
@@ -85,7 +85,7 @@ public abstract class Users extends PseudoContentProvider {
 	public static boolean isProfileManagedByIsland(final UserHandle user) {
 		return sProfilesManagedByIsland.contains(user);
 	}
-	public static List<UserHandle> getProfilesManagedByIsland() { return Collections.unmodifiableList(sProfilesManagedByIsland); }
+	public static List<UserHandle> getProfilesManagedByIsland() { return sProfilesManagedByIsland/* already unmodifiable */; }
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 

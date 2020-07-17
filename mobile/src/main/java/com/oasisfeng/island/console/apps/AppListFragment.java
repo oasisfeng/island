@@ -3,7 +3,6 @@ package com.oasisfeng.island.console.apps;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
@@ -19,7 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.oasisfeng.android.app.LifecycleViewModelFragment;
-import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.androidx.lifecycle.ViewModelProviders;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
@@ -32,11 +30,9 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
-import com.oasisfeng.island.tip.Tip;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -61,7 +57,6 @@ public class AppListFragment extends LifecycleViewModelFragment {
 		super.onResume();
 		if (SystemClock.uptimeMillis() - mTimeLastPaused < 1_000) return;	// Avoid updating for brief pausing caused by cross-profile functionality.
 		if (mViewModel.mFeatured.visible.getValue()) mViewModel.mFeatured.update(getActivity());
-		Loopers.addIdleTask(() -> AsyncTask.execute(() -> Optional.ofNullable(getActivity()).map(Tip::next).ifPresent(mBinding::setCard)));
 	}
 
 	@Override public void onPause() {

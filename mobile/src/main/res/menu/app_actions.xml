@@ -4,6 +4,8 @@
     <item android:id="@+id/menu_freeze"   android:showAsAction="ifRoom|withText" android:title="@string/action_freeze" android:icon="@drawable/ic_lock_24dp" />
     <item android:id="@+id/menu_unfreeze" android:showAsAction="ifRoom|withText" android:title="@string/action_unfreeze" android:icon="@drawable/ic_unlock_24dp" />
 
+    <item android:id="@+id/menu_suspend"  android:title="Suspend" android:showAsAction="never" android:visible="false" />
+
     <item android:id="@+id/menu_app_settings" android:showAsAction="ifRoom" android:title="@string/action_app_settings" android:icon="@drawable/ic_settings_applications_white_24dp" />
 
     <item android:id="@+id/menu_greenify"     android:title="@string/action_greenify" android:showAsAction="never" />
