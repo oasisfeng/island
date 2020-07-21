@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Semantic colors -->
+    <color name="textPrimary">#5C6BC0</color>
     <color name="background">#121212</color>
+    <color name="header_background">#121212</color>
     <color name="background_highlight">#2C2C2C</color>  <!-- background + 16% white -->
     <color name="card_background">#2C2C2C</color>
     <color name="card_attention">#635732</color>
@@ -9,5 +11,6 @@
     <!-- Specific colors -->
     <color name="state_alive">#DD6F00</color>
     <color name="state_frozen">#536dfe</color> <!-- Indigo A400 -->
+    <color name="state_other">@android:color/darker_gray</color>
     <color name="side_control">#536dfe</color>
 </resources>

@@ -35,7 +35,7 @@
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chips"
-                android:background="@color/background_highlight"
+                android:background="@color/header_background"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/margin_small"
@@ -78,6 +78,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
+                bind:tabSelectedTextColor="@color/textPrimary"
                 bind:tabMode="fixed" />
 
         </com.google.android.material.appbar.AppBarLayout>

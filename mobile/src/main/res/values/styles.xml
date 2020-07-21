@@ -7,9 +7,8 @@
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
-
+        <item name="android:textColorPrimary">@color/textPrimary</item>
         <item name="materialAlertDialogTheme">@style/Theme.MaterialComponents.DayNight.Dialog.Alert</item>
-        <item name="android:navigationBarColor">@color/primary_dark</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents">

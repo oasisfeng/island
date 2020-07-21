@@ -34,7 +34,7 @@
 
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:gravity="start|center_vertical"
-            android:textColor="@{app.state == State.Alive ? @color/state_alive : app.state == State.Frozen ? @color/state_frozen : @android:color/black}"
+            android:textColor="@{app.state == State.Alive ? @color/state_alive : app.state == State.Frozen ? @color/state_frozen : @color/state_other}"
             android:textAlignment="viewStart"
             android:ellipsize="end"
             android:maxLines="1"
