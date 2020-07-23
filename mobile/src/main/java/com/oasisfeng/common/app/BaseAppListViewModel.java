@@ -1,5 +1,6 @@
 package com.oasisfeng.common.app;
 
+import android.app.Application;
 import android.util.Log;
 
 import androidx.databinding.ObservableList;
@@ -17,7 +18,7 @@ import java.util.Map;
  *
  * Created by Oasis on 2016/6/24.
  */
-public abstract class BaseAppListViewModel<T extends AppViewModel> extends BaseViewModel {
+public abstract class BaseAppListViewModel<T extends AppViewModel> extends BaseAndroidViewModel {
 
 	// TODO: Rebuild the whole AbstractAppListViewModel to keep immutability?
 	protected void replaceApps(final List<T> apps) {
@@ -84,7 +85,8 @@ public abstract class BaseAppListViewModel<T extends AppViewModel> extends BaseV
 		if (selection != null) selection.selected.setValue(true);
 	}
 
-	protected BaseAppListViewModel(final Class<T> clazz) {
+	protected BaseAppListViewModel(final Application app, final Class<T> clazz) {
+		super(app);
 		mApps = new ObservableSortedList<>(clazz);
 	}
 

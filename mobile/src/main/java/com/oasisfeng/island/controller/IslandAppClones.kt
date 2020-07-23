@@ -21,7 +21,7 @@ import androidx.annotation.RequiresApi
 import com.oasisfeng.android.app.Activities
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
-import com.oasisfeng.common.app.BaseViewModel
+import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.Config
 import com.oasisfeng.island.analytics.Analytics
 import com.oasisfeng.island.analytics.analytics
@@ -58,7 +58,7 @@ object IslandAppClones {
 	private const val CLONE_RESULT_UNKNOWN_SYS_MARKET = 11
 	private const val CLONE_RESULT_NO_SYS_MARKET = -1
 
-	@JvmStatic fun cloneApp(vm: BaseViewModel, source: IslandAppInfo, target: UserHandle) {
+	@JvmStatic fun cloneApp(vm: BaseAndroidViewModel, source: IslandAppInfo, target: UserHandle) {
 		vm.interactive(source.context()) { cloneApp(source, target) }
 	}
 

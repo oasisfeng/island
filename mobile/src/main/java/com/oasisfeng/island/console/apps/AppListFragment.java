@@ -45,15 +45,15 @@ public class AppListFragment extends Fragment {
 		setHasOptionsMenu(true);
 		final Activity activity = requireActivity();
 		final ViewModelProvider provider = new ViewModelProvider(this);
-		final AppListViewModel vm = mViewModel = provider.get(AppListViewModel.class);
+		final AppListViewModel vm = mViewModel = provider.get("AppListViewModel", AppListViewModel.class);
 		vm.mFeatured = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, vm);
 
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 		vm.mFeatured.visible.observe(this, visible -> invalidateOptionsMenu());
 		vm.mSelection.observe(this, s -> { invalidateOptionsMenu(); mViewModel.updateActions(mBinding.toolbar.getMenu()); });
-		vm.mFilterIncludeHiddenSystemApps.observe(this, filter -> mViewModel.updateAppList());
-		vm.mFilterText.observe(this, text -> mViewModel.updateAppList());
+		vm.getFilterIncludeHiddenSystemApps().observe(this, filter -> mViewModel.updateAppList());
+		vm.getFilterText().observe(this, text -> mViewModel.updateAppList());
 	}
 
 	@Override public void onResume() {
@@ -109,7 +109,7 @@ public class AppListFragment extends Fragment {
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
-		mViewModel.attach(activity, mBinding.tabs, saved_state != null ? saved_state : getArguments());
+		mViewModel.updateTabs(activity, mBinding.tabs);
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
 		return mBinding.getRoot();

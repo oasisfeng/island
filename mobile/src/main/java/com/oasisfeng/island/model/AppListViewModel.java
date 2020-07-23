@@ -2,12 +2,12 @@ package com.oasisfeng.island.model;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.SearchManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.preference.PreferenceManager;
@@ -23,6 +23,10 @@ import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.HandlerCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.SavedStateHandle;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
@@ -75,6 +79,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	/** Workaround for menu res reference not supported by data binding */ public static @MenuRes int actions_menu = R.menu.app_actions;
 
+	public UserHandle getCurrentProfile() { return mState.get(Intent.EXTRA_USER); }
+	private void setCurrentProfile(final @Nullable UserHandle profile) { mState.set(Intent.EXTRA_USER, profile); }
+	public LiveData<String> getFilterText() { return mState.getLiveData(SearchManager.QUERY); }
+	private void setFilterText(final @Nullable String text) { mState.set(SearchManager.QUERY, text); }
+	public MutableLiveData<Boolean> getFilterIncludeHiddenSystemApps() {
+		return mState.getLiveData(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS, false);
+	}
+
 	public interface Filter extends Predicate<IslandAppInfo> {
 		Filter Island = app -> app.shouldShowAsEnabled() && app.isInstalled();
 		Filter Mainland = app -> Users.isOwner(app.user) && (app.isSystem() || app.isInstalled());	// Including uninstalled system app
@@ -86,28 +98,32 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	/** @see SearchView.OnQueryTextListener#onQueryTextChange(String) */
 	public boolean onQueryTextChange(final String text) {
-		mHandler.removeCallbacksAndMessages(mFilterText);		// In case like "A -> AB -> A" in a short time
-		if (TextUtils.equals(text, mFilterText.getValue())) return true;
-		HandlerCompat.postDelayed(mHandler, () -> mFilterText.setValue(text), mFilterText, QUERY_TEXT_DELAY);	// A short delay to avoid flickering during typing.
+		mHandler.removeCallbacksAndMessages(SearchManager.QUERY);		// In case like "A -> AB -> A" in a short time
+		if (! TextUtils.equals(text, getQueryText().getValue()))
+			HandlerCompat.postDelayed(mHandler, () -> setFilterText(text), SearchManager.QUERY, QUERY_TEXT_DELAY);    // A short delay to avoid flickering during typing.
 		return true;
 	}
 
+	private MutableLiveData<String> getQueryText() {
+		return mState.getLiveData(SearchManager.QUERY, "");
+	}
+
 	/** @see SearchView.OnQueryTextListener#onQueryTextSubmit(String) */
-	public void onQueryTextSubmit(final String text) {
-		mChipsVisible.setValue(! TextUtils.isEmpty(text) || mFilterIncludeHiddenSystemApps.getValue());
-		if (! TextUtils.equals(text, mFilterText.getValue())) {
-			mHandler.removeCallbacksAndMessages(mFilterText);
-			mFilterText.setValue(text);
+	public void onQueryTextSubmit(final @Nullable String text) {
+		mChipsVisible.setValue(! TextUtils.isEmpty(text) || getFilterIncludeHiddenSystemApps().getValue() == Boolean.TRUE);
+		if (! TextUtils.equals(text, getQueryText().getValue())) {
+			mHandler.removeCallbacksAndMessages(SearchManager.QUERY);
+			setFilterText(text);
 		}
 	}
 
 	public void onSearchClick(final SearchView view) {
-		view.setQuery(mFilterText.getValue(), false);
+		view.setQuery(getQueryText().getValue(), false);
 	}
 
 	/** @see SearchView.OnCloseListener#onClose() */
 	public boolean onSearchViewClose() {
-		onQueryTextSubmit(mFilterText.getValue());
+		onQueryTextSubmit(getQueryText().getValue());
 		return true;
 	}
 
@@ -117,15 +133,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public void updateAppList() {
 		if (mFilterShared == null) return;		// When called by constructor   TODO: Obsolete?
-		final UserHandle profile = mProfile;
+		final UserHandle profile = getCurrentProfile();
 		if (profile == null) return;
 		Log.d(TAG, "Profile: " + UserHandles.getIdentifier(profile));
 
 		final Filter profile_filter = Users.isOwner(profile) ? Filter.Mainland : Filter.Island;
 		Predicate<IslandAppInfo> filters = mFilterShared.and(profile_filter);
-		if (! mFilterIncludeHiddenSystemApps.getValue())
+		if (getFilterIncludeHiddenSystemApps().getValue() != Boolean.TRUE)
 			filters = filters.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
-		final String text = mFilterText.getValue();
+		final String text = getQueryText().getValue();
 		if (! TextUtils.isEmpty(text)) {
 			if (text.startsWith("package:")) {
 				final String pkg = text.substring(8);
@@ -152,14 +168,27 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			}
 	}
 
-	public AppListViewModel() { super(AppViewModel.class); }
+	public AppListViewModel(final Application app, final SavedStateHandle savedState) {
+		super(app, AppViewModel.class);
+		mState = savedState;
+		mAppListProvider = IslandAppListProvider.getInstance(app);
+		mOwnerUserManaged = new DevicePolicies(app).isProfileOrDeviceOwnerOnCallingUser();
+		mFilterShared = IslandAppListProvider.excludeSelf(app);
 
-	public void onTabSwitched(final Context context, final TabLayout tabs, final TabLayout.Tab tab) {
+		final UserHandle user = savedState.get(Intent.EXTRA_USER);
+		setCurrentProfile(user != null && (Users.isOwner(user) || Users.isProfileManagedByIsland(user)) ? user
+				: Users.profile != null ? Users.profile : Users.owner);
+
+		final String filter_text = getQueryText().getValue();
+		if (! TextUtils.isEmpty(filter_text)) onQueryTextSubmit(filter_text);
+	}
+
+	public void onTabSwitched(final FragmentActivity activity, final TabLayout tabs, final TabLayout.Tab tab) {
 		final int position = tab.getPosition();
 		if (position == 0) {    // Discovery
-			mProfile = null;
+			setCurrentProfile(null);
 			mFeatured.visible.setValue(Boolean.TRUE);
-			mFeatured.update(context);
+			mFeatured.update(activity);
 			mChipsVisible.setValue(false);
 			return;
 		} else mFeatured.visible.setValue(Boolean.FALSE);
@@ -169,61 +198,34 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			if (tag instanceof UserHandle) {
 				final UserHandle profile = (UserHandle) tag;
 				if (Users.isProfileManagedByIsland(profile)) {
-					mProfile = profile;
+					setCurrentProfile(profile);
 					updateAppList();
 					return;
 				}
 			}
 		}
 		tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
-		mProfile = Users.owner;
+		setCurrentProfile(Users.owner);
 		updateAppList();
 	}
 
-	public void attach(final Context context, final TabLayout tabs, final @Nullable Bundle state) {
-		mAppListProvider = IslandAppListProvider.getInstance(context);
-		mOwnerUserManaged = new DevicePolicies(context).isProfileOrDeviceOwnerOnCallingUser();
-		mFilterShared = IslandAppListProvider.excludeSelf(context);
-
+	public void updateTabs(final FragmentActivity activity, final TabLayout tabs) {
 		tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-			@Override public void onTabSelected(final TabLayout.Tab tab) { onTabSwitched(context, tabs, tab); }
+			@Override public void onTabSelected(final TabLayout.Tab tab) { onTabSwitched(activity, tabs, tab); }
 			@Override public void onTabUnselected(final TabLayout.Tab tab) {}
 			@Override public void onTabReselected(final TabLayout.Tab tab) {}
 		});
 		// Tab "Discovery" and "Mainland" are always present
-		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery));
-		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland));
-		UserHandle defaultProfile = Users.profile;		// Default
-		if (defaultProfile != null) {
-			if (state != null) {
-				final UserHandle profile = state.getParcelable(Intent.EXTRA_USER);
-				if (profile != null && (Users.isOwner(profile) || Users.isProfileManagedByIsland(profile)))
-					defaultProfile = profile;
-				else defaultProfile = Users.owner;
-			}
-			mProfile = defaultProfile;
-			mFilterIncludeHiddenSystemApps.setValue(state != null && state.getBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS));
+		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery), false);
+		final UserHandle mProfile = getCurrentProfile();
+		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland), Users.owner.equals(mProfile));
 
-			final Map<UserHandle, String> names = IslandNameManager.getAllNames(context);
-			for (final UserHandle profile : names.keySet()) {
-				final TabLayout.Tab tab = tabs.newTab().setTag(profile).setText(names.get(profile));
-				tabs.addTab(tab);
-				if (profile.equals(defaultProfile)) tabs.selectTab(tab);
-			}
-			if (tabs.getTabCount() > 3) tabs.setTabMode(TabLayout.MODE_SCROLLABLE);
-		} else mProfile = Users.owner;
-
-		if (state != null) {
-			final String filter_text = state.getString(SearchManager.QUERY);
-			if (filter_text != null && ! filter_text.isEmpty()) onQueryTextSubmit(filter_text);
+		final Map<UserHandle, String> names = IslandNameManager.getAllNames(activity);
+		for (final UserHandle profile : names.keySet()) {
+			final TabLayout.Tab tab = tabs.newTab().setTag(profile).setText(names.get(profile));
+			tabs.addTab(tab, profile.equals(mProfile));
 		}
-	}
-
-	public void onSaveInstanceState(final Bundle saved) {
-		saved.putParcelable(Intent.EXTRA_USER, mProfile);
-		saved.putBoolean(STATE_KEY_FILTER_HIDDEN_SYSTEM_APPS, mFilterIncludeHiddenSystemApps.getValue());
-		final String text = mFilterText.getValue();
-		if (! text.isEmpty()) saved.putString(SearchManager.QUERY, text);
+		if (tabs.getTabCount() > 3) tabs.setTabMode(TabLayout.MODE_SCROLLABLE);
 	}
 
 	public void updateActions(final Menu menu) {
@@ -461,17 +463,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		item.setVariable(BR.apps, this);
 	};
 
-	public FeaturedListViewModel mFeatured;
+	public FeaturedListViewModel mFeatured;     // TODO: Move to fragment
+	private final SavedStateHandle mState;
 	/* Attachable fields */
-	private IslandAppListProvider mAppListProvider;
-	/* Parcelable fields */
-	public UserHandle mProfile = null;
-	public final NonNullMutableLiveData<Boolean> mFilterIncludeHiddenSystemApps = new NonNullMutableLiveData<>(false);
-	public final NonNullMutableLiveData<String> mFilterText = new NonNullMutableLiveData<>("");
+	private final IslandAppListProvider mAppListProvider;
 	/* Transient fields */
 	public final NonNullMutableLiveData<Boolean> mChipsVisible = new NonNullMutableLiveData<>(false);
-	private Predicate<IslandAppInfo> mFilterShared;			// All other filters to apply always
-	private boolean mOwnerUserManaged;
+	private final Predicate<IslandAppInfo> mFilterShared;			// All other filters to apply always
+	private final boolean mOwnerUserManaged;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
 	private final Handler mHandler = new Handler();
 

@@ -7,13 +7,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.net.Uri
+import android.os.UserHandle
 import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import com.oasisfeng.android.app.Activities
 import com.oasisfeng.android.content.IntentCompat
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.widget.Toasts
-import com.oasisfeng.common.app.BaseViewModel
+import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY
 import com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID
 import com.oasisfeng.island.analytics.analytics
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull
 
 object IslandAppControl {
 
-	@JvmStatic fun requestRemoval(vm: BaseViewModel, activity: Activity, app: IslandAppInfo) = vm.interactive(app.context()) {
+	@JvmStatic fun requestRemoval(vm: BaseAndroidViewModel, activity: Activity, app: IslandAppInfo) = vm.interactive(app.context()) {
 		analytics().event("action_uninstall").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, "system").send()
 
 		if (! unfreezeIfNeeded(app)) return@interactive
@@ -54,7 +55,7 @@ object IslandAppControl {
 		}
 	}
 
-	@JvmStatic fun launch(context: Context, vm: BaseViewModel, app: IslandAppInfo) {
+	@JvmStatic fun launch(context: Context, vm: BaseAndroidViewModel, app: IslandAppInfo) {
 		val pkg = app.packageName
 		analytics().event("action_launch").with(ITEM_ID, pkg).send()
 
@@ -76,10 +77,10 @@ object IslandAppControl {
 		if (unfreezeIfNeeded(app))
 			app.context().getSystemService(LauncherApps::class.java)!!.startAppDetailsActivity(ComponentName(app.packageName, ""), app.user, null, null)
 	}
-	@JvmStatic fun launchSystemAppSettings(vm: BaseViewModel, app: IslandAppInfo)
+	@JvmStatic fun launchSystemAppSettings(vm: BaseAndroidViewModel, app: IslandAppInfo)
 			= vm.interactive(app.context()) { launchSystemAppSettings(app) }
 
-	@JvmStatic fun launchExternalAppSettings(vm: BaseViewModel, app: @NotNull IslandAppInfo) {
+	@JvmStatic fun launchExternalAppSettings(vm: BaseAndroidViewModel, app: @NotNull IslandAppInfo) {
 		val context = app.context()
 		val intent = Intent(IntentCompat.ACTION_SHOW_APP_INFO).setPackage(context.packageName)
 				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, app.packageName).putExtra(Intent.EXTRA_USER, app.user)
@@ -99,12 +100,13 @@ object IslandAppControl {
 		return frozen
 	}
 
-	@JvmStatic fun freeze(vm: BaseViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { freeze(app) }
+	@JvmStatic fun freeze(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { freeze(app) }
 
-	private suspend fun unfreeze(app: IslandAppInfo): Boolean {
-		return Shuttle(app.context(), to = app.user).invoke(app.packageName) { ensureAppHiddenState(this, it, false) }
-	}
-	@JvmStatic fun unfreeze(vm: BaseViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { unfreeze(app) }
+	private suspend fun unfreeze(app: IslandAppInfo)
+			= unfreeze(app.context(), app.user, app.packageName)
+	suspend fun unfreeze(context: Context, profile: UserHandle, pkg: String)
+			= Shuttle(context, to = profile).invoke(pkg) { ensureAppHiddenState(this, it, false) }
+	@JvmStatic fun unfreeze(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { unfreeze(app) }
 
 	@OwnerUser @ProfileUser private fun ensureAppHiddenState(context: Context, pkg: String, hidden: Boolean): Boolean {
 		val policies = DevicePolicies(context)
@@ -119,7 +121,7 @@ object IslandAppControl {
 		return false
 	}
 
-	@JvmStatic fun setSuspended(vm: BaseViewModel, app: IslandAppInfo, suspended: Boolean)
+	@JvmStatic fun setSuspended(vm: BaseAndroidViewModel, app: IslandAppInfo, suspended: Boolean)
 			= Shuttle(app.context(), to = app.user).future(vm.viewModelScope, app.packageName) { pkg ->
 				setPackageSuspended(this, pkg, suspended) }
 
@@ -128,7 +130,7 @@ object IslandAppControl {
 	fun setPackagesSuspended(context: Context, pkgs: Array<String>, suspended: Boolean): Array<String>
 			= DevicePolicies(context).invoke(DevicePolicyManager::setPackagesSuspended, pkgs, suspended)
 
-	@JvmStatic fun unfreezeInitiallyFrozenSystemApp(vm: BaseViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) {
+	@JvmStatic fun unfreezeInitiallyFrozenSystemApp(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) {
 		Shuttle(app.context(), to = app.user).invoke(app.packageName) { pkg -> IslandManager.ensureAppHiddenState(this, pkg, false) }.also {
 			if (it) stopTreatingHiddenSysAppAsDisabled(app) }}
 
