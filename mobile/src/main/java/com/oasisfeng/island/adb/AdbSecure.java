@@ -45,12 +45,8 @@ public class AdbSecure {
 				showPromptForEnablingAdbDebugging(activity);    // DISALLOW_DEBUGGING_FEATURES also disables ADB.
 			} else policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 		}
-		if (! Users.hasProfile()) {
-			showPromptForAdbSecureProtection(activity, enabling);
-			return;		// No managed profile, all done.
-		}
 
-		if (! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {
+		if (Users.hasProfile() && ! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {
 			final Context app_context = activity.getApplicationContext();
 			MethodShuttle.runInProfile(activity, context -> {
 				final DevicePolicies device_policies = new DevicePolicies(context);	// The "policies" instance can not be passed into profile.
@@ -66,7 +62,7 @@ public class AdbSecure {
 					showPromptForAdbSecureProtection(activity, enabled);
 				}
 			});
-		}
+		} else showPromptForAdbSecureProtection(activity, enabling);
 	}
 
 	private static void showPromptForAdbSecureProtection(final FragmentActivity activity, final boolean enabled) {
