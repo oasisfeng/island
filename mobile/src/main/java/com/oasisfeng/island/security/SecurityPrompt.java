@@ -7,9 +7,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
+import androidx.biometric.BiometricPrompt;
+import androidx.fragment.app.FragmentActivity;
 
-import com.oasisfeng.android.app.LifecycleActivity;
-import com.oasisfeng.androidx.biometric.BiometricPrompt;
 import com.oasisfeng.island.mobile.R;
 
 /**
@@ -19,7 +19,7 @@ import com.oasisfeng.island.mobile.R;
  */
 public class SecurityPrompt {
 
-	public static void showBiometricPrompt(final LifecycleActivity activity, final @StringRes int title,
+	public static void showBiometricPrompt(final FragmentActivity activity, final @StringRes int title,
 										   final @StringRes int description, final Runnable on_authenticated) {
 		final Handler handler = new Handler(Looper.getMainLooper());
 		final Context app_context = activity.getApplication();

@@ -14,7 +14,8 @@ import android.os.Bundle;
 import android.os.UserHandle;
 import android.util.Log;
 
-import com.oasisfeng.android.app.LifecycleActivity;
+import androidx.fragment.app.FragmentActivity;
+
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.island.analytics.Analytics;
@@ -35,7 +36,7 @@ import java.util.Optional;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 
-public class MainActivity extends LifecycleActivity {
+public class MainActivity extends FragmentActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -125,7 +126,7 @@ public class MainActivity extends LifecycleActivity {
 			if (user != null) arguments.putParcelable(Intent.EXTRA_USER, user);
 			fragment.setArguments(arguments);
 		}
-		getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+		getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
 		performOverallAnalyticsIfNeeded();
 	}
 

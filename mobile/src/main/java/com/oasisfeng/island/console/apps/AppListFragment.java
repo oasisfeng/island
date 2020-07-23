@@ -15,10 +15,10 @@ import android.view.ViewGroup;
 import android.widget.SearchView;
 
 import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.oasisfeng.android.app.LifecycleViewModelFragment;
-import com.oasisfeng.androidx.lifecycle.ViewModelProviders;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.island.TempDebug;
 import com.oasisfeng.island.data.IslandAppInfo;
@@ -32,20 +32,19 @@ import com.oasisfeng.island.model.AppListViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
 
 import java.util.Collection;
-import java.util.Objects;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /** The main UI - App list */
 @ParametersAreNonnullByDefault
-public class AppListFragment extends LifecycleViewModelFragment {
+public class AppListFragment extends Fragment {
 
 	@Override public void onCreate(final @Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);	// To keep view-model (by keeping the view-model provider)
 		setHasOptionsMenu(true);
-		final Activity activity = getActivity();
-		final ViewModelProvider provider = ViewModelProviders.of(this);
+		final Activity activity = requireActivity();
+		final ViewModelProvider provider = new ViewModelProvider(this);
 		final AppListViewModel vm = mViewModel = provider.get(AppListViewModel.class);
 		vm.mFeatured = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, vm);
@@ -60,7 +59,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 	@Override public void onResume() {
 		super.onResume();
 		if (SystemClock.uptimeMillis() - mTimeLastPaused < 1_000) return;	// Avoid updating for brief pausing caused by cross-profile functionality.
-		if (mViewModel.mFeatured.visible.getValue()) mViewModel.mFeatured.update(getActivity());
+		if (mViewModel.mFeatured.visible.getValue()) mViewModel.mFeatured.update(requireActivity());
 	}
 
 	@Override public void onPause() {
@@ -75,7 +74,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 	}
 
 	@Override public void onDestroy() {
-		IslandAppListProvider.getInstance(getActivity()).unregisterObserver(mAppChangeObserver);
+		IslandAppListProvider.getInstance(requireActivity()).unregisterObserver(mAppChangeObserver);
 		super.onDestroy();
 	}
 
@@ -103,7 +102,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 	}
 
 	@Nullable @Override public View onCreateView(final LayoutInflater inflater, final @Nullable ViewGroup container, final @Nullable Bundle saved_state) {
-		final Activity activity = Objects.requireNonNull(getActivity());
+		final FragmentActivity activity = requireActivity();
 		mBinding = AppListBinding.inflate(inflater, container, false);
 		mBinding.setApps(mViewModel);
 		mBinding.setFeatured(mViewModel.mFeatured);
@@ -171,15 +170,10 @@ public class AppListFragment extends LifecycleViewModelFragment {
 	@Override public boolean onOptionsItemSelected(final MenuItem item) {
 		final int id = item.getItemId();
 		if (id == R.id.menu_filter) mViewModel.mChipsVisible.setValue(! mViewModel.mChipsVisible.getValue());
-		if (id == R.id.menu_settings) startActivity(new Intent(getActivity(), SettingsActivity.class));
-		else if (id == R.id.menu_test) TempDebug.run(getActivity());
+		if (id == R.id.menu_settings) startActivity(new Intent(requireActivity(), SettingsActivity.class));
+		else if (id == R.id.menu_test) TempDebug.run(requireActivity());
 		else return super.onOptionsItemSelected(item);
 		return true;
-	}
-
-	@Override public void onSaveInstanceState(final Bundle out_state) {
-		super.onSaveInstanceState(out_state);
-		mViewModel.onSaveInstanceState(out_state);
 	}
 
 	/** Mandatory empty constructor for the fragment manager to instantiate the fragment (e.g. upon screen orientation changes). */

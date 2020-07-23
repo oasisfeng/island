@@ -9,7 +9,8 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.widget.Toast;
 
-import com.oasisfeng.android.app.LifecycleActivity;
+import androidx.fragment.app.FragmentActivity;
+
 import com.oasisfeng.android.ui.Snackbars;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.LiveUserRestriction;
@@ -31,7 +32,7 @@ public class AdbSecure {
 
 	private static final String PREF_KEY_ADB_SECURE_PROTECTED = "adb_secure_protected";
 
-	public static void toggleAdbSecure(final LifecycleActivity activity, final boolean enabling, final boolean security_confirmed) {
+	public static void toggleAdbSecure(final FragmentActivity activity, final boolean enabling, final boolean security_confirmed) {
 		if (! enabling && ! security_confirmed && isAdbSecureProtected(activity)) {
 			requestSecurityConfirmationBeforeDisablingAdbSecure(activity);
 			return;
@@ -68,7 +69,7 @@ public class AdbSecure {
 		}
 	}
 
-	private static void showPromptForAdbSecureProtection(final LifecycleActivity activity, final boolean enabled) {
+	private static void showPromptForAdbSecureProtection(final FragmentActivity activity, final boolean enabled) {
 		if (! enabled || activity.isDestroyed()) return;
 		if (isAdbSecureProtected(activity)) Snackbars.make(activity, R.string.prompt_security_confirmation_activated)
 				.setDuration(3_000).setAction(R.string.action_deactivate, v -> disableSecurityConfirmationForAdbSecure(activity)).show();
@@ -76,7 +77,7 @@ public class AdbSecure {
 				.setAction(R.string.action_activate, v -> enableSecurityConfirmationForAdbSecure(activity)).show();
 	}
 
-	private static void showPromptForEnablingAdbDebugging(final LifecycleActivity activity) {
+	private static void showPromptForEnablingAdbDebugging(final FragmentActivity activity) {
 		if (activity.isDestroyed()) return;
 
 		Snackbars.make(activity, R.string.prompt_enable_adb_debug).setAction(R.string.action_enable, v -> {
@@ -98,7 +99,7 @@ public class AdbSecure {
 		return getDefaultSharedPreferences(context).getBoolean(PREF_KEY_ADB_SECURE_PROTECTED, false);
 	}
 
-	private static void enableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
+	private static void enableSecurityConfirmationForAdbSecure(final FragmentActivity activity) {
 		if (activity.isDestroyed()) return;
 		final Application app = activity.getApplication();
 		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_activating, () -> {
@@ -107,7 +108,7 @@ public class AdbSecure {
 		});
 	}
 
-	private static void disableSecurityConfirmationForAdbSecure(final LifecycleActivity activity) {
+	private static void disableSecurityConfirmationForAdbSecure(final FragmentActivity activity) {
 		if (activity.isDestroyed()) return;
 		final Application app = activity.getApplication();
 		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_deactivating, () -> {
@@ -116,7 +117,7 @@ public class AdbSecure {
 		});
 	}
 
-	private static void requestSecurityConfirmationBeforeDisablingAdbSecure(final LifecycleActivity activity) {
+	private static void requestSecurityConfirmationBeforeDisablingAdbSecure(final FragmentActivity activity) {
 		SecurityPrompt.showBiometricPrompt(activity, R.string.featured_adb_secure_title, R.string.prompt_security_confirmation_to_disable,
 				() -> toggleAdbSecure(activity, false, true));
 	}

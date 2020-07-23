@@ -9,13 +9,13 @@ import android.provider.Settings;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.oasisfeng.android.app.Activities;
-import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
@@ -90,20 +90,19 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		@Override public boolean onMove(final RecyclerView view, final RecyclerView.ViewHolder vh, final RecyclerView.ViewHolder vht) { return false; }
 	});
 
-	public void update(final Context context) {
-		final LifecycleActivity activity = (LifecycleActivity) Objects.requireNonNull(Activities.findActivityFrom(context));
+	public void update(final FragmentActivity activity) {
 		final Application app = getApplication();
-		final DevicePolicies policies = new DevicePolicies(context);
+		final DevicePolicies policies = new DevicePolicies(activity);
 		final boolean is_mainland_owner = policies.isProfileOrDeviceOwnerOnCallingUser(), has_profile = Users.hasProfile();
 		features.beginBatchedUpdates();
 		features.clear();
 
-		if (SHOW_ALL || IslandFiles.isCompatible(context)) {
-			final boolean has_across_users_permission = Permissions.has(context, Permissions.INTERACT_ACROSS_USERS);
+		if (SHOW_ALL || IslandFiles.isCompatible(activity)) {
+			final boolean has_across_users_permission = Permissions.has(activity, Permissions.INTERACT_ACROSS_USERS);
 			if (! has_across_users_permission)
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
 						R.string.action_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
-			else if (! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(context))
+			else if (! Permissions.has(activity, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(activity))
 				addFeatureRaw(app, "file_shuttle", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
 						0, R.string.action_activate, vm -> IslandFiles.enableFileShuttle(activity));
 			else {
