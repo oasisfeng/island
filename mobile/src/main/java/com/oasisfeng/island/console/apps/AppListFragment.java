@@ -46,11 +46,15 @@ public class AppListFragment extends LifecycleViewModelFragment {
 		setHasOptionsMenu(true);
 		final Activity activity = getActivity();
 		final ViewModelProvider provider = ViewModelProviders.of(this);
-		mViewModel = provider.get(AppListViewModel.class);
-		mViewModel.mFeatured = provider.get(FeaturedListViewModel.class);
-		mUserGuide = UserGuide.initializeIfNeeded(activity, this, mViewModel);
+		final AppListViewModel vm = mViewModel = provider.get(AppListViewModel.class);
+		vm.mFeatured = provider.get(FeaturedListViewModel.class);
+		mUserGuide = UserGuide.initializeIfNeeded(activity, this, vm);
+
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
-		mViewModel.mFeatured.visible.observe(this, visible -> invalidateOptionsMenu());
+		vm.mFeatured.visible.observe(this, visible -> invalidateOptionsMenu());
+		vm.mSelection.observe(this, s -> { invalidateOptionsMenu(); mViewModel.updateActions(mBinding.toolbar.getMenu()); });
+		vm.mFilterIncludeHiddenSystemApps.observe(this, filter -> mViewModel.updateAppList());
+		vm.mFilterText.observe(this, text -> mViewModel.updateAppList());
 	}
 
 	@Override public void onResume() {
@@ -79,7 +83,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 
 		@Override public void onPackageUpdate(final Collection<IslandAppInfo> apps) {
 			Log.i(TAG, "Package updated: " + apps);
-			mViewModel.onPackagesUpdate(apps);
+			mViewModel.onPackagesUpdate(apps, mBinding.toolbar.getMenu());
 // TODO
 //			Snackbars.make(mBinding.getRoot(), getString(R.string.dialog_add_shortcut, app.getLabel()),
 //					Snackbars.withAction(android.R.string.ok, v -> AppLaunchShortcut.createOnLauncher(activity, pkg))).show();
@@ -88,7 +92,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 
 		@Override public void onPackageRemoved(final Collection<IslandAppInfo> apps) {
 			Log.i(TAG, "Package removed: " + apps);
-			mViewModel.onPackagesRemoved(apps);
+			mViewModel.onPackagesRemoved(apps, mBinding.toolbar.getMenu());
 			invalidateOptionsMenu();
 		}
 	};
@@ -106,8 +110,7 @@ public class AppListFragment extends LifecycleViewModelFragment {
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
-		mViewModel.attach(activity, mBinding.toolbar.getMenu(), mBinding.tabs, saved_state != null ? saved_state : getArguments());
-		mViewModel.mSelection.observe(this, selection -> invalidateOptionsMenu());
+		mViewModel.attach(activity, mBinding.tabs, saved_state != null ? saved_state : getArguments());
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
 		return mBinding.getRoot();

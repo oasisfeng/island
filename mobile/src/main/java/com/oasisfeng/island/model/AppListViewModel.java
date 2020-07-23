@@ -115,7 +115,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		onQueryTextSubmit("");
 	}
 
-	private void updateAppList() {
+	public void updateAppList() {
 		if (mFilterShared == null) return;		// When called by constructor   TODO: Obsolete?
 		final UserHandle profile = mProfile;
 		if (profile == null) return;
@@ -152,10 +152,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			}
 	}
 
-	public AppListViewModel() {
-		super(AppViewModel.class);
-		mSelection.observeForever(selection -> updateActions());
-	}
+	public AppListViewModel() { super(AppViewModel.class); }
 
 	public void onTabSwitched(final Context context, final TabLayout tabs, final TabLayout.Tab tab) {
 		final int position = tab.getPosition();
@@ -183,10 +180,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		updateAppList();
 	}
 
-	public void attach(final Context context, final Menu actions, final TabLayout tabs, final @Nullable Bundle state) {
+	public void attach(final Context context, final TabLayout tabs, final @Nullable Bundle state) {
 		mAppListProvider = IslandAppListProvider.getInstance(context);
 		mOwnerUserManaged = new DevicePolicies(context).isProfileOrDeviceOwnerOnCallingUser();
-		mActions = actions;
 		mFilterShared = IslandAppListProvider.excludeSelf(context);
 
 		tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -221,10 +217,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			final String filter_text = state.getString(SearchManager.QUERY);
 			if (filter_text != null && ! filter_text.isEmpty()) onQueryTextSubmit(filter_text);
 		}
-		// Start observation after initial value is set.
-		mFilterIncludeHiddenSystemApps.observeForever(filter -> updateAppList());
-		mFilterText.observeForever(text -> updateAppList());
-		updateAppList();
 	}
 
 	public void onSaveInstanceState(final Bundle saved) {
@@ -234,7 +226,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (! text.isEmpty()) saved.putString(SearchManager.QUERY, text);
 	}
 
-	private void updateActions() {
+	public void updateActions(final Menu menu) {
 		final AppViewModel selection = mSelection.getValue();
 		if (selection == null) return;
 		final IslandAppInfo app = selection.info();
@@ -245,26 +237,26 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 		final boolean system = app.isSystem(), installed = app.isInstalled(),
 				in_owner = Users.isOwner(app.user), is_managed = ! in_owner || mOwnerUserManaged;
-		mActions.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
-		mActions.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
-		mActions.findItem(R.id.menu_clone).setVisible(in_owner && num_profiles > 0 && (num_profiles > 1 || exclusive));
-		mActions.findItem(R.id.menu_clone_back).setVisible(! in_owner && exclusive);
-		mActions.findItem(R.id.menu_reinstall).setVisible(! installed);
-		mActions.findItem(R.id.menu_remove).setVisible(installed && (exclusive ? system : (! system || app.shouldShowAsEnabled())));	// Disabled system app is treated as "removed".
-		mActions.findItem(R.id.menu_uninstall).setVisible(installed && exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
-		mActions.findItem(R.id.menu_shortcut).setVisible(installed && is_managed && app.isLaunchable() && app.enabled);
-		mActions.findItem(R.id.menu_greenify).setVisible(installed && is_managed && app.enabled);
+		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
+		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
+		menu.findItem(R.id.menu_clone).setVisible(in_owner && num_profiles > 0 && (num_profiles > 1 || exclusive));
+		menu.findItem(R.id.menu_clone_back).setVisible(! in_owner && exclusive);
+		menu.findItem(R.id.menu_reinstall).setVisible(! installed);
+		menu.findItem(R.id.menu_remove).setVisible(installed && (exclusive ? system : (! system || app.shouldShowAsEnabled())));	// Disabled system app is treated as "removed".
+		menu.findItem(R.id.menu_uninstall).setVisible(installed && exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
+		menu.findItem(R.id.menu_shortcut).setVisible(installed && is_managed && app.isLaunchable() && app.enabled);
+		menu.findItem(R.id.menu_greenify).setVisible(installed && is_managed && app.enabled);
 
-		if (BuildConfig.DEBUG) mActions.findItem(R.id.menu_suspend).setVisible(true).setTitle(app.isSuspended() ? "Unsuspend" : "Suspend");
+		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_suspend).setVisible(true).setTitle(app.isSuspended() ? "Unsuspend" : "Suspend");
 	}
 
-	public void onPackagesUpdate(final Collection<IslandAppInfo> apps) {
+	public void onPackagesUpdate(final Collection<IslandAppInfo> apps, final Menu menu) {
 		final Predicate<IslandAppInfo> filters = activeFilters();
 		for (final IslandAppInfo app : apps)
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
 			} else removeApp(app.packageName, app.user);
-		updateActions();
+		updateActions(menu);
 	}
 
 	private void removeApp(final String pkg, final UserHandle user) {
@@ -272,11 +264,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (app != null && app.info().user.equals(user)) super.removeApp(pkg);
 	}
 
-	public void onPackagesRemoved(final Collection<IslandAppInfo> apps) {
+	public void onPackagesRemoved(final Collection<IslandAppInfo> apps, final Menu menu) {
 		final Predicate<IslandAppInfo> filters = activeFilters();
 		for (final IslandAppInfo app : apps)
 			if (filters.test(app)) removeApp(app.packageName);
-		updateActions();
+		updateActions(menu);
 	}
 
 	public void onItemLaunchIconClick(final Context context, final IslandAppInfo app) {
@@ -472,7 +464,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	public FeaturedListViewModel mFeatured;
 	/* Attachable fields */
 	private IslandAppListProvider mAppListProvider;
-	private Menu mActions;
 	/* Parcelable fields */
 	public UserHandle mProfile = null;
 	public final NonNullMutableLiveData<Boolean> mFilterIncludeHiddenSystemApps = new NonNullMutableLiveData<>(false);
