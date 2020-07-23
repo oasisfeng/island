@@ -41,6 +41,10 @@ public class IslandFiles {
 			return false;
 		}
 		Analytics.$().event("file_shuttle_request").send();
+		if (Permissions.has(activity, WRITE_EXTERNAL_STORAGE)) {
+			onPermissionGranted(activity);
+			return true;
+		}
 		com.oasisfeng.android.content.pm.Permissions.request(activity, WRITE_EXTERNAL_STORAGE, result -> {
 			if (result == PERMISSION_GRANTED) onPermissionGranted(activity);
 			else Toast.makeText(activity, R.string.toast_external_storage_permission_required, Toast.LENGTH_LONG).show();

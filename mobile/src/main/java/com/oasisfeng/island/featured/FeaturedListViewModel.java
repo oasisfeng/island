@@ -102,10 +102,11 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			if (! has_across_users_permission)
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
 						R.string.action_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
-			else if (! Permissions.has(activity, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(activity))
-				addFeatureRaw(app, "file_shuttle", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
-						0, R.string.action_activate, vm -> IslandFiles.enableFileShuttle(activity));
-			else {
+			else if (! Permissions.has(activity, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(activity)) {
+				final String tag = "file_shuttle";
+				addFeatureRaw(app, tag, R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
+						0, R.string.action_activate, vm -> { if (IslandFiles.enableFileShuttle(activity)) removeFeature(tag); });
+			} else {
 				Analytics.$().setProperty(Analytics.Property.FileShuttleEnabled, "1");
 				addFeaturedApp(R.string.featured_fx_title, R.string.featured_fx_description, R.drawable.ic_launcher_fx, "nextapp.fx");
 			}
@@ -180,6 +181,14 @@ public class FeaturedListViewModel extends AndroidViewModel {
 							   final @DrawableRes int icon, final LiveData<Integer> button, final Consumer<FeaturedViewModel> function) {
 		features.add(new FeaturedViewModel(app, sOrderGenerator.incrementAndGet(), tag, app.getString(title), app.getText(description),
 				icon != 0 ? app.getDrawable(icon) : null, button, function, Scopes.app(app).isMarked(SCOPE_TAG_PREFIX_FEATURED + tag)));
+	}
+
+	private void removeFeature(final String tag) {
+		for (final Iterator<FeaturedViewModel> iterator = features.iterator(); iterator.hasNext(); ) {
+			if (! tag.equals(iterator.next().tag)) continue;
+			iterator.remove();
+			return;
+		}
 	}
 
 	public FeaturedListViewModel(final Application app) { super(app); mApps = Apps.of(app); }
