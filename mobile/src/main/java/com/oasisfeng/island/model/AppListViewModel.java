@@ -187,6 +187,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final int position = tab.getPosition();
 		if (position == 0) {    // Discovery
 			setCurrentProfile(null);
+			mSelection.setValue(null);
 			mFeatured.visible.setValue(Boolean.TRUE);
 			mFeatured.update(activity);
 			mChipsVisible.setValue(false);
