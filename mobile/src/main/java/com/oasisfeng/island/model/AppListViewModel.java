@@ -210,25 +210,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		updateAppList();
 	}
 
-	public void updateTabs(final FragmentActivity activity, final TabLayout tabs) {
-		tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-			@Override public void onTabSelected(final TabLayout.Tab tab) { onTabSwitched(activity, tabs, tab); }
-			@Override public void onTabUnselected(final TabLayout.Tab tab) {}
-			@Override public void onTabReselected(final TabLayout.Tab tab) {}
-		});
-		// Tab "Discovery" and "Mainland" are always present
-		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery), false);
-		final UserHandle mProfile = getCurrentProfile();
-		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland), Users.owner.equals(mProfile));
-
-		final Map<UserHandle, String> names = IslandNameManager.getAllNames(activity);
-		for (final UserHandle profile : names.keySet()) {
-			final TabLayout.Tab tab = tabs.newTab().setTag(profile).setText(names.get(profile));
-			tabs.addTab(tab, profile.equals(mProfile));
-		}
-		if (tabs.getTabCount() > 3) tabs.setTabMode(TabLayout.MODE_SCROLLABLE);
-	}
-
 	public void updateActions(final Menu menu) {
 		final AppViewModel selection = mSelection.getValue();
 		if (selection == null) return;

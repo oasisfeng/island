@@ -29,6 +29,7 @@ import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.AppListBinding;
 import com.oasisfeng.island.model.AppListViewModel;
+import com.oasisfeng.island.model.MainViewModel;
 import com.oasisfeng.island.settings.SettingsActivity;
 
 import java.util.Collection;
@@ -45,7 +46,7 @@ public class AppListFragment extends Fragment {
 		setHasOptionsMenu(true);
 		final Activity activity = requireActivity();
 		final ViewModelProvider provider = new ViewModelProvider(this);
-		final AppListViewModel vm = mViewModel = provider.get("AppListViewModel", AppListViewModel.class);
+		final AppListViewModel vm = mViewModel = provider.get("MainViewModel", MainViewModel.class);
 		vm.mFeatured = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, vm);
 
@@ -109,7 +110,7 @@ public class AppListFragment extends Fragment {
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
-		mViewModel.updateTabs(activity, mBinding.tabs);
+		mViewModel.initializeTabs(activity, mBinding.tabs);
 
 		mBinding.executePendingBindings();		// This ensures all view state being fully restored
 		return mBinding.getRoot();
@@ -180,7 +181,7 @@ public class AppListFragment extends Fragment {
 	public AppListFragment() {}
 
 	private AppListBinding mBinding;
-	private AppListViewModel mViewModel;
+	private MainViewModel mViewModel;
 	private @Nullable UserGuide mUserGuide;
 	private ServiceConnection mIslandManagerConnection;
 
