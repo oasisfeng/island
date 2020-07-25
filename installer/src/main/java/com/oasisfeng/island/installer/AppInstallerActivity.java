@@ -48,6 +48,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.RomVariants;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
 
@@ -440,6 +441,11 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				fallbackToSystemPackageInstaller("alternative.auto", null);
 				return;
 			}
+
+			if (RomVariants.isMiui() && status == PackageInstaller.STATUS_FAILURE
+					&& message.equals("INSTALL_FAILED_INTERNAL_ERROR: Permission Denied"))
+				message += "\n\n" + getString(R.string.prompt_miui_optimization);
+
 			Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
 					.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
 					.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null)).show();

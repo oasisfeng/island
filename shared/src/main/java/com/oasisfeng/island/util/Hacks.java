@@ -78,6 +78,9 @@ public class Hacks {
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer>
 			SystemProperties_getInt = Hack.into("android.os.SystemProperties").staticMethod("getInt")
 			.returning(int.class).fallbackReturning(null).withParams(String.class, int.class);
+	public static final Hack.HackedMethod1<String, Void, Unchecked, Unchecked, Unchecked, String>
+			SystemProperties_get = Hack.into("android.os.SystemProperties").staticMethod("get")
+			.returning(String.class).fallbackReturning(null).withParam(String.class);
 	static final Hack.HackedMethod0<ComponentName, DevicePolicyManager, IllegalArgumentException, Unchecked, Unchecked>
 			DevicePolicyManager_getProfileOwner = Hack.into(DevicePolicyManager.class).method("getProfileOwner")
 			.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withoutParams();

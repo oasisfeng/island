@@ -28,4 +28,6 @@
     <string name="app_settings_helper_prompt">点击“强制停止”可打开其它工具中针对此应用的设置</string>
     <string name="fallback_to_sys_installer">尝试传统安装方式</string>
     <string name="toast_split_apk_clone_fallback_warning">此应用含有附加组件，可能无法以这种方式正常克隆。如果遇到故障，请尝试重新从应用市场安装。</string>
+
+    <string name="prompt_miui_optimization">可能是“MIUI 优化”导致（可在“系统设置 - 开发者选项”中关闭）</string>
 </resources>
