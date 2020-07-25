@@ -1,15 +1,15 @@
 package com.oasisfeng.island.settings
 
+import android.app.admin.DevicePolicyManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.UserHandle
 import android.util.ArrayMap
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.shuttle.Shuttle
-import com.oasisfeng.island.util.OwnerUser
-import com.oasisfeng.island.util.ProfileUser
-import com.oasisfeng.island.util.Users
-import com.oasisfeng.island.util.toId
+import com.oasisfeng.island.util.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -44,4 +44,14 @@ object IslandNameManager {
 	}
 
 	@OwnerUser private fun buildIslandNameKey(context: Context, user: Int) = context.getString(R.string.key_island_name) + "." + user
+
+	internal fun setName(context: Context, name: String)    // Extra spaces for better readability in system UI (e.g. app Uninstall confirmation dialog)
+			= DevicePolicies(context).invoke(DevicePolicyManager::setProfileName, " $name ")
+
+	class NameInitializer: BroadcastReceiver() {
+
+		override fun onReceive(context: Context, intent: Intent?) {
+			if (intent?.action == Intent.ACTION_USER_INITIALIZE) setName(context, getDefaultName(context))
+		}
+	}
 }

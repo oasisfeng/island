@@ -109,7 +109,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
     private fun onIslandRenamed(name: String) {
         val activity = activity
-        DevicePolicies(activity).invoke(DevicePolicyManager::setProfileName, name)
+        IslandNameManager.setName(activity, name)
         activity.title = name
         IslandNameManager.syncNameToOwnerUser(activity, name)
     }

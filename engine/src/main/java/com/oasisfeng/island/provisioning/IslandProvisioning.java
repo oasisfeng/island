@@ -161,7 +161,6 @@ public class IslandProvisioning extends IntentService {
 		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile(context);	// Users.isProfile() does not work before setProfileEnabled().
 
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
-			policies.execute(DevicePolicyManager::setProfileName, context.getString(R.string.profile_name));
 			Log.d(TAG, "Enable profile now.");
 			policies.execute(DevicePolicyManager::setProfileEnabled);
 		}
