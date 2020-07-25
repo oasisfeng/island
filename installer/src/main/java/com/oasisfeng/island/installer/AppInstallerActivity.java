@@ -44,6 +44,7 @@ import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsCompat;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
@@ -307,6 +308,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			}
 		}
 
+		ensureSystemPackageEnabledAndUnfrozen(this, intent);
+
 		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent,
 				PackageManager.MATCH_DEFAULT_ONLY | PackageManager.MATCH_SYSTEM_ONLY);
 		for (final ResolveInfo candidate : candidates) {
@@ -316,11 +319,10 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			intent.setComponent(component).setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
 			Log.i(TAG, "Redirect to system package installer: " + component.flattenToShortString());
 
-			final PackageManager pm = getPackageManager();
 			final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();
 			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());		// Workaround to suppress FileUriExposedException.
 			try {
-				final Intent uas_settings;
+				final Intent uas_settings; final PackageManager pm = getPackageManager();
 				if (SDK_INT >= O && ! pm.canRequestPackageInstalls() && (uas_settings = new Intent(ACTION_MANAGE_UNKNOWN_APP_SOURCES,
 						Uri.fromParts(SCHEME_PACKAGE, getPackageName(), null))).resolveActivity(pm) != null)
 					startActivities(new Intent[] { intent, uas_settings });
@@ -337,6 +339,14 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		Log.e(TAG, "Default system package installer is missing");
 		setResult(RESULT_CANCELED);
 		finish();
+	}
+
+	private static boolean ensureSystemPackageEnabledAndUnfrozen(final Context context, final Intent intent) {
+		final ResolveInfo resolve = context.getPackageManager().resolveActivity(intent,
+				PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_SYSTEM_ONLY);
+		return resolve != null && Apps.isInstalledInCurrentUser(resolve.activityInfo.applicationInfo)
+				|| new DevicePolicies(context).enableSystemAppByIntent(intent)
+				|| resolve != null && IslandManager.ensureAppFreeToLaunch(context, resolve.activityInfo.packageName).isEmpty();
 	}
 
 	@RequiresApi(O) private boolean isCallerQualified(final ApplicationInfo caller_app_info) {
@@ -401,11 +411,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			break;
 		case PackageInstaller.STATUS_PENDING_USER_ACTION:
 			final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-			if (action != null) try {
+			Exception cause = null;
+			if (action != null && ensureSystemPackageEnabledAndUnfrozen(context, action)) try {
 				startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
-			} catch (final ActivityNotFoundException e) {
-				fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", e);
-			} else finish();    // Should never happen
+				break;
+			} catch (final ActivityNotFoundException e) { cause = e; }
+			fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", cause);
 			break;
 		default:
 			if (status == PackageInstaller.STATUS_FAILURE_ABORTED && legacy_status == INSTALL_FAILED_ABORTED) {	// Aborted by user or us, no explicit feedback needed.
