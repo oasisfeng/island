@@ -6,12 +6,12 @@ import android.app.Notification.Action;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.LauncherApps;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -25,13 +25,15 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.oasisfeng.island.notification.NotificationIds;
-import com.oasisfeng.island.util.ProfileUser;
-
-import java.util.Arrays;
-
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+
+import com.oasisfeng.island.notification.NotificationIds;
+import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.ProfileUser;
+import com.oasisfeng.island.util.Users;
+
+import java.util.Arrays;
 
 import static android.app.Notification.CATEGORY_PROGRESS;
 import static android.app.Notification.CATEGORY_STATUS;
@@ -49,7 +51,7 @@ import static android.os.Build.VERSION_CODES.P;
  *
  * Created by Oasis on 2019-2-25.
  */
-@RequiresApi(P) @ProfileUser public class IslandWatcher extends BroadcastReceiver {
+@ProfileUser public class IslandWatcher extends BroadcastReceiver {
 
 	// With shared notification group, app watcher (group child) actually hides Island watcher (group summary), which only shows up if no app watchers.
 	static final String GROUP = "Watcher";
@@ -60,9 +62,9 @@ import static android.os.Build.VERSION_CODES.P;
 	@Override public void onReceive(final Context context, final Intent intent) {
 		Log.d(TAG, "onReceive: " + intent);
 		if (! Arrays.asList(VALID_ACTIONS).contains(intent.getAction())) return;
-		if (! ((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE)).isProfileOwnerApp(context.getPackageName())) {
+		if (Users.isOwner() || ! new DevicePolicies(context).isProfileOwner()) {
 			context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, getClass()), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-			return;		// We don't need this receiver in owner user.
+			return;
 		}
 		if (SDK_INT < O) return;
 		if (NotificationIds.IslandWatcher.isBlocked(context)) return;
