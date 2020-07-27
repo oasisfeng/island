@@ -121,7 +121,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
 
-		if (SHOW_ALL || is_mainland_owner && ! Users.hasProfile())
+		if (SHOW_ALL || is_mainland_owner && ! Users.hasProfile() && policies.isActiveDeviceOwner())    // New profile can not be setup if owner user is in managed profile mode.
 			addFeature(app, "setup_island", R.string.featured_setup_island_title, R.string.setup_island_intro, 0, R.string.featured_button_setup, c -> {
 				if (SetupViewModel.checkManagedProvisioningPrerequisites(c, true) == null) {
 					startSetupActivityCleanly(c);		// Prefer ManagedProvision, which could also fallback to root routine.
