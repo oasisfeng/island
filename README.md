@@ -36,25 +36,20 @@ If you are prompted to encrypt your device first during the setup and you don't 
 Please refer to [Manual setup](/setup.md) for prerequisites and detailed steps.
 
 
-God mode
----------------------
+God / Demigod mode
+------------------
 
-In normal mode, Island only takes care of apps inside the Island space. The "God mode" is an advanced mode, in which Island takes control of **ALL** apps, both inside and outside Island space. For example, you can freeze any app without cloning it first. At present it is only recommended for advanced users.
+In normal mode, Island only takes care of apps inside the Island space. The "God / Demigod mode" is an advanced mode, in which Island takes control of **ALL** apps, both inside and **outside** Island space. For example, you can freeze any app without cloning it to Island space. At present God mode is only recommended for advanced users.
 
-The limitations in "God mode":
+The limitations in "God / Demigod mode":
 
-- This device may no longer be available on the Google Play Store web site. (missing from the drop-down list of devices when initiating app installation from web) App installation from Google Play Store on the device is working as normal.
-- "App Timer" feature of Digital Wellbeing is not available. (Usage statistics still works)
+- "App Timer" feature in Digital Wellbeing is not available. (Usage statistics still works)
 - If any corporation Google account is logged-in on the device, Google Play Store will operate in "Work Mode" which may block the installation of paid apps.
 - On Android version prior to 7.1, app backup (e.g. Cloud backup for app data with Google Drive) will stop working. (Android 7.1+ is not affected)
+- (God mode only) This device may no longer be available on the Google Play Store web site. (missing from the drop-down list of devices when initiating app installation from web) App installation from Google Play Store on the device is working as normal.
+- (God mode only) You may see "Device is managed by your organization" (or similar words) in some system UI (e.g. Lock Screen). It's a the standard transparency notice of Android for Work.
 
-God mode could only be [setup manually](/setup.md) at present.
-
-
-Discussion and feedback
------------------------
-
-[XDA thread](https://forum.xda-developers.com/android/apps-games/closed-beta-test-incoming-companion-app-t3366295)
+God mode could only be [setup manually](/setup.md#manual-setup-for-island-in-god-mode--demigod-mode) at present.
 
 
 DISCLAIMER
