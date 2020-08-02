@@ -22,12 +22,16 @@ import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.shuttle.ActivityShuttle;
+import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import kotlin.Unit;
+import kotlinx.coroutines.GlobalScope;
 
 import static android.content.Intent.EXTRA_INITIAL_INTENTS;
 import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
@@ -46,6 +50,14 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		super.onCreate(savedInstanceState);
 		final Intent intent = getIntent().setComponent(null).setPackage(null);
 		final UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
+		if (user != null && Settings.ACTION_APPLICATION_DETAILS_SETTINGS.equals(intent.getAction())) {  // For profiles other than default
+			intent.removeExtra(Intent.EXTRA_USER);
+			new Shuttle(this, user).launch(GlobalScope.INSTANCE, context -> {
+				context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return Unit.INSTANCE;
+			});
+			finish();
+			return;
+		}
 		startActivity(buildTargetIntent(intent.getStringExtra(IntentCompat.EXTRA_PACKAGE_NAME), user, intent));
 		finish();
 	}
@@ -74,10 +86,10 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 			}
 			if (! caller_is_settings && user != null && ! UserHandles.MY_USER_HANDLE.equals(user)) {
 				if (user.equals(Users.profile)) app_detail.setComponent(ActivityShuttle.getForwarder(this));	// Forwarding added in IslandProvisioning
-				else app_detail = null;    // TODO: Not the default managed profile, use LauncherApps.startAppDetailsActivity().
+				else app_detail.setComponent(getComponentName()).putExtra(Intent.EXTRA_USER, user);
 			} else ActivityShuttle.forceNeverForwarding(pm, app_detail);
 
-			if (SDK_INT < O && ! caller_is_settings && app_detail != null && ! hasNonForwardingResolves(target_resolves.get()))
+			if (SDK_INT < O && ! caller_is_settings && ! hasNonForwardingResolves(target_resolves.get()))
 				return app_detail;		// Simulate EXTRA_AUTO_LAUNCH_SINGLE_CHOICE on Android pre-O.
 		} else app_detail = null;
 
@@ -87,10 +99,10 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 
 		final List<Intent> initial_intents = new ArrayList<>();
 		if (app_detail != null && ! caller_is_settings) {
-			if (user != null && user.equals(Users.profile)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
+			if (user != null && Users.isProfileManagedByIsland(user)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
 				final ActivityInfo activity = app_detail_resolve.activityInfo;
-				app_detail = new LabeledIntent(app_detail, activity.packageName,
-						activity.labelRes != 0 ? activity.labelRes : activity.applicationInfo.labelRes, activity.getIconResource());
+				final int labelRes = activity.labelRes != 0 ? activity.labelRes : activity.applicationInfo.labelRes;
+				app_detail = new LabeledIntent(app_detail, activity.packageName, labelRes, activity.getIconResource());
 			}
 			initial_intents.add(app_detail);
 		}
