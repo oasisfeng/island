@@ -33,15 +33,13 @@ object IslandNameManager {
 	}
 
 	@ProfileUser fun syncNameToOwnerUser(context: Context, name: String) = GlobalScope.launch { // TODO: syncNameToParentProfile() with proper "parent".
-		Shuttle(context, to = Users.owner).invoke(Users.current(), name) { profile, name -> saveProfileName(this, profile, name) }
-	}
+		Shuttle(context, to = Users.owner).invoke(with = Users.current()) { saveProfileName(this, it, name) }}
 
 	@OwnerUser private fun saveProfileName(context: Context, profile: UserHandle, name: String)
 			= getStore(context).edit().putString(buildIslandNameKey(context, profile.toId()), name).apply()
 
-	@Suppress("DEPRECATION") private fun getStore(context: Context): SharedPreferences {
-		return android.preference.PreferenceManager.getDefaultSharedPreferences(context.createDeviceProtectedStorageContext())
-	}
+	@Suppress("DEPRECATION") private fun getStore(context: Context)
+			= android.preference.PreferenceManager.getDefaultSharedPreferences(context.createDeviceProtectedStorageContext())
 
 	@OwnerUser private fun buildIslandNameKey(context: Context, user: Int) = context.getString(R.string.key_island_name) + "." + user
 

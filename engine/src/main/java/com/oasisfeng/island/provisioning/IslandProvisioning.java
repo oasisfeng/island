@@ -5,7 +5,6 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -38,6 +37,7 @@ import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
 import com.oasisfeng.island.appops.AppOpsCompat;
+import com.oasisfeng.island.engine.CrossProfile;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
@@ -64,6 +64,7 @@ import static android.content.Intent.ACTION_SEND_MULTIPLE;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_BROWSABLE;
 import static android.content.Intent.CATEGORY_LAUNCHER;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
@@ -93,7 +94,6 @@ public class IslandProvisioning extends IntentService {
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 9;
 	private static final String AFFILIATION_ID = "com.oasisfeng.island";
-	private static final String CATEGORY_MAIN_ACTIVITY = "com.oasisfeng.island.category.MAIN_ACTIVITY";
 	private static final String SCHEME_PACKAGE = "package";
 
 	@OwnerUser @ProfileUser public static void start(final Context context, final @Nullable String action) {
@@ -215,16 +215,11 @@ public class IslandProvisioning extends IntentService {
 			apps.startMainActivity(activity, Users.owner, null, null);
 			return true;
 		}
-		// Since Android O, activities in owner user is invisible to managed profile, use special forward rule to launch it in owner user.
-		new DevicePolicies(context).execute(DevicePolicyManager::addCrossProfileIntentFilter,
-				IntentFilters.forAction(ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
 		Log.i(TAG, "Launching main activity in owner user...");
-		try {
-			context.startActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		try {   // Since Android O, activities in owner user is invisible to managed profile.
+			new CrossProfile(context).startActivityInParentProfile(new Intent(ACTION_MAIN).addFlags(FLAG_ACTIVITY_NEW_TASK));
 			return true;
-		} catch (final ActivityNotFoundException e) {
-			return false;
-		}
+		} catch (final RuntimeException e) { return false; }
 	}
 
 	@ProfileUser private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning

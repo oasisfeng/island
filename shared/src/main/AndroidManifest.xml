@@ -15,15 +15,24 @@
         <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
                   android:initOrder="1000"
                   android:authorities="${applicationId}.internal.1"
-                  android:directBootAware="true" tools:targetApi="N"
+                  android:directBootAware="true"
                   android:exported="false" />
 
-        <receiver android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle" />
-        <service android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$StarterService" android:exported="false">
+        <receiver android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle" android:directBootAware="true">
             <intent-filter>
-                <action android:name="com.oasisfeng.island.PersistentService" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
-        </service>
+        </receiver>
+
+        <activity android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$ReceiverActivity"
+                  android:theme="@android:style/Theme.NoDisplay" android:directBootAware="true" android:exported="false">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.SHUTTLE" />
+                <category android:name="com.oasisfeng.island.category.PARENT_PROFILE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"

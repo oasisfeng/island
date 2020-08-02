@@ -76,7 +76,7 @@ object IslandAppClones {
 
 		if (SDK_INT >= O && cloneAppViaRoot(context, source, target)) return    // Prefer root routine to avoid overhead (it's instant)
 
-		val result = Shuttle(context, to = target).invoke(source as ApplicationInfo, ::performAppCloningInProfile)
+		val result = Shuttle(context, to = target).invoke(with = source as ApplicationInfo) { performAppCloningInProfile(this, it) }     // Cast to reduce the overhead
 		Log.i(TAG, "Result of cloning $pkg to $target: $result")
 
 		when (result) {
@@ -114,7 +114,7 @@ object IslandAppClones {
 		return false
 	}
 
-	@ProfileUser private fun performAppCloningInProfile(context: Context, appInfo: ApplicationInfo): Int {
+	@JvmStatic @ProfileUser private fun performAppCloningInProfile(context: Context, appInfo: ApplicationInfo): Int {
 		val pkg = appInfo.packageName; val policies = DevicePolicies(context)
 		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
 

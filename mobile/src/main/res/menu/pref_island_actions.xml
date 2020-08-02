@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" tools:ignore="AppCompatResource">
     <item android:id="@+id/menu_rename" android:title="@string/action_rename" android:showAsAction="never" />
+    <item android:id="@+id/menu_test" android:title="Test" android:showAsAction="never" android:visible="false" tools:ignore="HardcodedText" />
 </menu>

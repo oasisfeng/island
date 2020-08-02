@@ -11,8 +11,8 @@ import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
-fun BaseAndroidViewModel.interactive(context: Context, block: suspend () -> Unit) {
-	viewModelScope.launch(CoroutineExceptionHandler { _, e -> handleException(context, tag, e) }, block = { block() })
+fun BaseAndroidViewModel.interactive(context: Context, block: suspend CoroutineScope.() -> Unit) {
+	viewModelScope.launch(CoroutineExceptionHandler { _, e -> handleException(context, tag, e) }, block = block)
 }
 
 fun <R> BaseAndroidViewModel.interactiveFuture(context: Context, block: suspend CoroutineScope.() -> R): CompletableFuture<R> {

@@ -1,6 +1,7 @@
 package com.oasisfeng.island.util;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -128,6 +129,9 @@ public class Hacks {
 	static final Hack.HackedMethod1<String, Object, RemoteException, Unchecked, Unchecked, IBinder>
 			IActivityManager_getLaunchedFromPackage = Hack.into("android.app.IActivityManager")
 			.method("getLaunchedFromPackage").returning(String.class).throwing(RemoteException.class).withParam(IBinder.class);
+	public static final @Nullable Hack.HackedMethod0<ActivityOptions, Activity, Unchecked, Unchecked, Unchecked>
+			Activity_getActivityOptions = Hack.into(Activity.class)
+			.method("getActivityOptions").returning(ActivityOptions.class).withoutParams();
 
 	@Keep @ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 

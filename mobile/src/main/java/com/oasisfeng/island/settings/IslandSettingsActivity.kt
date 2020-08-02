@@ -5,7 +5,6 @@ package com.oasisfeng.island.settings
 import android.Manifest.permission.*
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
 import android.content.BroadcastReceiver
@@ -14,7 +13,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.*
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.*
+import android.os.Build.VERSION_CODES.O
+import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
 import android.preference.EditTextPreference
 import android.preference.Preference
@@ -22,13 +22,14 @@ import android.preference.TwoStatePreference
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import com.oasisfeng.island.TempDebug
 import com.oasisfeng.island.appops.AppOpsCompat
+import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
@@ -146,12 +147,15 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (! Users.isOwner()) inflater.inflate(R.menu.pref_island_actions, menu)
+        if (! Users.isOwner()) {
+            inflater.inflate(R.menu.pref_island_actions, menu)
+            if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).isVisible = true }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.menu_rename -> true.also{ requestRenaming() }
+            R.id.menu_rename -> true.also { requestRenaming() }
+            R.id.menu_test -> true.also { TempDebug.run(activity) }
             android.R.id.home -> true.also { activity.finish() }
             else -> super.onOptionsItemSelected(item)
         }
@@ -167,8 +171,8 @@ class IslandSettingsActivity: Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val shuttle = PendingIntentShuttle.retrieveFromActivity(this)
-        if (shuttle != null) { return finish().also { Log.i(TAG, "Shuttle received: $shuttle") }}
+        if (PendingIntentShuttle.collectFromActivity(this)) return finish()
+
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
 

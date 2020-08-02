@@ -15,27 +15,30 @@ import androidx.annotation.Nullable;
  */
 public abstract class CallerAwareActivity extends Activity {
 
-	@Nullable @Override public String getCallingPackage() {
+	@Override public @Nullable String getCallingPackage() {
 		final String caller = super.getCallingPackage();
 		if (caller != null) return caller;
+		return getCallingPackage(this);
+	}
 
+	public static @Nullable String getCallingPackage(final Activity activity) {
 		Intent original_intent = null;
-		final Intent intent = getIntent();
+		final Intent intent = activity.getIntent();
 		if (intent.hasExtra(Intent.EXTRA_REFERRER) || intent.hasExtra(Intent.EXTRA_REFERRER_NAME)) {
-			original_intent = new Intent(getIntent());
+			original_intent = new Intent(activity.getIntent());
 			intent.removeExtra(Intent.EXTRA_REFERRER);
 			intent.removeExtra(Intent.EXTRA_REFERRER_NAME);
 		}
 		try {
-			final Uri referrer = getReferrer();		// getReferrer() returns real calling package if no referrer extras
+			final Uri referrer = activity.getReferrer();		// getReferrer() returns real calling package if no referrer extras
 			if (referrer != null) return referrer.getAuthority();        // Referrer URI: android-app://<package name>
 		} finally {
-			if (original_intent != null) setIntent(original_intent);
+			if (original_intent != null) activity.setIntent(original_intent);
 		}
 		if (Hacks.IActivityManager_getLaunchedFromPackage != null) try {
 			final Object am = Hacks.ActivityManagerNative_getDefault.invoke().statically();
 			if (am != null) {
-				final IBinder token = Hacks.Activity_getActivityToken.invoke().on(this);
+				final IBinder token = Hacks.Activity_getActivityToken.invoke().on(activity);
 				return token != null ? Hacks.IActivityManager_getLaunchedFromPackage.invoke(token).on(am) : null;
 			}
 		} catch (final Exception e) {

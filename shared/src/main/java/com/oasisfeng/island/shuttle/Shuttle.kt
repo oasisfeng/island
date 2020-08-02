@@ -1,43 +1,33 @@
 package com.oasisfeng.island.shuttle
 
+import android.app.PendingIntent
 import android.content.Context
 import android.os.UserHandle
-import android.widget.Toast
-import com.oasisfeng.island.shared.BuildConfig
+import android.util.Log
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.toId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
-import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 class Shuttle(private val context: Context, private val to: UserHandle) {
 
 	fun launch(at: CoroutineScope, function: Context.() -> Unit) {
 		if (to == Users.current()) function(context) else at.launch { shuttle(function) }}
 
-	fun <A, R> future(at: CoroutineScope, a: A, function: Context.(A) -> R): CompletableFuture<R>
-			= if (to == Users.current()) CompletableFuture.completedFuture(function(context, a))
-			else at.future { shuttle { function(a) }}
+	suspend fun <R> invoke(function: Context.() -> R) = if (to == Users.current()) context.function() else shuttle(function)
 
-	suspend fun <R> invoke(function: Context.() -> R) = shuttleIfNeeded(function)
-	suspend fun <A, R> invoke(a: A, function: Context.(A) -> R) = shuttleIfNeeded { function(a) }
-
-	private suspend fun <R> shuttleIfNeeded(function: Context.() -> R)
-			= if (to == Users.current()) function(context) else shuttle(function)
+	/* Helpers to avoid redundant local variables. ("inline" is used to ensure only "Context.() -> R" function is shuttled) */
+	inline fun <A> launch(at: CoroutineScope, with: A, crossinline function: Context.(A) -> Unit) = launch(at) { function(with) }
+	suspend inline fun <A, R> invoke(with: A, crossinline function: Context.(A) -> R) = invoke { this.function(with) }
 
 	private suspend fun <R> shuttle(function: Context.() -> R): R {
 		val shuttle = PendingIntentShuttle.load(context, to)
-		if (shuttle != null) return PendingIntentShuttle.shuttle(context, shuttle, function)
-
-		if (to == Users.profile) return suspendCoroutine { continuation ->     // Fallback to method shuttle
-			if (BuildConfig.DEBUG) Toast.makeText(context, "Fallback to M shuttle", Toast.LENGTH_LONG).show()
-			MethodShuttle.runInProfile(context, function).whenComplete { r, t ->
-				if (t != null) continuation.resumeWithException(t)
-				else continuation.resume(r) }}
-		throw IllegalStateException("Shuttle to profile ${to.toId()} is unavailable")
+				?: return PendingIntentShuttle.sendToProfileAndShuttle(context, to, function)
+		return try { PendingIntentShuttle.shuttle(context, shuttle, function) }
+		catch (e: PendingIntent.CanceledException) {
+			Log.w(TAG, "Old shuttle (${Users.current()} to ${to.toId()}) is broken, resend now.")
+			PendingIntentShuttle.sendToProfileAndShuttle(context, to, function) }
 	}
 }
+
+private const val TAG = "Island.Shuttle"

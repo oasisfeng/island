@@ -1,13 +1,16 @@
 package com.oasisfeng.island.shuttle
 
-import android.annotation.SuppressLint
-import android.app.*
+import android.app.Activity
 import android.app.Activity.RESULT_FIRST_USER
+import android.app.ActivityOptions
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_NO_CREATE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import android.content.pm.LauncherApps
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
@@ -15,128 +18,185 @@ import android.net.Uri
 import android.os.*
 import android.util.Log
 import android.view.*
-import com.oasisfeng.island.util.Users
-import com.oasisfeng.island.util.toId
+import androidx.annotation.MainThread
+import com.oasisfeng.android.os.UserHandles
+import com.oasisfeng.island.engine.CrossProfile
+import com.oasisfeng.island.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.Serializable
-import java.lang.reflect.Constructor
-import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+private typealias ClosureFunction = Context.() -> Any?
+
 class PendingIntentShuttle: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
-		if (intent.getLongExtra(ActivityOptions.EXTRA_USAGE_TIME_REPORT, -1) >= 0) return   // Ignore usage report
+		if (intent.action.let { it == Intent.ACTION_LOCKED_BOOT_COMPLETED || it == Intent.ACTION_MY_PACKAGE_REPLACED}) {
+			Log.d(TAG, "$prefix Initiated by $intent")
+			if (Users.isOwner()) sendToAllUnlockedProfiles(context)
+			else sendToParentProfile(context)
+			return }    // We cannot initiate shuttle sending from to owner user on Android 8+, due to visibility restriction.
+		if (intent.getLongExtra(ActivityOptions.EXTRA_USAGE_TIME_REPORT, -1) >= 0) {
+			intent.getParcelableExtra<Bundle>(ActivityOptions.EXTRA_USAGE_TIME_REPORT_PACKAGES)?.apply {
+				Log.d(TAG, "Callee report: ${keySet().joinToString()}") }
+			return
+		}
 
-		val payload = intent.getParcelableExtra<Parcelable>(null).also { Log.d(TAG, "Received via shuttle: $it") }
-		if (payload is Invocation)
-			try { handleInvocation(context, payload) }
-			catch (t: Throwable) { Log.w(TAG, "Error executing " + payload.blockClass.name, t) }
-		else if (payload is PendingIntent && payload.creatorPackage == context.packageName)
-			save(context, payload)
-		else Log.e(TAG, "Invalid payload received: $payload")
-	}
-
-	private fun handleInvocation(context: Context, invocation: Invocation) {
-		val constructor = invocation.blockClass.declaredConstructors[0]
-		constructor.isAccessible = true
-		val closure = invocation.closure
-		val argTypes = constructor.parameterTypes
-		val args: Array<Any?> = arrayOfNulls(argTypes.size)
-		@Suppress("UNCHECKED_CAST") val block = constructor.newInstance(* args) as Context.() -> Any?
-		block.javaClass.declaredFields.forEachIndexed { index, field -> // Constructor arguments do not matter, as all fields are replaced.
-			field.apply { isAccessible = true }.set(block, if (field.type == Context::class.java) context else closure[index]) }
-
-		val result = try { block(context) }
-		catch (e: Throwable) { return setResult(RESULT_FIRST_USER, null, Bundle().apply { putSerializable(null, e) }) }
-
-		setResult(Activity.RESULT_OK, null, Bundle().apply { @Suppress("UNCHECKED_CAST") when (result) {
-			null ->             putString(null, null)
-			is Serializable ->  putSerializable(null, result)   // Catch most types, which are just put into the underling map.
-			is Parcelable ->    putParcelable(null, result)
-			is CharSequence ->  putCharSequence(null, result)   // CharSequence may not be serializable
-			else -> throw UnsupportedOperationException("Return type is not yet supported: ${result.javaClass}") }})
+		when(val payload = intent.getParcelableExtra<Parcelable>(null)) {
+			is Closure -> {
+				Log.d(TAG, "$prefix Invoke closure from ${payload.userId}")
+				try { invokeClosureAndSendResult(context, payload) { code, extras -> setResult(code, null, extras) }}
+				catch (t: Throwable) { Log.w(TAG, "$prefix Error invoking $payload", t) }}
+			is PendingIntent -> {
+				require(payload.creatorPackage == context.packageName)
+				save(context, payload) }
+			else -> Log.e(TAG, "$prefix Invalid payload type: ${payload.javaClass}") }
 	}
 
 	companion object {
 
+		private fun invokeClosureAndSendResult(context: Context, closure: Closure, sendResult: ((Int, Bundle) -> Unit)?) {
+			try {
+				val result = closure.invoke(context)
+
+				sendResult?.invoke(Activity.RESULT_OK, Bundle().apply { @Suppress("UNCHECKED_CAST") when (result) {
+					null, is Unit -> putString(null, null)
+					is Serializable -> putSerializable(null, result)   // Catch most types, which are just put into the underling map.
+					is Parcelable -> putParcelable(null, result)
+					is CharSequence -> putCharSequence(null, result)   // CharSequence may not be serializable
+					else -> throw UnsupportedOperationException("Return type is not yet supported: ${result.javaClass}") }}) }
+			catch (e: Throwable) {
+				sendResult?.invoke(RESULT_FIRST_USER, Bundle().apply { putSerializable(null, e) })
+						?: Log.e(TAG, "$prefix Error executing $closure") }
+		}
+
+		private fun <R> buildInvocation(procedure: Context.() -> R, resultReceiver: ResultReceiver)
+				= Invocation(Closure(procedure), resultReceiver)
+
+		private fun <T> Class<T>.getMemberFields()
+				= declaredFields.filter { if (Modifier.isStatic(it.modifiers)) false else { it.isAccessible = true; true }}
+
+		private fun wrapIfNeeded(obj: Any?): Any? = if (obj is Context) null else obj
+
 		fun isReady(context: Context, profile: UserHandle) = getLocker(context, profile) != null
 
-		internal suspend fun <R> shuttle(context: Context, shuttle: PendingIntent, procedure: Context.() -> R): R {
-			val javaClass = procedure.javaClass
-			val constructors: Array<Constructor<*>> = javaClass.declaredConstructors
-			require(constructors.isNotEmpty()) { "The method must have at least one constructor" }
+		internal suspend fun <R> shuttle(context: Context, shuttle: PendingIntent, procedure: Context.() -> R): R = suspendCoroutine { continuation ->
+			try { shuttle.send(context, Activity.RESULT_CANCELED,
+					Intent().putExtra(null, Closure(procedure)).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+					{ _,_, result,_, extras -> continuation.resume(procedure, result, extras) }, null) }
+			catch (e: RuntimeException) { continuation.resumeWithException(e) }}
 
-			val fields: Array<Field> = javaClass.declaredFields // Automatically generated for captured variables by compiler (indeterminate order)
-			val args = fields.map { it.apply { isAccessible = true }.get(procedure) }.toTypedArray()
-			val constructor = constructors[0] // Extra constructor may be generated by "Instant Run" of Android Studio.
-			val count = constructor.parameterTypes.size
-			require(fields.size >= count) { "Parameter types mismatch: " + constructor + " / " + fields.contentDeepToString() }
+		private fun <R> Continuation<R>.resume(procedure: Context.() -> R, result: Int, extras: Bundle?) = when (result) {
+			Activity.RESULT_OK  -> resume(@Suppress("UNCHECKED_CAST") (extras?.get(null) as R))
+			RESULT_FIRST_USER   -> resumeWithException(extras?.get(null) as Throwable)
+			else                -> resumeWithException(RuntimeException("Error shuttling ${procedure.javaClass}")) }
 
-			return suspendCoroutine { continuation -> try {
-				shuttle.send(context, Activity.RESULT_CANCELED, Intent().putExtra(null, Invocation(javaClass, args)), { _,_, result,_, extras ->
-					when (result) {
-						Activity.RESULT_OK -> continuation.resume(extras?.get(null) as R)
-						RESULT_FIRST_USER -> continuation.resumeWithException(extras?.get(null) as Throwable)
-						else -> continuation.resumeWithException(RuntimeException("Unexpected failure shuttling $javaClass")) }}, null)
-			} catch (e: RuntimeException) { continuation.resumeWithException(e) }}
+		@ProfileUser fun sendToParentProfile(context: Context) {
+			try {
+				val intent = Intent(ACTION_SHUTTLE).putExtra(null, buildReverseShuttle(context))
+				CrossProfile(context).startActivityInParentProfile(intent.addFlags(SILENT_LAUNCH_FLAGS))
+			} catch (e: RuntimeException) { Log.e(TAG, "Error establishing shuttle to parent profile.", e) }
 		}
 
-		fun sendToAllUnlockedProfiles(context: Context) {
+		@OwnerUser fun sendToAllUnlockedProfiles(context: Context) {
 			check(Users.isOwner()) { "Must be called in owner user" }
-			context.getSystemService(UserManager::class.java)!!.userProfiles.dropWhile { it == Users.current() }.forEach {
-				sendToProfileIfUnlocked(context, it) }
+			context.getSystemService(UserManager::class.java)!!.userProfiles.forEach {
+				if (it != Users.current()) sendToProfileIfUnlocked(context, it) }
 		}
 
-		fun waitForProfileUnlockAndSend(context: Context): BroadcastReceiver {
-			return object: BroadcastReceiver() { override fun onReceive(context: Context, intent: Intent) {
-				val profile: UserHandle = intent.getParcelableExtra(Intent.EXTRA_USER) ?: return
-				sendToProfileIfUnlocked(context, profile)
-			}}.also { context.registerReceiver(it, IntentFilter(Intent.ACTION_MANAGED_PROFILE_UNLOCKED)) }
+		@OwnerUser private fun sendToProfileIfUnlocked(context: Context, profile: UserHandle) = GlobalScope.launch(Dispatchers.Main.immediate) {
+			val shuttle = load(context, profile)
+			if (shuttle != null) try {
+				return@launch shuttle.send(context, 0, Intent().putExtra(null, buildReverseShuttle(context))) }
+			catch (e: PendingIntent.CanceledException) {
+				Log.w(TAG, "Old shuttle (${Users.current().toId()} to ${profile.toId()}) is broken, rebuild now.") }
+
+			if (context.getSystemService(UserManager::class.java)!!.isUserUnlocked(profile))
+				sendToProfileByActivity(context, profile)
+			else Log.i(TAG, "$prefix Skip stopped or locked profile: ${profile.toId()}")
 		}
 
-		private fun sendToProfileIfUnlocked(context: Context, profile: UserHandle): Boolean {
-			if (! context.getSystemService(UserManager::class.java)!!.isUserUnlocked(profile))
-				return false.also { Log.i(TAG, "Skip stopped or locked user: $profile") }
-			return sendToProfile(context, profile)
+		@Deprecated("Not working") @OwnerUser
+		internal suspend fun <R> sendToProfileAndShuttle(context: Context, profile: UserHandle, procedure: Context.() -> R): R {
+			return suspendCoroutine { continuation ->
+				val resultReceiver = object : ResultReceiver(null) { override fun onReceiveResult(code: Int, data: Bundle?) {
+					continuation.resume(procedure, code, data) }}
+				sendToProfileByActivity(context, profile, buildInvocation(procedure, resultReceiver)) }
 		}
 
-		private fun sendToProfile(context: Context, profile: UserHandle): Boolean {
+		@OwnerUser @MainThread private fun sendToProfileByActivity(context: Context, profile: UserHandle, payload: Parcelable? = null): Boolean {
 			val la = context.getSystemService(LauncherApps::class.java)!!
 			la.getActivityList(context.packageName, profile).getOrNull(0)?.also {
-				la.startMainActivity(it.componentName, profile, null, buildActivityOptionsWithReverseShuttle(context))
-				Log.i(TAG, "Initializing shuttle to profile ${profile.toId()}...")
-				return true } ?: Log.e(TAG, "No launcher activity in profile user ${profile.toId()}")
+				la.startMainActivity(it.componentName, profile, null, buildActivityOptionsWithReverseShuttle(context, payload))
+				Log.i(TAG, "$prefix Establishing shuttle to profile ${profile.toId()}...")
+				return true } ?: Log.e(TAG, "No launcher activity in profile ${profile.toId()}")
 			return false
 		}
 
-		private fun buildReverseShuttle(context: Context)  // For use by other profile to shuttle back
+		private fun buildReverseShuttle(context: Context): PendingIntent    // For use by other profile to shuttle back
 				= PendingIntent.getBroadcast(context, Users.current().toId(),
 				Intent(context, PendingIntentShuttle::class.java), FLAG_UPDATE_CURRENT)
 
-		private fun buildActivityOptionsWithReverseShuttle(context: Context): Bundle
-				= ActivityOptions.makeSceneTransitionAnimation(context as? Activity ?: DummyActivity(context), View(context), "")
-				.apply { requestUsageTimeReport(buildReverseShuttle(context)) }.toBundle()
+		@MainThread private fun buildActivityOptionsWithReverseShuttle(context: Context, payload: Parcelable?): Bundle
+				= ActivityOptions.makeSceneTransitionAnimation(DummyActivity(context), View(context), "")
+				.apply { requestUsageTimeReport(buildReverseShuttle(context)); }.toBundle()
+				.apply { if (payload != null) putParcelable(KEY_RESULT_DATA, Intent().putExtra(null, payload)) }
 
-		@JvmStatic fun retrieveFromActivity(activity: Activity): PendingIntent? {
-			@SuppressLint("PrivateApi") val options = Activity::class.java.getDeclaredMethod("getActivityOptions")
-					.apply { isAccessible = true }.invoke(activity) as ActivityOptions?
-			return options?.toBundle()?.getParcelable<PendingIntent>(KEY_USAGE_TIME_REPORT)?.also { shuttle ->
-				save(activity, shuttle)
-				val reverseShuttle = buildReverseShuttle(activity)
-				shuttle.send(activity, 0, Intent().putExtra(null, reverseShuttle))
+		@JvmStatic fun collectFromActivity(activity: Activity): Boolean {
+			if (! collect(activity)) return false
+			return true
+		}
+
+		private fun collect(activity: Activity): Boolean {
+			if (Users.isOwner()) activity.intent.getParcelableExtra<PendingIntent>(null)?.also { shuttle ->
+				return true.also { saveAndReply(activity, shuttle) }}   // Payload can be carried to parent profile directly in Intent.
+			val bundle = Hacks.Activity_getActivityOptions?.invoke()?.on(activity)?.toBundle()
+			if (bundle == null) {
+				if (activity.callingActivity ?: CallerAwareActivity.getCallingPackage(activity) == Modules.MODULE_ENGINE)
+					return true.also { Log.w(TAG, "Abort caller due to possible shuttle interruption") }
+				return false.also { Log.v(TAG, "No options to inspect (referrer: ${activity.referrer}, activity: ${activity.callingActivity}, package: ${activity.callingPackage})") }
 			}
+			val shuttle = bundle.getParcelable<PendingIntent>(KEY_USAGE_TIME_REPORT)
+					?: return false.also { Log.d(TAG, "No shuttle to collect") }
+			if (UserHandles.getAppId(shuttle.creatorUid) != UserHandles.getAppId(Process.myUid()))
+				return false.also { Log.d(TAG, "Not a shuttle (created by ${shuttle.creatorPackage})") } // Not from us
+			Log.i(TAG, "$prefix Shuttle collected")
+
+			saveAndReply(activity, shuttle)
+
+			bundle.getParcelable<Intent>(KEY_RESULT_DATA)?.apply {
+				setExtrasClassLoader(Invocation::class.java.classLoader)    // To avoid "BadParcelableException: ClassNotFoundException when unmarshalling"
+			}?.getParcelableExtra<Invocation>(null)?.also { invocation ->
+				Log.i(TAG, "$prefix Closure collected")
+				invokeClosureAndSendResult(activity, invocation.closure, invocation.resultReceiver::send) }
+			return true
+		}
+
+		private fun saveAndReply(context: Context, shuttle: PendingIntent) {
+			save(context, shuttle)
+			Log.d(TAG, "$prefix Reply to ${UserHandles.getUserId(shuttle.creatorUid)}")
+			shuttle.send(context, 0, Intent().putExtra(null, buildReverseShuttle(context)))
 		}
 
 		/** Shuttle cannot be retrieved directly as its "user" is not current, so we wrap it within a local "locker" PendingIntent.*/
 		private fun save(context: Context, shuttle: PendingIntent) {
-			val user = shuttle.creatorUserHandle?.takeIf { it != Users.current() }
-					?: return Unit.also { Log.e(TAG, "Not a shuttle: $shuttle") }
-			val locker = PendingIntent.getBroadcast(context, user.toId(),
-					Intent(ACTION_SHUTTLE_LOCKER).setPackage("").putExtra(null, shuttle), FLAG_UPDATE_CURRENT)
-			context.getSystemService(AlarmManager::class.java)!!.set(AlarmManager.ELAPSED_REALTIME,
-					SystemClock.elapsedRealtime() + 365 * 24 * 3600_000L, locker)
+			val user = shuttle.creatorUserHandle?.takeIf { it != Users.current() }?.toId()
+					?: return Unit.also { Log.e(TAG, "$prefix Not a shuttle: $shuttle") }
+			Log.d(TAG, "$prefix Received shuttle from $user")
+			val pack = Intent(ACTION_SHUTTLE_LOCKER).setPackage("").putExtra(null, shuttle)
+			val locker = PendingIntent.getBroadcast(context, user, pack, FLAG_UPDATE_CURRENT)
+			context.getSystemService(AlarmManager::class.java)!!.apply {    // To keep it in memory after process death.
+				cancel(locker)
+				set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 365 * 24 * 3600_000L, locker) }
+//
+//			if (BuildConfig.DEBUG) NotificationIds.Debug.post(context, TAG) {
+//				setSmallIcon(R.drawable.ic_landscape_black_24dp).setContentTitle("Shuttle established for $user") }
 		}
 
 		internal suspend fun load(context: Context, profile: UserHandle): PendingIntent? {
@@ -149,16 +209,80 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		private fun getLocker(context: Context, profile: UserHandle)
 				= PendingIntent.getBroadcast(context, profile.toId(), Intent(ACTION_SHUTTLE_LOCKER).setPackage(""), FLAG_NO_CREATE)
 
+		private val prefix = "[" + Users.current().toId() + "]"
+
+		private const val ACTION_SHUTTLE = "com.oasisfeng.island.action.SHUTTLE"        // For ReceiverActivity
 		private const val ACTION_SHUTTLE_LOCKER = "SHUTTLE_LOCKER"
-		private const val KEY_USAGE_TIME_REPORT = "android:activity.usageTimeReport"
+		private const val KEY_USAGE_TIME_REPORT = "android:activity.usageTimeReport"    // From ActivityOptions
+		private const val KEY_RESULT_DATA = "android:activity.resultData"               // From ActivityOptions
+		private const val SILENT_LAUNCH_FLAGS = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+				Intent.FLAG_ACTIVITY_NO_ANIMATION or Intent.FLAG_ACTIVITY_NO_USER_ACTION or
+				Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or Intent.FLAG_ACTIVITY_NO_HISTORY
+
+		// Automatically generated fields for captured variables, by compiler (indeterminate order)
+		private fun extractVariablesFromFields(procedure: ClosureFunction)
+				= procedure.javaClass.getMemberFields().map { wrapIfNeeded(it.get(procedure)) }.toTypedArray()
 	}
 
-	class Invocation(internal val blockClass: Class<*>, internal val closure: Array<Any?>): Parcelable {
+	open class Closure(private val functionClass: Class<ClosureFunction>, private val variables: Array<Any?>,
+	                   val userId: Int = Users.current().toId()): Parcelable {
 
-		override fun writeToParcel(dest: Parcel, flags: Int) = dest.run { writeString(blockClass.name); writeArray(closure) }
+		internal fun invoke(context: Context): Any? {
+			val constructor = functionClass.declaredConstructors[0].apply { isAccessible = true }
+			val args: Array<Any?> = constructor.parameterTypes.map(::getDefaultValue).toTypedArray()
+			val variables = variables
+			@Suppress("UNCHECKED_CAST") val block = constructor.newInstance(* args) as ClosureFunction
+			block.javaClass.getMemberFields().forEachIndexed { index, field ->  // Constructor arguments do not matter, as all fields are replaced.
+				field.set(block, when (field.type) {
+					Context::class.java -> context
+					Closure::class.java -> (variables[index] as? Closure)?.invoke(context)
+					else -> variables[index] }) }
+			return block(context)
+		}
+
+		constructor(procedure: ClosureFunction): this(procedure.javaClass, extractVariablesFromFields(procedure)) {
+			val constructors = javaClass.declaredConstructors
+			require(constructors.isNotEmpty()) { "The method must have at least one constructor" }
+
+		}
+
+		private fun getDefaultValue(type: Class<*>)
+				= if (type.isPrimitive) java.lang.reflect.Array.get(java.lang.reflect.Array.newInstance(type, 1), 0) else null
+
+		override fun toString() = "Closure {${functionClass.name}}"
+
+		@Suppress("UNCHECKED_CAST") constructor(parcel: Parcel, classLoader: ClassLoader)
+				: this(classLoader.loadClass(parcel.readString()) as Class<ClosureFunction>, parcel.readArray(classLoader)!!, parcel.readInt())
+		override fun writeToParcel(dest: Parcel, flags: Int)
+				= dest.run { writeString(functionClass.name); writeArray(variables); writeInt(userId) }
 		override fun describeContents() = 0
-		constructor(parcel: Parcel, classLoader: ClassLoader)
-				: this(classLoader.loadClass(parcel.readString()), parcel.readArray(classLoader)!!)
+
+		companion object CREATOR : Parcelable.ClassLoaderCreator<Closure> {
+			override fun createFromParcel(parcel: Parcel, classLoader: ClassLoader) = Closure(parcel, classLoader)
+			override fun createFromParcel(parcel: Parcel) = Closure(parcel, Closure::class.java.classLoader!!)
+			override fun newArray(size: Int): Array<Closure?> = arrayOfNulls(size)
+		}
+	}
+
+	class Invocation: Parcelable {
+
+		internal val closure: Closure
+		internal val resultReceiver: ResultReceiver
+
+		constructor(closure: Closure, resultReceiver: ResultReceiver) {
+			this.closure = closure
+			this.resultReceiver = resultReceiver
+		}
+
+		constructor(parcel: Parcel, classLoader: ClassLoader) {
+			closure = Closure.createFromParcel(parcel, classLoader)
+			resultReceiver = ResultReceiver.CREATOR.createFromParcel(parcel)
+		}
+		override fun writeToParcel(dest: Parcel, flags: Int) {
+			closure.writeToParcel(dest, 0)
+			resultReceiver.writeToParcel(dest, 0)
+		}
+		override fun describeContents() = 0
 
 		companion object CREATOR : Parcelable.ClassLoaderCreator<Invocation> {
 			override fun createFromParcel(parcel: Parcel, classLoader: ClassLoader) = Invocation(parcel, classLoader)
@@ -167,25 +291,13 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		}
 	}
 
-	class StarterService: Service() {   // TODO: PersistentService is unavailable if owner user is not managed by Island.
+	class ReceiverActivity: Activity() {
 
-		override fun onCreate() {
-			if (! Users.isOwner())
-				return packageManager.setComponentEnabledSetting(ComponentName(this, javaClass),
-						PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
-			Log.i(TAG, "Initializing shuttles...")
-			sendToAllUnlockedProfiles(this)
-			mReceiver = waitForProfileUnlockAndSend(this)
+		override fun onCreate(savedInstanceState: Bundle?) {
+			super.onCreate(savedInstanceState)
+			finish()
+			collect(this)
 		}
-
-		override fun onDestroy() {
-			if (! Users.isOwner()) return
-			unregisterReceiver(mReceiver)
-		}
-
-		override fun onBind(intent: Intent?) = if (Users.isOwner()) Binder() else null
-
-		private lateinit var mReceiver: BroadcastReceiver
 	}
 
 	private class DummyActivity(context: Context): Activity() {
