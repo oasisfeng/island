@@ -409,9 +409,12 @@ public class DeleteNonRequiredAppsTask {
         PackageManager(final Context base) { super(base.getPackageManager()); mDevicePolicies = new DevicePolicies(base); }
 
         void deletePackageAsUser(String pkg, PackageDeleteObserver observer, int flags, int mUserId) {
+            // Hidden + suspended, to indicate a deleted system app.
 			mDevicePolicies.invoke(DevicePolicyManager::setApplicationHidden, pkg, true);
-            if (mDevicePolicies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) observer.packageDeleted(pkg, DELETE_SUCCEEDED);
-            else observer.packageDeleted(pkg, DELETE_FAILED_INTERNAL_ERROR);
+            if (mDevicePolicies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) {
+                mDevicePolicies.invoke(DevicePolicyManager::setPackagesSuspended, new String[] { pkg }, true);
+                observer.packageDeleted(pkg, DELETE_SUCCEEDED);
+            } else observer.packageDeleted(pkg, DELETE_FAILED_INTERNAL_ERROR);
         }
 
         PackageInfo getPackageInfoAsUser(final String pkg, @SuppressWarnings("SameParameterValue") final int flags, final int user) throws NameNotFoundException {
