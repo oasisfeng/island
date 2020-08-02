@@ -35,9 +35,9 @@ import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import static android.os.Build.VERSION.PREVIEW_SDK_INT;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O_MR1;
+import static android.os.Build.VERSION_CODES.P;
 
 /**
  * All reflection-based hacks should be defined here
@@ -86,7 +86,7 @@ public class Hacks {
 			DevicePolicyManager_getProfileOwner = Hack.into(DevicePolicyManager.class).method("getProfileOwner")
 			.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withoutParams();
 	static final Hack.HackedMethod1<ComponentName, DevicePolicyManager, IllegalArgumentException, Unchecked, Unchecked, Integer>
-			DevicePolicyManager_getProfileOwnerAsUser = Hack.onlyIf(! isAndroidQ()).into(DevicePolicyManager.class).method("getProfileOwnerAsUser")
+			DevicePolicyManager_getProfileOwnerAsUser = Hack.onlyIf(SDK_INT < P).into(DevicePolicyManager.class).method("getProfileOwnerAsUser")
 			.returning(ComponentName.class).fallbackReturning(null).throwing(IllegalArgumentException.class).withParam(int.class);
 	static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked>
 			DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
@@ -170,6 +170,4 @@ public class Hacks {
 		boolean removeUser(@UserIdInt int userHandle);
 	}
 	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
-
-	private static boolean isAndroidQ() { return SDK_INT > O_MR1 + 1/* P */|| (SDK_INT > O_MR1 && PREVIEW_SDK_INT > 0); }
 }

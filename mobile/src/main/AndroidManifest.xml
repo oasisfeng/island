@@ -59,7 +59,7 @@
                   android:exported="false"
                   android:multiprocess="true" />
 
-        <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true" tools:targetApi="N">
+        <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -74,7 +74,7 @@
         </receiver>
 
         <receiver android:name="com.oasisfeng.island.settings.IslandNameManager$NameInitializer"
-                  android:exported="false" android:directBootAware="true" tools:targetApi="N">
+                  android:exported="false" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.USER_INITIALIZE" />
             </intent-filter>

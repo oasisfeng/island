@@ -58,10 +58,10 @@ public class MainActivity extends FragmentActivity {
 			return;
 		}
 
-		if (! DevicePolicies.isProfileOwner(this, profile)) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
+		if (! DevicePolicies.isProfileOwner(this, profile)) {	// Profile without owner or not managed by us, probably caused by provision interruption before device-admin is activated.
 			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(this, profile);
 			if (owner == null) {
-				Log.w(TAG, "Not profile owner");
+				Log.w(TAG, "Cannot detect profile owner");
 				startMainUi(savedInstanceState);
 			} else if (! owner.isPresent()) {
 				Log.w(TAG, "Profile without owner");

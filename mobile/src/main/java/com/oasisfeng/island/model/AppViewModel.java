@@ -53,7 +53,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		if (Users.isOwner(app.user)) {
 			if (! exclusive) appendixes.append(", ").append(context.getString(R.string.status_appendix_cloned));
 		} else if (exclusive) appendixes.append(", ").append(context.getString(R.string.status_appendix_exclusive));
-		if (BuildConfig.DEBUG && app.isSuspended()) appendixes.append(", ").append("Suspended");     // TODO
+		if (BuildConfig.DEBUG && app.isSuspended()) appendixes.append(", suspended");     // TODO
 		if (appendixes.length() > 0) status.append(" (").append(appendixes.substring(2)).append(')');
 		return status;
 	}

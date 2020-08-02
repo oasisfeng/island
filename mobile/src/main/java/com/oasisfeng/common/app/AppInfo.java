@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.text.TextUtils;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
@@ -46,6 +47,7 @@ public class AppInfo extends ApplicationInfo {
 		if (last != null) {
 			mLastInfo = last;
 			last.mLastInfo = null;	// Only store the adjacent last.
+			if (TextUtils.equals(sourceDir, last.sourceDir)) mCachedIcon = last.mCachedIcon;    // Reuse icon if package source-dir is unchanged.
 		}
 	}
 

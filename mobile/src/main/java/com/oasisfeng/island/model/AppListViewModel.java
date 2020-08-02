@@ -219,8 +219,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final int num_profiles = Users.getProfilesManagedByIsland().size();
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 
-		final boolean system = app.isSystem(), installed = app.isInstalled(),
-				in_owner = Users.isOwner(app.user), is_managed = ! in_owner || mOwnerUserManaged;
+		final boolean system = app.isSystem(), installed = app.isInstalled(), in_owner = Users.isOwner(app.user),
+				is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
 		menu.findItem(R.id.menu_clone).setVisible(in_owner && num_profiles > 0 && (num_profiles > 1 || exclusive));
