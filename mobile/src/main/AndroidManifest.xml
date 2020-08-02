@@ -99,6 +99,13 @@
         <activity-alias android:name="com.oasisfeng.island.settings.IslandSettingsActivityInMainland"
                         android:targetActivity="com.oasisfeng.island.settings.IslandSettingsActivity" /> <!-- To avoid launcher icon in mainland -->
 
+        <receiver android:name="com.oasisfeng.island.settings.AppOpsPermissionsUnlock" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

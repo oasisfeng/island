@@ -7,7 +7,6 @@ import android.content.pm.ApplicationInfo.FLAG_SYSTEM
 import android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP
 import android.content.pm.PackageManager.GET_PERMISSIONS
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
-import android.os.AsyncTask
 import android.os.Build.VERSION_CODES.P
 import android.os.Process
 import android.widget.Toast
@@ -17,7 +16,6 @@ import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.util.Apps
 import com.oasisfeng.android.util.SafeAsyncTask
 import com.oasisfeng.island.appops.AppOpsHelper
-import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.data.helper.hidden
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.util.Hacks
@@ -38,19 +36,12 @@ import com.oasisfeng.island.util.Hacks
 	private fun show(apps: List<AppInfoWithOps>, prompt: Int) {
 		val checkedItems = BooleanArray(apps.size) { i -> ! apps[i].mRevoked }
 		Dialogs.buildCheckList(activity, activity.getString(prompt), apps.map { it.mLabel }.toTypedArray(), checkedItems) { _, which, checked ->
-			apps[which].also { if (checked) it.restore() else it.revoke() }
+			apps[which].also { if (checked) it.resetToDefault() else it.revoke() }
 		}.setNeutralButton(R.string.action_revoke_all) { _, _ ->
 			Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.prompt_appops_revoke_for_all_users_apps)
 					.withOkButton { apps.forEach { if (! it.mSystem) it.revoke() } }
 					.withCancelButton().show()
-		}.setPositiveButton(R.string.action_done) { _,_ -> AsyncTask.execute {
-			syncPermissionsLockedStateForApps(op, apps.map { it.pkg }) }    // To migrate legacy ops without permission lock
-		}.show()
-	}
-
-	private fun syncPermissionsLockedStateForApps(op: Int, pkgs: List<String>) {
-		mAppOps.getPackageOps(op).forEach { (pkg, pkgOps) ->
-			if (pkg in pkgs) mAppOps.syncPermissionLockedState(pkg, op, pkgOps.ops?.getOrNull(0)?.mode ?: return@forEach) }
+		}.setPositiveButton(R.string.action_done, null).show()
 	}
 
 	/** Revoked first, granted & denied first (unused last), system apps last (user apps first), then by label */
@@ -79,8 +70,8 @@ import com.oasisfeng.island.util.Hacks
 
 	private inner class AppInfoWithOps(private val info: ApplicationInfo, val mGranted: Boolean) {
 
-		fun revoke() = mAppOps.revokeAndLockPermission(pkg, op, info.uid).showToastIfFalse()
-		fun restore() = mAppOps.restoreAndUnlockPermission(pkg, op, info.uid).showToastIfFalse()
+		fun revoke() = mAppOps.setMode(pkg, op, AppOpsManager.MODE_IGNORED, info.uid).showToastIfFalse()
+		fun resetToDefault() = mAppOps.resetToDefault(pkg, op, info.uid).showToastIfFalse()
 
 		private fun Boolean.showToastIfFalse() {
 			if (! this) Toast.makeText(activity, R.string.prompt_operation_failure_due_to_incompatibility, Toast.LENGTH_LONG).show()
@@ -117,5 +108,3 @@ import com.oasisfeng.island.util.Hacks
 				= pkgOps.ops?.getOrNull(0)?.mode ?: AppOpsManager.MODE_ALLOWED != AppOpsManager.MODE_ALLOWED
 	}
 }
-
-private const val TAG = "Island.OM"
