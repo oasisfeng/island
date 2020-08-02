@@ -75,12 +75,12 @@ public enum NotificationIds {
 		service.startForeground(id(), buildChannel(service, notification).build());
 	}
 
-	private Notification.Builder buildChannel(final Context context, final Notification.Builder notification) {
+	Notification.Builder buildChannel(final Context context, final Notification.Builder notification) {
 		if (SDK_INT < O) return notification;
 		return notification.setChannelId(channel.createAndGetId(context));
 	}
 
-	private int id() { return id != 0 ? id : ordinal() + 1; }		// 0 is reserved
+	int id() { return id != 0 ? id : ordinal() + 1; }		// 0 is reserved
 
 	public Intent buildChannelSettingsIntent(final Context context) {
 		if (SDK_INT >= O) channel.createAndGetId(context);

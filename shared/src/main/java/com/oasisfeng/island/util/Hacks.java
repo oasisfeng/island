@@ -10,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.os.Environment;
 import android.os.IBinder;
@@ -169,5 +170,10 @@ public class Hacks {
 		@RequiresPermission("android.permission.MANAGE_USERS") List<UserInfo> getUsers();
 		boolean removeUser(@UserIdInt int userHandle);
 	}
+
+	@Keep public interface PackageManagerHack extends Hack.Mirror<PackageManager> {
+		ComponentName getHomeActivities(List<ResolveInfo> outActivities);
+	}
+
 	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
 }
