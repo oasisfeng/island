@@ -172,8 +172,13 @@ class IslandSettingsActivity: Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (PendingIntentShuttle.collectFromActivity(this)) return finish()
-
+        setTheme(R.style.AppTheme_Settings)
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setVisible(true)    // Required due to "Theme.NoDisplay" being used for PendingIntentShuttle.
     }
 
     class Enabler: BroadcastReceiver() {    // One-time enabler for
@@ -189,5 +194,3 @@ class IslandSettingsActivity: Activity() {
 }
 
 private const val REQUEST_DEVICE_OWNER_ACTIVATION = 1
-
-private const val TAG = "Island.SA"

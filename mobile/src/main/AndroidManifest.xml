@@ -88,7 +88,7 @@
         <activity android:name="com.oasisfeng.island.settings.IslandSettingsActivity"
                   android:directBootAware="true"
                   android:label="@string/label_activity_island_settings"
-                  android:theme="@style/AppTheme.Settings"
+                  android:theme="@android:style/Theme.NoDisplay"
                   android:enabled="false"> <!-- Enabled explicitly by IslandSettingsActivity$Enabler, "directBootAware" to receive PendingIntentShuttle in user-locked state -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
