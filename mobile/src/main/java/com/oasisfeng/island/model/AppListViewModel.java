@@ -283,11 +283,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
-			IslandAppControl.unfreeze(this, app).exceptionally(t -> {
-				reportAndShowToastForInternalException(context, "Error unfreezing app: " + app.packageName, t);
-				return false;
-			}).thenAccept(result -> {
-				if (! result) return;
+			IslandAppControl.unfreeze(this, app).thenAccept(result -> {
+				if (result == null || ! result) return;
 				refreshAppStateAsSysBugWorkaround(context, app);
 				clearSelection();
 			});
@@ -332,7 +329,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
 			IslandAppControl.unfreezeInitiallyFrozenSystemApp(this, app).thenAccept(unfrozen -> {
 				if (unfrozen) Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-			}).exceptionally(t -> { reportAndShowToastForInternalException(context, "Error unfreezing app: " + pkg, t); return null; });
+			});
 		} else if (target != null && target.isInstalled() && ! target.enabled) {	// Disabled system app is shown as "removed" (not cloned)
 			IslandAppControl.launchSystemAppSettings(this, target);
 			Toast.makeText(context, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show();
@@ -419,11 +416,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	@SuppressWarnings("MethodMayBeStatic") public final void onBottomSheetClick(final View view) {
 		final BottomSheetBehavior<View> bottom_sheet = BottomSheetBehavior.from(view);
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
-	}
-
-	private static void reportAndShowToastForInternalException(final Context context, final String log, final Throwable t) {
-		Analytics.$().logAndReport(TAG, log, t);
-		Toast.makeText(context, "Internal error: " + t.getMessage(), Toast.LENGTH_LONG).show();
 	}
 
 	@Override public @NonNull String getTag() { return TAG; }

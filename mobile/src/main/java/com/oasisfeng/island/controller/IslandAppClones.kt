@@ -67,7 +67,7 @@ object IslandAppClones {
 		if (source.isSystem) {
 			analytics().event("clone_sys").with(Analytics.Param.ITEM_ID, pkg).send()
 
-			val enabled = Shuttle(context, to = target).invoke { DevicePolicies(this).enableSystemApp(pkg) }
+			val enabled = Shuttle(context, to = target).invoke { DevicePolicies(this).enableSystemApp(pkg) } ?: return
 
 			if (enabled) Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, source.label), Toast.LENGTH_SHORT).show()
 			else Toast.makeText(context, context.getString(R.string.toast_cannot_clone, source.label), Toast.LENGTH_LONG).show()

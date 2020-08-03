@@ -11,6 +11,8 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Apps;
@@ -55,7 +57,8 @@ public class IslandManager {
 		return state == hidden;
 	}
 
-	@OwnerUser @ProfileUser public static String ensureAppFreeToLaunch(final Context context, final String pkg) {
+	/** @return error information, or empty string for success. */
+	@OwnerUser @ProfileUser public static @NonNull String ensureAppFreeToLaunch(final Context context, final String pkg) {
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (policies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) {		// Hidden or not installed
 			if (! policies.setApplicationHidden(pkg, false))
@@ -65,7 +68,7 @@ public class IslandManager {
 			if (policies.isPackageSuspended(pkg))
 				policies.invoke(DevicePolicyManager::setPackagesSuspended, new String[] { pkg }, false);
 		} catch (final PackageManager.NameNotFoundException ignored) { return "not_found"; }
-		return null;
+		return "";
 	}
 
 	@OwnerUser public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {

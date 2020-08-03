@@ -144,7 +144,7 @@ class ApiDispatcher {
 		if ("package".equals(scheme)) {
 			final String pkg = uri.getSchemeSpecificPart();
 			final String free_to_launch = IslandManager.ensureAppFreeToLaunch(context, pkg);
-			if (free_to_launch != null) return free_to_launch;
+			if (! free_to_launch.isEmpty()) return free_to_launch;
 			return IslandManager.launchApp(context, pkg, Process.myUserHandle()) ? null : "no_launcher_activity";
 		}
 
