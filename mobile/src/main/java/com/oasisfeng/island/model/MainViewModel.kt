@@ -2,19 +2,18 @@ package com.oasisfeng.island.model
 
 import android.app.Application
 import android.content.Context
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.N_MR1
 import android.os.UserHandle
-import android.os.UserManager
-import androidx.core.content.getSystemService
+import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import com.google.android.material.tabs.TabLayout
 import com.oasisfeng.island.data.LiveProfileStates
+import com.oasisfeng.island.data.LiveProfileStates.ProfileState
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.settings.IslandNameManager
 import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.toId
 
 class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel(app, state) {
 
@@ -34,17 +33,18 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)
-			mProfileStates.get(profile).observe(activity, Observer { updateTabIconForProfileState(activity, tab, profile) })
+			mProfileStates.get(profile).observe(activity, Observer { updateTabIconForProfileState(activity, tab, profile, it) })
 			tabs.addTab(tab,/* selected = */profile == currentProfile) }
 
 		if (tabs.tabCount > 3) tabs.tabMode = TabLayout.MODE_SCROLLABLE
 	}
 }
 
-private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, profile: UserHandle) {
-	val active = context.getSystemService<UserManager>()!!.run {
-		if (SDK_INT >= N_MR1) isUserRunning(profile) else ! isQuietModeEnabled(profile) }
+private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, profile: UserHandle, state: ProfileState) {
+	Log.d(TAG, "Update tab icon for profile ${profile.toId()}: $state")
 	val icon = context.getDrawable(R.drawable.ic_island_black_24dp)!!
-	icon.setTint(context.getColor(if (active) R.color.state_alive else R.color.state_frozen))
+	icon.setTint(context.getColor(if (state == ProfileState.UNAVAILABLE) R.color.state_frozen else R.color.state_alive))
 	tab.icon = context.packageManager.getUserBadgedIcon(icon, profile)
 }
+
+private const val TAG = "Island.MVM"
