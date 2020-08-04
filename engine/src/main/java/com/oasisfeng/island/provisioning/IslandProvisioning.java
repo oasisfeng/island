@@ -31,7 +31,6 @@ import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.SafeAsyncTask;
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
@@ -52,6 +51,7 @@ import com.oasisfeng.island.util.Users;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.Notification.PRIORITY_HIGH;

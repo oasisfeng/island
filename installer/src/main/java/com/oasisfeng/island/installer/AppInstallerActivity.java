@@ -39,7 +39,6 @@ import androidx.annotation.RequiresApi;
 
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
@@ -64,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;

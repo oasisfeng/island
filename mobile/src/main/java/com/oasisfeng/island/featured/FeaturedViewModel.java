@@ -4,10 +4,10 @@ import android.app.Application;
 import android.graphics.drawable.Drawable;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
-import com.oasisfeng.android.util.Consumer;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

@@ -22,7 +22,6 @@ import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.android.util.Consumer;
 import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.Config;
@@ -46,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 

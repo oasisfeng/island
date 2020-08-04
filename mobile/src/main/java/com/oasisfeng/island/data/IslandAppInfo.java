@@ -8,7 +8,6 @@ import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
@@ -17,6 +16,7 @@ import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.content.Intent.ACTION_MAIN;

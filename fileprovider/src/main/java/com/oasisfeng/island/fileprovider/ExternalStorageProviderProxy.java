@@ -29,7 +29,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.pattern.PseudoContentProvider;
@@ -41,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.content.Context.CONTEXT_IGNORE_SECURITY;

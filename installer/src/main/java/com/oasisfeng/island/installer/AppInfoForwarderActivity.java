@@ -19,7 +19,6 @@ import androidx.annotation.Nullable;
 import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.shuttle.ActivityShuttle;
 import com.oasisfeng.island.shuttle.Shuttle;
@@ -29,6 +28,7 @@ import com.oasisfeng.island.util.Users;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import kotlin.Unit;
 import kotlinx.coroutines.GlobalScope;
