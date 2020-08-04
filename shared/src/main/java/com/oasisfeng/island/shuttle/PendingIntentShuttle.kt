@@ -271,8 +271,8 @@ class PendingIntentShuttle: BroadcastReceiver() {
 
 		override fun toString() = "Closure {${functionClass.name}}"
 
-		@Suppress("UNCHECKED_CAST") constructor(parcel: Parcel, classLoader: ClassLoader)
-				: this(classLoader.loadClass(parcel.readString()) as Class<ClosureFunction>, parcel.readArray(classLoader)!!, parcel.readInt())
+		@Suppress("UNCHECKED_CAST") constructor(parcel: Parcel, cl: ClassLoader)
+				: this(cl.loadClass(parcel.readString()) as Class<CtxFun<*>>, parcel.readArray(cl)!!, parcel.readInt())
 		override fun writeToParcel(dest: Parcel, flags: Int)
 				= dest.run { writeString(functionClass.name); writeArray(variables); writeInt(userId) }
 		override fun describeContents() = 0

@@ -32,8 +32,8 @@ object IslandNameManager {
 		else -> context.getString(R.string.default_island_name, profileId)
 	}
 
-	@ProfileUser fun syncNameToOwnerUser(context: Context, name: String) = GlobalScope.launch { // TODO: syncNameToParentProfile() with proper "parent".
-		Shuttle(context, to = Users.owner).invoke(with = Users.current()) { saveProfileName(this, it, name) }}
+	@ProfileUser fun syncNameToOwnerUser(context: Context, name: String)    // TODO: syncNameToParentProfile() with proper "parent".
+			= Shuttle(context, to = Users.owner).launch(at = GlobalScope, with = Users.current()) { saveProfileName(this, it, name) }
 
 	@OwnerUser private fun saveProfileName(context: Context, profile: UserHandle, name: String)
 			= getStore(context).edit().putString(buildIslandNameKey(context, profile.toId()), name).apply()

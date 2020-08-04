@@ -33,6 +33,7 @@ import java.util.function.BiFunction;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.Q;
 import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 /**
@@ -55,6 +56,7 @@ public class DevicePolicies {
 	}
 
 	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final UserHandle profile) {
+		if (SDK_INT >= Q) return null;
 		if (SDK_INT < P) return getProfileOwnerAsUser(context, UserHandles.getIdentifier(profile));
 		if (Hacks.DevicePolicyManager_getProfileOwner.isAbsent()) return null;
 		try {

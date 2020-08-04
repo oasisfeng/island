@@ -25,6 +25,7 @@ import java.lang.RuntimeException
 @RequiresApi(O) class IslandPersistentService: DeviceAdminService() {       // TODO: Fallback to foreground service for unmanaged user.
 
     override fun onCreate() {
+        Log.d(TAG, "Initializing persistent services...")
         Looper.getMainLooper().queue.addIdleHandler { false.also { bindPersistentServices() }}
     }
 
