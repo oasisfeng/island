@@ -74,4 +74,5 @@ class DelegationManager(policies: DevicePolicies) {
 
 private fun DevicePolicies.getApplicationRestrictions(pkg: String) = invoke(DevicePolicyManager::getApplicationRestrictions, pkg)
 private fun getDelegationsFromRestrictions(restrictions: Bundle) = restrictions.getStringArray(ApiConstants.TYPE_DELEGATION)
-private fun isDelegationSupportedByAndroid(delegation: String): Boolean = SDK_INT >= O && delegation == ApiConstants.DELEGATION_PACKAGE_ACCESS
+private fun isDelegationSupportedByAndroid(delegation: String): Boolean = SDK_INT >= O
+        && (delegation == ApiConstants.DELEGATION_PACKAGE_ACCESS || delegation == ApiConstants.DELEGATION_PERMISSION_GRANT)

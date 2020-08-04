@@ -5,5 +5,6 @@
     <string name="notification_delegated_scope_auth_text">允许其（在任何时候）%s</string>
     <string name="action_authorize">同意</string>
     <string name="label_delegation_package_access">冻结及解冻应用</string>
+    <string name="label_delegation_permission_grant">控制应用的运行期权限（包括 锁定）</string>
     <string name="label_delegation_app_ops">管理应用的权限限制 (App Ops)</string>
 </resources>

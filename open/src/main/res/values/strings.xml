@@ -5,5 +5,6 @@
     <string name="notification_delegated_scope_auth_text">Allow it to %s, at any time?</string>
     <string name="action_authorize">Authorize</string>
     <string name="label_delegation_package_access">freeze and unfreeze apps</string>
+    <string name="label_delegation_permission_grant">control runtime permission for apps (include locking)</string>
     <string name="label_delegation_app_ops">manage app ops (permission restrictions)</string>
 </resources>

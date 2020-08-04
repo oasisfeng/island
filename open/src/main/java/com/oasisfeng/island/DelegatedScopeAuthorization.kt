@@ -99,6 +99,7 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
     private fun getSupportedDelegatedScope(delegation: String): Pair<String, Int>? {
         return delegation to when (delegation) {
             ApiConstants.DELEGATION_PACKAGE_ACCESS ->   R.string.label_delegation_package_access
+            ApiConstants.DELEGATION_PERMISSION_GRANT -> R.string.label_delegation_permission_grant
             ApiConstants.DELEGATION_APP_OPS ->          R.string.label_delegation_app_ops
             else -> return null
         }
