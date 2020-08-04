@@ -21,6 +21,7 @@ import android.os.UserManager;
 import android.print.PrintManager;
 import android.util.Log;
 
+import androidx.annotation.IntDef;
 import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
@@ -32,6 +33,8 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
 
 import java.io.File;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -136,13 +139,21 @@ public class Hacks {
 
 	@Keep @ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 
-		@Keep interface PackageOps extends Hack.Mirror {
+		@Retention(RetentionPolicy.SOURCE) @IntDef(flag = true, value = {
+				android.app.AppOpsManager.MODE_ALLOWED,
+				android.app.AppOpsManager.MODE_IGNORED,
+				android.app.AppOpsManager.MODE_ERRORED,
+				android.app.AppOpsManager.MODE_DEFAULT,
+				android.app.AppOpsManager.MODE_FOREGROUND
+		}) @interface Mode {}
+
+		@Keep interface PackageOps extends Hack.Mirror<Object> {
 			String getPackageName();
 			int getUid();
 			List<OpEntry> getOps();
 		}
 
-		@Keep interface OpEntry extends Hack.Mirror {
+		@Keep interface OpEntry extends Hack.Mirror<Object> {
 			int getOp();
 			int getMode();
 		}
@@ -150,10 +161,13 @@ public class Hacks {
 		@Hack.Fallback(-1) int checkOpNoThrow(int op, int uid, String pkg);
 		@Nullable List<PackageOps> getOpsForPackage(int uid, String pkg, @Nullable int[] ops);
 		@Nullable List<PackageOps> getPackagesForOps(@Nullable int[] ops);
-		void setMode(int code, int uid, String packageName, int mode);
+		void setMode(int code, int uid, String packageName, @Mode int mode);
+		void setUidMode(String appOp, int uid, @Mode int mode);
+		void setRestriction(int code,/* @AttributeUsage */int usage, @Mode int mode, @Nullable String[] exceptionPackages);
+		void resetAllModes();
 
 		/** Retrieve the default mode for the operation. */
-		@Hack.Fallback(-1) int opToDefaultMode(final int op);
+		@Hack.Fallback(-1) @Mode int opToDefaultMode(final int op);
 		/** Retrieve the permission associated with an operation, or null if there is not one. */
 		@Nullable String opToPermission(int op);
 	}

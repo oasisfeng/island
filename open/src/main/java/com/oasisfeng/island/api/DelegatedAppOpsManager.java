@@ -9,6 +9,9 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.hack.Hack;
@@ -21,9 +24,6 @@ import com.oasisfeng.island.util.Users;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import static android.content.Context.APP_OPS_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
@@ -43,12 +43,16 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 
 	private DelegatedAppOpsManager(final Context context) throws ReflectiveOperationException {
 		mBinderProxy = sHelper.inject(this, context, APP_OPS_SERVICE, (c, delegate) -> new AppOpsBinderProxy(c, DELEGATION_APP_OPS, delegate));
-
-		// Whiltelist supported APIs by invoking them (with dummy arguments) before seal().
 		final Hacks.AppOpsManager aom = Hack.into(this).with(Hacks.AppOpsManager.class);
-		aom.setMode(0, 0, "a.b.c", 0);
+
+		// Supported APIs. (not the following but the indirectly invoked APIs on IAppOpsService)
+		aom.setMode(0, 0, "a.b.c", 0);  // Must be the first one. See AppOpsBinderProxy.onTransact() below.
+		aom.setUidMode(AppOpsManager.OPSTR_CAMERA, 0, 0);
 		aom.getOpsForPackage(0, "a.b.c", new int[]{ 0 });
 		aom.getPackagesForOps(new int[]{ 0 });
+		aom.setRestriction(0, 0, 0, null);
+		aom.resetAllModes();
+
 		mBinderProxy.seal();
 	}
 
@@ -56,7 +60,7 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 
 	private static final DerivedManagerHelper<AppOpsManager> sHelper = new DerivedManagerHelper<>(AppOpsManager.class);
 
-	private class AppOpsBinderProxy extends RestrictedBinderProxy {
+	private static class AppOpsBinderProxy extends RestrictedBinderProxy {
 
 		@Override protected boolean onTransact(final int code, @NonNull final Parcel data, @Nullable final Parcel reply, final int flags) throws RemoteException {
 			if (! isSealed() && mCodeSetMode == - 1) mCodeSetMode = code;
@@ -64,7 +68,11 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 		}
 
 		@Override protected boolean doTransact(final int code, final Parcel data, final Parcel reply, final int flags) throws RemoteException {
-			if (code != mCodeSetMode) return super.doTransact(code, data, reply, flags);
+			if (code == mCodeSetMode) return setMode(data);
+			else return super.doTransact(code, data, reply, flags);
+		}
+
+		protected boolean setMode(final Parcel data) throws RemoteException {
 			if (SDK_INT < P) throw new SecurityException("Island has no privilege to setMode() before Android P.");
 
 			data.enforceInterface(DESCRIPTOR);
