@@ -311,6 +311,16 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		}
 	}
 
+	@RequiresApi(O) class Initializer: Service() {  // Only supported on Android O+ (see IslandPersistentService in module "engine")
+
+		override fun onCreate() {
+			if (Users.isOwner()) sendToAllUnlockedProfiles(this)
+			else sendToParentProfileByActivityIfNotYet(this)
+		}
+
+		override fun onBind(intent: Intent?): IBinder? = null   // Return null to stop running
+	}
+
 	class ReceiverActivity: Activity() {
 
 		override fun onCreate(savedInstanceState: Bundle?) {

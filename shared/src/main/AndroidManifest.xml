@@ -34,6 +34,12 @@
             </intent-filter>
         </activity>
 
+        <service android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$Initializer" android:exported="false">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.PersistentService" />
+            </intent-filter>
+        </service>
+
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"
                   android:authorities="${applicationId}.firebaseinitprovider"
