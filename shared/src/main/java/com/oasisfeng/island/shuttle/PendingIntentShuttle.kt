@@ -40,25 +40,25 @@ class PendingIntentShuttle: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
 		if (intent.action.let { it == Intent.ACTION_LOCKED_BOOT_COMPLETED || it == Intent.ACTION_MY_PACKAGE_REPLACED}) {
-			Log.d(TAG, "$prefix Initiated by $intent")
+			Log.d(TAG, "Initiated by $intent")
 			if (Users.isOwner()) sendToAllUnlockedProfiles(context)
 			else sendToParentProfileByActivityIfNotYet(context)
 			return }    // We cannot initiate shuttle sending from to owner user on Android 8+, due to visibility restriction.
 		if (intent.getLongExtra(ActivityOptions.EXTRA_USAGE_TIME_REPORT, -1) >= 0) {
 			intent.getParcelableExtra<Bundle>(ActivityOptions.EXTRA_USAGE_TIME_REPORT_PACKAGES)?.apply {
-				Log.d(TAG, "Callee report: ${keySet().joinToString()}") }
+				Log.v(TAG, "Callee report: ${keySet().joinToString()}") }
 			return
 		}
 
 		when(val payload = intent.getParcelableExtra<Parcelable>(null)) {
 			is Closure -> {
-				Log.d(TAG, "$prefix Invoke closure from ${payload.userId}")
+				Log.d(TAG, "Invoke closure from ${payload.userId}")
 				try { invokeClosureAndSendResult(context, payload) { code, extras -> setResult(code, null, extras) }}
-				catch (t: Throwable) { Log.w(TAG, "$prefix Error invoking $payload", t) }}
+				catch (t: Throwable) { Log.w(TAG, "Error invoking $payload", t) }}
 			is PendingIntent -> {
 				require(payload.creatorPackage == context.packageName)
 				save(context, payload) }
-			else -> Log.e(TAG, "$prefix Invalid payload type: ${payload.javaClass}") }
+			else -> Log.e(TAG, "Invalid payload type: ${payload.javaClass}") }
 	}
 
 	companion object {
@@ -75,7 +75,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 					else -> throw UnsupportedOperationException("Return type is not yet supported: ${result.javaClass}") }}) }
 			catch (e: Throwable) {
 				sendResult?.invoke(RESULT_FIRST_USER, Bundle().apply { putSerializable(null, e) })
-						?: Log.e(TAG, "$prefix Error executing $closure") }
+						?: Log.e(TAG, "Error executing $closure") }
 		}
 
 		private fun <R> buildInvocation(procedure: CtxFun<R>, resultReceiver: ResultReceiver)
@@ -122,7 +122,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 
 			if (context.getSystemService(UserManager::class.java)!!.isUserUnlocked(profile))
 				sendToProfileByActivity(context, profile)
-			else Log.i(TAG, "$prefix Skip stopped or locked profile: ${profile.toId()}")
+			else Log.i(TAG, "Skip stopped or locked profile: ${profile.toId()}")
 		}
 
 		@OwnerUser internal suspend fun <R> sendToProfileAndShuttle(context: Context, profile: UserHandle, procedure: CtxFun<R>): R? {
@@ -166,7 +166,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 			val la = context.getSystemService(LauncherApps::class.java)!!
 			la.getActivityList(context.packageName, profile).getOrNull(0)?.also {
 				la.startMainActivity(it.componentName, profile, null, activityOptions)
-				Log.i(TAG, "$prefix Establishing shuttle to profile ${profile.toId()}...")
+				Log.i(TAG, "Establishing shuttle to profile ${profile.toId()}...")
 				return true } ?: Log.e(TAG, "No launcher activity in profile ${profile.toId()}")
 			return false
 		}
@@ -193,21 +193,21 @@ class PendingIntentShuttle: BroadcastReceiver() {
 					?: return false.also { Log.d(TAG, "No shuttle to collect") }
 			if (UserHandles.getAppId(shuttle.creatorUid) != UserHandles.getAppId(Process.myUid()))
 				return false.also { Log.d(TAG, "Not a shuttle (created by ${shuttle.creatorPackage})") } // Not from us
-			Log.i(TAG, "$prefix Shuttle collected")
+			Log.i(TAG, "Shuttle collected")
 
 			saveAndReply(activity, shuttle)
 
 			bundle.getParcelable<Intent>(KEY_RESULT_DATA)?.apply {
 				setExtrasClassLoader(Invocation::class.java.classLoader)    // To avoid "BadParcelableException: ClassNotFoundException when unmarshalling"
 			}?.getParcelableExtra<Invocation>(null)?.also { invocation ->
-				Log.i(TAG, "$prefix Closure collected")
+				Log.i(TAG, "Closure collected")
 				invokeClosureAndSendResult(activity, invocation.closure, invocation.resultReceiver::send) }
 			return true
 		}
 
 		private fun saveAndReply(context: Context, shuttle: PendingIntent) {
 			save(context, shuttle)
-			Log.d(TAG, "$prefix Reply to ${UserHandles.getUserId(shuttle.creatorUid)}")
+			Log.d(TAG, "Reply to ${UserHandles.getUserId(shuttle.creatorUid)}")
 			shuttle.send(context, 0, Intent().putExtra(null, buildReverseShuttle(context)))
 		}
 
@@ -233,8 +233,6 @@ class PendingIntentShuttle: BroadcastReceiver() {
 
 		private fun buildLockerIntent(context: Context)     // No receiver at present, just set to our package for faster delivery
 				= Intent(ACTION_SHUTTLE_LOCKER).setPackage(context.packageName)
-
-		private val prefix = "[" + Users.current().toId() + "]"
 
 		private const val ACTION_SHUTTLE = "com.oasisfeng.island.action.SHUTTLE"        // For ReceiverActivity
 		private const val ACTION_SHUTTLE_LOCKER = "SHUTTLE_LOCKER"
@@ -389,6 +387,18 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		override fun setChildInt(featureId: Int, value: Int) {}
 		override fun takeSurface(callback: SurfaceHolder.Callback2?) {}
 		override fun openPanel(featureId: Int, event: KeyEvent?) {}
+	}
+
+	@Suppress("NOTHING_TO_INLINE") object Log {
+		inline fun v(tag: String, message: String) { android.util.Log.v(tag, prefix + message) }
+		inline fun d(tag: String, message: String) { android.util.Log.d(tag, prefix + message) }
+		inline fun i(tag: String, message: String) { android.util.Log.i(tag, prefix + message) }
+		inline fun w(tag: String, message: String, t: Throwable? = null) {
+			if (t != null) android.util.Log.w(tag, prefix + message, t) else android.util.Log.w(tag, prefix + message) }
+		inline fun e(tag: String, message: String, t: Throwable? = null) {
+			if (t != null) android.util.Log.e(tag, prefix + message, t) else android.util.Log.e(tag, prefix + message) }
+
+		val prefix = "[" + Users.current().toId() + "] "
 	}
 }
 
