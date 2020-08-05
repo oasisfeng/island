@@ -1,6 +1,7 @@
 package com.oasisfeng.island.settings;
 
 import android.app.ActionBar;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
@@ -28,6 +29,7 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
+import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
@@ -36,6 +38,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import kotlin.Unit;
+import kotlinx.coroutines.GlobalScope;
+
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
 import static java.util.Objects.requireNonNull;
@@ -136,16 +143,22 @@ import static java.util.Objects.requireNonNull;
 		}).show();
 	}
 
-	private void launchSettingsActivityAsUser(final UserHandle user) {
-		final LauncherApps la = requireNonNull((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE));
-		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), user);
-		if (! activities.isEmpty()) {
-			for (final LauncherActivityInfo activity : activities)
-				if (IslandSettingsActivity.class.getName().equals(activity.getComponentName().getClassName())) {
-					la.startMainActivity(activity.getComponentName(), activity.getUser(), null, null);
-					break;
-				}
-		} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+	private void launchSettingsActivityAsUser(final UserHandle profile) {
+		final LauncherApps la = requireNonNull(getSystemService(LauncherApps.class));
+		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), profile);
+		if (activities.isEmpty()) {
+			Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+			return;
+		}
+		for (final LauncherActivityInfo activity : activities)
+			if (IslandSettingsActivity.class.getName().equals(activity.getComponentName().getClassName())) {
+				final ComponentName component = activity.getComponentName();
+				new Shuttle(this, profile).launch(GlobalScope.INSTANCE, context -> {
+					context.startActivity(new Intent().setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_NO_ANIMATION));
+					return Unit.INSTANCE;
+				});
+				break;
+			}
 	}
 
 	/** This method stops fragment injection in malicious applications. Make sure to deny any unknown fragments here. */

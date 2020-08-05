@@ -171,7 +171,7 @@ class IslandSettingsActivity: Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (PendingIntentShuttle.collect(this)) return finish()
+        if (intent.action != null && PendingIntentShuttle.collect(this)) return finish()    // Allow explicit launch intent without action
         setTheme(R.style.AppTheme_Settings)
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
@@ -179,6 +179,11 @@ class IslandSettingsActivity: Activity() {
     override fun onResume() {
         super.onResume()
         setVisible(true)    // Required due to "Theme.NoDisplay" being used for PendingIntentShuttle.
+    }
+
+    override fun finish() {
+        super.finish()
+        if (intent.flags and Intent.FLAG_ACTIVITY_NO_ANIMATION != 0) overridePendingTransition(0, 0)
     }
 
     class Enabler: BroadcastReceiver() {    // One-time enabler for
