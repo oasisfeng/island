@@ -12,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
-import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.RemoteException;
@@ -32,7 +31,6 @@ import com.oasisfeng.hack.Hack.Unchecked;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.shared.BuildConfig;
 
-import java.io.File;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
@@ -117,9 +115,6 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
 			IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 			.returning(String.class).throwing(RemoteException.class).withoutParams();
-	public static final @Nullable Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked>
-			Environment_getDataSystemDirectory = Hack.into(Environment.class).staticMethod("getDataSystemDirectory")
-			.returning(File.class).withoutParams();
 	public static final @Nullable Hack.HackedMethod0<AssetManager, Void, Unchecked, Unchecked, Unchecked>
 			AssetManager_constructor = Hack.into(AssetManager.class).constructor().withoutParams();
 	public static final @Nullable Hack.HackedMethod1<Integer, AssetManager, Unchecked, Unchecked, Unchecked, String>

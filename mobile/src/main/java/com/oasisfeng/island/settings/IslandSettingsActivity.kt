@@ -12,6 +12,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.*
+import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
@@ -27,6 +28,8 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import com.oasisfeng.android.ui.WebContent
+import com.oasisfeng.island.Config
 import com.oasisfeng.island.TempDebug
 import com.oasisfeng.island.appops.AppOpsCompat
 import com.oasisfeng.island.mobile.BuildConfig
@@ -56,8 +59,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
-                setOnPreferenceClickListener { true.also {
-                    IslandSetup.requestDeviceOwnerActivation(this@IslandSettingsFragment, REQUEST_DEVICE_OWNER_ACTIVATION) }}}
+                setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_GOD_MODE.get())) }}}
             setup<Preference>(R.string.key_privacy) { isEnabled = false }   // Show but disabled, as a feature preview.
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
             setup<Preference>(R.string.key_island_watcher) { remove(this) }
@@ -160,11 +162,6 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_DEVICE_OWNER_ACTIVATION) IslandSetup.onAddAdminResult(activity)
-    }
 }
 
 class IslandSettingsActivity: Activity() {
@@ -197,5 +194,3 @@ class IslandSettingsActivity: Activity() {
         }
     }
 }
-
-private const val REQUEST_DEVICE_OWNER_ACTIVATION = 1

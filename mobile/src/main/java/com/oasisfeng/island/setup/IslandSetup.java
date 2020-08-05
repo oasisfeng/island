@@ -3,7 +3,6 @@ package com.oasisfeng.island.setup;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -13,21 +12,17 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Settings;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
 import com.oasisfeng.android.ui.Dialogs;
-import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.common.app.AppListProvider;
 import com.oasisfeng.hack.Hack;
-import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
@@ -39,7 +34,6 @@ import com.oasisfeng.island.util.OwnerUser;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -139,58 +133,6 @@ public class IslandSetup {
 		final int res = sys_res.getIdentifier(RES_MAX_USERS, "integer", "android");
 		if (res == 0) return null;
 		return Resources.getSystem().getInteger(res);
-	}
-
-	public static void requestDeviceOwnerActivation(final Fragment fragment, final int request_code) {
-		Dialogs.buildAlert(fragment.getActivity(), fragment.getText(R.string.featured_god_mode_title),
-				fragment.getText(R.string.featured_god_mode_description) + "\n\n" + fragment.getText(R.string.dialog_activate_god_mode_additional_text))
-				.setPositiveButton(R.string.action_continue, (d, w) -> activateDeviceOwnerOrShowSetupGuide(fragment, request_code)).show();
-	}
-
-	private static void activateDeviceOwnerOrShowSetupGuide(final Fragment fragment, final int request_code) {
-		final Activity activity = fragment.getActivity();
-		if (activity == null) return;
-		String content = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?><device-owner package=\"" + Modules.MODULE_ENGINE + "\" />";
-		final String admin_component = DeviceAdmins.getComponentName(activity).flattenToString();
-		if (Users.profile != null && DevicePolicies.isProfileOwner(activity, Users.profile))
-			content += "<profile-owner package=\"" + Modules.MODULE_ENGINE + "\" name=\"Island\" userId=\"" + Users.toId(Users.profile)
-					+ "\" component=\"" + admin_component + "\" />";
-		content = content.replace("\"", "\\\"").replace("'", "\\'")
-				.replace("<", "\\<").replace(">", "\\>");
-
-		final String file = new File(getDataSystemDirectory(), "device_owner.xml").getAbsolutePath();
-		final String command = "echo " + content + " > " + file + " && chmod 600 " + file
-				+ " && chown system:system " + file + " && dpm set-active-admin " + admin_component + " ; echo DONE";
-		SafeAsyncTask.execute(activity, context -> Shell.SU.run(command), (context, output) -> {
-			if (output == null || output.isEmpty()) {
-				Toast.makeText(context, R.string.toast_setup_mainland_non_root, Toast.LENGTH_LONG).show();
-				WebContent.view(context, Uri.parse(Config.URL_SETUP_GOD_MODE.get()));
-				return;
-			}
-			if (! "DONE".equals(output.get(output.size() - 1))) {
-				Analytics.$().event("setup_mainland_root").with(CONTENT, output.stream().collect(joining("\n"))).send();
-				Toast.makeText(context, R.string.toast_setup_mainland_root_failed, Toast.LENGTH_LONG).show();
-				return;
-			}
-			Analytics.$().event("setup_mainland_root").with(CONTENT, output.size() == 1/* DONE */? null : output.stream().collect(joining("\n"))).send();
-			// Start the device-admin activation UI (no-op if already activated with root above), since "dpm set-active-admin" is not supported on Android 5.0.
-			fragment.startActivityForResult(new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-					.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, DeviceAdmins.getComponentName(context))
-					.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, activity.getString(R.string.dialog_mainland_device_admin)), request_code);
-			// Procedure is followed in onAddAdminResult().
-		});
-	}
-
-	private static File getDataSystemDirectory() {
-		if (Hacks.Environment_getDataSystemDirectory != null) return Hacks.Environment_getDataSystemDirectory.invoke().statically();
-		final String data_path = System.getenv("ANDROID_DATA");
-		return new File(data_path == null ? new File("/data") : new File(data_path), "system");
-	}
-
-	public static void onAddAdminResult(final Activity activity) {
-		if (! new DevicePolicies(activity).invoke(DevicePolicyManager::isAdminActive)) return;
-		Dialogs.buildAlert(activity, 0, R.string.dialog_mainland_setup_done).withCancelButton()
-				.setPositiveButton(R.string.action_reboot, (d, w) -> SafeAsyncTask.execute(() -> Shell.SU.run("reboot"))).show();
 	}
 
 	@OwnerUser public static void requestDeviceOrProfileOwnerDeactivation(final Activity activity) {

@@ -99,16 +99,13 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_critical_app_warning">This app (or component) is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
     <string name="dialog_reinstall_system_app_warning">This system app (or component) is not installed for some reason. If proceed, the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
     <string name="dialog_mainland_device_admin">Device Admin privilege is required to activate God mode.</string>
-    <string name="dialog_mainland_setup_done">God mode is now enabled. It will be activated after device reboot.</string>
     <string name="dialog_island_setup_failed">Sorry, something went wrong in Island setup. (stage %1$d)</string>
-    <string name="dialog_activate_god_mode_additional_text">If your device is rooted, God mode can be activated now systemlessly (system partition untouched).\n\nFor non-root device, God mode could only be activated manually. Please follow the online guide for instructions.</string>
 
     <string name="action_continue">Continue</string>
     <string name="action_learn_more">Learn more</string>
     <string name="action_install">Install</string>
     <string name="action_upgrade">Upgrade</string>
     <string name="action_destroy">Destroy</string>
-    <string name="action_reboot">Reboot</string>
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
     <string name="prompt_clone_app_to">Clone app to…</string>
@@ -126,8 +123,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_error_freezing_active_admin">Cannot freeze active device-admin</string>
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
     <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
-    <string name="toast_setup_mainland_non_root">No root, opening online guide now.</string>
-    <string name="toast_setup_mainland_root_failed">Error activating God mode with root.</string>
     <string name="toast_app_launch_failure">Could not launch \"%s\"</string>
     <string name="prompt_operation_failure_due_to_incompatibility">Operation failed.\n(probably due to ROM compatibility)</string>
 
