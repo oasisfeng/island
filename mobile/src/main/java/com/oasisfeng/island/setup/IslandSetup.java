@@ -42,7 +42,6 @@ import com.oasisfeng.island.util.Users;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -238,9 +237,12 @@ public class IslandSetup {
 			showPromptForProfileManualRemoval(activity);
 			return;
 		}
-		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_destroy_message)
-				.setPositiveButton(android.R.string.no, null)
-				.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity)).show();
+		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setNeutralButton(R.string.action_destroy, (dd, ww) -> {
+			if (! DevicePolicies.isProfileOwner(activity, Users.owner)) destroyProfile(activity);
+			else new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_destroy_message_for_managed_user)
+					.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity))
+					.setPositiveButton(android.R.string.no, null).show();
+		}).setMessage(R.string.dialog_destroy_message).setPositiveButton(android.R.string.no, null).show();
 	}
 
 	private static void showPromptForProfileManualRemoval(final Activity activity) {
