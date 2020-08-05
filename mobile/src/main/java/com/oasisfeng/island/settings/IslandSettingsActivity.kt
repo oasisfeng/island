@@ -171,7 +171,7 @@ class IslandSettingsActivity: Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (PendingIntentShuttle.collectFromActivity(this)) return finish()
+        if (PendingIntentShuttle.collect(this)) return finish()
         setTheme(R.style.AppTheme_Settings)
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
