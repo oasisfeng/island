@@ -33,6 +33,7 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(activity) }
+            if (! policies.isProfileOrDeviceOwnerOnCallingUser) return@setup remove(this)
 
             isChecked = policies.invoke(DevicePolicyManager::getShortSupportMessage) != null
             onChange { enabled ->
