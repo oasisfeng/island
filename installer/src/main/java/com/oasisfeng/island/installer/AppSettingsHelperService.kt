@@ -57,7 +57,7 @@ class AppSettingsHelperService: Service() {
 
 		val uptimeMillis = SystemClock.uptimeMillis()
 		if (intent.action == Intent.ACTION_PACKAGE_RESTARTED) {     // If triggered by system Settings, it will be followed by ACTION_QUERY_PACKAGE_RESTART immediately.
-			return Shuttle(context, to = Users.owner).launch(at = GlobalScope) { onPackageRestarted(pkg, uid, uptimeMillis) }}
+			return Unit.also { Shuttle(context, to = Users.owner).launch(at = GlobalScope) { onPackageRestarted(pkg, uid, uptimeMillis) }}}
 
 		if (intent.action == ACTION_QUERY_PACKAGE_RESTART) {
 			if (sLastPackageRestart?.run { first + MAX_DELAY > uptimeMillis && second == pkg && third == uid } == true) {

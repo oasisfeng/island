@@ -9,14 +9,20 @@ import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.toId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 
 class Shuttle(private val context: Context, private val to: UserHandle) {
 
-	fun launch(at: CoroutineScope, alwaysByActivity: Boolean = false, function: Context.() -> Unit) {
-		if (to == Users.current()) function(context) else at.launch(Dispatchers.Unconfined) {
+	/** @return Job if launched in coroutine, otherwise null. */
+	fun launch(at: CoroutineScope, alwaysByActivity: Boolean = false, function: Context.() -> Unit)
+			= if (to == Users.current()) { function(context); null } else at.launch(Dispatchers.Unconfined) {
 			try { shuttle(function, alwaysByActivity) }
-			catch (e: ProfileUnlockCanceledException) { Log.i(TAG, "Profile unlock is canceled.") }}}
+			catch (e: ProfileUnlockCanceledException) { Log.i(TAG, "Profile unlock is canceled.") }}
+
+	fun launchAsFuture(function: Context.() -> Unit)
+			= launch(at = GlobalScope, alwaysByActivity = false, function = function)?.asCompletableFuture()
 
 	@Throws(ProfileUnlockCanceledException::class)
 	suspend fun <R> invoke(alwaysByActivity: Boolean = false, function: Context.() -> R)

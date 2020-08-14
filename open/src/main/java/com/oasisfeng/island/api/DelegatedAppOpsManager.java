@@ -7,23 +7,28 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.RestrictedBinderProxy;
 import com.oasisfeng.island.appops.AppOpsHelper;
-import com.oasisfeng.island.shuttle.MethodShuttle;
+import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import kotlin.Unit;
 
 import static android.content.Context.APP_OPS_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
@@ -63,16 +68,16 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 	private static class AppOpsBinderProxy extends RestrictedBinderProxy {
 
 		@Override protected boolean onTransact(final int code, @NonNull final Parcel data, @Nullable final Parcel reply, final int flags) throws RemoteException {
-			if (! isSealed() && mCodeSetMode == - 1) mCodeSetMode = code;
+			if (SDK_INT >= P && ! isSealed() && mCodeSetMode == - 1) mCodeSetMode = code;
 			return super.onTransact(code, data, reply, flags);
 		}
 
 		@Override protected boolean doTransact(final int code, final Parcel data, final Parcel reply, final int flags) throws RemoteException {
-			if (code == mCodeSetMode) return setMode(data);
+			if (code == mCodeSetMode && SDK_INT >= P) return setMode(data);
 			else return super.doTransact(code, data, reply, flags);
 		}
 
-		protected boolean setMode(final Parcel data) throws RemoteException {
+		@RequiresApi(P) protected boolean setMode(final Parcel data) throws RemoteException {
 			if (SDK_INT < P) throw new SecurityException("Island has no privilege to setMode() before Android P.");
 
 			data.enforceInterface(DESCRIPTOR);
@@ -88,13 +93,15 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 				new AppOpsHelper(mContext).setMode(pkg, op, mode, uid);
 				return true;
 			}
-			if (Users.profile == null || user_id != UserHandles.getIdentifier(Users.profile))
+			final UserHandle user = UserHandles.of(user_id);
+			if (! Users.isProfileManagedByIsland(user))
 				throw new IllegalArgumentException("User " + user_id + " is not managed by Island");
 
 			try {	// Cross-profile synchronized invocation with 2s timeout.
-				MethodShuttle.runInProfile(mContext, context -> {
-					new AppOpsHelper(context).setMode(pkg, op, mode, uid);
-				}).toCompletableFuture().get(2, TimeUnit.SECONDS);
+				final CompletableFuture<Unit> future = new Shuttle(mContext, user).launchAsFuture(context -> {
+					new AppOpsHelper(context).setMode(pkg, op, mode, uid); return Unit.INSTANCE;
+				});
+				if (future != null) future.get(2, TimeUnit.SECONDS);
 			} catch (final ExecutionException e) {
 				final Throwable cause = e.getCause();
 				if (cause instanceof RuntimeException) throw (RuntimeException) cause;
