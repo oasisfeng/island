@@ -284,7 +284,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
 			IslandAppControl.unfreeze(this, app).thenAccept(result -> {
-				if (result == null || ! result) return;
+				if (! result) return;
 				refreshAppStateAsSysBugWorkaround(context, app);
 				clearSelection();
 			});

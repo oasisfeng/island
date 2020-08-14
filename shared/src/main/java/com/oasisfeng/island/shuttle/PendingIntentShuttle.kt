@@ -3,11 +3,8 @@ package com.oasisfeng.island.shuttle
 import android.app.*
 import android.app.Activity.RESULT_FIRST_USER
 import android.app.PendingIntent.*
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.Intent.FLAG_RECEIVER_FOREGROUND
-import android.content.IntentFilter
+import android.content.*
+import android.content.Intent.*
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
@@ -22,8 +19,10 @@ import androidx.core.content.getSystemService
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.engine.CrossProfile
 import com.oasisfeng.island.util.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.future.future
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
@@ -39,7 +38,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 	class ProfileUnlockCanceledException(message: String) : CancellationException(message)
 
 	override fun onReceive(context: Context, intent: Intent) {
-		if (intent.action.let { it == Intent.ACTION_LOCKED_BOOT_COMPLETED || it == Intent.ACTION_MY_PACKAGE_REPLACED}) {
+		if (intent.action.let { it == ACTION_LOCKED_BOOT_COMPLETED || it == ACTION_MY_PACKAGE_REPLACED }) {
 			Log.d(TAG, "Initiated by $intent")
 			if (Users.isOwner()) sendToAllUnlockedProfiles(context)
 			else sendToParentProfileByActivityIfNotYet(context)
@@ -87,8 +86,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		private fun wrapIfNeeded(obj: Any?): Any? = if (obj is Context) null else obj
 
 		internal suspend fun <R> shuttle(context: Context, shuttle: PendingIntent, procedure: CtxFun<R>): R = suspendCoroutine { continuation ->
-			try { shuttle.send(context, Activity.RESULT_CANCELED,
-					Intent().putExtra(null, Closure(procedure)).addFlags(FLAG_RECEIVER_FOREGROUND),
+			try { shuttle.send(context, Activity.RESULT_CANCELED, Intent().putExtra(null, Closure(procedure)),
 					{ _,_, result,_, extras -> continuation.resume(result, extras, procedure.javaClass) }, null) }
 			catch (e: RuntimeException) { continuation.resumeWithException(e) }}
 
@@ -114,7 +112,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		}
 
 		@OwnerUser private fun sendToProfileIfUnlocked(context: Context, profile: UserHandle) = GlobalScope.launch(Dispatchers.Unconfined) {
-			val shuttle = load(context, profile)
+			val shuttle = retrieveShuttle(context, profile)
 			if (shuttle != null) try {
 				return@launch shuttle.send(context, 0, Intent().putExtra(null, buildReverseShuttle(context))) }
 			catch (e: CanceledException) {
@@ -125,11 +123,11 @@ class PendingIntentShuttle: BroadcastReceiver() {
 			else Log.i(TAG, "Skip stopped or locked profile: ${profile.toId()}")
 		}
 
-		@OwnerUser internal suspend fun <R> sendToProfileAndShuttle(context: Context, profile: UserHandle, procedure: CtxFun<R>): R? {
+		@OwnerUser internal suspend fun <R> sendToProfileAndShuttle(context: Context, profile: UserHandle, procedure: CtxFun<R>): R {
 			if (! ensureProfileUnlocked(context, profile))  // ActivityOptions cannot be passed through if profile is pending unlock.
 				throw CancellationException("Profile unlock is canceled")
 
-			return suspendCoroutine<R> { continuation ->
+			return suspendCoroutine { continuation ->
 				val resultReceiver = object : ResultReceiver(null) { override fun onReceiveResult(code: Int, data: Bundle?) {
 					continuation.resume(code, data) }}
 				sendToProfileByActivity(context, profile, buildInvocation(procedure, resultReceiver)) }
@@ -155,29 +153,23 @@ class PendingIntentShuttle: BroadcastReceiver() {
 				if (it) Log.d(TAG, "The unlock request for profile ${profile.toId()} is ${if (it) "acknowledged" else "canceled"} by user") }
 		}
 
-		@JvmStatic fun requestProfileUnlockIfNotYet(context: Context, profile: UserHandle)
-				= GlobalScope.future(Dispatchers.Unconfined) { ensureProfileUnlocked(context, profile) }
-
 		@OwnerUser private fun sendToProfileByActivity(context: Context, profile: UserHandle, payload: Parcelable? = null)
 				= GlobalScope.launch(Dispatchers.Main.immediate) {
-			startMainActivityInProfile(context, profile, buildActivityOptionsWithReverseShuttle(context, payload)) }
+			startMainActivityInProfile(context, profile, buildActivityOptions(context, buildReverseShuttle(context), payload)) }
 
 		private fun startMainActivityInProfile(context: Context, profile: UserHandle, activityOptions: Bundle?): Boolean {
 			val la = context.getSystemService(LauncherApps::class.java)!!
 			la.getActivityList(context.packageName, profile).getOrNull(0)?.also {
-				la.startMainActivity(it.componentName, profile, null, activityOptions)
+				try { la.startMainActivity(it.componentName, profile, null, activityOptions) }
+				catch (e: Exception) { Log.e(TAG, "Error starting activity in profile: ${it.componentName}", e) }
 				Log.i(TAG, "Establishing shuttle to profile ${profile.toId()}...")
 				return true } ?: Log.e(TAG, "No launcher activity in profile ${profile.toId()}")
 			return false
 		}
 
-		private fun buildReverseShuttle(context: Context): PendingIntent    // For use by other profile to shuttle back
-				= getBroadcast(context, Users.current().toId(),
-				Intent(context, PendingIntentShuttle::class.java), FLAG_UPDATE_CURRENT)
-
-		@MainThread private fun buildActivityOptionsWithReverseShuttle(context: Context, payload: Parcelable?): Bundle
+		@MainThread private fun buildActivityOptions(context: Context, pi: PendingIntent? = null, payload: Parcelable?): Bundle
 				= ActivityOptions.makeSceneTransitionAnimation(DummyActivity(context), View(context), "")
-				.apply { requestUsageTimeReport(buildReverseShuttle(context)); }.toBundle()
+				.apply { requestUsageTimeReport(pi); }.toBundle()
 				.apply { if (payload != null) putParcelable(KEY_RESULT_DATA, Intent().putExtra(null, payload)) }
 
 		@JvmStatic fun collect(activity: Activity): Boolean {
@@ -198,7 +190,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 			saveAndReply(activity, shuttle)
 
 			bundle.getParcelable<Intent>(KEY_RESULT_DATA)?.apply {
-				setExtrasClassLoader(Invocation::class.java.classLoader)    // To avoid "BadParcelableException: ClassNotFoundException when unmarshalling"
+				setExtrasClassLoader(Invocation::class.java.classLoader)    // To avoid "BadParcelableException: ClassNotFoundException when un-marshalling"
 			}?.getParcelableExtra<Invocation>(null)?.also { invocation ->
 				Log.i(TAG, "Closure collected")
 				invokeClosureAndSendResult(activity, invocation.closure, invocation.resultReceiver::send) }
@@ -223,7 +215,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 				set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 365 * 24 * 3600_000L, locker) }
 		}
 
-		internal suspend fun load(context: Context, profile: UserHandle): PendingIntent? {
+		internal suspend fun retrieveShuttle(context: Context, profile: UserHandle): PendingIntent? {
 			require(profile != Users.current()) { "Same profile: $profile" }
 			val locker = getBroadcast(context, profile.toId(), buildLockerIntent(context), FLAG_NO_CREATE) ?: return null
 			return suspendCoroutine { continuation -> locker.send(context, 0, null, { _, intent, _, _, _ ->
@@ -234,13 +226,17 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		private fun buildLockerIntent(context: Context)     // No receiver at present, just set to our package for faster delivery
 				= Intent(ACTION_SHUTTLE_LOCKER).setPackage(context.packageName)
 
+		private fun buildReverseShuttle(context: Context): PendingIntent    // For use by other profile to shuttle back
+				= getBroadcast(context, Users.current().toId(),
+				Intent(context, PendingIntentShuttle::class.java).addFlags(FLAG_RECEIVER_FOREGROUND), FLAG_UPDATE_CURRENT)
+
 		private const val ACTION_SHUTTLE = "com.oasisfeng.island.action.SHUTTLE"        // For ReceiverActivity
 		private const val ACTION_SHUTTLE_LOCKER = "SHUTTLE_LOCKER"
 		private const val KEY_USAGE_TIME_REPORT = "android:activity.usageTimeReport"    // From ActivityOptions
 		private const val KEY_RESULT_DATA = "android:activity.resultData"               // From ActivityOptions
-		private const val SILENT_LAUNCH_FLAGS = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
-				Intent.FLAG_ACTIVITY_NO_ANIMATION or Intent.FLAG_ACTIVITY_NO_USER_ACTION or
-				Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or Intent.FLAG_ACTIVITY_NO_HISTORY
+		private const val SILENT_LAUNCH_FLAGS = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_MULTIPLE_TASK or
+				FLAG_ACTIVITY_NO_ANIMATION or FLAG_ACTIVITY_NO_USER_ACTION or
+				FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or FLAG_ACTIVITY_NO_HISTORY
 
 		// Automatically generated fields for captured variables, by compiler (indeterminate order)
 		private fun extractVariablesFromFields(procedure: CtxFun<*>)

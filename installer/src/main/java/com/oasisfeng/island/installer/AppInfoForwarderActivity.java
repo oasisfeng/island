@@ -52,7 +52,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		final UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
 		if (user != null && Settings.ACTION_APPLICATION_DETAILS_SETTINGS.equals(intent.getAction())) {  // For profiles other than default
 			intent.removeExtra(Intent.EXTRA_USER);
-			new Shuttle(this, user).launch(GlobalScope.INSTANCE, context -> {
+			new Shuttle(this, user).launch(GlobalScope.INSTANCE, true, context -> {
 				context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return Unit.INSTANCE;
 			});
 			finish();

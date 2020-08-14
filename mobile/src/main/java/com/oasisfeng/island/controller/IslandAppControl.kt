@@ -61,8 +61,7 @@ object IslandAppControl {
 
 	private suspend fun unfreezeAndLaunch(context: Context, app: IslandAppInfo) {
 		val pkg = app.packageName
-		var failure: String = Shuttle(context, to = app.user).invoke { IslandManager.ensureAppFreeToLaunch(this, pkg) }
-				?: return   // Null if canceled
+		var failure = Shuttle(context, to = app.user).invoke { IslandManager.ensureAppFreeToLaunch(this, pkg) }
 
 		if (failure.isEmpty()) if (! IslandManager.launchApp(context, pkg, app.user)) failure = "launcher_activity_not_found"
 		if (failure.isNotEmpty()) {
@@ -89,21 +88,20 @@ object IslandAppControl {
 	}
 
 	private suspend fun unfreezeIfNeeded(app: IslandAppInfo): Boolean {
-		return if (! app.isHidden) true else unfreeze(app) ?: false
+		return if (! app.isHidden) true else unfreeze(app)
 	}
 
 	private suspend fun freeze(app: IslandAppInfo): Boolean {
 		val frozen = Shuttle(app.context(), to = app.user).invoke(with = app.packageName) {
-			ensureAppHiddenState(this, it, true) } ?: false
+			ensureAppHiddenState(this, it, true) }
 		if (frozen && app.isSystem) stopTreatingHiddenSysAppAsDisabled(app)
 		return frozen
 	}
 
 	@JvmStatic fun freeze(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { freeze(app) }
 
-	private suspend fun unfreeze(app: IslandAppInfo)
-			= unfreeze(app.context(), app.user, app.packageName)
-	suspend fun unfreeze(context: Context, profile: UserHandle, pkg: String)
+	private suspend fun unfreeze(app: IslandAppInfo) = unfreeze(app.context(), app.user, app.packageName)
+	private suspend fun unfreeze(context: Context, profile: UserHandle, pkg: String)
 			= Shuttle(context, to = profile).invoke { ensureAppHiddenState(this, pkg, false) }
 	@JvmStatic fun unfreeze(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { unfreeze(app) }
 
@@ -129,7 +127,7 @@ object IslandAppControl {
 
 	@JvmStatic fun unfreezeInitiallyFrozenSystemApp(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) {
 		Shuttle(app.context(), to = app.user).invoke(with = app.packageName) { IslandManager.ensureAppHiddenState(this, it, false) }.also {
-			if (it == true) stopTreatingHiddenSysAppAsDisabled(app) }}
+			if (it) stopTreatingHiddenSysAppAsDisabled(app) }}
 
 	private suspend fun stopTreatingHiddenSysAppAsDisabled(app: IslandAppInfo)
 			= Shuttle(app.context(), to = app.user).invoke(with = app.packageName, function = ::setCloned)
