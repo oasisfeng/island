@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
-import android.os.Bundle
 import android.os.UserHandle
 import android.util.ArrayMap
 import android.util.Log

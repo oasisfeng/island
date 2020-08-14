@@ -116,14 +116,14 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 	// Eventual consistency strategy to improve performance
 	private void onPackagesEvent(final String[] pkgs, final boolean removed) {
 		final Map<String, T> apps = mAppMap.get();
-		final List<T> removed_apps = new ArrayList<>();
+		final List<T> updated_apps = new ArrayList<>();
 		if (removed) {
 			for (final String pkg : pkgs) {
 				final T removed_app = apps.remove(pkg);
-				if (removed_app != null) removed_apps.add(removed_app);
+				if (removed_app != null) updated_apps.add(removed_app);
 			}
 			Log.i(TAG, "Removed: " + Arrays.toString(pkgs));
-			notifyRemoval(removed_apps);
+			notifyRemoval(updated_apps);
 		} else {
 			for (final String pkg : pkgs) {
 				ApplicationInfo info = null;
@@ -137,10 +137,10 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 
 				final T app = createEntry(info, apps.get(pkg)/* last entry */);
 				apps.put(pkg, app);
-				removed_apps.add(app);
+				updated_apps.add(app);
 				Log.i(TAG, "Added: " + pkg);
 			}
-			notifyUpdate(removed_apps);
+			notifyUpdate(updated_apps);
 		}
 	}
 

@@ -28,9 +28,9 @@
     <string name="featured_fx_description">“文件传送门”提供的穿越结界的文件访问能力基于 Android 的“存储访问框架”。但并非所有的应用都支持“存储访问框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支持“存储访问框架”，只需在壶中界启动它，选择下拉菜单中的“Connect to Storage”，然后从侧栏选择相应传送门即可访问外部文件。</string>
     <string name="featured_adb_secure_title">ADB 安全结界</string>
     <string name="featured_adb_secure_island_title">ADB 安全结界（仅限壶中界）</string>
-    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果启用“黄帝之名”，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
-    <string name="featured_god_mode_title">黄帝之名</string>
-    <string name="featured_god_mode_description">将炼妖壶的强大力量扩展至界外。以“黄帝之名”，不仅可以冻结界外的应用，还能召唤其它神器相助。</string>
+    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果授予炼妖壶对“界外”的管理权，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
+    <string name="featured_god_mode_title">将控制扩展至“界外”</string>
+    <string name="featured_god_mode_description">不仅可以冻结界外的应用，还能获得一些此模式下独有的功能。（详细介绍参见在线说明）</string>
     <string name="featured_greenify_title">绿色守护</string>
     <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_saf_enhancer_title">SAF 增强器 Lite</string>
@@ -117,6 +117,7 @@
     <string name="toast_greenify_failed">绿色化失败</string>
     <string name="toast_internal_error">抱歉，出现了内部异常，请退出后重新尝试。</string>
     <string name="toast_error_freeze_failure">冻结失败</string>
+    <string name="toast_error_unfreeze_failure">解冻失败</string>
     <string name="toast_error_freezing_active_admin">无法冻结已激活设备管理器的应用</string>
     <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
     <string name="toast_app_launch_error">抱歉，启动应用时出现了异常。</string>

@@ -19,7 +19,6 @@ import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.OwnerUser
 import com.oasisfeng.island.util.Users
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 /** Track explicitly "cloned" (unfrozen) system apps (previous frozen in post-provisioning). Other frozen system apps should be treated as "disabled" in UI.  */
 @OwnerUser class ClonedHiddenSystemApps(private val context: Context) {
@@ -36,7 +35,7 @@ import kotlinx.coroutines.launch
 				app.hidden && ! app.suspended && store.getInt(pkg, 0) != COMPONENT_ENABLED_STATE_ENABLED }}}.toTypedArray()
 		if (pkgsToSuspend.isEmpty()) return
 
-		Shuttle(context, to = profile).launch(GlobalScope) { IslandAppControl.setPackagesSuspended(this, pkgsToSuspend, true).apply {
+		Shuttle(context, to = profile).launch(at = GlobalScope) { IslandAppControl.setPackagesSuspended(this, pkgsToSuspend, true).apply {
 			if (isEmpty()) Log.i(TAG, "Migration finished")
 			else Log.w(TAG, "${pkgsToSuspend.size - size} migrated but $size failed: $this") }}
 	}

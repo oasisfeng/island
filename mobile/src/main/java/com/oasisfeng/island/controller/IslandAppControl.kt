@@ -61,13 +61,15 @@ object IslandAppControl {
 
 	private suspend fun unfreezeAndLaunch(context: Context, app: IslandAppInfo) {
 		val pkg = app.packageName
-		var failure = Shuttle(context, to = app.user).invoke { IslandManager.ensureAppFreeToLaunch(this, pkg) }
+		val failure = Shuttle(context, to = app.user).invoke { IslandManager.ensureAppFreeToLaunch(this, pkg) }
 
-		if (failure.isEmpty()) if (! IslandManager.launchApp(context, pkg, app.user)) failure = "launcher_activity_not_found"
 		if (failure.isNotEmpty()) {
-			Toast.makeText(context, R.string.toast_failed_to_launch_app, Toast.LENGTH_LONG).show()
-			analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, "launcher_activity_not_found").send()
-		}
+			Toast.makeText(context, R.string.toast_app_launch_error, Toast.LENGTH_LONG).show()
+			return analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, failure).send() }
+
+		if (! IslandManager.launchApp(context, pkg, app.user)) {
+			Toast.makeText(context, R.string.toast_app_launch_failure, Toast.LENGTH_LONG).show()
+			analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, "launcher_activity_not_found").send() }
 	}
 
 	private suspend fun launchSystemAppSettings(app: IslandAppInfo) {   // Stock app info activity requires the target app not hidden.
@@ -114,7 +116,7 @@ object IslandAppControl {
 		val activeAdmins = policies.manager.activeAdmins
 		if (activeAdmins != null && activeAdmins.any { pkg == it.packageName })
 			Toasts.showLong(context, R.string.toast_error_freezing_active_admin) // TODO: Action to open device-admin settings.
-		else Toasts.showLong(context, R.string.toast_error_freeze_failure)
+		else Toasts.showLong(context, if (hidden) R.string.toast_error_freeze_failure else R.string.toast_error_unfreeze_failure)
 		return false
 	}
 
