@@ -113,15 +113,15 @@
     <string name="toast_successfully_cloned">%1$s 已完成分身</string>
     <string name="toast_cannot_clone">抱歉，无法为 %1$s 分身。</string>
     <string name="toast_already_cloned">分身已存在</string>
-    <string name="toast_shortcut_request_sent">快捷方式创建请求已发送</string>
     <string name="toast_shortcut_failed">快捷方式创建失败</string>
     <string name="toast_greenify_failed">绿色化失败</string>
     <string name="toast_internal_error">抱歉，出现了内部异常，请退出后重新尝试。</string>
     <string name="toast_error_freeze_failure">冻结失败</string>
     <string name="toast_error_freezing_active_admin">无法冻结已激活设备管理器的应用</string>
     <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
-    <string name="toast_failed_to_launch_app">抱歉，启动应用时出现了异常。</string>
+    <string name="toast_app_launch_error">抱歉，启动应用时出现了异常。</string>
     <string name="toast_app_launch_failure">未能启动“%s”</string>
+    <string name="prompt_invalid_shortcut">快捷方式已失效，请重新创建</string>
     <string name="prompt_operation_failure_due_to_incompatibility">操作失败\n(可能由于 ROM 兼容性)</string>
 
     <!-- General words -->
@@ -133,7 +133,13 @@
     <string name="settings_title">设置</string>
 
     <string name="pref_general_header">常规</string>
-    <string name="pref_launch_shortcut_prefix_title">应用启动快捷方式的名称前缀</string>
+    <string name="pref_cat_app_launch_shortcuts">应用启动快捷方式</string>
+    <string name="pref_alt_shortcut_badge_title">界内使用替代角标 (试验性)</string>
+    <string name="pref_alt_shortcut_badge_summary">对界外和界内的应用启动快捷方式使用不同的角标。\n(某些设备可能不支持)</string>
+    <string name="pref_dynamic_shortcut_label_title">动态快捷方式</string>
+    <string name="pref_dynamic_shortcut_label_summary">在应用冻结时为应用启动快捷方式添加前缀，在应用解冻时去掉前缀。\n(某些启动器可能不支持)</string>
+    <string name="prompt_updating_shortcuts">正在更新现有快捷方式…</string>
+
     <string name="pref_show_admin_message_title">在操作限制界面中显示提示信息</string>
     <string name="pref_show_admin_message_summary">在系统弹出的“不允许执行此操作”对话框中显示针对性的提示信息。</string>
     <string name="pref_preserve_app_ops">为解冻的应用恢复权限审查 (App Ops)</string>

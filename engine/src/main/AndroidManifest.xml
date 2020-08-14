@@ -40,30 +40,6 @@
 
     <application android:label="Island - Engine" tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <activity android:name="com.oasisfeng.island.shortcut.AppLaunchShortcut"
-                  android:hardwareAccelerated="false"
-                  android:resumeWhilePausing="true"
-                  android:excludeFromRecents="true"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                  android:clearTaskOnLaunch="true"
-                  android:taskAffinity=":shortcut"
-                  android:launchMode="singleTask" > <!-- Most important attribute: launchMode="singleTask" -->
-            <intent-filter android:priority="-1"> <!-- Negative priority cause intent matching preferably in profile -->
-                <action android:name="com.oasisfeng.island.action.LAUNCH_CLONE" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="target" />
-                <data android:scheme="package" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="target" />
-                <data android:scheme="package" />
-            </intent-filter>
-        </activity>
-
         <activity android:name="com.oasisfeng.island.api.ApiActivity"
                   android:hardwareAccelerated="false"
                   android:resumeWhilePausing="true"
@@ -128,7 +104,7 @@
         </service>
 
         <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" android:exported="false"
-                 android:directBootAware="true" tools:targetApi="N">
+                 android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.app.action.PROVISION_MANAGED_PROFILE" />
                 <action android:name="android.app.action.PROVISION_MANAGED_DEVICE" />
@@ -137,7 +113,7 @@
         <activity android:name="com.oasisfeng.island.provisioning.IslandProvisioning$CompletionActivity"
                   android:permission="android.permission.BIND_DEVICE_ADMIN"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                  android:excludeFromRecents="true" android:directBootAware="true" tools:targetApi="N">
+                  android:excludeFromRecents="true" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.app.action.PROVISIONING_SUCCESSFUL" />
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -153,7 +129,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.oasisfeng.island.provisioning.ManualProvisioningReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="N">
+        <receiver android:name="com.oasisfeng.island.provisioning.ManualProvisioningReceiver" android:exported="false" android:directBootAware="true">
             <intent-filter android:priority="9999"> <!-- High priority to ensure being executed as early as possible -->
                 <action android:name="android.intent.action.USER_INITIALIZE" />
                 <action android:name="android.app.action.DEVICE_OWNER_CHANGED" />
@@ -162,15 +138,9 @@
 
         <provider android:name="com.oasisfeng.island.provisioning.AutoIncrementalProvision" android:authorities="${applicationId}.AIP" android:exported="false"/>
 
-        <receiver android:name="com.oasisfeng.island.AppUpdateReceiver" android:exported="false" android:directBootAware="true" tools:targetApi="N">
+        <receiver android:name="com.oasisfeng.island.AppUpdateReceiver" android:exported="false" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name="com.oasisfeng.island.shuttle.ShortcutShuttle" tools:ignore="ExportedReceiver"> <!-- Exported without permission requirement, for wider compatibility -->
-            <intent-filter>
-                <action android:name="com.android.launcher.action.INSTALL_SHORTCUT" />
             </intent-filter>
         </receiver>
 

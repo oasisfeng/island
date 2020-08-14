@@ -115,15 +115,15 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_successfully_cloned">%1$s is successfully cloned.</string>
     <string name="toast_cannot_clone">Sorry, unable to clone %1$s.</string>
     <string name="toast_already_cloned">Already cloned</string>
-    <string name="toast_shortcut_request_sent">Shortcut request is sent to launcher</string>
     <string name="toast_shortcut_failed">Failed to create the shortcut</string>
     <string name="toast_greenify_failed">Failed to greenify</string>
     <string name="toast_internal_error">Sorry, an internal error occurred, please restart this app and try again.</string>
     <string name="toast_error_freeze_failure">Failed to freeze</string>
     <string name="toast_error_freezing_active_admin">Cannot freeze active device-admin</string>
     <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
-    <string name="toast_failed_to_launch_app">Sorry, there\'s an error launching this app.</string>
+    <string name="toast_app_launch_error">Sorry, there\'s an error launching this app.</string>
     <string name="toast_app_launch_failure">Could not launch \"%s\"</string>
+    <string name="prompt_invalid_shortcut">Invalid shortcut, please recreate.</string>
     <string name="prompt_operation_failure_due_to_incompatibility">Operation failed.\n(probably due to ROM compatibility)</string>
 
     <!-- General words -->
@@ -135,7 +135,13 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="settings_title">Settings</string>
 
     <string name="pref_general_header">General</string>
-    <string name="pref_launch_shortcut_prefix_title">Launch shortcut prefix</string>
+    <string name="pref_cat_app_launch_shortcuts">App launch shortcuts</string>
+    <string name="pref_alt_shortcut_badge_title">Alternative badge in Island (Experimental)</string>
+    <string name="pref_alt_shortcut_badge_summary">Use different badge for app launch shortcuts in Mainland and Island.\n(May not work on some devices)</string>
+    <string name="pref_dynamic_shortcut_label_title">Dynamic shortcut label</string>
+    <string name="pref_dynamic_shortcut_label_summary">Add prefix to shortcut label when app is frozen, and remove the prefix when app is unfrozen.\n(May not work on some launchers)</string>
+    <string name="prompt_updating_shortcuts">Updating shortcuts…</string>
+
     <string name="pref_show_admin_message_title">Extra info in \"Action not allowed\" dialog</string>
     <string name="pref_show_admin_message_summary">Show Island-specific extra information in the \"Action not allowed\" system dialog.</string>
     <string name="pref_preserve_app_ops">Preserve permission supervision for frozen apps</string>
@@ -176,7 +182,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_rescind_summary">Rescind the privilege on Mainland. All your apps and data will be intact (unfrozen), but you could no longer:\n\n</string>
     <string name="pref_device_owner_title">God mode</string>
     <string name="pref_device_owner_summary">A powerful mode with special privilege granted to Island. If activated, you can:\n\n</string>
-    <string name="pref_device_owner_featurs">· Freeze apps in Mainland\n· Supervise app permissions in Mainland(Android 9+)\n· Use some device global features (e.g. full ADB Secure).</string>
+    <string name="pref_device_owner_featurs">· Freeze apps in Mainland\n· Supervise app permissions in Mainland (Android 9+)\n· Use some device global features (e.g. full ADB Secure).</string>
 
     <string name="pref_privacy_notification_for_clone_title">Notification of privacy exposure</string>
     <string name="pref_privacy_notification_for_clone_summary">Show notification for potential privacy exposure in cloned apps</string>

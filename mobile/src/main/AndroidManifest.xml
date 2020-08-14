@@ -42,6 +42,32 @@
             <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
         </activity>
 
+        <activity android:name="com.oasisfeng.island.shortcut.IslandAppShortcut$ShortcutLauncher"
+            android:hardwareAccelerated="false"
+            android:resumeWhilePausing="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:clearTaskOnLaunch="true"
+            android:taskAffinity=":shortcut"
+            android:launchMode="singleTask" > <!-- Most important attribute: launchMode="singleTask" -->
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="package" />
+                <data android:scheme="android-app" />
+            </intent-filter>
+        </activity>
+
+        <!--<activity android:name="android.__dummy__" android:exported="true" android:icon="@mipmap/ic_dummy" />-->
+
+        <service android:name="com.oasisfeng.island.shortcut.IslandAppShortcut$ShortcutUpdater"
+                 android:exported="false" android:enabled="@bool/since_api_26">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.PersistentService" />
+            </intent-filter>
+        </service>
+
         <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
 
         <activity android:name="com.oasisfeng.island.action.FeatureActionActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar"

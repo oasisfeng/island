@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.UserHandle;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -48,7 +47,7 @@ import com.oasisfeng.island.mobile.BR;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.settings.IslandNameManager;
-import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
+import com.oasisfeng.island.shortcut.IslandAppShortcut;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
@@ -356,10 +355,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final IslandAppInfo app= app_vm.info();
 		final String pkg = app.packageName;
 		Analytics.$().event("action_create_shortcut").with(ITEM_ID, pkg).send();
-		final String shortcut_prefix = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.key_launch_shortcut_prefix), context.getString(R.string.default_launch_shortcut_prefix));
-		final Boolean result = AbstractAppLaunchShortcut.createOnLauncher(context, pkg, app, app.user, shortcut_prefix + app.getLabel(), app.icon);
-		if (result == null || result) Toast.makeText(context, R.string.toast_shortcut_request_sent, Toast.LENGTH_SHORT).show();	// MIUI has no UI for shortcut pinning.
-		else Toast.makeText(context, R.string.toast_shortcut_failed, Toast.LENGTH_LONG).show();
+		IslandAppShortcut.requestPin(context, app);
 	}
 
 	private void onGreenifyRequested(final Context context) {

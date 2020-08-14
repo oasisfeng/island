@@ -11,16 +11,12 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.preference.ListPreference;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import androidx.annotation.StringRes;
 import androidx.annotation.XmlRes;
 import androidx.core.app.NavUtils;
 
@@ -85,38 +81,6 @@ import static java.util.Objects.requireNonNull;
 		return super.onMenuItemSelected(featureId, item);
 	}
 
-	/**
-	 * Binds a preference's summary to its value. More specifically, when the preference's value is changed, its summary (line of text
-	 * below the preference title) is updated to reflect the value. The summary is also immediately updated upon calling this method.
-	 * The exact display format is dependent on the type of preference.
-	 */
-	private static void bindPreferenceSummaryToValue(final Preference preference) {
-		// Set the listener to watch for value changes.
-		preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-		// Trigger the listener immediately with the preference's current value.
-		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-				PreferenceManager.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(), ""));
-	}
-
-	/** A preference value change listener that updates the preference's summary to reflect its new value. */
-	private static final Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = (preference, value) -> {
-		String stringValue = value.toString();
-
-		if (preference instanceof ListPreference) {
-			// For list preferences, look up the correct display value in
-			// the preference's 'entries' list.
-			ListPreference listPreference = (ListPreference) preference;
-			int index = listPreference.findIndexOfValue(stringValue);
-
-			// Set the summary to reflect the new value.
-			preference.setSummary(index >= 0 ? listPreference.getEntries()[index] : null);
-		} else {
-			// For all other preferences, set the summary to the value's simple string representation.
-			preference.setSummary(stringValue);
-		}
-		return true;
-	};
-
 	@Override public boolean onIsMultiPane() {
 		return (getResources().getConfiguration().screenLayout & SCREENLAYOUT_SIZE_MASK) >= SCREENLAYOUT_SIZE_XLARGE;
 	}
@@ -153,7 +117,7 @@ import static java.util.Objects.requireNonNull;
 		for (final LauncherActivityInfo activity : activities)
 			if (IslandSettingsActivity.class.getName().equals(activity.getComponentName().getClassName())) {
 				final ComponentName component = activity.getComponentName();
-				new Shuttle(this, profile).launch(GlobalScope.INSTANCE, context -> {
+				new Shuttle(this, profile).launch(GlobalScope.INSTANCE, true, context -> {
 					context.startActivity(new Intent().setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_NO_ANIMATION));
 					return Unit.INSTANCE;
 				});
@@ -166,18 +130,14 @@ import static java.util.Objects.requireNonNull;
 
 	public static abstract class SubPreferenceFragment extends PreferenceFragment {
 
-		public SubPreferenceFragment(final @XmlRes int preference_xml, final int... keys_to_bind_summary) {
+		public SubPreferenceFragment(final @XmlRes int preference_xml) {
 			mPreferenceXml = preference_xml;
-			mKeysToBindSummary = keys_to_bind_summary;
 		}
 
 		@Override public void onCreate(final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(mPreferenceXml);
 			setHasOptionsMenu(true);
-			// Bind the summaries of EditText/List/Dialog/Ringtone preferences to their values.
-			// When their values change, their summaries are updated to reflect the new value, per the Android Design guidelines.
-			for (final int key : mKeysToBindSummary) bindPreferenceSummaryToValue(findPreference(getString(key)));
 		}
 
 		@Override public boolean onOptionsItemSelected(final MenuItem item) {
@@ -189,7 +149,6 @@ import static java.util.Objects.requireNonNull;
 		}
 
 		private final int mPreferenceXml;
-		private final @StringRes int[] mKeysToBindSummary;
 	}
 
 
