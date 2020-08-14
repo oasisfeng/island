@@ -45,7 +45,7 @@ public class AppListFragment extends Fragment {
 		setRetainInstance(true);	// To keep view-model (by keeping the view-model provider)
 		setHasOptionsMenu(true);
 		final Activity activity = requireActivity();
-		final ViewModelProvider provider = new ViewModelProvider(this);
+		final ViewModelProvider provider = new ViewModelProvider(this, getDefaultViewModelProviderFactory());
 		final AppListViewModel vm = mViewModel = provider.get("MainViewModel", MainViewModel.class);
 		vm.mFeatured = provider.get(FeaturedListViewModel.class);
 		mUserGuide = UserGuide.initializeIfNeeded(activity, this, vm);
