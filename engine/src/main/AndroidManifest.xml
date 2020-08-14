@@ -117,6 +117,10 @@
             </intent-filter>
         </service>
 
+        <provider android:authorities="com.oasisfeng.island.settings"
+                  android:name="com.oasisfeng.settings.AppSettingsProvider"
+                  android:exported="false" />
+
         <service android:name="com.oasisfeng.island.shuttle.MethodShuttle$MethodShuttleService" android:exported="false">
             <intent-filter android:priority="-1">
                 <action android:name="com.oasisfeng.island.shuttle.IMethodShuttle" />
