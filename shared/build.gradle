@@ -46,7 +46,6 @@ android {
 dependencies {
     api project(':deagle')
     api 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation project(':legacy')
     implementation 'org.jetbrains:annotations:15.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlin_coroutine_version"
