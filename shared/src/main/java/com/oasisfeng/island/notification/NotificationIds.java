@@ -100,7 +100,7 @@ public enum NotificationIds {
 
 		OngoingTask	("OngoingTask",	R.string.notification_channel_ongoing_task,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(false)),
 		Important	("Important",	R.string.notification_channel_important,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
-		AppInstall	("AppInstall",	R.string.notification_channel_app_install,	IMPORTANCE_HIGH, 	channel -> channel.setShowBadge(true)),
+		AppInstall	("AppInstall",	R.string.notification_channel_app_install,	IMPORTANCE_HIGH, 	c -> { c.setShowBadge(true); c.setSound(null, null);}),
 		Watcher		("Watcher",		R.string.notification_channel_island_watcher,		IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
 		AppWatcher	("AppWatcher",	R.string.notification_channel_app_watcher,	IMPORTANCE_DEFAULT, c -> c.setShowBadge(true), c -> c.setSound(null, null)),
 		Debug		("Debug",		R.string.notification_channel_debug,		IMPORTANCE_MIN,  	channel -> channel.setShowBadge(false));
