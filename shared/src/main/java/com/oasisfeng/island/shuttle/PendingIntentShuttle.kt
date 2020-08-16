@@ -49,7 +49,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 			return
 		}
 
-		when(val payload = intent.getParcelableExtra<Parcelable>(null)) {
+		when(val payload: Parcelable? = intent.getParcelableExtra(null)) {
 			is Closure -> {
 				Log.d(TAG, "Invoke closure from ${payload.userId}")
 				try { invokeClosureAndSendResult(context, payload) { code, extras -> setResult(code, null, extras) }}
@@ -57,7 +57,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 			is PendingIntent -> {
 				require(payload.creatorPackage == context.packageName)
 				save(context, payload) }
-			else -> Log.e(TAG, "Invalid payload type: ${payload.javaClass}") }
+			else -> Log.e(TAG, "Invalid payload type: ${payload?.javaClass}") }
 	}
 
 	companion object {

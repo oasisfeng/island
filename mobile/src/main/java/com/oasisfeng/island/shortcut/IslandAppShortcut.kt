@@ -169,7 +169,8 @@ object IslandAppShortcut {
 			val pkg = intent.data?.schemeSpecificPart ?: return
 			if (intent.getBooleanExtra(EXTRA_REPLACING, false)) return      // Ignore package replacing
 			Log.d(TAG, "Package event: $intent")
-			val info = context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES)
+			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
+			catch (e: NameNotFoundException) { return }     // Actual package uninstall
 			Shuttle(context, to = Users.owner).launch(at = GlobalScope) { updateIfNeeded(context, info) }
 		}}
 

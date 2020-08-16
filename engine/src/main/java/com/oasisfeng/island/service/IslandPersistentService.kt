@@ -69,7 +69,8 @@ import com.oasisfeng.island.util.toId
                 bindPersistentServices(pkg)
             else unbindPersistentServices(pkg)
         } else components.forEach {
-            val info = pm.getServiceInfo(ComponentName(pkg, it), MATCH_DISABLED_COMPONENTS or MATCH_UNINSTALLED_PACKAGES)
+            val info = try { pm.getServiceInfo(ComponentName(pkg, it), MATCH_DISABLED_COMPONENTS or MATCH_UNINSTALLED_PACKAGES) }
+            catch (e: PackageManager.NameNotFoundException) { return@forEach }  // Non-service component
             if (info.isEnabled && ! info.applicationInfo.hidden) bindPersistentService(info)
             else unbindPersistentService(info.getComponentName()) }
     }}

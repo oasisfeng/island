@@ -13,6 +13,7 @@ import android.os.Parcelable;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -67,12 +68,12 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 		final String referrer_pkg = referrer != null && "android-app".equals(referrer.getScheme()) ? referrer.getAuthority() : null;
 		final String caller = getCallingPackage();
 		Intent app_detail = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null));
-		ResolveInfo app_detail_resolve;
+		ResolveInfo app_detail_resolve = null;
 		try {
 			final List<ResolveInfo> app_detail_resolves = pm.queryIntentActivities(app_detail, PackageManager.MATCH_SYSTEM_ONLY);
 			app_detail_resolve = app_detail_resolves.isEmpty() ? null : app_detail_resolves.get(0);
-		} catch (final NullPointerException e) {	// Huawei-specific issue, only reported on Android 8
-			app_detail_resolve = pm.resolveActivity(app_detail, PackageManager.MATCH_SYSTEM_ONLY);
+		} catch (final NullPointerException e) {	// Huawei-specific issue, only reported on Android 8, probably due to
+			Log.e(TAG, "Error querying app detail activities: " + app_detail, e);
 		}
 		boolean caller_is_settings = false;
 		final Supplier<List<ResolveInfo>> target_resolves = Suppliers.memoize(() -> pm.queryIntentActivities(target, MATCH_DEFAULT_ONLY/* Excluding this activity */));
@@ -134,4 +135,6 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 	private static boolean hasNonForwardingResolves(final List<ResolveInfo> resolves) {
 		return resolves != null && resolves.stream().anyMatch(candidate -> ! "android".equals(candidate.activityInfo.packageName));
 	}
+
+	private static final String TAG = "Island.AIFA";
 }

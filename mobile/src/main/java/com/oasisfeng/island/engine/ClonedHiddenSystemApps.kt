@@ -35,9 +35,10 @@ import kotlinx.coroutines.GlobalScope
 				app.hidden && ! app.suspended && store.getInt(pkg, 0) != COMPONENT_ENABLED_STATE_ENABLED }}}.toTypedArray()
 		if (pkgsToSuspend.isEmpty()) return
 
-		Shuttle(context, to = profile).launch(at = GlobalScope) { IslandAppControl.setPackagesSuspended(this, pkgsToSuspend, true).apply {
-			if (isEmpty()) Log.i(TAG, "Migration finished")
-			else Log.w(TAG, "${pkgsToSuspend.size - size} migrated but $size failed: $this") }}
+		Shuttle(context, to = profile).launch(at = GlobalScope, with = pkgsToSuspend) { pkgs ->
+			IslandAppControl.setPackagesSuspended(this, pkgs, true).apply {
+				if (isEmpty()) Log.i(TAG, "Migration finished")
+				else Log.w(TAG, "${pkgs.size - size} migrated but $size failed: $this") }}
 	}
 
 	private val mLauncherApps by lazy { LauncherAppsCompat(context) }
