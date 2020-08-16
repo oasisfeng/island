@@ -309,7 +309,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (targets.isEmpty()) throw new IllegalStateException("No Island");
 		final Set<UserHandle> profiles = targets.keySet();
 
-		if (profiles.size() == 1) requestToCloneAppToProfile(context, app, profiles.iterator().next());
+		if (profiles.size() == 1) {
+			requestToCloneAppToProfile(context, app, profiles.iterator().next());
+			return;
+		}
 
 		for (final Iterator<UserHandle> iterator = profiles.iterator(); iterator.hasNext(); ) {
 			final UserHandle profile = iterator.next();
