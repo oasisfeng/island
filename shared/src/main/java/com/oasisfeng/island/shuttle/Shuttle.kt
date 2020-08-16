@@ -21,8 +21,7 @@ class Shuttle(private val context: Context, private val to: UserHandle) {
 			try { shuttle(function, alwaysByActivity) }
 			catch (e: ProfileUnlockCanceledException) { Log.i(TAG, "Profile unlock is canceled.") }}
 
-	fun launchAsFuture(function: Context.() -> Unit)
-			= launch(at = GlobalScope, alwaysByActivity = false, function = function)?.asCompletableFuture()
+	fun launchAsFuture(function: Context.() -> Unit) = launch(at = GlobalScope, function = function)?.asCompletableFuture()
 
 	@Throws(ProfileUnlockCanceledException::class)
 	suspend fun <R> invoke(alwaysByActivity: Boolean = false, function: Context.() -> R)
@@ -30,8 +29,10 @@ class Shuttle(private val context: Context, private val to: UserHandle) {
 
 	/* Helpers to avoid redundant local variables. ("inline" is used to ensure only "Context.() -> R" function is shuttled) */
 	inline fun <A> launch(at: CoroutineScope, with: A, crossinline function: Context.(A) -> Unit) = launch(at) { function(with) }
-	suspend inline fun <A, R> invoke(with: A, crossinline function: Context.(A) -> R) = invoke { this.function(with) }
+	suspend inline fun <A, R> invoke(with: A, alwaysByActivity: Boolean = false, crossinline function: Context.(A) -> R)
+			= invoke(alwaysByActivity = alwaysByActivity) { this.function(with) }
 
+	/** @param alwaysByActivity always shuttle by activity launch. It ensures activity launch in shuttled function is not blocked by background activity launch restrictions. (vital on most Chinese ROMs) */
 	private suspend fun <R> shuttle(function: Context.() -> R, alwaysByActivity: Boolean): R {
 		val shuttle = (if (alwaysByActivity) null else PendingIntentShuttle.retrieveShuttle(context, to))
 				?: return PendingIntentShuttle.sendToProfileAndShuttle(context, to, function)
