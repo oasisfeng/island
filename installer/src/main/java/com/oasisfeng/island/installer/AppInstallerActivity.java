@@ -451,6 +451,8 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
 					.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
 					.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null)).show();
+
+			unregisterReceiver(mStatusCallback);    // Stop receive further status broadcast (sometimes another broadcast with STATUS_FAILURE_ABORTED will follow)
 		}
 	}};
 
