@@ -16,6 +16,7 @@ import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
+import android.os.Build.VERSION_CODES.Q
 import android.os.Bundle
 import android.preference.EditTextPreference
 import android.preference.Preference
@@ -56,29 +57,33 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
         val policies = DevicePolicies(activity)
         val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser
+
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
                 setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_GOD_MODE.get())) }}}
-            setup<Preference>(R.string.key_privacy) { isEnabled = false }   // Show but disabled, as a feature preview.
+            setup<Preference>(R.string.key_privacy) { if (SDK_INT > Q) remove(this) else isEnabled = false }   // Show but disabled, as a feature preview.
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
             setup<Preference>(R.string.key_island_watcher) { remove(this) }
             setup<Preference>(R.string.key_setup) { remove(this) }
             return
-        }
-        setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
-        setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
-                R.string.pref_privacy_read_phone_state_title, SDK_INT <= P)
-        setupPreferenceForManagingAppOps(R.string.key_manage_read_sms, READ_SMS, AppOpsCompat.OP_READ_SMS,
-                R.string.pref_privacy_read_sms_title)
-        setupPreferenceForManagingAppOps(R.string.key_manage_location, ACCESS_COARSE_LOCATION, AppOpsCompat.OP_COARSE_LOCATION,
-                R.string.pref_privacy_location_title)
-        if (Settings.Global.getInt(activity.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 0)
-            setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
-        else setupPreferenceForManagingAppOps(R.string.key_manage_storage, READ_EXTERNAL_STORAGE,
-                AppOpsCompat.OP_READ_EXTERNAL_STORAGE, R.string.pref_privacy_storage_title)
+        } else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
+
+        if (SDK_INT <= Q) {     // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
+            setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
+                    R.string.pref_privacy_read_phone_state_title, SDK_INT <= P)
+            setupPreferenceForManagingAppOps(R.string.key_manage_read_sms, READ_SMS, AppOpsCompat.OP_READ_SMS,
+                    R.string.pref_privacy_read_sms_title)
+            setupPreferenceForManagingAppOps(R.string.key_manage_location, ACCESS_COARSE_LOCATION, AppOpsCompat.OP_COARSE_LOCATION,
+                    R.string.pref_privacy_location_title)
+            if (Settings.Global.getInt(activity.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) != 0)
+                setupPreferenceForManagingAppOps(R.string.key_manage_storage, READ_EXTERNAL_STORAGE,
+                        AppOpsCompat.OP_READ_EXTERNAL_STORAGE, R.string.pref_privacy_storage_title)
+        } else setup<Preference>(R.string.key_privacy) { remove(this) }
+
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
+
         setup<Preference>(R.string.key_reprovision) {
             if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
             setOnPreferenceClickListener { true.also { @SuppressLint("InlinedApi")
