@@ -26,11 +26,11 @@
     <string name="featured_file_shuttle_description">借助“虚空之阵”实现穿越结界的文件访问能力，让文件可以更轻松的往返壶中界。布此阵需要通过 USB 连接的电脑使用 ADB 指令。</string>
     <string name="featured_fx_title">FX File Explorer</string>
     <string name="featured_fx_description">“文件传送门”提供的穿越结界的文件访问能力基于 Android 的“存储访问框架”。但并非所有的应用都支持“存储访问框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支持“存储访问框架”，只需在壶中界启动它，选择下拉菜单中的“Connect to Storage”，然后从侧栏选择相应传送门即可访问外部文件。</string>
-    <string name="featured_adb_secure_title">ADB 安全结界</string>
-    <string name="featured_adb_secure_island_title">ADB 安全结界（仅限壶中界）</string>
+    <string name="featured_adb_secure_title">ADB 安全封印</string>
+    <string name="featured_adb_secure_island_title">ADB 安全封印（仅限壶中界）</string>
     <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果授予炼妖壶对“界外”的管理权，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
-    <string name="featured_god_mode_title">将控制扩展至“界外”</string>
-    <string name="featured_god_mode_description">不仅可以冻结界外的应用，还能获得一些此模式下独有的功能。（详细介绍参见在线说明）</string>
+    <string name="featured_managed_mainland_title">将控制扩展至“界外”</string>
+    <string name="featured_managed_mainland_description">不仅可以冻结界外的应用，还能获得一些此模式下独有的功能。（详细介绍参见在线说明）</string>
     <string name="featured_greenify_title">绿色守护</string>
     <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_saf_enhancer_title">SAF 增强器 Lite</string>
@@ -180,9 +180,9 @@
     <string name="pref_destroy_summary">永久的销毁此界，连同其中的所有应用及其数据。</string>
     <string name="pref_rescind_title">撤除管理权</string>
     <string name="pref_rescind_summary">撤销炼妖壶对设备的全局管理权。所有的应用和数据都将保留（解冻），但你将无法再：\n\n</string>
-    <string name="pref_device_owner_title">黄帝之名</string>
-    <string name="pref_device_owner_summary">授予炼妖壶此设备的全局管理权，你将可以：\n\n</string>
-    <string name="pref_device_owner_featurs">· 冻结界外的应用\n· 监管界外应用的权限。(Android 9+)\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全结界）</string>
+    <string name="pref_device_owner_title">让掌控力延伸至界外</string>
+    <string name="pref_device_owner_summary">授予炼妖壶管理界外的权限，你将可以：\n\n</string>
+    <string name="pref_device_owner_featurs">· 冻结和管理界外的应用\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全封印）</string>
 
     <string name="pref_setup_header">管理</string>
 

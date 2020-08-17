@@ -41,7 +41,6 @@ import com.oasisfeng.island.util.Users
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.lang.RuntimeException
 import java.util.concurrent.ExecutionException
 
 /**
@@ -145,5 +144,5 @@ object IslandAppClones {
 		return CLONE_RESULT_OK_INSTALL
 	}
 
-	private const val TAG = "Island.IC"
+	private const val TAG = "Island.AC"
 }

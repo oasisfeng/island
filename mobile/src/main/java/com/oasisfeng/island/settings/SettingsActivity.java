@@ -95,7 +95,7 @@ import static java.util.Objects.requireNonNull;
 		final List<UserHandle> users = new ArrayList<>();		// Support multiple managed-profiles
 		users.add(Users.owner);
 		users.addAll(Users.getProfilesManagedByIsland());
-		if (users.size() <= 1) {		// God mode without Island
+		if (users.size() <= 1) {		// Managed mainland without Island
 			switchToHeader(header);
 			return;
 		}

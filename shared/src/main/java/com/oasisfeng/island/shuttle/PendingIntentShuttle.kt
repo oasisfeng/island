@@ -3,8 +3,11 @@ package com.oasisfeng.island.shuttle
 import android.app.*
 import android.app.Activity.RESULT_FIRST_USER
 import android.app.PendingIntent.*
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import android.content.Intent.*
+import android.content.IntentFilter
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
@@ -57,7 +60,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 			is PendingIntent -> {
 				require(payload.creatorPackage == context.packageName)
 				save(context, payload) }
-			else -> Log.e(TAG, "Invalid payload type: ${payload?.javaClass}") }
+			else -> Log.e(TAG, "Invalid payload type: ${payload?.javaClass} from: $intent") }
 	}
 
 	companion object {
@@ -385,7 +388,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		override fun openPanel(featureId: Int, event: KeyEvent?) {}
 	}
 
-	@Suppress("NOTHING_TO_INLINE") object Log {
+	@Suppress("NOTHING_TO_INLINE") private object Log {
 		inline fun v(tag: String, message: String) { android.util.Log.v(tag, prefix + message) }
 		inline fun d(tag: String, message: String) { android.util.Log.d(tag, prefix + message) }
 		inline fun i(tag: String, message: String) { android.util.Log.i(tag, prefix + message) }

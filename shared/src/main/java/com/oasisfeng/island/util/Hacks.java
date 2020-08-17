@@ -40,6 +40,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O_MR1;
 import static android.os.Build.VERSION_CODES.P;
+import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 /**
  * All reflection-based hacks should be defined here
@@ -154,8 +155,9 @@ public class Hacks {
 		}
 
 		@Hack.Fallback(-1) int checkOpNoThrow(int op, int uid, String pkg);
-		@Nullable List<PackageOps> getOpsForPackage(int uid, String pkg, @Nullable int[] ops);
-		@Nullable List<PackageOps> getPackagesForOps(@Nullable int[] ops);
+		@RequiresPermission(GET_APP_OPS_STATS) @Nullable List<PackageOps> getOpsForPackage(int uid, String pkg, @Nullable int[] ops);
+		@RequiresPermission(GET_APP_OPS_STATS) @Nullable List<PackageOps> getPackagesForOps(@Nullable int[] ops);
+		@RequiresPermission(GET_APP_OPS_STATS) @Nullable List<PackageOps> getPackagesForOps(@Nullable String[] ops);
 		void setMode(int code, int uid, String packageName, @Mode int mode);
 		void setUidMode(String appOp, int uid, @Mode int mode);
 		void setRestriction(int code,/* @AttributeUsage */int usage, @Mode int mode, @Nullable String[] exceptionPackages);
