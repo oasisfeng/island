@@ -24,11 +24,13 @@ import android.preference.TwoStatePreference
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.ArraySet
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
 import com.oasisfeng.island.Config
 import com.oasisfeng.island.TempDebug
@@ -38,6 +40,7 @@ import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
 import com.oasisfeng.island.shuttle.PendingIntentShuttle
+import com.oasisfeng.island.util.DPM
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Users
@@ -80,6 +83,21 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                 setupPreferenceForManagingAppOps(R.string.key_manage_storage, READ_EXTERNAL_STORAGE,
                         AppOpsCompat.OP_READ_EXTERNAL_STORAGE, R.string.pref_privacy_storage_title)
         } else setup<Preference>(R.string.key_privacy) { remove(this) }
+
+        setup<Preference>(R.string.key_cross_profile) {
+            if (SDK_INT <= Q || ! isProfileOrDeviceOwner) return@setup remove(this)
+            onClick {
+                val pkgs = activity.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
+                        .filter { it.requestedPermissions?.contains(INTERACT_ACROSS_PROFILES) == true }
+                val pm = activity.packageManager
+                val entries = pkgs.map { it.applicationInfo.loadLabel(pm) }.toTypedArray()
+                val allowedPackages = policies.invoke(DPM::getCrossProfilePackages)
+                val allowed = BooleanArray(entries.size) { index -> pkgs[index].packageName in allowedPackages }
+                Dialogs.buildCheckList(activity, activity.getText(R.string.prompt_manage_cross_profile_apps),
+                        entries, allowed) { _, which, checked -> allowed[which] = checked }.withOkButton {
+                            pkgs.mapIndexedNotNullTo(ArraySet()) { index, pkg -> if (allowed[index]) pkg.packageName else null }
+                                    .toSet().also { policies.invoke(DPM::setCrossProfilePackages, it) }}
+                        .withCancelButton().show() }}
 
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)

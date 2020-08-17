@@ -27,6 +27,7 @@ fun removeLeafPreference(root: PreferenceGroup, preference: Preference): Boolean
     return false
 }
 
-inline fun TwoStatePreference.onChange(crossinline block: (enabled: Boolean) -> Boolean) = setOnPreferenceChangeListener { _, v -> block(v as Boolean) }
-inline fun EditTextPreference.onChange(crossinline block: (value: String) -> Boolean) = setOnPreferenceChangeListener { _, v -> block(v as String) }
+fun Preference.onClick(block: Preference.() -> Unit) { onPreferenceClickListener = Preference.OnPreferenceClickListener { block(); true }}
+inline fun TwoStatePreference.onChange(crossinline block: (Boolean) -> Boolean) = setOnPreferenceChangeListener { _, v -> block(v as Boolean) }
+inline fun EditTextPreference.onChange(crossinline block: (String) -> Boolean) = setOnPreferenceChangeListener { _, v -> block(v as String) }
 fun TwoStatePreference.lock(checked: Boolean) { isChecked = checked; isSelectable = false }
