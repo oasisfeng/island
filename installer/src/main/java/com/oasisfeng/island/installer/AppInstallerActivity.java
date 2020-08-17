@@ -101,6 +101,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	private static final String EXTRA_INSTALL_RESULT = "android.intent.extra.INSTALL_RESULT";		// Intent.EXTRA_INSTALL_RESULT
 	private static final int INSTALL_SUCCEEDED = 1;													// PackageManager.INSTALL_SUCCEEDED
 	private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;									// ...
+	private static final int INSTALL_FAILED_USER_RESTRICTED = -111;                                 // ...
 	private static final int INSTALL_FAILED_ABORTED = -115;
 	private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";		// PackageInstall.EXTRA_LEGACY_STATUS
 
@@ -442,9 +443,10 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				return;
 			}
 
-			if (RomVariants.isMiui() && status == PackageInstaller.STATUS_FAILURE
-					&& message.equals("INSTALL_FAILED_INTERNAL_ERROR: Permission Denied"))
-				message += "\n\n" + getString(R.string.prompt_miui_optimization);
+			if (RomVariants.isMiui())
+				if (status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE && legacy_status == INSTALL_FAILED_USER_RESTRICTED
+						|| status == PackageInstaller.STATUS_FAILURE && message.equals("INSTALL_FAILED_INTERNAL_ERROR: Permission Denied"))
+					message += "\n\n" + getString(R.string.prompt_miui_optimization);
 
 			Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
 					.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
