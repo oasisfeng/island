@@ -32,7 +32,8 @@ import kotlinx.coroutines.GlobalScope
 		val flags = PackageManager.MATCH_SYSTEM_ONLY or PackageManager.MATCH_UNINSTALLED_PACKAGES
 		val pkgsToSuspend = context.packageManager.getInstalledApplications(flags).mapNotNull { it.packageName.takeIf { pkg ->
 			mLauncherApps.getApplicationInfoNoThrows(pkg, flags, profile).let { app ->
-				app.hidden && ! app.suspended && store.getInt(pkg, 0) != COMPONENT_ENABLED_STATE_ENABLED }}}.toTypedArray()
+				app != null && app.hidden && ! app.suspended && store.getInt(pkg, 0) != COMPONENT_ENABLED_STATE_ENABLED }}
+		}.toTypedArray()
 		if (pkgsToSuspend.isEmpty()) return
 
 		Shuttle(context, to = profile).launch(at = GlobalScope, with = pkgsToSuspend) { pkgs ->
