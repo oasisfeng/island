@@ -9,6 +9,7 @@ import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
 import android.os.UserHandle
 import android.os.UserManager
 import android.util.Log
+import androidx.annotation.WorkerThread
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
 import com.oasisfeng.android.util.SafeSharedPreferences
 import com.oasisfeng.island.controller.IslandAppControl
@@ -19,16 +20,18 @@ import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.OwnerUser
 import com.oasisfeng.island.util.Users
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /** Track explicitly "cloned" (unfrozen) system apps (previous frozen in post-provisioning). Other frozen system apps should be treated as "disabled" in UI.  */
 @OwnerUser class ClonedHiddenSystemApps(private val context: Context) {
 
 	fun migrateIfNeeded() {
 		val profile = Users.profile; val store = getStore(context, profile ?: return)
-		if (store.getInt(PREF_KEY_VERSION, 0) > 0) migrate(store, profile).also { store.edit().clear().apply() }
+		if (store.getInt(PREF_KEY_VERSION, 0) > 0)
+			GlobalScope.launch { migrate(store, profile).also { store.edit().clear().apply() }}
 	}
 
-	private fun migrate(store: SharedPreferences, profile: UserHandle) {
+	@WorkerThread private fun migrate(store: SharedPreferences, profile: UserHandle) {
 		val flags = PackageManager.MATCH_SYSTEM_ONLY or PackageManager.MATCH_UNINSTALLED_PACKAGES
 		val pkgsToSuspend = context.packageManager.getInstalledApplications(flags).mapNotNull { it.packageName.takeIf { pkg ->
 			mLauncherApps.getApplicationInfoNoThrows(pkg, flags, profile).let { app ->
