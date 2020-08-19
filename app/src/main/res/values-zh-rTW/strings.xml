@@ -17,10 +17,10 @@
     <string name="featured_button_disable">停用</string>
     <string name="featured_button_setup">建立</string>
     <string name="featured_button_install">安裝</string>
-    <string name="featured_file_shuttle_title">文件傳送門</string>
-    <string name="featured_file_shuttle_description">借助“虛空之陣”實現穿越结界的文件訪問能力，讓文件可以更輕鬆的往返壺中界。布此陣需要透過 USB 連結的電腦使用 ADB 指令。</string>
+    <string name="featured_file_shuttle_title">檔案傳送門</string>
+    <string name="featured_file_shuttle_description">借助“虛空之陣”實現穿越结界的瀏覽檔案能力，讓檔案可以更輕鬆的往返壺中界。布此陣需要透過 USB 連結的電腦使用 ADB 指令。</string>
     <string name="featured_fx_title">FX File Explorer</string>
-    <string name="featured_fx_description">“文件傳送門”提供的穿越结界的文件訪問能力基於 Android 的“儲存訪問框架”。但並非所有的應用程式都支援“儲存訪問框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支持“儲存訪問框架”，只需在壺中界啟動它，選擇下拉選單中的“Connect to Storage”，然後從側欄選擇對應傳送門即可訪問外部文件。</string>
+    <string name="featured_fx_description">“檔案傳送門”提供的穿越结界的瀏覽檔案能力基於 Android 的“儲存瀏覽框架”。但並非所有的應用程式都支援“儲存瀏覽框架”，甚至包括一些主流檔案管理工具。\n\nFX File Explorer 完全支持“儲存瀏覽框架”，只需在壺中界啟動它，選擇下拉選單中的“Connect to Storage”，然後從側欄選擇對應傳送門即可瀏覽外部檔案。</string>
     <string name="featured_adb_secure_title">ADB 安全結界</string>
     <string name="featured_adb_secure_island_title">ADB 安全结界（僅限壺中界）</string>
     <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 終端執行危險指令（如安裝 APK、修改關鍵系统設定）的權限。\n如果啟用“黄帝之名”，還可以在整個裝置層面限制 ADB 终端權限（包括阻止連結的裝置通過 USB 連結隱密的安裝應用程式）。</string>
@@ -36,9 +36,9 @@
     <string name="featured_coolapk_description">輕鬆升级凍結的應用程式，無需事先解凍。（需在酷安的設定 - 實驗室中開啟“顯示隱藏應用程式”）\n\n升级壺中界的應用程式需要在壺中界執行酷安。</string>
 
     <string name="setup_profile_welcome">歡迎来到壺中界</string>
-    <string name="setup_island_intro">壺中界是一个獨立的應用程式和數據空間。可以為應用程式選擇性的在壺中界創造分身，也可以將應用程式單獨安裝在壺中界。
-壺中界的應用程式訪問到的個人數據（通訊錄、通話紀錄等）是完全隔離，獨立於外部的，它們即便被給予了相關的權限，也無法訪問到外部的個人數據。
-\n\n應用程式分身的數據也獨立於外部的該應用程式，互不影響。壺中界的應用程式還可以在需要的時候被凍结，使其看起来完全消失無蹤，也無法進行任何後台行為。
+    <string name="setup_island_intro">壺中界是一个獨立的應用程式和資料。可以為應用程式選擇性的在壺中界創造分身，也可以將應用程式單獨安裝在壺中界。
+壺中界的應用程式瀏覽到的個人資料（通訊錄、通話紀錄等）是完全隔離，獨立於外部的，它們即便被給予了相關的權限，也無法瀏覽到外部的個人資料。
+\n\n應用程式分身的資料也獨立於外部的該應用程式，互不影響。壺中界的應用程式還可以在需要的時候被凍结，使其看起来完全消失無蹤，也無法進行任何後台行為。
 \n\n開始建立壺中界，意味著你同意授權“工作資料”（壺中界底層機制）的管理權限。我們不會收集您的隱私，詳情請參閱我們在 Google Play 商店中的隱私政策。</string>
     <string name="setup_accept">同意</string>
     <string name="setup_error_multi_user_not_allowed">抱歉，此裝置不支援必需的“Android 多使用者”特性。</string>
@@ -84,7 +84,7 @@
     <string name="dialog_greenify_explanation">基於節省記憶體和電量的原則，壺中界自身是後台乾淨的，因此需要借助綠色守護精巧的狀態檢測和休眠管理實現應用程式的自動凍結（以休眠之名）。</string>
     <string name="dialog_greenify_version_too_low">綠色守護需要升级到更新的版本</string>
     <string name="dialog_reactivate_message">通往壺中界的入口被意外關閉，请再次給予裝置管理權限以重新開啟。</string>
-    <string name="dialog_destroy_message">確定希望毀滅整个壺中界？其中的應用程式分身和所有數據将會完全湮滅，無法恢復。\n\n别擔心，外部的應用程式和數據不會受到任何影響。</string>
+    <string name="dialog_destroy_message">確定希望毀滅整个壺中界？其中的應用程式分身和所有資料将會完全湮滅，無法恢復。\n\n别擔心，外部的應用程式和資料不會受到任何影響。</string>
     <string name="dialog_destroy_exclusives_message">以下 %1$d 个應用程式僅存於壺中界，因此將隨著壺中界的毀滅而被完全解除安裝。\n\n%2$s\n\n確定要繼續毀滅壺中界？</string>
     <string name="dialog_deactivate_message">確定希望解除“黄帝之名”？\n\n將來如果希望重新啟用“黄帝之名”，必須再一次完成必要的流程，意味著如果没有 ROOT 權限，屆時需要摧毁現有的壺中界（如果已建立）並退出裝置上登入的所有帳號。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壺中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
@@ -114,7 +114,7 @@
     <string name="toast_greenify_failed">綠色化失敗</string>
     <string name="toast_internal_error">抱歉，出现了内部異常，請退出後重新嘗試。</string>
     <string name="toast_error_freeze_failure">凍結失敗</string>
-    <string name="toast_external_storage_permission_required">文件傳送門需要“儲存”權限以打通文件訪問。</string>
+    <string name="toast_external_storage_permission_required">檔案傳送門需要“儲存”權限以打通瀏覽檔案。</string>
     <string name="toast_failed_to_launch_app">抱歉，啟動應用程式時出現了異常。</string>
     <string name="toast_setup_mainland_non_root">沒有檢測到 ROOT 權限，正在打打開線上的操作說明。</string>
     <string name="toast_setup_mainland_root_failed">通過 ROOT 權限開啟“黄帝之名”時出現了異常。</string>
@@ -149,16 +149,16 @@
     <string name="pref_setup_category_status">狀態</string>
     <string name="pref_setup_category_troubleshooting">Troubleshooting</string>
     <string name="pref_setup_mainland_reprovision_title">修復山海界</string>
-    <string name="pref_setup_mainland_reprovision_summary">有助於解決山海界出現的問題。\n所有的應用程式和數據將保留。</string>
+    <string name="pref_setup_mainland_reprovision_summary">有助於解決山海界出現的問題。\n所有的應用程式和資料將保留。</string>
     <string name="pref_setup_island_reprovision_title">修復壺中界</string>
-    <string name="pref_setup_island_reprovision_summary">有助於解决壺中界出現的問題。\n所有的應用程式和數據將保留。</string>
+    <string name="pref_setup_island_reprovision_summary">有助於解决壺中界出現的問題。\n所有的應用程式和資料將保留。</string>
 
     <string name="pref_about_header">關於</string>
     <string name="pref_about_version_title">版本</string>
     <string name="pref_about_licenses_title">授權</string>
 
     <string name="notification_island_after_uninstall_title">壺中界已失去控制</string>
-    <string name="notification_island_after_uninstall_text">讓其毀滅（連同其中的所有應用程式和數據）還是重生？</string>
+    <string name="notification_island_after_uninstall_text">讓其毀滅（連同其中的所有應用程式和資料）還是重生？</string>
     <string name="notification_action_restore">重生</string>
 
     <!-- New User Guide -->
@@ -166,7 +166,7 @@
     <string name="prompt_freeze_title">凍結壺中界的應用程式</string>
     <string name="prompt_freeze_text">被凍結應用程式會完全消失，看起来就像是解除安裝了一樣，直到將其解凍。\n\n在凍結狀態的應用程式絕對無法做任何事情。</string>
     <string name="prompt_clone_title">在壺中界建立應用程式的分身</string>
-    <string name="prompt_clone_text">山海界的應用程式可以在壺中界獲得分身。\n\n應用程式的分身就像是新安装的應用程式副本，有自己獨立的數據。他們只分享應用程式的執行文件以節省空間。</string>
+    <string name="prompt_clone_text">山海界的應用程式可以在壺中界獲得分身。\n\n應用程式的分身就像是新安装的應用程式副本，有自己獨立的資料。他們只分享應用程式的執行檔案以節省空間。</string>
 
     <!-- Tip cards -->
 
