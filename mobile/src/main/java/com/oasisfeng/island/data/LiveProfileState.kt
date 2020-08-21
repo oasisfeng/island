@@ -26,10 +26,12 @@ class LiveProfileStates(private val context: Context) {
 
 		override fun onActive() {
 			mLiveBroadcastReceiver.observeForever(mDummyObserver)
-			value = context.getSystemService(UserManager::class.java)!!.run { when {
-				isUserUnlocked(profile) -> ProfileState.UNLOCKED
-				isUserRunning(profile)  -> ProfileState.AVAILABLE
-				else                    -> ProfileState.UNAVAILABLE }}
+			value = context.getSystemService(UserManager::class.java)!!.run {
+				try { when {
+					isUserUnlocked(profile) -> ProfileState.UNLOCKED
+					isUserRunning(profile) -> ProfileState.AVAILABLE
+					else -> ProfileState.UNAVAILABLE
+				}} catch (e: SecurityException) { ProfileState.UNAVAILABLE }}    // "SecurityException: You need INTERACT_ACROSS_USERS or MANAGE_USERS permission to ...", probably due to Island being destroyed.
 		}
 
 		override fun onInactive() = mLiveBroadcastReceiver.removeObserver(mDummyObserver)
