@@ -10,6 +10,7 @@ android {
         targetSdkVersion 28     // Private APIs are accessed by module "open" and "fileprovider" (via indirectly loaded remote class)
         resConfigs "en", "zh"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        missingDimensionStrategy 'compat', 'gingerbreadCompat'  // setup-wizard has a "compat" dimension that Insular doesn't
     }
 
     buildFeatures.dataBinding true
