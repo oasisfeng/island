@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_installer_label">應用程式安裝器</string>
+
+    <string name="confirm_installing">“%1$s”請求安裝 %2$s。\n\n是否繼續？</string>
+    <string name="confirm_updating">“%1$s”請求更新 %2$s。\n\n是否繼續？</string>
+    <string name="confirm_cloning">“%1$s”請求複製 %2$s。\n\n是否繼續？</string>
+    <string name="description_for_installing_app">“%1$s” (%2$s) 版本 %3$s (%4$d)</string>
+    <string name="description_for_cloning_app">“%1$s” (%2$s)</string>
+    <string name="description_for_installing_split">“%1$s” 的應用程式組件</string>
+    <string name="label_unknown_app">應用程式</string>
+    <string name="dialog_install_checkbox_always_allow">始終允許此來源安裝應用程式</string>
+    <string name="dialog_install_failure_title">安裝失敗</string>
+    <string name="dialog_install_unknown_failure_message">Android 系统的應用程式安裝過程發生了內部錯誤</string>
+    <string name="progress_dialog_installing">“%1$s”正在安裝 %2$s</string>
+    <string name="progress_dialog_updating">“%1$s”正在安裝 %2$s</string>
+    <string name="progress_dialog_cloning">“%1$s”正在複製 %2$s</string>
+
+    <string name="notification_caller_installed_app">“%1$s”已安裝新應用程式“%2$s”</string>
+    <string name="notification_caller_updated_app">“%1$s”已更新“%2$s”</string>
+    <string name="notification_caller_updated_self">\"%1$s\"已更新自己</string>
+    <string name="notification_app_with_permissions">已取得的權限：%s</string>
+    <string name="notification_app_target_api">適配至 Android %s</string>
+    <string name="notification_app_target_pre_m_wo_sensitive_permissions">適配至 Android %s (無敏感權限)</string>
+    <string name="action_show_app_settings">應用程式設定</string>
+
+    <string name="app_info_forwarder_title">在哪一個應用程式中顯示關於 %1$s (%2$s) 的訊息</string>
+    <string name="app_settings_helper_prompt">點擊“強制停止”可打開其它工具中針對此應用程式的設定</string>
+    <string name="fallback_to_sys_installer">嘗試傳統安裝方式</string>
+    <string name="toast_split_apk_clone_fallback_warning">此應用程式含有附加組件，可能無法以這種方式正常複製。如果遇到故障，請嘗試重新從應用程式商店安裝。</string>
+
+    <string name="prompt_miui_optimization">可能是“MIUI 優化”導致（可在“系统設定 - 開發人員選項”中關閉）</string>
+</resources>
