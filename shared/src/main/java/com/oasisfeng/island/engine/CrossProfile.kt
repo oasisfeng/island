@@ -14,6 +14,7 @@ class CrossProfile(private val context: Context) {
 	fun startActivityInParentProfile(intent: Intent) {
 		require(intent.data == null) { "Intent with data is not supported yet" }
 		check(! Users.isOwner()) { "Must not be called in parent profile" }
+		intent.addCategory(CATEGORY_PARENT_PROFILE)
 		val candidates = queryActivities(intent)
 		if (candidates.isEmpty()) throw ActivityNotFoundException("No matched activity for $intent")
 		val forwarder = candidates.findForwarder()
