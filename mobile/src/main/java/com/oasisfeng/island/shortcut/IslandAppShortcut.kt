@@ -7,7 +7,8 @@ import android.content.*
 import android.content.Intent.*
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
-import android.content.pm.PackageManager.*
+import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
+import android.content.pm.PackageManager.NameNotFoundException
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.content.res.Resources
@@ -19,10 +20,12 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.net.Uri
-import android.os.*
+import android.os.Binder
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.Q
+import android.os.Bundle
+import android.os.UserHandle
 import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
@@ -89,7 +92,7 @@ object IslandAppShortcut {
 			update(context, sm, app, profile.toId()) }
 	}
 
-	@RequiresApi(O) private fun update(context: Context, sm: ShortcutManager, app: ApplicationInfo, userId: Int) {
+	@OwnerUser @RequiresApi(O) private fun update(context: Context, sm: ShortcutManager, app: ApplicationInfo, userId: Int) {
 		Log.i(TAG, "Updating shortcut for ${app.packageName} in profile $userId")
 		val shortcut = buildShortcutInfo(context, sm, app)
 		sm.updateShortcuts(listOf(shortcut))
@@ -114,8 +117,6 @@ object IslandAppShortcut {
 		val drawable = getAppIconDrawable(context, context.getSystemService()!!, app)
 		return ShortcutInfo.Builder(context, shortcutId).setIntent(intent).setShortLabel(label).apply {
 			setIcon(Icon.createWithAdaptiveBitmap(drawable.toBitmap(sm.iconMaxWidth, sm.iconMaxHeight)))
-			if (isCrossProfile && settings.AlternativeShortcutBadge().enabled)
-				setActivity(ComponentName(context.packageName, "android.__dummy__"))
 			if (SDK_INT >= Q) setLongLived(true).setLocusId(LocusId(shortcutId))
 		}.build()
 	}

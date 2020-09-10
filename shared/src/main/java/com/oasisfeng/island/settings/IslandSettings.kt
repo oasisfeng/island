@@ -9,11 +9,11 @@ import com.oasisfeng.settings.AppSettings
 class IslandSettings(context: Context) {
 
 	inner class DynamicShortcutLabel: BooleanSetting(R.string.setting_dynamic_shortcut_label)
-	inner class AlternativeShortcutBadge: BooleanSetting(R.string.setting_alt_shortcut_badge)
 
 	open inner class BooleanSetting(@StringRes prefKeyStringRes: Int, singleUser: Boolean = true)
 		: IslandSetting<Boolean>(prefKeyStringRes, singleUser) {
-		val enabled get() = mAppSettings.getBoolean(this); fun set(value: Boolean) = mAppSettings.set(this, value)
+		val enabled get() = mAppSettings.getBoolean(this)
+		fun set(value: Boolean) = mAppSettings.set(this, value)
 	}
 
 	open inner class IslandSetting<T>(override val prefKeyResId: Int, override val isSingleUser: Boolean) : AppSettings.AppSetting<T> {

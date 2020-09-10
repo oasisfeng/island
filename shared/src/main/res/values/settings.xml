@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string translatable="false" name="setting_dynamic_shortcut_label">dynamic_shortcut_label</string>
-    <string translatable="false" name="setting_alt_shortcut_badge">alt_shortcut_badge</string>
 </resources>

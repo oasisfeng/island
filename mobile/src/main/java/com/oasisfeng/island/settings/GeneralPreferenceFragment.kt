@@ -2,7 +2,6 @@
 
 package com.oasisfeng.island.settings
 
-import android.app.admin.DevicePolicyManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -27,7 +26,6 @@ import com.oasisfeng.island.util.Permissions
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 /**
@@ -41,12 +39,9 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
         super.onCreate(savedInstanceState)
         val settings = IslandSettings(activity)
 
-        val updateShortcutsAsync: Preference.() -> Boolean = @RequiresApi(O) { true.also { activity.apply {
-            Toast.makeText(this, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
-            Handler().post { IslandAppShortcut.updateAllPinned(activity) }}}}   // Update after setting changed is made
-
-        setupSetting(settings.DynamicShortcutLabel(), visible = SDK_INT >= O, onChange = updateShortcutsAsync)
-        setupSetting(settings.AlternativeShortcutBadge(), onChange = updateShortcutsAsync)
+        setupSetting(settings.DynamicShortcutLabel(), visible = SDK_INT >= O, onChange = @RequiresApi(O) { true.also {
+            Toast.makeText(activity, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
+            Handler().post { IslandAppShortcut.updateAllPinned(activity) }}})
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(activity) }
