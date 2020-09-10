@@ -35,8 +35,6 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 			val tab = tabs.newTab().setTag(profile).setText(name)
 			mProfileStates.get(profile).observe(activity, Observer { updateTabIconForProfileState(activity, tab, profile, it) })
 			tabs.addTab(tab,/* selected = */profile == currentProfile) }
-
-		if (tabs.tabCount > 3) tabs.tabMode = TabLayout.MODE_SCROLLABLE
 	}
 }
 

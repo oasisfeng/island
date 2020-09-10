@@ -80,7 +80,7 @@
                 android:layout_gravity="top"
                 bind:tabInlineLabel="true"
                 bind:tabSelectedTextColor="@color/textPrimary"
-                bind:tabMode="fixed" />
+                bind:tabMode="scrollable" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
