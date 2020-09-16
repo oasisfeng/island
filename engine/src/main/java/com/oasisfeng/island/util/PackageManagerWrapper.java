@@ -42,8 +42,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 
-import java.util.List;
-
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,15 +49,14 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 import androidx.annotation.RestrictTo;
 
+import java.util.List;
+
 import static android.os.Build.VERSION_CODES.HONEYCOMB;
 import static android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.KITKAT;
 import static android.os.Build.VERSION_CODES.KITKAT_WATCH;
-import static android.os.Build.VERSION_CODES.LOLLIPOP;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 
 /**
@@ -92,7 +89,7 @@ public class PackageManagerWrapper extends PackageManager {
 		return mBase.getLaunchIntentForPackage(packageName);
 	}
 
-	@RequiresApi(LOLLIPOP) @Override public Intent getLeanbackLaunchIntentForPackage(String packageName) {
+	@Override public Intent getLeanbackLaunchIntentForPackage(String packageName) {
 		return mBase.getLeanbackLaunchIntentForPackage(packageName);
 	}
 
@@ -100,11 +97,11 @@ public class PackageManagerWrapper extends PackageManager {
 		return mBase.getPackageGids(packageName);
 	}
 
-	@RequiresApi(N) @Override public int[] getPackageGids(String packageName, int flags) throws NameNotFoundException {
+	@Override public int[] getPackageGids(String packageName, int flags) throws NameNotFoundException {
 		return mBase.getPackageGids(packageName, flags);
 	}
 
-	@RequiresApi(N) @Override public int getPackageUid(String packageName, int flags) throws NameNotFoundException {
+	@Override public int getPackageUid(String packageName, int flags) throws NameNotFoundException {
 		return mBase.getPackageUid(packageName, flags);
 	}
 
@@ -156,7 +153,7 @@ public class PackageManagerWrapper extends PackageManager {
 		return mBase.checkPermission(permName, pkgName);
 	}
 
-	@RequiresApi(M) @Override public boolean isPermissionRevokedByPolicy(@NonNull String permName, @NonNull String pkgName) {
+	@Override public boolean isPermissionRevokedByPolicy(@NonNull String permName, @NonNull String pkgName) {
 		return mBase.isPermissionRevokedByPolicy(permName, pkgName);
 	}
 
@@ -236,7 +233,7 @@ public class PackageManagerWrapper extends PackageManager {
 		return mBase.hasSystemFeature(name);
 	}
 
-	@RequiresApi(N) @Override public boolean hasSystemFeature(String name, int version) {
+	@Override public boolean hasSystemFeature(String name, int version) {
 		return mBase.hasSystemFeature(name, version);
 	}
 
@@ -340,15 +337,15 @@ public class PackageManagerWrapper extends PackageManager {
 		return mBase.getApplicationLogo(packageName);
 	}
 
-	@RequiresApi(api = LOLLIPOP) @Override public Drawable getUserBadgedIcon(Drawable icon, UserHandle user) {
+	@Override public Drawable getUserBadgedIcon(Drawable icon, UserHandle user) {
 		return mBase.getUserBadgedIcon(icon, user);
 	}
 
-	@RequiresApi(api = LOLLIPOP) @Override public Drawable getUserBadgedDrawableForDensity(Drawable drawable, UserHandle user, Rect badgeLocation, int badgeDensity) {
+	@Override public Drawable getUserBadgedDrawableForDensity(Drawable drawable, UserHandle user, Rect badgeLocation, int badgeDensity) {
 		return mBase.getUserBadgedDrawableForDensity(drawable, user, badgeLocation, badgeDensity);
 	}
 
-	@RequiresApi(api = LOLLIPOP) @Override public CharSequence getUserBadgedLabel(CharSequence label, UserHandle user) {
+	@Override public CharSequence getUserBadgedLabel(CharSequence label, UserHandle user) {
 		return mBase.getUserBadgedLabel(label, user);
 	}
 
@@ -445,7 +442,7 @@ public class PackageManagerWrapper extends PackageManager {
 		mBase.setApplicationCategoryHint(packageName, categoryHint);
 	}
 
-	@RequiresApi(LOLLIPOP) @Override @NonNull public PackageInstaller getPackageInstaller() {
+	@Override @NonNull public PackageInstaller getPackageInstaller() {
 		return mBase.getPackageInstaller();
 	}
 

@@ -13,9 +13,6 @@ import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.Hacks;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
-
 /**
  * API via activity (better for crossing the user border)
  *
@@ -41,7 +38,7 @@ public class ApiActivity extends CallerAwareActivity {
 			} else {
 				final String caller_pkg = getCallingPackage();
 				int caller_uid = -1;
-				if (SDK_INT >= N) try {
+				try {
 					caller_uid = getPackageManager().getPackageUid(caller_pkg, 0);
 				} catch (final PackageManager.NameNotFoundException ignored) {}
 				result = ApiDispatcher.verifyCaller(this, intent, caller_pkg, caller_uid);

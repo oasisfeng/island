@@ -20,15 +20,16 @@ public class AppStateTrackingHelper {
 		activity.getFragmentManager().beginTransaction().add(AppStateSyncFragment.create(pkg, user), pkg + "@" + Users.toId(user)).commit();
 	}
 
-	public static class AppStateSyncFragment extends Fragment {
+	@SuppressWarnings("deprecation") public static class AppStateSyncFragment extends Fragment {
 
 		private static final String KEY_PACKAGE = "package", KEY_USER = "user";
 
 		@Override public void onResume() {
 			super.onResume();
-			final Bundle args = getArguments();
-			final Activity activity = getActivity();
-			IslandAppListProvider.getInstance(activity).refreshPackage(args.getString(KEY_PACKAGE), args.getParcelable(KEY_USER), false);
+			final Activity activity = getActivity(); final Bundle args = getArguments();
+			final String pkg = args.getString(KEY_PACKAGE); final UserHandle user = args.getParcelable(KEY_USER);
+			if (pkg != null && user != null)
+				IslandAppListProvider.getInstance(activity).refreshPackage(pkg, user, false);
 			activity.getFragmentManager().beginTransaction().remove(this).commitAllowingStateLoss();
 		}
 

@@ -4,27 +4,31 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.text.TextUtils;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Users;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
+import java.util.function.Supplier;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
+import static android.content.Context.LAUNCHER_APPS_SERVICE;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -34,6 +38,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class AppInfo extends ApplicationInfo {
 
+	protected static final int PRIVATE_FLAG_HIDDEN = 1;
+
 	protected AppInfo(final AppListProvider<? extends AppInfo> provider, final ApplicationInfo base, final @Nullable AppInfo last) {
 		super(base);
 		mProvider = provider;
@@ -41,6 +47,7 @@ public class AppInfo extends ApplicationInfo {
 		if (last != null) {
 			mLastInfo = last;
 			last.mLastInfo = null;	// Only store the adjacent last.
+			if (TextUtils.equals(sourceDir, last.sourceDir)) mCachedIcon = last.mCachedIcon;    // Reuse icon if package source-dir is unchanged.
 		}
 	}
 
@@ -48,6 +55,20 @@ public class AppInfo extends ApplicationInfo {
 
 	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
 	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
+	public boolean isSuspended() { return (flags & ApplicationInfo.FLAG_SUSPENDED) != 0; }
+
+	public boolean isHidden() {
+		final Boolean hidden = isHidden(this);
+		if (hidden != null) return hidden;
+		// The fallback implementation
+		return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, Users.current());
+	}
+
+	/** @return hidden state, or null if failed to */
+	private static @Nullable Boolean isHidden(final ApplicationInfo info) {
+		final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
+		return private_flags != null ? (private_flags & PRIVATE_FLAG_HIDDEN) != 0 : null;
+	}
 
 	/** Is launchable (and neither disabled nor hidden) */
 	public boolean isLaunchable() { return mIsLaunchable.get(); }
@@ -108,7 +129,7 @@ public class AppInfo extends ApplicationInfo {
 	private static <T> Supplier<T> lazyLessMutable(final Supplier<T> supplier) { return Suppliers.memoizeWithExpiration(supplier, 1, SECONDS); }
 
 	private Drawable loadUnbadgedIconCompat(final PackageManager pm) {
-		if (SDK_INT >= LOLLIPOP_MR1) try {
+		try {
 			return loadUnbadgedIcon(pm);
 		} catch (final SecurityException e) {		// Appears on some Samsung devices (e.g. Galaxy S7, Note 8) with Android 8.0
 			Analytics.$().logAndReport(TAG, "Error loading unbadged icon for " + this, e);
@@ -119,7 +140,7 @@ public class AppInfo extends ApplicationInfo {
 		return dr;
 	}
 
-	@NonNull protected Context context() { return mProvider.context(); }
+	@NonNull public Context context() { return mProvider.context(); }
 
 	@Override public @NonNull String toString() { return buildToString(AppInfo.class).append('}').toString(); }
 

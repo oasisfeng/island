@@ -16,6 +16,8 @@ import android.os.UserHandle;
 import android.util.ArrayMap;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
@@ -27,21 +29,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import java9.util.Objects;
-import java9.util.function.Function;
-import java9.util.function.Predicate;
-import java9.util.stream.Collectors;
-import java9.util.stream.Stream;
-import java9.util.stream.StreamSupport;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static android.content.pm.PackageManager.GET_SIGNATURES;
-import static android.content.pm.PackageManager.GET_UNINSTALLED_PACKAGES;
+import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.P;
+import static com.oasisfeng.island.util.Permissions.INTERACT_ACROSS_USERS;
 
 /**
  * Dispatch the API calls.
@@ -71,7 +69,7 @@ class ApiDispatcher {
 			Log.w(TAG, "Never use implicit intent or explicit intent with component name for API request, use Intent.setPackage() instead.");
 
 		Log.d(TAG, "API invoked by " + pkg);
-		if (SDK_INT >= M && uid >= 0 && verifyRuntimePermission(context, uid, intent.getAction())) return null;
+		if (uid >= 0 && verifyRuntimePermission(context, uid, intent.getAction())) return null;
 
 		// Fallback verification for API v1 clients.
 		final Integer value = sVerifiedCallers.get(pkg);
@@ -80,9 +78,9 @@ class ApiDispatcher {
 		if (signature_hash == 0) return null;	// 0 means already verified (cached)
 
 		// Legacy verification is not supported inside Island without INTERACT_ACROSS_USERS on Android P+, due to MATCH_ANY_USER being restricted.
-		try { @SuppressWarnings("deprecation") @SuppressLint({"PackageManagerGetSignatures", "WrongConstant"})
+		try { @SuppressLint("WrongConstant")
 			final PackageInfo pkg_info = context.getPackageManager().getPackageInfo(pkg, GET_SIGNATURES
-				| (SDK_INT < P || Permissions.has(context, Permissions.INTERACT_ACROSS_USERS) ? Hacks.GET_ANY_USER_AND_UNINSTALLED : GET_UNINSTALLED_PACKAGES));
+				| (SDK_INT < P || Permissions.has(context, INTERACT_ACROSS_USERS) ? Hacks.GET_ANY_USER_AND_UNINSTALLED : MATCH_UNINSTALLED_PACKAGES));
 			return verifySignature(pkg, signature_hash, pkg_info);
 		} catch (final PackageManager.NameNotFoundException e) { return "Permission denied or client package not found: " + pkg; }
 	}
@@ -117,15 +115,14 @@ class ApiDispatcher {
 		if (action == null) return "No action";
 		boolean positive = false;
 		switch (action) {
-		case Api.latest.ACTION_FREEZE: positive = true;
+		case Api.latest.ACTION_FREEZE: positive = true;		// Fall-through
 		case Api.latest.ACTION_UNFREEZE:
 			final boolean hidden = positive;
 			return processPackageUri(intent, null, pkg -> IslandManager.ensureAppHiddenState(context, pkg, hidden));
 		case Api.latest.ACTION_LAUNCH:
 			return launchActivity(context, intent);
-		case Api.latest.ACTION_SUSPEND: positive = true;
+		case Api.latest.ACTION_SUSPEND: positive = true;	// Fall-through
 		case Api.latest.ACTION_UNSUSPEND:
-			if (SDK_INT < N) return "Requires Android N+: " + action;
 			final boolean suspended = positive;
 			return processPackageUri(intent, pkgs -> setPackageSuspended(context, pkgs, suspended), null);
 		default: return "Unsupported action: " + action;
@@ -147,7 +144,7 @@ class ApiDispatcher {
 		if ("package".equals(scheme)) {
 			final String pkg = uri.getSchemeSpecificPart();
 			final String free_to_launch = IslandManager.ensureAppFreeToLaunch(context, pkg);
-			if (free_to_launch != null) return free_to_launch;
+			if (! free_to_launch.isEmpty()) return free_to_launch;
 			return IslandManager.launchApp(context, pkg, Process.myUserHandle()) ? null : "no_launcher_activity";
 		}
 
@@ -167,7 +164,7 @@ class ApiDispatcher {
 		return null;
 	}
 
-	@RequiresApi(N) private static String setPackageSuspended(final Context context, final Stream<String> pkgs, final boolean suspended) {
+	private static String setPackageSuspended(final Context context, final Stream<String> pkgs, final boolean suspended) {
 		final String[] failed = new DevicePolicies(context).invoke(DevicePolicyManager::setPackagesSuspended, pkgs.toArray(String[]::new), suspended);
 		return failed.length == 0 ? null : "Failed packages: " + Arrays.toString(failed);
 	}
@@ -180,7 +177,7 @@ class ApiDispatcher {
 		final Stream<String> pkgs;
 		final boolean single;
 		if (single = "package".equals(scheme)) pkgs = Stream.of(ssp);
-		else if ("packages".equals(scheme)) pkgs = StreamSupport.stream(Arrays.asList(ssp.split(","))).filter(Objects::nonNull).map(String::trim);
+		else if ("packages".equals(scheme)) pkgs = Arrays.stream(ssp.split(",")).filter(Objects::nonNull).map(String::trim);
 		else return "Unsupported intent data scheme: " + intent;	// Should never happen
 
 		try {

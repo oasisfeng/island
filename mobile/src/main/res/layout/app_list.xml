@@ -35,7 +35,7 @@
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chips"
-                android:background="@color/background"
+                android:background="@color/header_background"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/margin_small"
@@ -56,7 +56,7 @@
                     app:checkedIconVisible="false"
                     app:chipBackgroundColor="@color/chip_background_color"
                     app:rippleColor="@color/accent"
-                    android:checked="@={apps.mFilterIncludeHiddenSystemApps}"
+                    android:checked="@={apps.getFilterIncludeHiddenSystemApps()}"
                     android:text="@string/filter_include_hidden_system_components" />
 
                 <com.google.android.material.chip.Chip
@@ -67,11 +67,20 @@
                     app:chipStrokeColor="@color/primary"
                     app:chipStrokeWidth="2dp"
                     app:chipBackgroundColor="@color/chip_background_color"
-                    bind:shown="@{! apps.mFilterText.isEmpty()}"
+                    bind:shown="@{! apps.getFilterText().isEmpty()}"
                     bind:onCloseIconClickListener="@{view -> apps.onQueryTextCleared()}"
-                    tools:text="@{apps.mFilterText}" />
+                    tools:text="@{apps.getFilterText()}" />
 
             </com.google.android.material.chip.ChipGroup>
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                bind:tabInlineLabel="true"
+                bind:tabSelectedTextColor="@color/textPrimary"
+                bind:tabMode="fixed" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -96,7 +105,7 @@
             android:id="@+id/featured_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?android:attr/actionBarSize"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             bind:shown="@{featured.visible}"
             android:paddingBottom="88dp"
             android:clipToPadding="false"
@@ -126,20 +135,6 @@
             android:layout_height="wrap_content"
             android:visibility="@{card != null ? View.VISIBLE : View.GONE}"
             bind:vm="@{card}" />
-
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottom_navigation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_gravity="bottom"
-            android:layout_marginStart="-5dp" android:layout_marginEnd="-5dp" tools:comments="To avoid white edges when fading and scaling out"
-            android:background="?android:attr/colorPrimary"
-            app:itemBackground="?android:attr/colorPrimary"
-            app:itemIconTint="@android:color/white"
-            app:itemTextColor="@drawable/bottom_navigation_text_color"
-            app:menu="@menu/bottom_navigation"
-            bind:onNavigationItemSelected="@{menu -> apps.onTabSwitched(context, menu)}" />
 
         <LinearLayout
             android:orientation="vertical"

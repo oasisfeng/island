@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.oasisfeng.island.settings
 
 import android.app.admin.DevicePolicyManager
@@ -5,41 +7,55 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.N
+import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
+import android.os.Handler
+import android.preference.Preference
 import android.preference.TwoStatePreference
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS
 import com.oasisfeng.island.mobile.R
+import com.oasisfeng.island.settings.IslandSettings.BooleanSetting
+import com.oasisfeng.island.shortcut.IslandAppShortcut
+import com.oasisfeng.island.util.DPM
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Permissions
 import eu.chainfire.libsuperuser.Shell
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * General preferences in Settings
  *
  * Extracted from SettingsActivity by Oasis on 2019/7/17.
  */
-@Suppress("DEPRECATION")
-class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.pref_general, R.string.key_launch_shortcut_prefix) {
+class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pref_general) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val settings = IslandSettings(activity)
+
+        val updateShortcutsAsync: Preference.() -> Boolean = @RequiresApi(O) { true.also { activity.apply {
+            Toast.makeText(this, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
+            Handler().post { IslandAppShortcut.updateAllPinned(activity) }}}}   // Update after setting changed is made
+
+        setupSetting(settings.DynamicShortcutLabel(), visible = SDK_INT >= O, onChange = updateShortcutsAsync)
+        setupSetting(settings.AlternativeShortcutBadge(), onChange = updateShortcutsAsync)
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(activity) }
-            if (SDK_INT < N || ! policies.isProfileOrDeviceOwnerOnCallingUser) return@setup remove(this)
+            if (! policies.isProfileOrDeviceOwnerOnCallingUser) return@setup remove(this)
 
-            isChecked = policies.invoke(DevicePolicyManager::getShortSupportMessage) != null
-            onChange { enabled ->
-                policies.execute(DevicePolicyManager::setShortSupportMessage, if (enabled) getText(R.string.device_admin_support_message_short) else null)
-                policies.execute(DevicePolicyManager::setLongSupportMessage, if (enabled) getText(R.string.device_admin_support_message_long) else null)
-                true
-            }
-        }
+            isChecked = policies.invoke(DPM::getShortSupportMessage) != null
+            onChange { enabled -> true.also {
+                policies.execute(DPM::setShortSupportMessage, if (enabled) getText(R.string.device_admin_support_message_short) else null)
+                policies.execute(DPM::setLongSupportMessage, if (enabled) getText(R.string.device_admin_support_message_long) else null) }}}
 
         setup<TwoStatePreference>(R.string.key_preserve_app_ops) {
             if (SDK_INT < P) return@setup remove(this)
@@ -58,6 +74,12 @@ class GeneralPreferenceFragment : SettingsActivity.SubPreferenceFragment(R.xml.p
                                 cm?.setPrimaryClip(ClipData.newPlainText(null, cmd))
                             }.show() }}}}
     }
+
+    private fun setupSetting(setting: BooleanSetting, visible: Boolean = true, onChange: (Preference.() -> Boolean)? = null)
+            = setup<TwoStatePreference>(setting.prefKeyResId) {
+        if (! visible) return@setup remove(this)
+        isChecked = setting.enabled
+        onChange { enabled -> onChange?.invoke(this) != false && setting.set(enabled) }}
 
     private fun TwoStatePreference.refreshActivationStateForPreserveAppOps()
             = Permissions.has(activity, GET_APP_OPS_STATS).also { if (it) lock(true) }

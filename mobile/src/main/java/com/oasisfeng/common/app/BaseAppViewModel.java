@@ -4,13 +4,13 @@ import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.View;
 
+import androidx.databinding.ObservableField;
+import androidx.lifecycle.ViewModel;
+
 import com.oasisfeng.android.ui.IconResizer;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.IslandApplication;
 import com.oasisfeng.island.mobile.R;
-
-import androidx.databinding.ObservableField;
-import androidx.lifecycle.ViewModel;
 
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 
@@ -44,7 +44,7 @@ public class BaseAppViewModel extends ViewModel {
 	}
 
 	protected boolean isContentSameAs(final BaseAppViewModel another) {
-		return TextUtils.equals(info.getLabel(), another.info.getLabel());
+		return TextUtils.equals(info.getLabel(), another.info.getLabel()) && info.flags == another.info.flags;
 	}
 
 	private final static IconResizer sIconResizer = new IconResizer((int) IslandApplication.$().getResources().getDimension(R.dimen.app_icon_size));	// TODO: Avoid static

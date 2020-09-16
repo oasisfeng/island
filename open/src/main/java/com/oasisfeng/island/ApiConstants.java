@@ -30,6 +30,7 @@ import android.os.UserHandle;
 	public static final long USER_ALL = -1;
 
 	public static final String DELEGATION_PACKAGE_ACCESS = DevicePolicyManager.DELEGATION_PACKAGE_ACCESS;
+	public static final String DELEGATION_PERMISSION_GRANT = DevicePolicyManager.DELEGATION_PERMISSION_GRANT;
 	/* Custom delegations with prefix "-island-" */
 	public static final String DELEGATION_APP_OPS = "-island-delegation-app-ops";
 }

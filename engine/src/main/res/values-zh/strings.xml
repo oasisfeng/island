@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="profile_name">壶中界</string>
-
     <string name="permission_group_control_island_apps_label">炼妖壶管理的应用</string>
     <string name="permission_group_control_island_apps_description">控制炼妖壶管理的应用</string>
     <string name="permission_freeze_app_label">冻结炼妖壶管理的应用</string>

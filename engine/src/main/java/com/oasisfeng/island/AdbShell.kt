@@ -2,15 +2,11 @@ package com.oasisfeng.island
 
 import android.accounts.Account
 import android.accounts.AccountManager
-import android.accounts.AccountManagerFuture
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Context.ACCOUNT_SERVICE
 import android.content.Context.USER_SERVICE
 import android.content.Intent
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.LOLLIPOP_MR1
-import android.os.Bundle
 import android.os.Looper
 import android.os.Process
 import android.os.UserManager
@@ -21,7 +17,6 @@ import com.oasisfeng.island.util.Hacks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 
 /**
  * Helper running in ADB shell
@@ -111,7 +106,7 @@ object AdbShell {
 
     private suspend fun removeAccountIfNotExcludedInternal(am: AccountManager, account: Account): String {
         if (shouldExclude(account)) return "SKIPPED"
-        val future = removeAccount(am, account)     // Avoid Dispatchers.MAIN due to lack of running main Looper.
+        val future = am.removeAccount(account, null, null, null)     // Avoid Dispatchers.MAIN due to lack of running main Looper.
         return withContext(Dispatchers.Default) {
             try {
                 val result = future.result
@@ -122,19 +117,6 @@ object AdbShell {
             } catch (e: Exception) {
                 "ERROR ($e)"
             }
-        }
-    }
-
-    private fun removeAccount(am: AccountManager, account: Account): AccountManagerFuture<Bundle> {
-        if (SDK_INT >= LOLLIPOP_MR1) return am.removeAccount(account, null, null, null)
-        val future = @Suppress("DEPRECATION") am.removeAccount(account, null, null)
-        return object: AccountManagerFuture<Bundle> {
-            override fun cancel(mayInterruptIfRunning: Boolean): Boolean = future.cancel(mayInterruptIfRunning)
-            override fun isCancelled(): Boolean = future.isCancelled
-            override fun isDone(): Boolean = future.isDone
-            override fun getResult(timeout: Long, unit: TimeUnit?): Bundle = convert(future.getResult(timeout, unit))
-            override fun getResult(): Bundle = convert(future.result)
-            private fun convert(result: Boolean): Bundle = Bundle().apply { putBoolean(AccountManager.KEY_BOOLEAN_RESULT, result) }
         }
     }
 

@@ -33,7 +33,7 @@
             <intent-filter android:priority="-1"> <!-- Used by IslandProvisioning to launch this activity from Island after successful provisioning -->
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="com.oasisfeng.island.category.MAIN_ACTIVITY" />
+                <category android:name="com.oasisfeng.island.category.PARENT_PROFILE" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
@@ -41,6 +41,32 @@
             </intent-filter>
             <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
         </activity>
+
+        <activity android:name="com.oasisfeng.island.shortcut.IslandAppShortcut$ShortcutLauncher"
+            android:hardwareAccelerated="false"
+            android:resumeWhilePausing="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:clearTaskOnLaunch="true"
+            android:taskAffinity=":shortcut"
+            android:launchMode="singleTask" > <!-- Most important attribute: launchMode="singleTask" -->
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="package" />
+                <data android:scheme="android-app" />
+            </intent-filter>
+        </activity>
+
+        <!--<activity android:name="android.__dummy__" android:exported="true" android:icon="@mipmap/ic_dummy" />-->
+
+        <service android:name="com.oasisfeng.island.shortcut.IslandAppShortcut$ShortcutUpdater"
+                 android:exported="false" android:enabled="@bool/since_api_26">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.PersistentService" />
+            </intent-filter>
+        </service>
 
         <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
 
@@ -59,7 +85,7 @@
                   android:exported="false"
                   android:multiprocess="true" />
 
-        <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true" tools:targetApi="N">
+        <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -73,24 +99,38 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="com.oasisfeng.island.settings.IslandNameManager$NameInitializer"
+                  android:exported="false" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_INITIALIZE" />
+            </intent-filter>
+        </receiver>
+
         <activity android:name="com.oasisfeng.island.settings.SettingsActivity"
                   android:label="@string/settings_title"
                   android:theme="@style/AppTheme.Settings"
                   android:parentActivityName="com.oasisfeng.island.MainActivity" />
 
         <activity android:name="com.oasisfeng.island.settings.IslandSettingsActivity"
+                  android:directBootAware="true"
                   android:label="@string/label_activity_island_settings"
-                  android:theme="@style/AppTheme.Settings"
-                  android:enabled="false"> <!-- Enabled explicitly for managed profiles during Island setup -->
+                  android:theme="@android:style/Theme.NoDisplay"
+                  android:enabled="false"> <!-- Enabled explicitly by IslandSettingsActivity$Enabler, "directBootAware" to receive PendingIntentShuttle in user-locked state -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="com.oasisfeng.island.category.ISLAND_ONLY" />
             </intent-filter>
         </activity>
 
         <activity-alias android:name="com.oasisfeng.island.settings.IslandSettingsActivityInMainland"
                         android:targetActivity="com.oasisfeng.island.settings.IslandSettingsActivity" /> <!-- To avoid launcher icon in mainland -->
+
+        <receiver android:name="com.oasisfeng.island.settings.AppOpsPermissionsUnlock" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

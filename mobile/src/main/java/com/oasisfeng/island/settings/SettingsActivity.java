@@ -11,17 +11,12 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.preference.ListPreference;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceGroup;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import androidx.annotation.StringRes;
 import androidx.annotation.XmlRes;
 import androidx.core.app.NavUtils;
 
@@ -30,28 +25,29 @@ import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.island.MainActivity;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.shared.BuildConfig;
-import com.oasisfeng.island.shuttle.MethodShuttle;
+import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static android.content.Intent.EXTRA_TITLE;
+import kotlin.Unit;
+import kotlinx.coroutines.GlobalScope;
+
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
 import static java.util.Objects.requireNonNull;
-import static java9.util.stream.StreamSupport.stream;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On handset devices, settings are presented as a single list.
  * On tablets, settings are split by category, with category headers shown to the left of the list of settings.
  */
-public class SettingsActivity extends PreferenceActivity {
+@SuppressWarnings("deprecation") public class SettingsActivity extends PreferenceActivity {
 
 	public static void startWithPreference(final Context context, final Class<? extends PreferenceFragment> fragment) {
 		final Intent intent = new Intent(context, SettingsActivity.class).putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, fragment.getName());
@@ -85,38 +81,6 @@ public class SettingsActivity extends PreferenceActivity {
 		return super.onMenuItemSelected(featureId, item);
 	}
 
-	/**
-	 * Binds a preference's summary to its value. More specifically, when the preference's value is changed, its summary (line of text
-	 * below the preference title) is updated to reflect the value. The summary is also immediately updated upon calling this method.
-	 * The exact display format is dependent on the type of preference.
-	 */
-	private static void bindPreferenceSummaryToValue(final Preference preference) {
-		// Set the listener to watch for value changes.
-		preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-		// Trigger the listener immediately with the preference's current value.
-		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-				PreferenceManager.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(), ""));
-	}
-
-	/** A preference value change listener that updates the preference's summary to reflect its new value. */
-	private static final Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = (preference, value) -> {
-		String stringValue = value.toString();
-
-		if (preference instanceof ListPreference) {
-			// For list preferences, look up the correct display value in
-			// the preference's 'entries' list.
-			ListPreference listPreference = (ListPreference) preference;
-			int index = listPreference.findIndexOfValue(stringValue);
-
-			// Set the summary to reflect the new value.
-			preference.setSummary(index >= 0 ? listPreference.getEntries()[index] : null);
-		} else {
-			// For all other preferences, set the summary to the value's simple string representation.
-			preference.setSummary(stringValue);
-		}
-		return true;
-	};
-
 	@Override public boolean onIsMultiPane() {
 		return (getResources().getConfiguration().screenLayout & SCREENLAYOUT_SIZE_MASK) >= SCREENLAYOUT_SIZE_XLARGE;
 	}
@@ -131,35 +95,34 @@ public class SettingsActivity extends PreferenceActivity {
 		final List<UserHandle> users = new ArrayList<>();		// Support multiple managed-profiles
 		users.add(Users.owner);
 		users.addAll(Users.getProfilesManagedByIsland());
-		if (users.size() <= 1) {		// God mode without Island
+		if (users.size() <= 1) {		// Managed mainland without Island
 			switchToHeader(header);
 			return;
 		}
-		final String[] profile_labels = stream(users).map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
-				: user.equals(Users.profile) ? getText(R.string.tab_island) : "Island " + Users.toId(user)).toArray(String[]::new);	// TODO: Use actual name for Islands
+		final Map<UserHandle, String> names = IslandNameManager.getAllNames(this);
+		final CharSequence[] profile_labels = users.stream().map(user -> Users.isOwner(user) ? getText(R.string.tab_mainland)
+				: names.get(user)).toArray(CharSequence[]::new);
 		Dialogs.buildList(this, null, profile_labels, (d, which) -> {
-			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which), profile_labels[which]);
+			if (which == 0) switchToHeader(header); else launchSettingsActivityAsUser(users.get(which));
 		}).show();
 	}
 
-	private void launchSettingsActivityAsUser(final UserHandle user, final String title) {
-		final LauncherApps la = ((LauncherApps) getSystemService(LAUNCHER_APPS_SERVICE));
-		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), user);
-		if (! activities.isEmpty()) {
-			for (final LauncherActivityInfo activity : activities)
-				if (IslandSettingsActivity.class.getName().equals(activity.getComponentName().getClassName())) {
-					la.startMainActivity(activity.getComponentName(), activity.getUser(), null, null);
-					break;
-				}
-		} else {	// In case IslandSettingsActivity is not enabled, due to Island space is not yet activated after upgrading.
-			if (user.equals(Users.profile)) {
-				final ComponentName component = new ComponentName(this, IslandSettingsActivity.class);
-				MethodShuttle.runInProfile(this, (Context context) -> {
-					context.getPackageManager().setComponentEnabledSetting(component, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
-					context.startActivity(new Intent().setComponent(component).putExtra(EXTRA_TITLE, title).addFlags(FLAG_ACTIVITY_NEW_TASK));
-				});
-			} else Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+	private void launchSettingsActivityAsUser(final UserHandle profile) {
+		final LauncherApps la = requireNonNull(getSystemService(LauncherApps.class));
+		final List<LauncherActivityInfo> activities = la.getActivityList(getPackageName(), profile);
+		if (activities.isEmpty()) {
+			Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show();
+			return;
 		}
+		for (final LauncherActivityInfo activity : activities)
+			if (IslandSettingsActivity.class.getName().equals(activity.getComponentName().getClassName())) {
+				final ComponentName component = activity.getComponentName();
+				new Shuttle(this, profile).launch(GlobalScope.INSTANCE, true, context -> {
+					context.startActivity(new Intent().setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_NO_ANIMATION));
+					return Unit.INSTANCE;
+				});
+				break;
+			}
 	}
 
 	/** This method stops fragment injection in malicious applications. Make sure to deny any unknown fragments here. */
@@ -167,18 +130,14 @@ public class SettingsActivity extends PreferenceActivity {
 
 	public static abstract class SubPreferenceFragment extends PreferenceFragment {
 
-		public SubPreferenceFragment(final @XmlRes int preference_xml, final int... keys_to_bind_summary) {
+		public SubPreferenceFragment(final @XmlRes int preference_xml) {
 			mPreferenceXml = preference_xml;
-			mKeysToBindSummary = keys_to_bind_summary;
 		}
 
 		@Override public void onCreate(final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(mPreferenceXml);
 			setHasOptionsMenu(true);
-			// Bind the summaries of EditText/List/Dialog/Ringtone preferences to their values.
-			// When their values change, their summaries are updated to reflect the new value, per the Android Design guidelines.
-			for (final int key : mKeysToBindSummary) bindPreferenceSummaryToValue(findPreference(getString(key)));
 		}
 
 		@Override public boolean onOptionsItemSelected(final MenuItem item) {
@@ -189,17 +148,7 @@ public class SettingsActivity extends PreferenceActivity {
 			} else return super.onOptionsItemSelected(item);
 		}
 
-		protected static boolean removeLeafPreference(final PreferenceGroup root, final Preference preference) {
-			if (root.removePreference(preference)) return true;
-			for (int i = 0; i < root.getPreferenceCount(); i ++) {
-				final Preference child = root.getPreference(i);
-				if (child instanceof PreferenceGroup && removeLeafPreference((PreferenceGroup) child, preference)) return true;
-			}
-			return false;
-		}
-
 		private final int mPreferenceXml;
-		private final @StringRes int[] mKeysToBindSummary;
 	}
 
 

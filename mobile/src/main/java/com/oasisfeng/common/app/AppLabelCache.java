@@ -17,9 +17,6 @@ import com.oasisfeng.island.util.Hacks;
 
 import java.util.Objects;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
-
 /**
  * Cache for app labels.
  *
@@ -71,10 +68,7 @@ class AppLabelCache implements ComponentCallbacks {
 	}
 
 	@Override public void onConfigurationChanged(final @NonNull Configuration config) {
-		final String language_tags;
-		if (SDK_INT < N) language_tags = config.locale.toLanguageTag();
-		else language_tags = config.getLocales().toLanguageTags();
-
+		final String language_tags = config.getLocales().toLanguageTags();
 		final String cache_language_tags = mStore.getString(KEY_LANGUAGE_TAGS, null);
 		if (language_tags.equals(cache_language_tags)) return;
 		mStore.edit().clear().putString(KEY_LANGUAGE_TAGS, language_tags).apply();	// Invalidate the whole cache

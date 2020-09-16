@@ -1,17 +1,31 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <EditTextPreference android:key="@string/key_launch_shortcut_prefix"
-                        android:title="@string/pref_launch_shortcut_prefix_title"
-                        android:defaultValue="@string/default_launch_shortcut_prefix" />
+    <CheckBoxPreference android:key="@string/key_preserve_app_ops"
+        android:title="@string/pref_preserve_app_ops"
+        android:summary="@string/pref_preserve_app_ops_description"
+        android:persistent="false" />
 
     <SwitchPreference android:key="@string/key_show_admin_message"
-                      android:title="@string/pref_show_admin_message_title"
-                      android:summary="@string/pref_show_admin_message_summary"
-                      android:persistent="false" />
+        android:title="@string/pref_show_admin_message_title"
+        android:summary="@string/pref_show_admin_message_summary"
+        android:persistent="false" />
 
-    <CheckBoxPreference android:key="@string/key_preserve_app_ops"
-                        android:title="@string/pref_preserve_app_ops"
-                        android:summary="@string/pref_preserve_app_ops_description"
-                        android:persistent="false" />
+    <PreferenceCategory android:title="@string/pref_cat_app_launch_shortcuts">
+
+        <!--<SwitchPreference
+            android:key="@string/setting_alt_shortcut_badge"
+            android:title="@string/pref_alt_shortcut_badge_title"
+            android:summary="@string/pref_alt_shortcut_badge_summary"
+            android:persistent="false"
+            android:defaultValue="false" />-->
+
+        <SwitchPreference
+            android:key="@string/setting_dynamic_shortcut_label"
+            android:title="@string/pref_dynamic_shortcut_label_title"
+            android:summary="@string/pref_dynamic_shortcut_label_summary"
+            android:persistent="false"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
 
 </PreferenceScreen>

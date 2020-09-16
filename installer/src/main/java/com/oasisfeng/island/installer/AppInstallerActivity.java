@@ -39,14 +39,15 @@ import androidx.annotation.RequiresApi;
 
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsCompat;
+import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.RomVariants;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
 
@@ -60,9 +61,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-
-import java9.util.Optional;
+import java.util.function.Supplier;
 
 import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
@@ -74,7 +75,6 @@ import static android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
@@ -101,6 +101,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	private static final String EXTRA_INSTALL_RESULT = "android.intent.extra.INSTALL_RESULT";		// Intent.EXTRA_INSTALL_RESULT
 	private static final int INSTALL_SUCCEEDED = 1;													// PackageManager.INSTALL_SUCCEEDED
 	private static final int INSTALL_FAILED_INTERNAL_ERROR = -110;									// ...
+	private static final int INSTALL_FAILED_USER_RESTRICTED = -111;                                 // ...
 	private static final int INSTALL_FAILED_ABORTED = -115;
 	private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";		// PackageInstall.EXTRA_LEGACY_STATUS
 
@@ -309,8 +310,10 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			}
 		}
 
-		final int flags = PackageManager.MATCH_DEFAULT_ONLY | (SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);
-		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent, flags);
+		ensureSystemPackageEnabledAndUnfrozen(this, intent);
+
+		final List<ResolveInfo> candidates = getPackageManager().queryIntentActivities(intent,
+				PackageManager.MATCH_DEFAULT_ONLY | PackageManager.MATCH_SYSTEM_ONLY);
 		for (final ResolveInfo candidate : candidates) {
 			final ActivityInfo activity = candidate.activityInfo;
 			if ((activity.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;
@@ -318,11 +321,10 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			intent.setComponent(component).setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
 			Log.i(TAG, "Redirect to system package installer: " + component.flattenToShortString());
 
-			final PackageManager pm = getPackageManager();
 			final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();
 			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());		// Workaround to suppress FileUriExposedException.
 			try {
-				final Intent uas_settings;
+				final Intent uas_settings; final PackageManager pm = getPackageManager();
 				if (SDK_INT >= O && ! pm.canRequestPackageInstalls() && (uas_settings = new Intent(ACTION_MANAGE_UNKNOWN_APP_SOURCES,
 						Uri.fromParts(SCHEME_PACKAGE, getPackageName(), null))).resolveActivity(pm) != null)
 					startActivities(new Intent[] { intent, uas_settings });
@@ -339,6 +341,14 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		Log.e(TAG, "Default system package installer is missing");
 		setResult(RESULT_CANCELED);
 		finish();
+	}
+
+	private static boolean ensureSystemPackageEnabledAndUnfrozen(final Context context, final Intent intent) {
+		final ResolveInfo resolve = context.getPackageManager().resolveActivity(intent,
+				PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_SYSTEM_ONLY);
+		return resolve != null && Apps.isInstalledInCurrentUser(resolve.activityInfo.applicationInfo)
+				|| new DevicePolicies(context).enableSystemAppByIntent(intent)
+				|| resolve != null && IslandManager.ensureAppFreeToLaunch(context, resolve.activityInfo.packageName).isEmpty();
 	}
 
 	@RequiresApi(O) private boolean isCallerQualified(final ApplicationInfo caller_app_info) {
@@ -403,11 +413,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			break;
 		case PackageInstaller.STATUS_PENDING_USER_ACTION:
 			final Intent action = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-			if (action != null) try {
+			Exception cause = null;
+			if (action != null && ensureSystemPackageEnabledAndUnfrozen(context, action)) try {
 				startActivity(action.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT));
-			} catch (final ActivityNotFoundException e) {
-				fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", e);
-			} else finish();    // Should never happen
+				break;
+			} catch (final ActivityNotFoundException e) { cause = e; }
+			fallbackToSystemPackageInstaller("ActivityNotFoundException:PENDING_USER_ACTION", cause);
 			break;
 		default:
 			if (status == PackageInstaller.STATUS_FAILURE_ABORTED && legacy_status == INSTALL_FAILED_ABORTED) {	// Aborted by user or us, no explicit feedback needed.
@@ -431,9 +442,17 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				fallbackToSystemPackageInstaller("alternative.auto", null);
 				return;
 			}
+
+			if (RomVariants.isMiui())
+				if (status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE && legacy_status == INSTALL_FAILED_USER_RESTRICTED
+						|| status == PackageInstaller.STATUS_FAILURE && message.equals("INSTALL_FAILED_INTERNAL_ERROR: Permission Denied"))
+					message += "\n\n" + getString(R.string.prompt_miui_optimization);
+
 			Dialogs.buildAlert(activity, getString(R.string.dialog_install_failure_title), message)
 					.withOkButton(AppInstallerActivity.this::finish).setOnCancelListener(d -> finish())
 					.setNeutralButton(R.string.fallback_to_sys_installer, (d, w) -> fallbackToSystemPackageInstaller("alternate", null)).show();
+
+			unregisterReceiver(mStatusCallback);    // Stop receive further status broadcast (sometimes another broadcast with STATUS_FAILURE_ABORTED will follow)
 		}
 	}};
 

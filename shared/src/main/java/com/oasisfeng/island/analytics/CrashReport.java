@@ -3,10 +3,11 @@ package com.oasisfeng.island.analytics;
 import android.os.Process;
 
 import com.crashlytics.android.core.CrashlyticsCore;
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.island.firebase.FirebaseWrapper;
 import com.oasisfeng.island.shared.BuildConfig;
+
+import java.util.function.Supplier;
 
 import io.fabric.sdk.android.Fabric;
 

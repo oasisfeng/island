@@ -26,17 +26,14 @@ import com.oasisfeng.island.appops.AppOpsHelper;
 import com.oasisfeng.island.shared.R;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
-import java9.util.Optional;
-import java9.util.function.BiConsumer;
-import java9.util.function.BiFunction;
-
-import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
-import static android.os.Build.VERSION_CODES.O_MR1;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.Q;
 import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 import static android.os.UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE;
@@ -57,13 +54,14 @@ public class DevicePolicies {
 	}
 
 	public static boolean isProfileOwner(final Context context, final UserHandle profile) {
-		if (SDK_INT > O_MR1) return new DevicePolicies(context, profile).isProfileOwner();
+		if (SDK_INT >= P) return new DevicePolicies(context, profile).isProfileOwner();
 		final Optional<ComponentName> profile_owner = getProfileOwnerAsUser(context, Users.toId(profile));
 		return profile_owner != null && profile_owner.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName());
 	}
 
 	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final UserHandle profile) {
-		if (SDK_INT <= O_MR1) return getProfileOwnerAsUser(context, UserHandles.getIdentifier(profile));
+		if (SDK_INT >= Q) return null;
+		if (SDK_INT < P) return getProfileOwnerAsUser(context, UserHandles.getIdentifier(profile));
 		if (Hacks.DevicePolicyManager_getProfileOwner.isAbsent()) return null;
 		try {
 			return Optional.ofNullable(Hacks.DevicePolicyManager_getProfileOwner.invoke().on(new DevicePolicies(context, profile).mDevicePolicyManager));
@@ -96,7 +94,7 @@ public class DevicePolicies {
 	}
 
 	/** @return true if successfully enabled, false if package not found or not system app.
-	 * @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
+	 *  @see DevicePolicyManager#enableSystemApp(ComponentName, String) */
 	public boolean enableSystemApp(final String pkg) {
 		try {
 			mDevicePolicyManager.enableSystemApp(sCachedComponent, pkg);
@@ -110,7 +108,7 @@ public class DevicePolicies {
 	}
 
 	/** @see DevicePolicyManager#enableSystemApp(ComponentName, Intent) */
-	public boolean enableSystemApp(final Intent intent) {
+	public boolean enableSystemAppByIntent(final Intent intent) {
 		try {
 			return mDevicePolicyManager.enableSystemApp(sCachedComponent, intent) > 0;
 		} catch (final IllegalArgumentException e) {
@@ -123,29 +121,16 @@ public class DevicePolicies {
 
 	public void addUserRestrictionIfNeeded(final Context context, final String key) {
 		if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;		// Immutable
-		if (SDK_INT >= N) {
-			if (! mDevicePolicyManager.getUserRestrictions(sCachedComponent).containsKey(key))
-				mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
-		} else {
-			final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
-			if (um == null || ! um.hasUserRestriction(key))
-				mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
-		}
+		if (! mDevicePolicyManager.getUserRestrictions(sCachedComponent).containsKey(key))
+			mDevicePolicyManager.addUserRestriction(sCachedComponent, key);
 	}
 
 	public void clearUserRestrictionsIfNeeded(final Context context, final String... keys) {
 		Bundle restrictions = null;
 		for (final String key : keys) {
 			if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER.equals(key)) return;	// Immutable
-			if (SDK_INT >= N) {
-				if (restrictions == null) restrictions = mDevicePolicyManager.getUserRestrictions(sCachedComponent);
-				if (restrictions.containsKey(key))
-					mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
-			} else {
-				final UserManager um = (UserManager) context.getSystemService(USER_SERVICE);
-				if (um == null || um.hasUserRestriction(key))
-					mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
-			}
+			if (restrictions == null) restrictions = mDevicePolicyManager.getUserRestrictions(sCachedComponent);
+			if (restrictions.containsKey(key)) mDevicePolicyManager.clearUserRestriction(sCachedComponent, key);
 		}
 	}
 
@@ -158,7 +143,7 @@ public class DevicePolicies {
 	public void setBackupServiceEnabled(final boolean enabled) { mDevicePolicyManager.setBackupServiceEnabled(sCachedComponent, enabled); }
 
 	/** @see DevicePolicyManager#isPackageSuspended(ComponentName, String) */
-	@RequiresApi(N) public boolean isPackageSuspended(final String pkg) throws PackageManager.NameNotFoundException {	// Helper due to exception
+	public boolean isPackageSuspended(final String pkg) throws PackageManager.NameNotFoundException {	// Helper due to exception
 		return mDevicePolicyManager.isPackageSuspended(sCachedComponent, pkg);
 	}
 
@@ -241,9 +226,8 @@ public class DevicePolicies {
 		cacheDeviceAdminComponent(context);
 	}
 
-	@RequiresApi(O_MR1 + 1) private DevicePolicies(final Context context, final UserHandle profile) {
-		ApplicationInfo profile_app_info = null;
-		if (SDK_INT >= N) profile_app_info = new LauncherAppsCompat(context).getApplicationInfoNoThrows(Modules.MODULE_ENGINE, 0, profile);
+	@RequiresApi(P) private DevicePolicies(final Context context, final UserHandle profile) {
+		ApplicationInfo profile_app_info = new LauncherAppsCompat(context).getApplicationInfoNoThrows(Modules.MODULE_ENGINE, 0, profile);
 		if (profile_app_info == null) {		// Make up the required profile ApplicationInfo
 			profile_app_info = context.getApplicationInfo();
 			profile_app_info.uid = UserHandles.getUid(UserHandles.getIdentifier(profile), UserHandles.getAppId(Process.myUid()));

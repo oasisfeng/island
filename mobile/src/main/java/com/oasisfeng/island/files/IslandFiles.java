@@ -19,8 +19,6 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
 
 /**
  * Created by Oasis on 2018-6-8.
@@ -36,19 +34,22 @@ public class IslandFiles {
 		return component != null && getProfilePackageManager(context).getComponentEnabledSetting(component) == COMPONENT_ENABLED_STATE_ENABLED;
 	}
 
-	@RequiresPermission(Permissions.INTERACT_ACROSS_USERS) public static void enableFileShuttle(final Activity activity) {
+	/** @return true if activated synchronously, false for failure or asynchronous procedure. */
+	@RequiresPermission(Permissions.INTERACT_ACROSS_USERS) public static boolean enableFileShuttle(final Activity activity) {
 		if (Modules.getFileProviderComponent(activity) == null) {
 			Toast.makeText(activity, "Module \"File Provider\" not installed.", Toast.LENGTH_LONG).show();
-			return;
+			return false;
 		}
-		if (SDK_INT >= M) {
-			Analytics.$().event("file_shuttle_request").send();
-			com.oasisfeng.android.content.pm.Permissions.request(activity, WRITE_EXTERNAL_STORAGE, result -> {
-				if (result == PERMISSION_GRANTED) onPermissionGranted(activity);
-				else Toast.makeText(activity, R.string.toast_external_storage_permission_required, Toast.LENGTH_LONG).show();
-			});
-
-		} else onPermissionGranted(activity);
+		Analytics.$().event("file_shuttle_request").send();
+		if (Permissions.has(activity, WRITE_EXTERNAL_STORAGE)) {
+			onPermissionGranted(activity);
+			return true;
+		}
+		com.oasisfeng.android.content.pm.Permissions.request(activity, WRITE_EXTERNAL_STORAGE, result -> {
+			if (result == PERMISSION_GRANTED) onPermissionGranted(activity);
+			else Toast.makeText(activity, R.string.toast_external_storage_permission_required, Toast.LENGTH_LONG).show();
+		});
+		return false;
 	}
 
 	private static void onPermissionGranted(final Context context) {

@@ -21,7 +21,6 @@ import java.util.List;
 
 import static android.content.Context.USER_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static java.util.Objects.requireNonNull;
 
@@ -64,12 +63,11 @@ public abstract class Users extends PseudoContentProvider {
 			} else Log.i(TAG, "Profile not managed by Island: " + toId(user));
 		}
 		profile = first_profile_managed_by_island;
-		sProfilesManagedByIsland = profiles_managed_by_island;
+		sProfilesManagedByIsland = Collections.unmodifiableList(profiles_managed_by_island);
 	}
 
 	public static boolean isProfileRunning(final Context context, final UserHandle user) {
 		if (CURRENT.equals(user)) return true;
-		if (SDK_INT < N) return true;		// TODO: Alternative for pre-N ?
 		final UserManager um = requireNonNull(context.getSystemService(UserManager.class));
 		if (SDK_INT >= N_MR1) try {
 			return um.isUserRunning(user);
@@ -87,7 +85,7 @@ public abstract class Users extends PseudoContentProvider {
 	public static boolean isProfileManagedByIsland(final UserHandle user) {
 		return sProfilesManagedByIsland.contains(user);
 	}
-	public static List<UserHandle> getProfilesManagedByIsland() { return Collections.unmodifiableList(sProfilesManagedByIsland); }
+	public static List<UserHandle> getProfilesManagedByIsland() { return sProfilesManagedByIsland/* already unmodifiable */; }
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 

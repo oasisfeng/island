@@ -11,8 +11,8 @@ import com.google.firebase.appindexing.Action.Builder.ACTIVATE_ACTION
 import com.google.firebase.appindexing.Action.Metadata
 import com.google.firebase.appindexing.FirebaseUserActions
 import com.oasisfeng.android.widget.Toasts
+import com.oasisfeng.island.engine.IslandManager
 import com.oasisfeng.island.mobile.BuildConfig
-import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut
 import com.oasisfeng.island.shuttle.MethodShuttle
 import com.oasisfeng.island.util.CallerAwareActivity
 import com.oasisfeng.island.util.Users
@@ -43,7 +43,9 @@ class FeatureActionActivity : CallerAwareActivity() {
         AsyncTask.execute {
             findApp(query)?.also { activity ->
                 val pkg = activity.componentName.packageName
-                MethodShuttle.runInProfile(this) { context -> AbstractAppLaunchShortcut.launchApp(context, pkg) }
+                MethodShuttle.runInProfile(this) { context ->
+                    if (IslandManager.ensureAppFreeToLaunch(context, pkg).isEmpty())
+                        IslandManager.launchApp(context, pkg, Users.current()) }
                 if (caller == PACKAGE_GOOGLE_SEARCH || caller == PACKAGE_GOOGLE_ASSISTANT_GO)    // Send action acknowledgement to Google Assistant
                     FirebaseUserActions.getInstance().end(Action.Builder(ACTIVATE_ACTION).setMetadata(Metadata.Builder().setUpload(false))
                             .setObject(activity.label.toString(), data.toString()).build())

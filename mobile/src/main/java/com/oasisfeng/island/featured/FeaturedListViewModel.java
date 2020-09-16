@@ -9,20 +9,19 @@ import android.provider.Settings;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.oasisfeng.android.app.Activities;
-import com.oasisfeng.android.app.LifecycleActivity;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.android.util.Consumer;
 import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.Config;
@@ -42,9 +41,11 @@ import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -89,23 +90,23 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		@Override public boolean onMove(final RecyclerView view, final RecyclerView.ViewHolder vh, final RecyclerView.ViewHolder vht) { return false; }
 	});
 
-	public void update(final Context context) {
-		final LifecycleActivity activity = (LifecycleActivity) Objects.requireNonNull(Activities.findActivityFrom(context));
+	public void update(final FragmentActivity activity) {
 		final Application app = getApplication();
-		final DevicePolicies policies = new DevicePolicies(context);
+		final DevicePolicies policies = new DevicePolicies(activity);
 		final boolean is_mainland_owner = policies.isProfileOrDeviceOwnerOnCallingUser(), has_profile = Users.hasProfile();
 		features.beginBatchedUpdates();
 		features.clear();
 
-		if (SHOW_ALL || IslandFiles.isCompatible(context)) {
-			final boolean has_across_users_permission = Permissions.has(context, Permissions.INTERACT_ACROSS_USERS);
+		if (SHOW_ALL || IslandFiles.isCompatible(activity)) {
+			final boolean has_across_users_permission = Permissions.has(activity, Permissions.INTERACT_ACROSS_USERS);
 			if (! has_across_users_permission)
 				addFeature(app, "file_shuttle_prereq", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description, 0,
 						R.string.action_learn_more, c -> WebContent.view(c, Config.URL_FILE_SHUTTLE.get()));
-			else if (! Permissions.has(context, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(context))
-				addFeatureRaw(app, "file_shuttle", R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
-						0, R.string.action_activate, vm -> IslandFiles.enableFileShuttle(activity));
-			else {
+			else if (! Permissions.has(activity, WRITE_EXTERNAL_STORAGE) || ! IslandFiles.isFileShuttleEnabled(activity)) {
+				final String tag = "file_shuttle";
+				addFeatureRaw(app, tag, R.string.featured_file_shuttle_title, R.string.featured_file_shuttle_description,
+						0, R.string.action_activate, vm -> { if (IslandFiles.enableFileShuttle(activity)) removeFeature(tag); });
+			} else {
 				Analytics.$().setProperty(Analytics.Property.FileShuttleEnabled, "1");
 				addFeaturedApp(R.string.featured_fx_title, R.string.featured_fx_description, R.drawable.ic_launcher_fx, "nextapp.fx");
 			}
@@ -120,7 +121,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
 
-		if (SHOW_ALL || is_mainland_owner && ! Users.hasProfile())
+		if (SHOW_ALL || is_mainland_owner && ! Users.hasProfile() && policies.isActiveDeviceOwner())    // New profile can not be setup if owner user is in managed profile mode.
 			addFeature(app, "setup_island", R.string.featured_setup_island_title, R.string.setup_island_intro, 0, R.string.featured_button_setup, c -> {
 				if (SetupViewModel.checkManagedProvisioningPrerequisites(c, true) == null) {
 					startSetupActivityCleanly(c);		// Prefer ManagedProvision, which could also fallback to root routine.
@@ -131,7 +132,7 @@ public class FeaturedListViewModel extends AndroidViewModel {
 			});
 
 		if (SHOW_ALL || ! is_mainland_owner)
-			addFeature(app, "god_mode", R.string.featured_god_mode_title, R.string.featured_god_mode_description, 0,
+			addFeature(app, "managed_mainland", R.string.featured_managed_mainland_title, R.string.featured_managed_mainland_description, 0,
 					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(activity, IslandSettingsFragment.class));
 
 		addFeaturedApp(R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify, "com.oasisfeng.greenify");
@@ -180,6 +181,14 @@ public class FeaturedListViewModel extends AndroidViewModel {
 							   final @DrawableRes int icon, final LiveData<Integer> button, final Consumer<FeaturedViewModel> function) {
 		features.add(new FeaturedViewModel(app, sOrderGenerator.incrementAndGet(), tag, app.getString(title), app.getText(description),
 				icon != 0 ? app.getDrawable(icon) : null, button, function, Scopes.app(app).isMarked(SCOPE_TAG_PREFIX_FEATURED + tag)));
+	}
+
+	private void removeFeature(final String tag) {
+		for (final Iterator<FeaturedViewModel> iterator = features.iterator(); iterator.hasNext(); ) {
+			if (! tag.equals(iterator.next().tag)) continue;
+			iterator.remove();
+			return;
+		}
 	}
 
 	public FeaturedListViewModel(final Application app) { super(app); mApps = Apps.of(app); }

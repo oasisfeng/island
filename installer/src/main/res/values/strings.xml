@@ -28,4 +28,6 @@
     <string name="app_settings_helper_prompt">\"Force stop\" to reveal extra 3rd-party settings</string>
     <string name="fallback_to_sys_installer">Try alternate way</string>
     <string name="toast_split_apk_clone_fallback_warning">App with Bundles may not be installed properly in this way. Please try installing it from app store if not working.</string>
+
+    <string name="prompt_miui_optimization">This might be caused by "MIUI optimization", which can be disabled in system "Settings - Developer options".</string>
 </resources>

@@ -8,28 +8,23 @@ import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
+import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-
-import androidx.annotation.Nullable;
+import java.util.function.Supplier;
 
 import static android.content.Context.LAUNCHER_APPS_SERVICE;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_LAUNCHER;
-import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Process.myUserHandle;
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java9.util.stream.Collectors.toSet;
-import static java9.util.stream.StreamSupport.stream;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Island-specific {@link AppInfo}
@@ -38,16 +33,10 @@ import static java9.util.stream.StreamSupport.stream;
  */
 public class IslandAppInfo extends AppInfo {
 
-	private static final int PRIVATE_FLAG_HIDDEN = 1;
-	private static final int FLAG_HIDDEN = 1<<27;
-
 	void setHidden(final boolean state) {
-		if (SDK_INT >= M) {
-			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
-			if (private_flags != null)
-				Hacks.ApplicationInfo_privateFlags.set(this, state ? private_flags | PRIVATE_FLAG_HIDDEN : private_flags & ~ PRIVATE_FLAG_HIDDEN);
-		} else if (state) flags |= FLAG_HIDDEN;
-		else flags &= ~ FLAG_HIDDEN;
+		final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(this);
+		if (private_flags != null)
+			Hacks.ApplicationInfo_privateFlags.set(this, state ? private_flags | PRIVATE_FLAG_HIDDEN : private_flags & ~ PRIVATE_FLAG_HIDDEN);
 	}
 
 	/** Some system apps are hidden by post-provisioning, they should be treated as "disabled". */
@@ -56,31 +45,11 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	public boolean isHiddenSysIslandAppTreatedAsDisabled() {
-		return Users.isProfileManagedByIsland(user) && isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
+		return isSystem() && isHidden() && shouldTreatHiddenSysAppAsDisabled();
 	}
 
 	private boolean shouldTreatHiddenSysAppAsDisabled() {
-		return ! ((IslandAppListProvider) mProvider).isHiddenSysAppCloned(packageName);
-	}
-
-	public void stopTreatingHiddenSysAppAsDisabled() {
-		if (isSystem()) ((IslandAppListProvider) mProvider).setHiddenSysAppCloned(packageName);
-	}
-
-	public boolean isHidden() {
-		final Boolean hidden = isHidden(this);
-		if (hidden != null) return hidden;
-		// The fallback implementation
-		return ! Objects.requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).isPackageEnabled(packageName, myUserHandle());
-	}
-
-	/** @return hidden state, or null if failed to */
-	public static @Nullable Boolean isHidden(final ApplicationInfo info) {
-		if (SDK_INT >= M) {
-			final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
-			if (private_flags != null) return (private_flags & PRIVATE_FLAG_HIDDEN) != 0;
-		} else return (info.flags & FLAG_HIDDEN) != 0;
-		return null;
+		return ! ClonedHiddenSystemApps.isCloned(this);
 	}
 
 	/** @return whether this package is critical to the system, thus should not be frozen or disabled. */
@@ -91,23 +60,23 @@ public class IslandAppInfo extends AppInfo {
 	/** Is launchable (even if hidden) */
 	@Override public boolean isLaunchable() { return mIsLaunchable.get(); }
 	private final Supplier<Boolean> mIsLaunchable = Suppliers.memoizeWithExpiration(	// Use GET_DISABLED_COMPONENTS in case mainland sibling is disabled.
-			() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | GET_DISABLED_COMPONENTS), 1, SECONDS);
+			() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | MATCH_DISABLED_COMPONENTS), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
 		if (! Users.isOwner(user) && ! isHidden()) {		// Accurate detection for non-frozen app in Island
 			if (sLaunchableNonFrozenIslandAppsCache != null) return sLaunchableNonFrozenIslandAppsCache.contains(packageName);
-			return ! ((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty();
+			return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty();
 		}
 		if (sPotentiallyLaunchableAppsCache != null) return sPotentiallyLaunchableAppsCache.contains(packageName);
 		return super.checkLaunchable(flags_for_resolve);	// Inaccurate detection for frozen app (false-positive if launcher activity is actually disabled)
 	}
 
 	public static void cacheLaunchableApps(final Context context) {
-		if (Users.profile != null) sLaunchableNonFrozenIslandAppsCache = stream(((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
-				.getActivityList(null, Users.profile)).map(lai -> lai.getComponentName().getPackageName()).collect(toSet());
+		if (Users.profile != null) sLaunchableNonFrozenIslandAppsCache = requireNonNull((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
+				.getActivityList(null, Users.profile).stream().map(lai -> lai.getComponentName().getPackageName()).collect(toSet());
 		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager().queryIntentActivities(
-				new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | GET_DISABLED_COMPONENTS);
-		sPotentiallyLaunchableAppsCache = stream(activities).map(resolve -> resolve.activityInfo.packageName).collect(toSet());
+				new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | MATCH_DISABLED_COMPONENTS);
+		sPotentiallyLaunchableAppsCache = activities.stream().map(resolve -> resolve.activityInfo.packageName).collect(toSet());
 	}
 
 	public static void invalidateLaunchableAppsCache() { sLaunchableNonFrozenIslandAppsCache = null; sPotentiallyLaunchableAppsCache = null; }

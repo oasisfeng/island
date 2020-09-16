@@ -44,7 +44,7 @@ internal object AppInstallationNotifier {
 		val title = context.getString(titleRes, callerAppLabel, if (isSelfUpdate) null /* unused */ else Apps.of(context).getAppName(pkg))
 		val targetApi = info.applicationInfo.targetSdkVersion
 		var dangerousPermissions: MutableList<CharSequence?>? = null
-		if (! isUpdate && SDK_INT >= M && targetApi < M && info.requestedPermissions != null) {
+		if (! isUpdate && targetApi < M && info.requestedPermissions != null) {
 			dangerousPermissions = ArrayList()
 			for (requested_permission in info.requestedPermissions) try {
 				val permissionInfo = pm.getPermissionInfo(requested_permission, 0)

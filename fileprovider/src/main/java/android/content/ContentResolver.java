@@ -9,17 +9,13 @@ import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 
+import androidx.annotation.Keep;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.Keep;
-import androidx.annotation.RequiresApi;
-
-import static android.os.Build.VERSION_CODES.KITKAT;
-import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Stub class of real ContentResolver, only for compilation purpose.
@@ -60,23 +56,23 @@ import static android.os.Build.VERSION_CODES.N;
 		throw new RuntimeException("Stub!");
 	}
 
-	@RequiresApi(N) public void notifyChange(Uri uri, ContentObserver observer, int flags) {
+	public void notifyChange(Uri uri, ContentObserver observer, int flags) {
 		throw new RuntimeException("Stub!");
 	}
 
-	@RequiresApi(KITKAT) public void takePersistableUriPermission(Uri uri, int modeFlags) {
+	public void takePersistableUriPermission(Uri uri, int modeFlags) {
 		throw new RuntimeException("Stub!");
 	}
 
-	@RequiresApi(KITKAT) public void releasePersistableUriPermission(Uri uri, int modeFlags) {
+	public void releasePersistableUriPermission(Uri uri, int modeFlags) {
 		throw new RuntimeException("Stub!");
 	}
 
-	@RequiresApi(KITKAT) public List<UriPermission> getPersistedUriPermissions() {
+	public List<UriPermission> getPersistedUriPermissions() {
 		throw new RuntimeException("Stub!");
 	}
 
-	@RequiresApi(KITKAT) public List<UriPermission> getOutgoingPersistedUriPermissions() {
+	public List<UriPermission> getOutgoingPersistedUriPermissions() {
 		throw new RuntimeException("Stub!");
 	}
 

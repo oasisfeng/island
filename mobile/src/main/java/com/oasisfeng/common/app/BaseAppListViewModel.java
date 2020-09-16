@@ -1,6 +1,10 @@
 package com.oasisfeng.common.app;
 
+import android.app.Application;
 import android.util.Log;
+
+import androidx.databinding.ObservableList;
+import androidx.lifecycle.MutableLiveData;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.island.model.AppViewModel;
@@ -9,16 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import androidx.databinding.ObservableList;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-
 /**
  * View-model of basic entry-selectable (single-choice) app-list.
  *
  * Created by Oasis on 2016/6/24.
  */
-public class BaseAppListViewModel<T extends AppViewModel> extends ViewModel {
+public abstract class BaseAppListViewModel<T extends AppViewModel> extends BaseAndroidViewModel {
 
 	// TODO: Rebuild the whole AbstractAppListViewModel to keep immutability?
 	protected void replaceApps(final List<T> apps) {
@@ -85,7 +85,8 @@ public class BaseAppListViewModel<T extends AppViewModel> extends ViewModel {
 		if (selection != null) selection.selected.setValue(true);
 	}
 
-	protected BaseAppListViewModel(final Class<T> clazz) {
+	protected BaseAppListViewModel(final Application app, final Class<T> clazz) {
+		super(app);
 		mApps = new ObservableSortedList<>(clazz);
 	}
 

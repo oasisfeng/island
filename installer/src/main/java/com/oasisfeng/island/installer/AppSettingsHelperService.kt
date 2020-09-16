@@ -13,8 +13,9 @@ import android.util.Log
 import android.widget.Toast
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.android.util.Apps
-import com.oasisfeng.island.shuttle.PendingIntentShuttle
+import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.Users
+import kotlinx.coroutines.GlobalScope
 
 private const val HELPER_NOTIFICATION_TIMEOUT = 10_000L
 
@@ -56,9 +57,7 @@ class AppSettingsHelperService: Service() {
 
 		val uptimeMillis = SystemClock.uptimeMillis()
 		if (intent.action == Intent.ACTION_PACKAGE_RESTARTED) {     // If triggered by system Settings, it will be followed by ACTION_QUERY_PACKAGE_RESTART immediately.
-			if (Users.isOwner()) onPackageRestarted(pkg, uid, uptimeMillis)
-			else PendingIntentShuttle.shuttle(context, Users.owner) { onPackageRestarted(pkg, uid, uptimeMillis) }
-			return }
+			return Unit.also { Shuttle(context, to = Users.owner).launch(at = GlobalScope) { onPackageRestarted(pkg, uid, uptimeMillis) }}}
 
 		if (intent.action == ACTION_QUERY_PACKAGE_RESTART) {
 			if (sLastPackageRestart?.run { first + MAX_DELAY > uptimeMillis && second == pkg && third == uid } == true) {

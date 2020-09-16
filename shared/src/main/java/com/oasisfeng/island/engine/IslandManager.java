@@ -11,13 +11,14 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.oasisfeng.android.annotation.UserIdInt;
 import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.OwnerUser;
-import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.ProfileUser;
 import com.oasisfeng.island.util.Users;
 
@@ -25,12 +26,7 @@ import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import androidx.annotation.RequiresApi;
-
-import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static java.util.Objects.requireNonNull;
 
@@ -49,10 +45,7 @@ public class IslandManager {
 		final ContentResolver resolver = context.getContentResolver();
 		@SuppressWarnings("deprecation") final String INSTALL_NON_MARKET_APPS = Settings.Secure.INSTALL_NON_MARKET_APPS;
 		if (Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0) return true;
-		if (SDK_INT < LOLLIPOP_MR1) {		// INSTALL_NON_MARKET_APPS is not whitelisted by DPM.setSecureSetting() until Android 5.1.
-			if (! Permissions.has(context, WRITE_SECURE_SETTINGS)) return false;
-			Settings.Secure.putInt(resolver, INSTALL_NON_MARKET_APPS, 1);
-		} else policies.execute(DevicePolicyManager::setSecureSetting, INSTALL_NON_MARKET_APPS, "1");
+		policies.execute(DevicePolicyManager::setSecureSetting, INSTALL_NON_MARKET_APPS, "1");
 		return Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0;
 	}
 
@@ -64,17 +57,18 @@ public class IslandManager {
 		return state == hidden;
 	}
 
-	@OwnerUser @ProfileUser public static String ensureAppFreeToLaunch(final Context context, final String pkg) {
+	/** @return error information, or empty string for success. */
+	@OwnerUser @ProfileUser public static @NonNull String ensureAppFreeToLaunch(final Context context, final String pkg) {
 		final DevicePolicies policies = new DevicePolicies(context);
 		if (policies.invoke(DevicePolicyManager::isApplicationHidden, pkg)) {		// Hidden or not installed
 			if (! policies.setApplicationHidden(pkg, false))
 				if (! Apps.of(context).isInstalledInCurrentUser(pkg)) return "not_installed";	// Not installed in profile, just give up.
 		}
-		if (SDK_INT >= N) try {
+		try {
 			if (policies.isPackageSuspended(pkg))
 				policies.invoke(DevicePolicyManager::setPackagesSuspended, new String[] { pkg }, false);
 		} catch (final PackageManager.NameNotFoundException ignored) { return "not_found"; }
-		return null;
+		return "";
 	}
 
 	@OwnerUser public static boolean launchApp(final Context context, final String pkg, final UserHandle profile) {
@@ -90,7 +84,7 @@ public class IslandManager {
 		return true;
 	}
 
-	@RequiresApi(N) public static @UserIdInt int[] getProfileIdsIncludingDisabled(final Context context) {
+	public static @UserIdInt int[] getProfileIdsIncludingDisabled(final Context context) {
 		if (Hacks.UserManager_getProfileIds != null)
 			return Hacks.UserManager_getProfileIds.invoke(UserHandles.MY_USER_ID, false).on(requireNonNull(context.getSystemService(UserManager.class)));
 		else return requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles().stream().mapToInt(Users::toId).toArray();	// Fallback to profiles without disabled.

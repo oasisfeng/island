@@ -36,8 +36,6 @@ import java.util.Set;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.content.pm.ProviderInfo.FLAG_SINGLE_USER;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N;
 
 /**
  * Manage the critical system apps in Island
@@ -69,7 +67,10 @@ import static android.os.Build.VERSION_CODES.N;
 			// Essential Google packages
 			"com.google.android.gsf",				// Google services framework
 			WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES,	// Disabling GMS in the provision will cause GMS in owner user being killed too due to its single user nature, causing weird ANR.
-			"com.google.android.feedback"			// Used by GMS for crash report
+			"com.google.android.feedback",			// Used by GMS for crash report
+			// MIUI-specific
+			"com.miui.core",						// Required by com.lbe.security.miui (Runtime permission UI of MIUI)
+			"com.miui.securitycenter"				// Required by system Settings app of MIUI.
 	);
 	private static final Collection<Intent> sCriticalActivityIntents = Arrays.asList(
 			new Intent(Intent.ACTION_INSTALL_PACKAGE)				// Usually com.[google.]android.packageinstaller, may be altered by ROM.
@@ -83,17 +84,17 @@ import static android.os.Build.VERSION_CODES.N;
 			new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*")	// Usually com.android.documentsui, may be file explorer app on some ROMs. (e.g. MIUI)
 	);
 	private static final Collection<String> sCriticalContentAuthorities = Arrays.asList(
-			ContactsContract.AUTHORITY,								// Usually com.android.providers.contacts
-			CallLog.AUTHORITY,										// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
-			CalendarContract.AUTHORITY,								// Usually com.android.providers.calendar
-			Carriers.CONTENT_URI.getAuthority(),					// Usually com.android.providers.telephony
-			MediaStore.AUTHORITY,									// Usually com.android.providers.media
-			SDK_INT >= N ? BlockedNumberContract.AUTHORITY : null,	// Usually com.android.providers.blockednumber (required by phone app)
-			"downloads",											// Usually com.android.providers.downloads
-			UserDictionary.AUTHORITY,								// Usually com.android.providers.userdictionary
-			"com.android.providers.downloads.documents",			// Newer authority of com.android.providers.downloads
-			"com.android.externalstorage.documents",				// Usually com.android.externalstorage
-			"logs"													// Samsung-specific voice-mail content provider (content://logs/from_vvm)
+			ContactsContract.AUTHORITY,						// Usually com.android.providers.contacts
+			CallLog.AUTHORITY,								// Usually com.android.providers.contacts (originally com.android.providers.calllogbackup)
+			CalendarContract.AUTHORITY,						// Usually com.android.providers.calendar
+			Carriers.CONTENT_URI.getAuthority(),			// Usually com.android.providers.telephony
+			MediaStore.AUTHORITY,							// Usually com.android.providers.media
+			BlockedNumberContract.AUTHORITY,				// Usually com.android.providers.blockednumber (required by phone app)
+			"downloads",									// Usually com.android.providers.downloads
+			UserDictionary.AUTHORITY,						// Usually com.android.providers.userdictionary
+			"com.android.providers.downloads.documents",	// Newer authority of com.android.providers.downloads
+			"com.android.externalstorage.documents",		// Usually com.android.externalstorage
+			"logs"											// Samsung-specific voice-mail content provider (content://logs/from_vvm)
 	);
 
 	/**

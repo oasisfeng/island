@@ -5,7 +5,6 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -32,12 +31,12 @@ import com.oasisfeng.android.content.IntentCompat;
 import com.oasisfeng.android.content.IntentFilters;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.util.SafeAsyncTask;
-import com.oasisfeng.android.util.Supplier;
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.android.widget.Toasts;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.Api;
 import com.oasisfeng.island.appops.AppOpsCompat;
+import com.oasisfeng.island.engine.CrossProfile;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
@@ -53,6 +52,7 @@ import com.oasisfeng.island.util.Users;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.Notification.PRIORITY_HIGH;
@@ -65,13 +65,13 @@ import static android.content.Intent.ACTION_SEND_MULTIPLE;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_BROWSABLE;
 import static android.content.Intent.CATEGORY_LAUNCHER;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.M;
+
 import static android.content.Intent.getIntent;
 import static android.content.Intent.parseIntent;
-import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
@@ -98,7 +98,6 @@ public class IslandProvisioning extends IntentService {
 	/** The revision for post-provisioning. Increase this const value if post-provisioning needs to be re-performed after upgrade. */
 	private static final int POST_PROVISION_REV = 9;
 	private static final String AFFILIATION_ID = "com.oasisfeng.island";
-	private static final String CATEGORY_MAIN_ACTIVITY = "com.oasisfeng.island.category.MAIN_ACTIVITY";
 	private static final String SCHEME_PACKAGE = "package";
 
 	@OwnerUser @ProfileUser public static void start(final Context context, final @Nullable String action) {
@@ -166,7 +165,6 @@ public class IslandProvisioning extends IntentService {
 		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile(context);	// Users.isProfile() does not work before setProfileEnabled().
 
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
-			policies.execute(DevicePolicyManager::setProfileName, context.getString(R.string.profile_name));
 			Log.d(TAG, "Enable profile now.");
 			policies.execute(DevicePolicyManager::setProfileEnabled);
 		}
@@ -183,8 +181,8 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static void hideUnnecessaryAppsInManagedProfile(final Context context) {
-		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI),
-				SDK_INT >= N ? PackageManager.MATCH_SYSTEM_ONLY : 0);		// Do not use resolveActivity(), which will return ResolverActivity.
+		final List<ResolveInfo> resolves = context.getPackageManager().queryIntentActivities(
+				new Intent(Intent.ACTION_PICK, Contacts.CONTENT_URI), PackageManager.MATCH_SYSTEM_ONLY);	// Do not use resolveActivity(), which will return ResolverActivity.
 		for (final ResolveInfo resolve : resolves) {
 			final String pkg = resolve.activityInfo.packageName;
 			if ((resolve.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || "android".equals(pkg)) continue;
@@ -221,16 +219,11 @@ public class IslandProvisioning extends IntentService {
 			apps.startMainActivity(activity, Users.owner, null, null);
 			return true;
 		}
-		// Since Android O, activities in owner user is invisible to managed profile, use special forward rule to launch it in owner user.
-		new DevicePolicies(context).execute(DevicePolicyManager::addCrossProfileIntentFilter,
-				IntentFilters.forAction(ACTION_MAIN).withCategory(CATEGORY_MAIN_ACTIVITY), FLAG_PARENT_CAN_ACCESS_MANAGED);
 		Log.i(TAG, "Launching main activity in owner user...");
-		try {
-			context.startActivity(new Intent(ACTION_MAIN).addCategory(CATEGORY_MAIN_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		try {   // Since Android O, activities in owner user is invisible to managed profile.
+			new CrossProfile(context).startActivityInParentProfile(new Intent(ACTION_MAIN).addFlags(FLAG_ACTIVITY_NEW_TASK));
 			return true;
-		} catch (final ActivityNotFoundException e) {
-			return false;
-		}
+		} catch (final RuntimeException e) { return false; }
 	}
 
 	@ProfileUser private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning
@@ -286,10 +279,8 @@ public class IslandProvisioning extends IntentService {
 			Analytics.$().report(e);
 		}
 
-		if (SDK_INT >= N) {
-			policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
-			policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
-		}
+		policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
+		policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
 		// As reported by user, some account types are strangely unable to remove. Just make sure all account types are allowed.
 		final String[] restricted_account_types = policies.getManager().getAccountTypesWithManagementDisabled();
 		if (restricted_account_types != null && restricted_account_types.length > 0) for (final String account_type : restricted_account_types)
@@ -315,8 +306,6 @@ public class IslandProvisioning extends IntentService {
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual and incremental provisioning. */
 	@WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		final boolean owner = Users.isOwner();
-		if (SDK_INT >= O) policies.execute(DevicePolicyManager::setAffiliationIds, Collections.singleton(AFFILIATION_ID));
-
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
@@ -356,11 +345,8 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static void startProfileOwnerPostProvisioningForNonOwnerProfile(final Context context, final DevicePolicies policies) {
-		if (SDK_INT >= M) policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		enableAdditionalForwarding(context, policies);
-		// Prepare AppLaunchShortcut
-		policies.addCrossProfileIntentFilter(IntentFilters.forAction(AbstractAppLaunchShortcut.ACTION_LAUNCH_CLONE).withDataSchemes("target", "package")
-				.withCategories(Intent.CATEGORY_DEFAULT, CATEGORY_LAUNCHER), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare ServiceShuttle
 		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
@@ -380,13 +366,14 @@ public class IslandProvisioning extends IntentService {
 		policies.addCrossProfileIntentFilter(new IntentFilter(ACTION_SEND), FLAGS_BIDIRECTIONAL);		// Keep for historical compatibility reason
 		try {
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_SEND).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
+			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_SEND_MULTIPLE).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
 		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
 		// For web browser
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withCategory(CATEGORY_BROWSABLE).withDataSchemes("http", "https", "ftp"),
 				FLAG_PARENT_CAN_ACCESS_MANAGED);
 		try {	// For Package Installer
-			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_VIEW, ACTION_INSTALL_PACKAGE)
+			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_INSTALL_PACKAGE)   // ACTION_VIEW is already covered above for */*.
 					.withDataScheme(ContentResolver.SCHEME_CONTENT).withDataType("application/vnd.android.package-archive"), FLAGS_BIDIRECTIONAL);
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE).withCategory(context.getPackageName())	// Additional category to bypass system package installer
 					.withDataSchemes(ContentResolver.SCHEME_CONTENT, SCHEME_PACKAGE), FLAG_MANAGED_CAN_ACCESS_PARENT);	// One-way only
@@ -400,8 +387,9 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> {
-		final Notification.Builder builder = new Notification.Builder(this).setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS)
-				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getResources().getColor(R.color.accent)).setUsesChronometer(true)
+		final Notification.Builder builder = new Notification.Builder(this)
+				.setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS).setUsesChronometer(true)
+				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getColor(R.color.accent))
 				.setContentTitle(getText(Users.isOwner() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
 				.setContentText(getText(R.string.notification_provisioning_text));
 		return SDK_INT < O ? builder : builder.setBadgeIconType(BADGE_ICON_SMALL).setColorized(true);

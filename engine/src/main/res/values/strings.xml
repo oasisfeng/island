@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="profile_name">Island</string>
-
     <string name="permission_group_control_island_apps_label">Control Island apps</string>
     <string name="permission_group_control_island_apps_description">control apps managed by Island</string>
     <string name="permission_freeze_app_label">Freeze Island-managed apps</string>

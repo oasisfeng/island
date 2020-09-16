@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" tools:ignore="AppCompatResource" >
-
-    <item android:id="@+id/tab_mainland"  android:title="@string/tab_mainland"  android:icon="@drawable/ic_mainland_black_24dp" android:showAsAction="always|withText" />
-    <item android:id="@+id/tab_island"    android:title="@string/tab_island"    android:icon="@drawable/ic_island_black_24dp" android:showAsAction="always|withText" />
-    <item android:id="@+id/tab_discovery" android:title="@string/tab_discovery" android:icon="@drawable/ic_explore_black_24dp" android:showAsAction="always|withText" />
-
-</menu>

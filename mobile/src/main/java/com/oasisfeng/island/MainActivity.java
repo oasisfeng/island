@@ -14,7 +14,8 @@ import android.os.Bundle;
 import android.os.UserHandle;
 import android.util.Log;
 
-import com.oasisfeng.android.app.LifecycleActivity;
+import androidx.fragment.app.FragmentActivity;
+
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.island.analytics.Analytics;
@@ -30,13 +31,12 @@ import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
-
-import java9.util.Optional;
+import java.util.Optional;
 
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 
-public class MainActivity extends LifecycleActivity {
+public class MainActivity extends FragmentActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -58,12 +58,12 @@ public class MainActivity extends LifecycleActivity {
 			return;
 		}
 
-		if (! DevicePolicies.isProfileOwner(this, profile)) {	// Profile without owner, probably caused by provisioning interrupted before device-admin is activated.
+		if (! DevicePolicies.isProfileOwner(this, profile)) {	// Profile without owner or not managed by us, probably caused by provision interruption before device-admin is activated.
 			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(this, profile);
 			if (owner == null) {
-				Log.w(TAG, "Not profile owner");
+				Log.w(TAG, "Cannot detect profile owner");
 				startMainUi(savedInstanceState);
-			} else if (owner.isEmpty()) {
+			} else if (! owner.isPresent()) {
 				Log.w(TAG, "Profile without owner");
 				if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
 				else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
@@ -126,7 +126,7 @@ public class MainActivity extends LifecycleActivity {
 			if (user != null) arguments.putParcelable(Intent.EXTRA_USER, user);
 			fragment.setArguments(arguments);
 		}
-		getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+		getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
 		performOverallAnalyticsIfNeeded();
 	}
 

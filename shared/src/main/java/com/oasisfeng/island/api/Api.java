@@ -1,16 +1,14 @@
 package com.oasisfeng.island.api;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 import androidx.annotation.RequiresPermission;
 import androidx.annotation.RestrictTo;
 
-import static android.os.Build.VERSION_CODES.N;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 /**
@@ -65,13 +63,13 @@ public class Api {
 		 * Suspend the app(s) specified by Intent data with "package" or "packages" (comma-separated) scheme. (requires Android N+)
 		 * <p>Result: {@link Activity#RESULT_OK} for success, {@link Activity#RESULT_CANCELED} for failure or {@link latest#RESULT_UNVERIFIED_IDENTITY}
 		 */
-		@Since(2.1) @TargetApi(N) @RequiresPermission(PERMISSION_SUSPEND_PACKAGE) String ACTION_SUSPEND = "com.oasisfeng.island.action.SUSPEND";
+		@Since(2.1) @RequiresPermission(PERMISSION_SUSPEND_PACKAGE) String ACTION_SUSPEND = "com.oasisfeng.island.action.SUSPEND";
 
 		/**
 		 * Unsuspend the app(s) specified by Intent data with "package" or "packages" (comma-separated) scheme. (requires Android N+)
 		 * <p>Result: {@link Activity#RESULT_OK} for success, {@link Activity#RESULT_CANCELED} for failure or {@link latest#RESULT_UNVERIFIED_IDENTITY}
 		 */
-		@Since(2.1) @TargetApi(N) @RequiresPermission(PERMISSION_SUSPEND_PACKAGE) String ACTION_UNSUSPEND = "com.oasisfeng.island.action.UNSUSPEND";
+		@Since(2.1) @RequiresPermission(PERMISSION_SUSPEND_PACKAGE) String ACTION_UNSUSPEND = "com.oasisfeng.island.action.UNSUSPEND";
 
 		/**
 		 * {@link android.app.PendingIntent} extra required for all types of API invocation except {@link Activity#startActivityForResult(Intent, int)}.

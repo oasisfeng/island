@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Semantic colors -->
+    <color name="textPrimary">@color/primary_dark</color>
     <color name="background">#F3F3F3</color>
+    <color name="header_background">@android:color/white</color>
     <color name="background_highlight">@android:color/white</color>
     <color name="card_background">@android:color/white</color>
     <color name="card_attention">#FFFFE082</color>
@@ -9,5 +11,6 @@
     <!-- Specific colors -->
     <color name="state_alive">#FF8F00</color>
     <color name="state_frozen">@color/primary_dark</color>
+    <color name="state_other">@android:color/black</color>
     <color name="side_control">@color/primary_dark</color>
 </resources>

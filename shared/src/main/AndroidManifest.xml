@@ -15,11 +15,26 @@
         <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
                   android:initOrder="1000"
                   android:authorities="${applicationId}.internal.1"
-                  android:directBootAware="true" tools:targetApi="N"
+                  android:directBootAware="true"
                   android:exported="false" />
 
-        <receiver android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle" />
-        <service android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$StarterService" android:exported="false">
+        <receiver android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$ReceiverActivity"
+                  android:theme="@android:style/Theme.NoDisplay" android:directBootAware="true" android:exported="false">
+            <intent-filter>
+                <action android:name="com.oasisfeng.island.action.SHUTTLE" />
+                <category android:name="com.oasisfeng.island.category.PARENT_PROFILE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$Initializer" android:exported="false">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.PersistentService" />
             </intent-filter>
@@ -37,14 +52,6 @@
             </intent-filter>
         </receiver>
         <service android:name="com.google.android.gms.analytics.AnalyticsService" android:exported="false" />
-
-        <!-- Override the original FirebaseInstanceIdService with explicit initialization due for lazy initialization of Firebase -->
-        <service tools:node="remove" android:name="com.google.firebase.iid.FirebaseInstanceIdService" />
-        <service android:name="com.oasisfeng.island.firebase.LazyFirebaseInstanceIdService" android:exported="true" tools:ignore="ExportedService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
 
         <!-- Workaround issue of Firebase Analytics - IllegalStateException: Not allowed to start service Intent ... app is in background uid ... -->
         <receiver android:name="com.google.android.gms.measurement.AppMeasurementReceiver" android:enabled="@bool/until_api_24" tools:replace="android:enabled" />

@@ -6,6 +6,11 @@
     <string name="tab_mainland">界外</string>
     <string name="tab_island">壶中界</string>
     <string name="tab_discovery">天书</string>
+    <string name="default_island_name">界 %d</string>
+    <string name="default_island0_name">壶中界</string>
+    <string name="default_island1_name">山海界</string>
+    <string name="default_island2_name">云中界</string>
+    <string name="default_island3_name">昊天界</string>
 
     <string name="status_alive">正常</string>
     <string name="status_frozen">冻结</string>
@@ -21,11 +26,11 @@
     <string name="featured_file_shuttle_description">借助“虚空之阵”实现穿越结界的文件访问能力，让文件可以更轻松的往返壶中界。布此阵需要通过 USB 连接的电脑使用 ADB 指令。</string>
     <string name="featured_fx_title">FX File Explorer</string>
     <string name="featured_fx_description">“文件传送门”提供的穿越结界的文件访问能力基于 Android 的“存储访问框架”。但并非所有的应用都支持“存储访问框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支持“存储访问框架”，只需在壶中界启动它，选择下拉菜单中的“Connect to Storage”，然后从侧栏选择相应传送门即可访问外部文件。</string>
-    <string name="featured_adb_secure_title">ADB 安全结界</string>
-    <string name="featured_adb_secure_island_title">ADB 安全结界（仅限壶中界）</string>
-    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果启用“黄帝之名”，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
-    <string name="featured_god_mode_title">黄帝之名</string>
-    <string name="featured_god_mode_description">将炼妖壶的强大力量扩展至界外。以“黄帝之名”，不仅可以冻结界外的应用，还能召唤其它神器相助。</string>
+    <string name="featured_adb_secure_title">ADB 安全封印</string>
+    <string name="featured_adb_secure_island_title">ADB 安全封印（仅限壶中界）</string>
+    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果授予炼妖壶对“界外”的管理权，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
+    <string name="featured_managed_mainland_title">将控制扩展至“界外”</string>
+    <string name="featured_managed_mainland_description">不仅可以冻结界外的应用，还能获得一些此模式下独有的功能。（详细介绍参见在线说明）</string>
     <string name="featured_greenify_title">绿色守护</string>
     <string name="featured_greenify_description">在屏幕关闭后，自动冻结选定的应用，除非它们仍然在工作中。</string>
     <string name="featured_saf_enhancer_title">SAF 增强器 Lite</string>
@@ -40,7 +45,6 @@
 \n\n应用分身的数据也独立于外部的该应用，互不影响。壶中界的应用还可以在需要的时候被冻结，使其看起来完全消失无踪，也无法进行任何后台行为。
 \n\n开始创建壶中界，意味着你同意授予“工作资料”（壶中界底层机制）的管理权限。我们不会收集您的隐私数据，详情请参阅我们在 Google Play 市场中的隐私政策。</string>
     <string name="setup_accept">同意</string>
-    <string name="setup_error_multi_user_not_allowed">抱歉，此设备不支持必需的“Android 多用户”特性。</string>
     <string name="setup_error_managed_profile_not_supported">抱歉，此设备不支持必需的“Android 工作资料”特性。</string>
     <string name="setup_error_provisioning_incomplete">壶中界的创建不完整，此前的创建尝试可能并未成功。\n\n<b>如果您的设备或其它三方工具施加了“自启动”（或类似的）限制，请务必首先将壶中界解除限制或加入白名单，然后再次创建壶中界。</b></string>
     <string name="setup_error_managed_device">抱歉，由于此设备已被 <b>%1$s</b> 接管，壶中界无法创建。</string>
@@ -70,6 +74,7 @@
     <string name="action_disable">停用</string>
     <string name="action_activate">激活</string>
     <string name="action_deactivate">解除</string>
+    <string name="action_rescind">撤除</string>
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜索</string>
@@ -80,62 +85,62 @@
 
     <string name="dialog_title_warning">注意</string>
     <string name="dialog_manual_setup"><b>致高级用户</b>：\n这一限制可以通过在 USB 连接的电脑上进行手动操作绕过。</string>
-    <string name="dialog_encryption_required"><b>设备加密</b> 是 Android 7.0 之前版本系统对创建工作资料施加的前置要求。加密整个设备在中低端机型上可能显著降低设备性能。如果此设备已 ROOT，可在下一步授予 ROOT 权限以绕过此限制（不会触碰系统分区）。</string>
-    <string name="dialog_clone_via_install_explanation">即将启动 Android 系统的应用安装界面开始分身。\n\n尽管它看起来像是通常的安装提示，实际并不会占用额外的空间。</string>
-    <string name="dialog_clone_via_google_play_explanation">即将启动 Google Play 市场完成应用分身，届时请点击“安装”按钮。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。</string>
-    <string name="dialog_clone_via_sys_market_explanation">即将启动设备内置的应用市场完成应用分身，届时请按照常规的应用安装步骤完成应用的安装。\n\n尽管这一过程看起来像是通常的应用安装，但它实际上并不会占用额外的空间，而仅仅是在壶中界创造此应用的分身。\n\n注意：无法确定此设备内置的应用市场是否支持 Android 工作资料机制。如果安装应用的分身失败，请参考“常见问题解答”中提供的解决方案。</string>
     <string name="dialog_clone_incapable_explanation">抱歉，在 Android 5.1 之前，缺少内置的应用市场（如 Google Play）将无法完成应用分身。请参考“常见问题解答”中提供的解决方案。</string>
     <string name="dialog_greenify_title">与绿色守护的协同</string>
     <string name="dialog_greenify_explanation">基于节省内存和电量的原则，壶中界自身是后台纯净的，因此需要借助绿色守护精巧的状态检测和休眠管理实现应用的自动冻结（以休眠之名）。</string>
     <string name="dialog_greenify_version_too_low">绿色守护需要升级到更新的版本</string>
     <string name="dialog_reactivate_message">通往壶中界的入口被意外关闭，请再次授予设备管理权限以重新开启。</string>
     <string name="dialog_destroy_message">确定希望毁灭整个壶中界？其中的应用分身和所有数据将会完全湮灭，无法恢复。\n\n别担心，外部的应用和数据不会受到任何影响。</string>
-    <string name="dialog_destroy_exclusives_message">以下 %1$d 个应用仅存与壶中界，因此将随着壶中界的毁灭而被完全卸载。\n\n%2$s\n\n确定要继续毁灭壶中界？</string>
-    <string name="dialog_rescind_message">确定希望解除“黄帝之名”？\n\n将来如果希望重新启用“黄帝之名”，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
+    <string name="dialog_destroy_message_for_managed_user">在当前“界外”的管理状态下，由于 Android 系统施加的限制，您将无法再创建新的壶中界，除非撤除对“界外”的管理权。\n\n确定仍然希望毁灭此界？</string>
+    <string name="dialog_rescind_message">确定希望撤除对“界外”的管理权？\n\n将来若希望重新启用，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壶中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
     <string name="dialog_critical_app_warning">这个应用（或组件）可能对于 Android 系统或其它应用的正常运作至关重要。如果继续此操作，部分应用甚至整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
     <string name="dialog_reinstall_system_app_warning">这个系统应用（或组件）因为某些原因并未安装。如果继续此操作，整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>
-    <string name="dialog_mainland_device_admin">启用“黄帝之名”需要授予设备管理权限。</string>
-    <string name="dialog_mainland_setup_done">“黄帝之名”已启用，将在设备重启后生效。</string>
+    <string name="dialog_mainland_device_admin">接管“界外”需要授予设备管理权限。</string>
     <string name="dialog_island_setup_failed">抱歉，创建壶中界时出现了异常。（阶段 %1$d）</string>
-    <string name="dialog_activate_god_mode_additional_text">如果设备已 ROOT，“黄帝之名”接下来将自动启用（不会触碰系统分区）。\n\n对于未 ROOT 的设备，也可以手动激活，请按照即将打开的在线指导中的步骤操作。</string>
 
     <string name="action_continue">继续</string>
     <string name="action_learn_more">详细了解</string>
     <string name="action_install">安装</string>
     <string name="action_upgrade">升级</string>
     <string name="action_destroy">毁灭</string>
-    <string name="action_reboot">重启</string>
 
     <string name="prompt_disable_sys_app_as_removal">系统应用（或组件）只能被停用，与卸载安装的应用效果相似。\n\n由于没有权限直接停用应用，接下来即将打开系统的应用设置界面，届时请点击“停用”按钮。</string>
+    <string name="prompt_clone_app_to">将应用克隆至…</string>
     <string name="toast_enable_disabled_system_app">请重新启用此分身</string>
 
     <string name="toast_setup_in_progress">正在创建壶中界，请稍候…</string>
     <string name="toast_successfully_cloned">%1$s 已完成分身</string>
     <string name="toast_cannot_clone">抱歉，无法为 %1$s 分身。</string>
     <string name="toast_already_cloned">分身已存在</string>
-    <string name="toast_shortcut_request_sent">快捷方式创建请求已发送</string>
     <string name="toast_shortcut_failed">快捷方式创建失败</string>
     <string name="toast_greenify_failed">绿色化失败</string>
     <string name="toast_internal_error">抱歉，出现了内部异常，请退出后重新尝试。</string>
     <string name="toast_error_freeze_failure">冻结失败</string>
+    <string name="toast_error_unfreeze_failure">解冻失败</string>
     <string name="toast_error_freezing_active_admin">无法冻结已激活设备管理器的应用</string>
     <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
-    <string name="toast_failed_to_launch_app">抱歉，启动应用时出现了异常。</string>
-    <string name="toast_setup_mainland_non_root">没有检测到 ROOT 权限，正在打开在线的操作说明。</string>
-    <string name="toast_setup_mainland_root_failed">通过 ROOT 权限启用“黄帝之名”时出现了异常。</string>
+    <string name="toast_app_launch_error">抱歉，启动应用时出现了异常。</string>
     <string name="toast_app_launch_failure">未能启动“%s”</string>
+    <string name="prompt_invalid_shortcut">快捷方式已失效，请重新创建</string>
     <string name="prompt_operation_failure_due_to_incompatibility">操作失败\n(可能由于 ROM 兼容性)</string>
 
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>
+    <string name="prompt_invalid_input">输入无效</string>
 
     <!-- Settings -->
 
     <string name="settings_title">设置</string>
 
     <string name="pref_general_header">常规</string>
-    <string name="pref_launch_shortcut_prefix_title">应用启动快捷方式的名称前缀</string>
+    <string name="pref_cat_app_launch_shortcuts">应用启动快捷方式</string>
+    <string name="pref_alt_shortcut_badge_title">界内使用替代角标 (试验性)</string>
+    <string name="pref_alt_shortcut_badge_summary">对界外和界内的应用启动快捷方式使用不同的角标。\n(某些设备可能不支持)</string>
+    <string name="pref_dynamic_shortcut_label_title">动态快捷方式</string>
+    <string name="pref_dynamic_shortcut_label_summary">在应用冻结时为应用启动快捷方式添加前缀，在应用解冻时去掉前缀。\n(某些启动器可能不支持)</string>
+    <string name="prompt_updating_shortcuts">正在更新现有快捷方式…</string>
+
     <string name="pref_show_admin_message_title">在操作限制界面中显示提示信息</string>
     <string name="pref_show_admin_message_summary">在系统弹出的“不允许执行此操作”对话框中显示针对性的提示信息。</string>
     <string name="pref_preserve_app_ops">为解冻的应用恢复权限审查 (App Ops)</string>
@@ -146,6 +151,7 @@
 
     <string name="pref_scoped_settings_header">分空间的独立设置</string>
     <string name="prompt_island_not_yet_setup">壶中界尚未创建</string>
+    <string name="action_rename">更名</string>
     <string name="pref_privacy_header">隐私保护</string>
     <string name="pref_privacy_summary">壶中界里的应用无法访问您在外部的应用和私人数据（如 联系人、通话记录、照片、文档等），除了设备全局的数据：（包括但不限于）
         \n\n· 设备唯一标识（Android 10 已禁止）\n· 短信\n· 设备的地理位置</string>
@@ -164,6 +170,7 @@
     <string name="prompt_appops_loading">正在载入应用列表…</string>
     <string name="prompt_appops_no_such_apps">没有应用使用此权限</string>
     <string name="prompt_appops_revoke_for_all_users_apps">确认对所有用户应用（不涉及系统应用）撤销此权限？</string>
+    <string name="prompt_manage_cross_profile_apps">授权具有跨界互联能力的应用此项特权（部分系统应用可能无视此设置获得特权）</string>
     <string name="pref_quick_controls_header">通知区快捷控制</string>
     <string name="pref_island_watcher_summary">可封印诸界，中止其中所有应用的后台活动。再次启动其中的任何应用将会重新激活。</string>
     <string name="pref_app_watcher_summary">可重新冻结最近解冻的应用，撤销临时授予的权限。</string>
@@ -173,9 +180,9 @@
     <string name="pref_destroy_summary">永久的销毁此界，连同其中的所有应用及其数据。</string>
     <string name="pref_rescind_title">撤除管理权</string>
     <string name="pref_rescind_summary">撤销炼妖壶对设备的全局管理权。所有的应用和数据都将保留（解冻），但你将无法再：\n\n</string>
-    <string name="pref_device_owner_title">黄帝之名</string>
-    <string name="pref_device_owner_summary">授予炼妖壶此设备的全局管理权，你将可以：\n\n</string>
-    <string name="pref_device_owner_featurs">· 冻结界外的应用\n· 监管界外应用的权限。(Android 9+)\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全结界）</string>
+    <string name="pref_device_owner_title">让掌控力延伸至界外</string>
+    <string name="pref_device_owner_summary">授予炼妖壶管理界外的权限，你将可以：\n\n</string>
+    <string name="pref_device_owner_featurs">· 冻结和管理界外的应用\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全封印）</string>
 
     <string name="pref_setup_header">管理</string>
 

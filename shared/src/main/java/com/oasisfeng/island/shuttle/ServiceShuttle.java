@@ -20,9 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import androidx.annotation.NonNull;
-import java9.util.stream.StreamSupport;
-
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
@@ -62,9 +59,9 @@ public class ServiceShuttle {
 				.putExtra(EXTRA_INTENT, service).putExtra(EXTRA_FLAGS, flags);
 		Log.d(TAG, "Connecting to service in profile (via shuttle): " + service + " from " + conn);
 		if (sForwarderComponent == null) try {
-			sForwarderComponent = StreamSupport.stream(pm.queryIntentActivities(intent, 0))
-					.filter((@NonNull ResolveInfo r) -> (r.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
-					.map((@NonNull ResolveInfo r) -> new ComponentName(r.activityInfo.packageName, r.activityInfo.name)).findFirst().orElse(null);
+			sForwarderComponent = pm.queryIntentActivities(intent, 0).stream()
+					.filter(r -> (r.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
+					.map(r -> new ComponentName(r.activityInfo.packageName, r.activityInfo.name)).findFirst().orElse(null);
 			if (sForwarderComponent == null) {
 				Analytics.$().event("shuttle_service_forwarder_unavailable").send();
 				return false;	// DO NOT fallback to default component assumed, due to cross-profile intent filter may not properly created.
