@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.oasisfeng.island",
+  "variantName": "completeRelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "properties": [],
+      "versionCode": 51000,
+      "versionName": "5.1",
+      "enabled": true,
+      "outputFile": "assembly-complete-release.apk"
+    }
+  ]
+}

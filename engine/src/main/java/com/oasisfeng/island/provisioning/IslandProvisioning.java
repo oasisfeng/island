@@ -41,7 +41,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
 import com.oasisfeng.island.util.DeviceAdmins;
-import com.oasisfeng.island.shortcut.AbstractAppLaunchShortcut;
+import com.oasisfeng.island.shortcut.ShortcutIcons;
 import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
