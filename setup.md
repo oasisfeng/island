@@ -94,3 +94,11 @@ WARNING: Some **Samsung** users encountered [**boot failure**](https://github.co
 5. Start Island app now and it will work in God/Demigod mode.
 
 God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Starting from Android 8, you can setup Island in God mode directly from Island settings - Setup, click the wrench icon on the side of Island. Prior to Android 8, you can also follow the manual steps to setup normal mode, as mentioned above.
+
+Deactivate God / Demigod mode
+-----------------------------
+
+Before Island can be uninstalled, God / Demigod mode must be deactivated.
+
+Open Island, Settings - Scoped Settings - Mainland, scroll to the bottom, click "Deactivate".
+Beware, if you want to activate God mode again, all Island spaces must be destroyed first. Demigod can be reactivated without losing Island spaces.
