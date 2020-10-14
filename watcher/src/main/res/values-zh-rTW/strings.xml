@@ -1,0 +1,16 @@
+<resources>
+    <string name="notification_island_watcher_title">壺中界 運轉中</string>
+    <string name="notification_island_watcher_text">封印它可終止其中所有的背景活動</string>
+    <string name="notification_app_watcher_title">%s 已解凍</string>
+    <string name="notification_app_watcher_text">點擊將其解凍</string>
+    <string name="action_deactivate_island">封印</string>
+    <string name="action_settings">設定</string>
+    <string name="action_dismiss">忽略</string>
+
+    <string name="toast_manual_quiet_mode">停止工作資料失敗，請手動關閉。</string>
+
+    <string name="notification_permission_was_granted_title">已授權权限“%s”</string>
+    <string name="notification_permission_was_granted_text">是否撤銷此權限？</string>
+    <string name="action_revoke_granted">撤銷</string>
+    <string name="action_keep_granted">保持授權</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_ongoing_task">執行中的任務</string>
+    <string name="notification_channel_important">重要事項</string>
+    <string name="notification_channel_app_install">應用程式安裝</string>
+    <string name="notification_channel_island_watcher">諸界 守望者</string>
+    <string name="notification_channel_app_watcher">應用程式 守望者</string>
+    <string name="notification_channel_debug">偵錯</string>
+
+    <string name="device_admin_support_message_short">如需取消此限制，請至“煉妖壺”中調整對應的設定。\n\n應用程式權限：限制修改狀態表明此權限已被撤銷。如需恢復，請至“設定 - 分空間的獨立設定 - 隱私保護”。</string>
+    <string name="device_admin_support_message_long">您可能注意到系统界面中出现的“裝置由您所在的單位負責管理”或類似訊息，這是 Android 工作資料（壺中界的 Android 底層機制）啟用後的透明性告知，無法隱藏。\n\n我們不會以任何方式收集您的個人隐私訊息，請參考在 Google Play 商店中發布的隱私政策。\n\n如果遇到“XX 特性已被管理員停用”，可能是由於您打開了某項限制功能，請至此應用程式中調整對應的設定。</string>
+
+    <string name="prompt_failed_preserving_app_ops">App Ops 未能保留（內部異常）</string>
+</resources>
