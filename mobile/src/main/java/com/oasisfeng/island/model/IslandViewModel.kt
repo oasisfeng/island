@@ -5,7 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import com.oasisfeng.common.app.BaseAndroidViewModel
-import com.oasisfeng.island.analytics.analytics
+import com.oasisfeng.island.analytics.Analytics
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
@@ -23,6 +23,6 @@ fun <R> BaseAndroidViewModel.interactiveFuture(context: Context, block: suspend 
 
 private fun handleException(context: Context, tag: String, t: Throwable) {
 	if (t is CancellationException) return Unit.also { Log.i(tag, "Interaction canceled: ${t.message}") }
-	analytics().logAndReport(tag, "Unexpected internal error", t)
+	Analytics().logAndReport(tag, "Unexpected internal error", t)
 	Toast.makeText(context, "Internal error: " + t.message, Toast.LENGTH_LONG).show()
 }

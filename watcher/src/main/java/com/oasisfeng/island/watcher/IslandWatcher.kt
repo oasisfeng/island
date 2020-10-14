@@ -15,7 +15,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.*
+import android.os.Build.VERSION_CODES.O
+import android.os.Build.VERSION_CODES.P
+import android.os.Build.VERSION_CODES.Q
 import android.os.Bundle
 import android.os.IBinder
 import android.os.UserHandle

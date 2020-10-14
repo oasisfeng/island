@@ -191,6 +191,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			mFeatured.visible.setValue(Boolean.TRUE);
 			mFeatured.update(activity);
 			mChipsVisible.setValue(false);
+			Analytics.log(TAG, "tab-discover");
 			return;
 		} else mFeatured.visible.setValue(Boolean.FALSE);
 
@@ -201,6 +202,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				if (Users.isProfileManagedByIsland(profile)) {
 					setCurrentProfile(profile);
 					updateAppList();
+					Analytics.log(TAG, "tab-island-" + UserHandles.getIdentifier(profile));
 					return;
 				}
 			}
@@ -208,6 +210,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
 		setCurrentProfile(Users.owner);
 		updateAppList();
+		Analytics.log(TAG, "tab-mainland");
 	}
 
 	public void updateActions(final Menu menu) {

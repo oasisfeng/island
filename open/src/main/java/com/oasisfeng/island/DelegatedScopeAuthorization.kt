@@ -78,11 +78,13 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        onRequestReactedByUser(context, when {
-            intent.action == ACTION_AUTHORIZE -> true
-            intent.action == ACTION_REFUSE    -> false
-            else                              -> return super.onReceive(context, intent)
-        }, intent.data?.schemeSpecificPart, intent.getStringExtra(EXTRA_PACKAGE_NAME), intent.getParcelableExtra(EXTRA_USER), intent.getStringExtra(REQUEST_KEY_DATA))
+        val pkg = intent.getStringExtra(EXTRA_PACKAGE_NAME) ?: return
+        val user : UserHandle = intent.getParcelableExtra(EXTRA_USER) ?: return
+        onRequestReactedByUser(context, when (intent.action) {
+            ACTION_AUTHORIZE -> true
+            ACTION_REFUSE -> false
+            else -> return super.onReceive(context, intent)
+        }, intent.data?.schemeSpecificPart, pkg, user, intent.getStringExtra(REQUEST_KEY_DATA) ?: return)
     }
 
     private fun onRequestReactedByUser(context: Context, authorized: Boolean, requestId: String?, pkg: String, user: UserHandle, delegation: String) {
@@ -105,11 +107,10 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
         }
     }
 
-    private fun logAndToast(context: Context?, pkg: String?, message: String?) {
+    private fun logAndToast(context: Context?, pkg: String?, message: String) {
         Log.w(TAG, message)
         pkg?.let { Apps.of(context).getAppInfo(it) }?.flags?.apply { and(ApplicationInfo.FLAG_TEST_ONLY) != 0 }?.also {
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show() }
     }
 
     class Initializer : PseudoContentProvider() { override fun onCreate(): Boolean {

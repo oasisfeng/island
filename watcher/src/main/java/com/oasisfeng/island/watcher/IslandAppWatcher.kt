@@ -49,7 +49,7 @@ import java.util.*
 					Log.w(TAG, "App is unavailable: $ssp")
 					NotificationIds.IslandAppWatcher.cancel(context, ssp) }
 			ACTION_REVOKE_PERMISSION -> {
-				val pkg = data.scheme; val policies = DevicePolicies(context)
+				val pkg = data.scheme!!; val policies = DevicePolicies(context)
 				val hidden = policies.invoke(DPM::isApplicationHidden, pkg)
 				if (hidden) policies.setApplicationHiddenWithoutAppOpsSaver(pkg, false) // setPermissionGrantState() only works for unfrozen app
 				try {

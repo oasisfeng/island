@@ -96,7 +96,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		private fun <R> Continuation<R>.resume(result: Int, extras: Bundle?, procedureClass: Class<*>? = null) = when (result) {
 			Activity.RESULT_OK  -> resume(@Suppress("UNCHECKED_CAST") (extras?.get(null) as R))
 			RESULT_FIRST_USER   -> resumeWithException(extras?.get(null) as Throwable)
-			else                -> resumeWithException(RuntimeException("Error shuttling ${procedureClass ?: ""}")) }
+			else                -> resumeWithException(RuntimeException("Error shuttling ${procedureClass ?: ""} (code $result)")) }
 
 		@ProfileUser fun sendToParentProfileByActivityIfNotYet(context: Context) {
 			if (mSentByActivity) return     // Activity start is relatively heavy and cross-profile toast will be shown.

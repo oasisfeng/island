@@ -2,7 +2,10 @@
 
 package com.oasisfeng.island.settings
 
-import android.Manifest.permission.*
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_PHONE_STATE
+import android.Manifest.permission.READ_SMS
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
@@ -91,7 +94,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                         .filter { it.requestedPermissions?.contains(INTERACT_ACROSS_PROFILES) == true }
                 val pm = activity.packageManager
                 val entries = pkgs.map { it.applicationInfo.loadLabel(pm) }.toTypedArray()
-                val allowedPackages = policies.invoke(DPM::getCrossProfilePackages)
+                val allowedPackages: Set<String> = policies.invoke(DPM::getCrossProfilePackages)
                 val allowed = BooleanArray(entries.size) { index -> pkgs[index].packageName in allowedPackages }
                 Dialogs.buildCheckList(activity, activity.getText(R.string.prompt_manage_cross_profile_apps),
                         entries, allowed) { _, which, checked -> allowed[which] = checked }.withOkButton {
@@ -99,7 +102,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                                     .toSet().also { policies.invoke(DPM::setCrossProfilePackages, it) }}
                         .withCancelButton().show() }}
 
-        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isOwner(), NotificationIds.IslandWatcher)
+        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && !Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
 
         setup<Preference>(R.string.key_reprovision) {
@@ -128,7 +131,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         setup<TwoStatePreference>(key) {
             if (visible && SDK_INT >= O) {
                 isChecked = ! notificationId.isBlocked(context)
-                setOnPreferenceChangeListener { _,_ -> true.also { context.startActivity(notificationId.buildChannelSettingsIntent(context)) }}
+                setOnPreferenceChangeListener { _, _ -> true.also { context.startActivity(notificationId.buildChannelSettingsIntent(context)) }}
             } else remove(this)
         }
     }
@@ -149,11 +152,11 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                 if (text.isNullOrEmpty()) text = IslandNameManager.getDefaultName(activity)
                 editText.also { editText ->
                     editText.addTextChangedListener(object: TextWatcher {
-                    override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-                    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+                        override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                        override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
 
-                    override fun afterTextChanged(s: Editable) {
-                        if (editText.text.any { it < ' ' }) editText.error = getString(R.string.prompt_invalid_input) }})
+                        override fun afterTextChanged(s: Editable) {
+                            if (editText.text.any { it < ' ' }) editText.error = getString(R.string.prompt_invalid_input) }})
 
                 setOnPreferenceChangeListener { _, name -> (editText.error == null).also { if (it)
                     onIslandRenamed(name.toString()) }}
@@ -217,3 +220,5 @@ class IslandSettingsActivity: Activity() {
         }
     }
 }
+
+private const val INTERACT_ACROSS_PROFILES = "android.permission.INTERACT_ACROSS_PROFILES"
