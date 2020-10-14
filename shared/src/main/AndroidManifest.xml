@@ -9,7 +9,6 @@
     <application android:name="com.oasisfeng.island.IslandApplication" tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
         <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
-        <meta-data android:name="io.fabric.ApiKey" android:value="2fa85ef2740d3e29a2ed203a3af1db3513507ddb" /> <!-- Still required for project migrated from Fabric Crashlytics -->
 
         <!-- Users -->
         <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
