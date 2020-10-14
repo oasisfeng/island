@@ -10,7 +10,6 @@
 
     <item android:id="@+id/menu_greenify"     android:title="@string/action_greenify" android:showAsAction="never" />
     <item android:id="@+id/menu_shortcut"     android:title="@string/action_shortcut" android:showAsAction="never" />
-    <item android:id="@+id/menu_clone_back"   android:title="@string/action_clone_back" android:showAsAction="never" />
     <item android:id="@+id/menu_remove"       android:title="@string/action_remove" android:showAsAction="never" />
     <item android:id="@+id/menu_uninstall"    android:title="@string/action_uninstall" android:showAsAction="never" />
     <item android:id="@+id/menu_reinstall"    android:title="@string/action_reinstall" android:showAsAction="ifRoom" />

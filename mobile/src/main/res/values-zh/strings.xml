@@ -61,7 +61,6 @@
     <string name="button_setup_island_with_root">通过 ROOT 创建壶中界</string>
 
     <string name="action_clone">分身</string>
-    <string name="action_clone_back">分身回界外</string>
     <string name="action_freeze">冻结</string>
     <string name="action_unfreeze">解除冻结</string>
     <string name="action_shortcut">创建“解冻并启动”快捷方式</string>

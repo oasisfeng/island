@@ -35,10 +35,12 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 		return if (Users.isOwner(profile)) super.get(pkg) else loadAppsInProfileIfNotYet(profile)[pkg]
 	}
 
+	fun isInstalled(pkg: String, profile: UserHandle) = get(pkg, profile)?.run { installed && shouldShowAsEnabled() } == true
+
 	fun isExclusive(app: IslandAppInfo): Boolean {
 		if (Users.isOwner(app.user) && ! Users.hasProfile()) return true
 		return Users.getProfilesManagedByIsland().asSequence().plus(Users.owner).minus(app.user).all { profile ->
-			get(app.packageName, profile)?.run { installed && shouldShowAsEnabled() } != true }
+			! isInstalled(app.packageName, profile) }
 	}
 
 	override fun createEntry(current: ApplicationInfo, last: IslandAppInfo?): IslandAppInfo {

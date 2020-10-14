@@ -9,12 +9,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -51,12 +54,10 @@ import com.oasisfeng.island.shortcut.IslandAppShortcut;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -215,15 +216,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final IslandAppInfo app = selection.info();
 		Analytics.$().trace("app", app.packageName).trace("user", Users.toId(app.user)).trace("hidden", app.isHidden())
 				.trace("system", app.isSystem()).trace("critical", app.isCritical());
-		final int num_profiles = Users.getProfilesManagedByIsland().size();
 		final boolean exclusive = mAppListProvider.isExclusive(app);
-
 		final boolean system = app.isSystem(), installed = app.isInstalled(), in_owner = Users.isOwner(app.user),
 				is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
-		menu.findItem(R.id.menu_clone).setVisible(in_owner && num_profiles > 0 && (num_profiles > 1 || exclusive));
-		menu.findItem(R.id.menu_clone_back).setVisible(! in_owner && exclusive);
 		menu.findItem(R.id.menu_reinstall).setVisible(! installed);
 		menu.findItem(R.id.menu_remove).setVisible(installed && (exclusive ? system : (! system || app.shouldShowAsEnabled())));	// Disabled system app is treated as "removed".
 		menu.findItem(R.id.menu_uninstall).setVisible(installed && exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
@@ -268,10 +265,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (id == R.id.menu_clone) {
 			requestToCloneApp(context, app);
 			clearSelection();
-		} else if (id == R.id.menu_clone_back) {
-			Activities.startActivity(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
-			Analytics.$().event("action_install_outside").with(ITEM_ID, pkg).send();
-			clearSelection();
 		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
 			Analytics.$().event("action_freeze").with(ITEM_ID, pkg).send();
 
@@ -305,24 +298,43 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private void requestToCloneApp(final Context context, final IslandAppInfo app) {
-		final Map<UserHandle, String> targets = IslandNameManager.getAllNames(context);
+		final Map<UserHandle, String> targets = new HashMap<>(IslandNameManager.getAllNames(context));
 		if (targets.isEmpty()) throw new IllegalStateException("No Island");
-		final Set<UserHandle> profiles = targets.keySet();
-
-		if (profiles.size() == 1) {
-			requestToCloneAppToProfile(context, app, profiles.iterator().next());
+		final String pkg = app.packageName;
+		if (targets.size() == 1) {     // Single Island, no need to show menu
+			final boolean from_mainland = Users.isOwner(app.user); final UserHandle profile;
+			if (from_mainland && ! mAppListProvider.isInstalled(pkg, profile = targets.keySet().iterator().next())) {
+				requestToCloneAppToProfile(context, app, profile);
+			} else if (! from_mainland && ! mAppListProvider.isInstalled(pkg, Users.owner)) {
+				requestToCloneAppToMainland(context, pkg);
+			} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_LONG).show();
 			return;
 		}
-
-		for (final Iterator<UserHandle> iterator = profiles.iterator(); iterator.hasNext(); ) {
-			final UserHandle profile = iterator.next();
-			final IslandAppInfo appInProfile = mAppListProvider.get(app.packageName, profile);
-			if (appInProfile != null && app.shouldShowAsEnabled()) iterator.remove();  // Already cloned to target profile
-		}
-
+		targets.put(Users.owner, context.getString(R.string.tab_mainland));
+		final UserHandle[] profiles = targets.keySet().toArray(new UserHandle[0]);      // Including owner user
 		final String[] names = targets.values().toArray(new String[0]);
-		Dialogs.buildList(requireNonNull(Activities.findActivityFrom(context)), R.string.prompt_clone_app_to, names, (dialog, which) ->
-				requestToCloneAppToProfile(context, app, new ArrayList<>(profiles).get(which))).show();
+
+		final Dialogs.Builder dialog = Dialogs.buildAlert(Activities.findActivityFrom(context), R.string.prompt_clone_app_to, 0);
+		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(dialog.getContext(),
+				android.R.layout.select_dialog_item, android.R.id.text1, names) {
+
+			@Override public @NonNull View getView(final int position, @Nullable final View convertView, @NonNull final ViewGroup parent) {
+				final View view = super.getView(position, convertView, parent);
+				view.setEnabled(! mAppListProvider.isInstalled(pkg, profiles[position]));
+				return view;
+			}
+
+			@Override public boolean hasStableIds() { return true; }
+		};
+		dialog.setSingleChoiceItems(adapter, -1, (d, which) -> {
+			if (which == 0) requestToCloneAppToMainland(context, pkg);
+			else requestToCloneAppToProfile(context, app, profiles[which]);
+			d.dismiss();
+		}).show();
+	}
+
+	private static void requestToCloneAppToMainland(final Context context, final String pkg) {
+		Activities.startActivity(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
 	}
 
 	private void requestToCloneAppToProfile(final Context context, final IslandAppInfo app, final UserHandle profile) {
@@ -445,7 +457,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private final Predicate<IslandAppInfo> mFilterShared;			// All other filters to apply always
 	private final boolean mOwnerUserManaged;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
-	private final Handler mHandler = new Handler();
+	private final Handler mHandler = new Handler(Looper.getMainLooper());
 
 	private static final String TAG = "Island.Apps";
 }
