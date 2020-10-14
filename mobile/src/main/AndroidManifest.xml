@@ -55,7 +55,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="package" />
-                <data android:scheme="android-app" />
+                <data android:scheme="android-app" /> <!-- deprecated, to be removed -->
+                <data android:scheme="app" />
             </intent-filter>
         </activity>
 
@@ -67,6 +68,13 @@
                 <action android:name="com.oasisfeng.island.PersistentService" />
             </intent-filter>
         </service>
+
+        <receiver android:name="com.oasisfeng.island.shortcut.ShortcutsRepairer">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
 
