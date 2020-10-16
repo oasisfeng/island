@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="tab_mainland">Área Principal</string>
+    <string name="tab_island">Island</string>
+    <string name="tab_discovery">Encontrar</string>
+
+    <string name="status_alive">Ativo</string>
+    <string name="status_frozen">Suspenso</string>
+    <string name="status_disabled">Desativado</string>
+    <string name="status_appendix_system">Sistema</string>
+    <string name="status_appendix_critical">Crítico</string>
+    <string name="status_appendix_cloned">Clonado</string>
+    <string name="status_appendix_exclusive">Exclusivo</string>
+
+    <string name="featured_button_enable">Ativar</string>
+    <string name="featured_button_disable">Desativar</string>
+    <string name="featured_button_setup">Configuração</string>
+    <string name="featured_button_install">Instalar</string>
+    <string name="featured_file_shuttle_title">Traslado De Arquivo</string>
+    <string name="featured_file_shuttle_description">Traslado De Arquivo oferece acesso cruzado aos arquivos e facilita muito o gerenciamento de arquivos dentro do Island. Para ativar recurso é requerida a permissão manual concedida através ADB via PC conectado a USB.</string>
+    <string name="featured_fx_title">FX File Explorer</string>
+    <string name="featured_fx_description">Traslado De Arquivo do Island oferece acesso cruzado via Android \"Framework de Acesso ao Armazenamento - SAF\". Mas nem todos os aplicativos (mesmo alguns aplicativos populares de gerenciamento de arquivos) suportam SAF.\n\nFX File Explorer tem suporte total para SAF, basta clonar e lançá-lo dentro de Island, selecionar \"Conectar ao Armazenamento\" no menu. Traslado De Arquivo do Island está no menu lateral.</string>
+    <string name="featured_adb_secure_title">ADB Seguro</string>
+    <string name="featured_adb_secure_island_title">ADB Seguro (Apenas para o espaço do Island)</string>
+    <string name="featured_adb_secure_description">Restringir o shell de ADB (Android Debugging Bridge) de executar comandos perigosos (instalar APK, alterar configurações e etc.).\nSe "God Mode" é ativado, isto poderia proteger todo o dispositivo (incluindo a instalação Não Solicitada do aplicativo via cabo USB).</string>
+    <string name="featured_god_mode_title">God Mode</string>
+    <string name="featured_god_mode_description">\"God Mode\" é um modo especial do Island para usuários avançados, para ajudá-lo a assumir o controle de TODOS os aplicativos (tanto no Island como na Área Principal). Assim você pode suspender os aplicativos indesejados sem Root.</string>
+    <string name="featured_greenify_title">Greenify</string>
+    <string name="featured_greenify_description">Suspender automaticamente aplicativos selecionados se não estiverem em uso ativo, depois que a tela for desligada</string>
+    <string name="featured_icebox_title">Ice Box</string>
+    <string name="featured_icebox_description">Experiência fácil e agradável de iniciar os aplicativos suspensos na Área Principal. (Iniciar os aplicativos no Island ainda não é suportado pelo Ice Box)</string>
+    <string name="featured_appops_title">App Ops</string>
+    <string name="featured_appops_description">Island é incapaz de bloquear aplicativos de acessar ao dados de nível de dispositivo (por exemplo, IMEI, SMS). AppOps é uma ferramenta poderosa para bloquear seletivamente tais acessos de forma excelente a partir de aplicativos de interesse.</string>
+    <string name="featured_coolapk_title">CoolApk</string>
+    <string name="featured_coolapk_description">Atualize facilmente os aplicativos suspensos, não há necessidade de ativá-las primeiro. (\"Mostrar aplicativos ocultos\" deve estar ativado nas \"configurações de labs\" de CoolApk).\n\nPara atualizar aplicativos instalados somente no Island, você ainda precisa usar o clone de CoolApk dentro de Island.</string>
+
+    <string name="setup_profile_welcome">Bem-vindo</string>
+    <string name="setup_island_intro">\"Island\" é um ambiente de sandbox para clonar aplicativos selecionados e isolá-los de acesso aos seus dados pessoais
+fora (incluindo registros de chamadas, contatos e etc) mesmo que as permissões sejam concedidas.
+\n\nAplicativo clonado funciona paralelamente com o instalado, com sua cópia separada de dados do aplicativo. Ele também pode ser suspenso sob demanda, com o ícone do lançador quitado 
+e seus funções de fundo completamente bloqueados.
+\n\nAo criar o ambiente sandbox, você autoriza Island a agir como administrador de dispositivo do \"Android for Work\", com o privilégio de gerenciar
+o ambiente sandbox. Island nunca colete dados relacionados à sua privacidade, por favor leia nossa política de privacidade na Loja de Google Play para mais detalhes.</string>
+    <string name="setup_accept">Aceitar</string>
+    <string name="setup_error_multi_user_not_allowed">Desculpe, o recurso necessário de \"Multiusuário\" não é suportado neste dispositivo.</string>
+    <string name="setup_error_managed_profile_not_supported">Desculpe, o recurso necessário de \"Perfil Gerenciado\" não é suportado neste dispositivo.</string>
+    <string name="setup_error_provisioning_incomplete">A configuração do Island não está completa, a tentativa anterior podia não ser bem sucedida.\n\nSe o ROM do seu dispositivo ou a ferramenta de terceiros obrigar o controle de início automático (ou uma funcionalidade similar de restrição de fundo), por favor, coloque Island na lista branca nas configurações relacionadas, após continue a configuração.</string>
+    <string name="setup_error_managed_device">Desculpe, o Island não pode ser configurado devido ao dispositivo atualmente sendo gerenciado por <b>%1$s</b>.</string>
+    <string name="setup_error_other_work_profile">Desculpe, o \"Perfil de Trabalho\" já estava configurado neste dispositivo por outro aplicativo. Para usar o Island, você precisa primeiro exluir o Perfil de Trabalho existente nas Configurações do sistema - Contas.</string>
+    <string name="setup_error_missing_managed_provisioning">Desculpe, o recurso necessário \"Perfis de Android\" pode não ser totalmente suportado no seu dispositivo.</string>
+    <string name="setup_solution_for_cancelled_provision">Não consegue configurar o Island?\n\nSe você recebeu uma mensagem de erro durante o procedimento de configuração do Island, por favor, continue abrindo o guia de solução de problemas on-line com as soluções sugeridas. Se todas as soluções não funcionarem e seu dispositivo estiver com Root, você pode, alternativamente, configurar o Island com Root.</string>
+
+    <string name="tip_empty_app_list">Não há aplicativos aqui.\nFavor mudar para outra vista.</string>
+
+    <string name="field_app_id">ID do APP: %1$s</string>
+    <string name="button_instructions_online">Instruções (online)</string>
+    <string name="button_account_settings">Configurações da conta</string>
+    <string name="button_have_checked">Verifiquei</string>
+    <string name="button_setup_troubleshooting">Soluções (web)</string>
+    <string name="button_setup_island_with_root">Configurar o Island com Root</string>
+
+    <string name="action_clone">Clonar</string>
+    <string name="action_clone_back">Clonar para Área Principal</string>
+    <string name="action_freeze">Suspenda</string>
+    <string name="action_unfreeze">Ative</string>
+    <string name="action_shortcut">Criar atalho Ative &amp; Iniciar</string>
+    <string name="action_greenify">Auto-Suspensão com Greenify</string>
+    <string name="action_app_settings">Configurações do App</string>
+    <string name="action_remove">Excluir</string>
+    <string name="action_uninstall">Desinstalar</string>
+
+    <string name="menu_tip">Dica…</string>
+    <string name="menu_search">Buscar</string>
+    <string name="menu_show_hidden_sys_apps">Mostrar os aplicativos ocultos de sistema</string>
+    <string name="menu_settings">Configurações</string>
+
+    <string name="dialog_title_warning">AVISO</string>
+    <string name="dialog_manual_setup"><b>Para usuários avançados</b>:\nEsta limitação também poderia ser solucionada com uma única configuração manual via PC conectado a USB.</string>
+    <string name="dialog_encryption_required"><b>CRIPTOGRAFIA DE DISPOSITIVO</b> é necessária no dispositivo para utilizar o Island, usada pelo sistema Android até o 7.0. Criptografar o dispositivo pode degradar o desempenho geral em alguns dispositivos de baixo custo. A criptografia pode ser evitada se o privilégio Root estiver disponível e for concedido na próxima etapa.</string>
+    <string name="dialog_clone_via_install_explanation">Island agora lançará o instalador Android para \"instalar\" este aplicativo no Island.\n\nEmbora pareça a confirmação de instalação regular, na verdade não requer espaço extra de armazenamento.</string>
+    <string name="dialog_clone_via_google_play_explanation">Island agora vai lançar a Loja de Google Play para clonar este aplicativo, por favor clique no botão \"Instalar\" aí.\n\nEmbora pareça a instalação normal, na verdade não vai precisar de espaço extra no armazenamento, apenas ativa este aplicativo no Island.</string>
+    <string name="dialog_clone_via_sys_market_explanation">Island agora lançará a loja de aplicativos integrada no seu dispositivo para clonar este aplicativo, por favor, siga o procedimento de instalação regular.\n\nATTENÇÃO: A loja de aplicativos integrada no seu dispositivo pode não suportar os Perfis de Android corretamente. Caso não consiga terminar a instalação, consulte os FAQs para encontrar as soluções.</string>
+    - [ ] <string name="dialog_clone_incapable_explanation">Desculpe, o Island não pode clonar aplicativos sem uma loja de aplicativos integrada no seu dispositivo (de preferência a loja de Google Play) até o Android 5.1. Consulte o FAQ para as soluções.</string>
+    <string name="dialog_greenify_title">Integração com Greenify</string>
+    <string name="dialog_greenify_explanation">Para economizar armazenamento e evitar o consumo desnecessário de bateria, o Island não tem serviços de fundo integrados. Em vez disso, ela delega o trabalho de suspensão automática à Greenify, aproveitando seu sofisticado gerenciamento automático de hibernação.</string>
+    <string name="dialog_greenify_version_too_low">Greenify precisa ser atualizada para uma versão mais recente.</string>
+    <string name="dialog_reactivate_message">Island foi desativado inesperadamente, por favor, conceda a permissão de Administrador do Dispositivo para reativar.</string>
+    <string name="dialog_destroy_message">Tem certeza que quer destruir todo o Island? Você perderá TODOS OS DADOS DE ISLAND.\n\nNão se preocupe, os aplicativos e os dados fora do Island App NUNCA serão afetados.</string>
+    <string name="dialog_destroy_exclusives_message">Por ser exclusivamente instalado no Island, o(s) seguinte(s) aplicativo(s) %1$d será(ão) DESINSTALADO(S) de seu dispositivo se o Island for destruído.\n\n%2$s\n\nTem certeza que quer prosseguir?</string>
+    <string name="dialog_deactivate_message">Tem certeza que quer desativar o God Mode?\n\nVocê terá que fazer toda a configuração novamente para trazê-lo de volta, isso significa que o espaço do Island e todas as contas devem ser excluídas primeiro se seu dispositivo não estiver com Root.</string>
+    <string name="dialog_cannot_destroy_message">Para excluir todo o espaço do Island, favor abrir o sistema \"Configurações - Contas\" e selecionar \"Exluir o Perfil de Trabalho\".</string>
+    <string name="dialog_critical_app_warning">Este aplicativo é fundamental para que o sistema de Android e outros aplicativos funcionem corretamente. Se continuar, alguns aplicativos ou todo o sistema podem se tornar instáveis ou funcionar mal.\n\nVocê  realmente quer continuar?</string>
+    <string name="dialog_mainland_device_admin">O privilégio de Administrador do Dispositivo é necessário para ativar o God Mode.</string>
+    <string name="dialog_mainland_setup_done">God Mode já está ativado. Ele estará funcionando após a reinicialização do dispositivo.</string>
+    <string name="dialog_island_setup_failed">Desculpe, algo deu errado na configuração do Island. (stage %1$d)</string>
+    <string name="dialog_activate_god_mode_additional_text">Se seu dispositivo estiver com Root, o God Mode pode ser ativado sem participação de sistema (sem interferência na partição do sistema).\n\nPara dispositivo sem Root, o God Mode só poderia ser ativado manualmente. Por favor, siga o guia on-line para instruções.</string>
+
+    <string name="dialog_button_continue">Continuar</string>
+    <string name="dialog_button_learn_more">Saiba mais</string>
+    <string name="dialog_button_install">Instalar</string>
+    <string name="dialog_button_upgrade">Atualizar</string>
+    <string name="dialog_button_destroy">Destruir</string>
+    <string name="dialog_button_activate">Ativar</string>
+    <string name="dialog_button_deactivate">Desativar</string>
+    <string name="dialog_button_reboot">Reiniciar</string>
+
+    <string name="prompt_disable_sys_app_as_removal">O aplicativo do sistema só pode ser desativado. É semelhante à desinstalação de um aplicativo instalado.\n\nIsland não tem o privilégio de fazer isso, em vez disso você será redirecionado para o aplicativo em configuração de sistema, lá você pode clicar no botão \"DESATIVAR\" para prosseguir.</string>
+
+    <string name="toast_setup_in_progress">Instalação de Island em andamento, por favor aguarde...</string>
+    <string name="toast_successfully_cloned">%1$s é clonado com êxito.</string>
+    <string name="toast_cannot_clone">Desculpe, não foi possível clonar %1$s.</string>
+    <string name="toast_already_cloned">Já clonado</string>
+    <string name="toast_shortcut_request_sent">O pedido de atalho é enviado para o lançador</string>
+    <string name="toast_shortcut_failed">Falha na criação do atalho</string>
+    <string name="toast_greenify_failed">Falha no uso do greenify</string>
+    <string name="toast_internal_error">Desculpe, ocorreu um erro interno, por favor reinicie este aplicativo e tente novamente.</string>
+    <string name="toast_error_freeze_failure">Falha na suspensão</string>
+    <string name="toast_external_storage_permission_required">A permissão de armazenamento é necessária para acessar o armazenamento compartilhado dentro do Island.</string>
+    <string name="toast_failed_to_launch_app">Desculpe, houve um erro ao iniciar este aplicativo.</string>
+    <string name="toast_setup_mainland_non_root">Sem Root, abrindo agora o guia on-line.</string>
+    <string name="toast_setup_mainland_root_failed">A ativação do God Mode com Root falhou.</string>
+    <string name="toast_enable_install_from_unknown_source">Por favor, ative esta função para que o Island possa clonar os aplicativos.</string>
+
+    <!-- General words -->
+    <string name="open_settings">Abrir Configurações</string>
+
+    <!-- Settings -->
+
+    <string name="settings_title">Configurações</string>
+
+    <string name="pref_general_header">Geral</string>
+    <string name="pref_launch_shortcut_prefix_title">Lançar prefixo de atalho</string>
+    <string name="pref_show_admin_message_title">Informações extras no diálogo "Ação não permitida".</string>
+    <string name="pref_show_admin_message_summary">Mostrar informações adicionais sobre o Island no diálogo do sistema \"Ação não permitida\".</string>
+
+    <string name="pref_privacy_header">Proteção da Privacidade</string>
+    <string name="pref_privacy_notification_for_clone_title">Notificação de exposição de Privacidade</string>
+    <string name="pref_privacy_notification_for_clone_summary">Mostrar notificação sobre potencial exposição de Privacidade nos aplicativos clonados</string>
+
+    <string name="pref_setup_header">Configuração &amp; Desligar</string>
+    <string name="pref_setup_island_title">Island</string>
+    - <string name="pref_setup_island_summary_managed">Administrados</string>
+    <string name="pref_setup_island_summary_unknown">Desconhecido</string>
+    <string name="pref_setup_island_summary_managed_other">O Perfil de Trabalho existente não é gerenciado por Island.\nClique o ícone lateral para excluir</string>
+    <string name="pref_setup_island_summary_incomplete">Configuração incompleta.\nClique no ícone lateral para refazer.</string>
+    <string name="pref_setup_island_summary_pending_setup">Ainda não configurado.\nClique no ícone lateral para configurar.</string>
+    <string name="pref_setup_mainland_title">Área Principal</string>
+    <string name="pref_setup_mainland_summary_managed">Administrados</string>
+    <string name="pref_setup_mainland_summary_not_managed">Não Administrados</string>
+    <string name="pref_setup_category_status">Status</string>
+    <string name="pref_setup_category_troubleshooting">Solução de problemas</string>
+    <string name="pref_setup_mainland_reprovision_title">Consertar Área Principal</string>
+    <string name="pref_setup_mainland_reprovision_summary">Isto pode ajudar a resolver problemas na Área Principal.\nTodos os aplicativos e dados serão preservados.</string>
+    <string name="pref_setup_island_reprovision_title">Consertar o Island</string>
+    <string name="pref_setup_island_reprovision_summary">Isto pode ajudar a resolver problemas no Island.\nTodos os aplicativos e dados serão preservados</string>
+
+    <string name="pref_about_header">Sobre</string>
+    <string name="pref_about_version_title">Versão</string>
+    <string name="pref_about_licenses_title">Licenças</string>
+
+    <string name="notification_island_after_uninstall_title">Excluir o Island por completo</string>
+    <string name="notification_island_after_uninstall_text">Destruir o Island e excluir todas os aplicativos e dados dentro dele?</string>
+    <string name="notification_action_restore">Restaurar</string>
+
+    <!-- New User Guide -->
+
+    <string name="prompt_freeze_title">Suspender App no Island</string>
+    <string name="prompt_freeze_text">Uma vez suspenso, o aplicativo desaparecerá até ser explicitamente ativado de novo.\nApp não poderia fazer absolutamente nada em estado de suspensão.</string>
+    <string name="prompt_clone_title">Clonar o app para o Island</string>
+    <string name="prompt_clone_text">Aplicativo na Área Principal pode ser clonado para o Island.\n\nA cópia age como uma instância recém-instalada e tem seus próprios dados, separados do App na Área Principal. Eles só compartilham os binários executáveis para conservar espaço.</string>
+
+    <!-- Tip cards -->
+
+    <string name="tip_action_ignore">Ignorar</string>
+    <string name="tip_critical_package_required">Aplicativo crítico (ou componente) necessário</string>
+    <string name="tip_critical_package_message">\"%1$s\" é um componente crítico do sistema necessário para que o sistema de Android funcione corretamente.\n\nConserte isso agora para evitar mau funcionamento do sistema ou erros inesperados dos aplicativos.</string>
+
+</resources>
