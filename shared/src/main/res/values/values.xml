@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="firebase_proxy_host" translatable="false" /><!-- Service proxy is not included in open source project, use your own reverse proxy. -->
-</resources>

@@ -2,14 +2,13 @@ package com.oasisfeng.island.analytics;
 
 import android.os.Process;
 
-import com.crashlytics.android.core.CrashlyticsCore;
+import androidx.annotation.NonNull;
+
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.oasisfeng.android.util.Suppliers;
-import com.oasisfeng.island.firebase.FirebaseWrapper;
-import com.oasisfeng.island.shared.BuildConfig;
 
 import java.util.function.Supplier;
 
-import io.fabric.sdk.android.Fabric;
 
 /**
  * Lazy initializer for crash handler.
@@ -18,24 +17,20 @@ import io.fabric.sdk.android.Fabric;
  */
 public abstract class CrashReport {
 
-	private static final boolean DISABLED = BuildConfig.DEBUG && ! BuildConfig.CRASHLYTICS_ENABLED;
-
-	static void logException(final Throwable t) { sSingleton.get().logException(t); }
+	static void logException(final Throwable t) { sSingleton.get().recordException(t); }
 	static void log(final String message) { sSingleton.get().log(message); }
-	static void setProperty(final String key, final String value) { sSingleton.get().setString(key, value); }
-	static void setProperty(final String key, final int value) { sSingleton.get().setInt(key, value); }
-	static void setProperty(final String key, final boolean value) { sSingleton.get().setBool(key, value); }
+	static void setProperty(final String key, final String value) { sSingleton.get().setCustomKey(key, value); }
+	static void setProperty(final String key, final int value) { sSingleton.get().setCustomKey(key, value); }
+	static void setProperty(final String key, final boolean value) { sSingleton.get().setCustomKey(key, value); }
 
-	private static final Supplier<CrashlyticsCore> sSingleton = Suppliers.memoize(() -> {
-		Fabric.with(new Fabric.Builder(FirebaseWrapper.init()).debuggable(BuildConfig.DEBUG)
-				.kits(new CrashlyticsCore.Builder().disabled(DISABLED).build()).build());
-		final CrashlyticsCore instance = CrashlyticsCore.getInstance();
-		instance.setInt("user", Process.myUserHandle().hashCode());			// Attach the current (Android) user ID to crash report.
-		return instance;
+	private static final Supplier<FirebaseCrashlytics> sSingleton = Suppliers.memoize(() -> {
+		final FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
+		crashlytics.setCrashlyticsCollectionEnabled(true/*BuildConfig.CRASHLYTICS_ENABLED*/);
+		crashlytics.setCustomKey("user", Process.myUserHandle().hashCode());			// Attach the current (Android) user ID to crash report.
+		return crashlytics;
 	});
 
 	public static void initCrashHandler() {
-		if (DISABLED) return;
 		final Thread.UncaughtExceptionHandler current_exception_handler = Thread.getDefaultUncaughtExceptionHandler();
 		if (! (current_exception_handler instanceof LazyThreadExceptionHandler))
 			Thread.setDefaultUncaughtExceptionHandler(new LazyThreadExceptionHandler(current_exception_handler));
@@ -43,7 +38,7 @@ public abstract class CrashReport {
 
 	private static class LazyThreadExceptionHandler implements Thread.UncaughtExceptionHandler {
 
-		@Override public void uncaughtException(final Thread thread, final Throwable e) {
+		@Override public void uncaughtException(final @NonNull Thread thread, final @NonNull Throwable e) {
 			if (mHandlingUncaughtException) {		// Avoid infinite recursion
 				mOriginalHandler.uncaughtException(thread, e);
 				return;
