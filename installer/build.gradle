@@ -23,5 +23,5 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlin_coroutine_version"
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test:runner:1.3.0'
 }
