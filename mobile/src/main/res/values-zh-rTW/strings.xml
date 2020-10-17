@@ -6,8 +6,9 @@
     <string name="tab_mainland">界外</string>
     <string name="tab_island">壺中界</string>
     <string name="tab_discovery">天書</string>
-    <string name="default_island_name">界 %d</string>
-    <string name="default_island0_name">壺中界</string>
+    <string name="default_island_name">壺中界</string>
+    <string name="default_islandN_name">界 %d</string>
+    <string name="default_island0_name">昆侖界</string>
     <string name="default_island1_name">山海界</string>
     <string name="default_island2_name">雲中界</string>
     <string name="default_island3_name">昊天界</string>
