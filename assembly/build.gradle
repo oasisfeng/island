@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     compileSdkVersion this.compileSdkVersion
@@ -14,6 +16,9 @@ android {
     buildFeatures.dataBinding true
 
     buildTypes {
+        debug {
+            firebaseCrashlytics.mappingFileUploadEnabled false
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -76,6 +81,3 @@ dependencies {
     // File Provider only
     fileproviderImplementation project(':fileprovider')
 }
-
-// Firebase plug-in
-apply plugin: 'com.google.gms.google-services'
