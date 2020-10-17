@@ -76,6 +76,7 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
         isChecked = setting.enabled
         onChange { enabled -> onChange?.invoke(this) != false && setting.set(enabled) }}
 
-    private fun TwoStatePreference.refreshActivationStateForPreserveAppOps()
-            = Permissions.has(activity, GET_APP_OPS_STATS).also { if (it) lock(true) }
+    private fun TwoStatePreference.refreshActivationStateForPreserveAppOps(): Boolean {
+        return Permissions.has(activity ?: return false, GET_APP_OPS_STATS).also { if (it) lock(true) }
+    }
 }

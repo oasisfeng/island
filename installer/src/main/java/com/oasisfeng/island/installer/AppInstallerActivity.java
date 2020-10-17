@@ -346,9 +346,11 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	private static boolean ensureSystemPackageEnabledAndUnfrozen(final Context context, final Intent intent) {
 		final ResolveInfo resolve = context.getPackageManager().resolveActivity(intent,
 				PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_SYSTEM_ONLY);
-		return resolve != null && Apps.isInstalledInCurrentUser(resolve.activityInfo.applicationInfo)
-				|| new DevicePolicies(context).enableSystemAppByIntent(intent)
-				|| resolve != null && IslandManager.ensureAppFreeToLaunch(context, resolve.activityInfo.packageName).isEmpty();
+		if (resolve == null) return false;
+		if (Apps.isInstalledInCurrentUser(resolve.activityInfo.applicationInfo)) return true;
+		final DevicePolicies policies = new DevicePolicies(context);
+		return policies.isProfileOwner() && (policies.enableSystemAppByIntent(intent)
+				|| IslandManager.ensureAppFreeToLaunch(context, resolve.activityInfo.packageName).isEmpty());
 	}
 
 	@RequiresApi(O) private boolean isCallerQualified(final ApplicationInfo caller_app_info) {

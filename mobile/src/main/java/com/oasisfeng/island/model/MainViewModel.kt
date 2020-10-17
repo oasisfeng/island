@@ -2,12 +2,14 @@ package com.oasisfeng.island.model
 
 import android.app.Application
 import android.content.Context
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES.Q
 import android.os.UserHandle
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import com.google.android.material.tabs.TabLayout
+import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.data.LiveProfileStates
 import com.oasisfeng.island.data.LiveProfileStates.ProfileState
 import com.oasisfeng.island.mobile.R
@@ -33,7 +35,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)
-			mProfileStates.get(profile).observe(activity, Observer { updateTabIconForProfileState(activity, tab, profile, it) })
+			mProfileStates.get(profile).observe(activity, { updateTabIconForProfileState(activity, tab, profile, it) })
 			tabs.addTab(tab,/* selected = */profile == currentProfile) }
 	}
 }
@@ -42,7 +44,9 @@ private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, p
 	Log.d(TAG, "Update tab icon for profile ${profile.toId()}: $state")
 	val icon = context.getDrawable(R.drawable.ic_island_black_24dp)!!
 	icon.setTint(context.getColor(if (state == ProfileState.UNAVAILABLE) R.color.state_frozen else R.color.state_alive))
-	tab.icon = context.packageManager.getUserBadgedIcon(icon, profile)
+	try { tab.icon = context.packageManager.getUserBadgedIcon(icon, profile) }
+	// (Mostly "vivo" devices before Android Q) "SecurityException: You need MANAGE_USERS permission to: check if specified user a managed profile outside your profile group"
+	catch (e: SecurityException) { if (SDK_INT >= Q) analytics().logAndReport(TAG, "Error getting user badged icon", e) }
 }
 
 private const val TAG = "Island.MVM"
