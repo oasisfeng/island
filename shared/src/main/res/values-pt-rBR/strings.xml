@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_ongoing_task">Tarefa em andamento</string>
+    <string name="notification_channel_important">Importante</string>
+    <string name="notification_channel_app_install">Instalação do App</string>
+    <string name="notification_channel_island_watcher">Observador do Island</string>
+    <string name="notification_channel_app_watcher">Observador do App</string>
+    <string name="notification_channel_debug">Depurar</string>
+
+    <string name="device_admin_support_message_short">Para desativar esta restrição, veja a configuração relacionada no Island.</string>
+    <string name="device_admin_support_message_long">Quando o Island é ativado, você pode ver \"Dispositivo é gerenciado por sua organização\" ou informações similares ao redor de IU do sistema. É um aviso padrão de transparência do Perfil de Trabalho (o recurso subjacente de Android usado pelo Island), que não pode ser removido.\n\nO Island não coleta suas informações pessoais de forma alguma, consulte nossa política de privacidade na Loja de Google Play para obter detalhes.\n\nSe receber uma mensagem \"xxx recurso desativado por admin\", você pode ter ativado um dos recursos de restrição no Island, por favor, consulte a configuração relacionada no Island.\n\nPara desinstalar o Island, você deve desativá-lo primeiro, vá para Island - Configurações - Configurações Extensivas - Destruir / Desativar.</string>
+
+    <string name="prompt_failed_preserving_app_ops">Os App Ops não foram preservados devido a um erro interno.</string>
+</resources>
