@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_installer_label">Instalador do Aplicativo</string>
+
+    <string name="confirm_installing">\"%1$s\" solicita a instalação de %2$s.\n\nTem certeza de que quer continuar?</string>
+    <string name="confirm_updating">\"%1$s\" solicita a instalação de %2$s.\n\nTem certeza de que quer continuar?</string>
+    <string name="confirm_cloning">\"%1$s\" solicita a instalação de %2$s.\n\nTem certeza de que quer continuar?</string>
+    <string name="description_for_installing_app">\"%1$s\" (%2$s) versão %3$s (%4$d)</string>
+    <string name="description_for_cloning_app">\"%1$s\" (%2$s)</string>
+    <string name="description_for_installing_split">Pacote de Apps para \"%1$s\"</string>
+    <string name="label_unknown_app">um app</string>
+    <string name="dialog_install_checkbox_always_allow">Sempre permitir a instalação de Apps desta fonte.</string>
+    <string name="dialog_install_failure_title">Instalação falhou</string>
+    <string name="dialog_install_unknown_failure_message">Ocorreu um erro interno durante a instalação realizada pelo sistema de Android</string>
+    <string name="progress_dialog_installing">\"%1$s\" está instalando %2$s</string>
+    <string name="progress_dialog_updating">\"%1$s\" está atualizando %2$s</string>
+    <string name="progress_dialog_cloning">\"%1$s\" está clonando %2$s</string>
+
+    <string name="notification_caller_installed_app">\"%1$s\" instalou \"%2$s\"</string>
+    <string name="notification_caller_updated_app">\"%1$s\" atualizou \"%2$s\"</string>
+    <string name="notification_caller_updated_self">\"%1$s\" se atualizou"</string>
+    <string name="notification_app_with_permissions">com permissões concedidas: %s</string>
+    <string name="notification_app_target_api">orientado  a Android %s</string>
+    <string name="notification_app_target_pre_m_wo_sensitive_permissions">orientado a Android %s sem permissões sensíveis</string>
+    <string name="action_show_app_settings">Configurações de Apps</string>
+
+    <string name="app_info_forwarder_title">Mostrar info sobre %1$s (%2$s) in</string>
+    <string name="app_settings_helper_prompt">\"Parada forçada\" para revelar configurações extras de terceiros</string>
+    <string name="fallback_to_sys_installer">Tente uma forma alternativa</string>
+    <string name="toast_split_apk_clone_fallback_warning">Os Apps no Pacote podem não ser instalados adequadamente desta forma. Por favor, tente instalá-los da Loja de Aplicativos se não estiver funcionando.</string>
+
+    <string name="prompt_miui_optimization">Isto pode ser causado pela "otimização de MIUI", que pode ser desativada no sistema "Configurações - Opções de Desenvolvedor".</string>
+</resources>
