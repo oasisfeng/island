@@ -70,6 +70,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.Q;
 import static androidx.core.app.NotificationCompat.BADGE_ICON_SMALL;
 import static androidx.core.app.NotificationCompat.CATEGORY_STATUS;
 
@@ -308,6 +309,8 @@ public class IslandProvisioning extends IntentService {
 		// Acquire SYSTEM_ALERT_WINDOW permission to overcome "background activity start" blocking on Android Q+.
 		if (SDK_INT > P && ! Settings.canDrawOverlays(context))
 			new AppOpsCompat(context).setMode(AppOpsCompat.OP_SYSTEM_ALERT_WINDOW, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
+
+		if (SDK_INT >= Q) policies.execute(DevicePolicyManager::setCrossProfileCalendarPackages, null);
 
 		// Some Samsung devices default to restrict all 3rd-party cross-profile services (IMEs, accessibility and etc).
 		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
