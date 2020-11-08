@@ -22,6 +22,7 @@ object IslandNameManager {
 	}
 
 	fun getDefaultName(context: Context, profile: UserHandle = Users.current()) = when (val profileId = profile.toId()) {
+		0    -> context.getString(R.string.tab_mainland)
 		10   -> context.getString(R.string.default_island0_name)
 		11   -> context.getString(R.string.default_island1_name)
 		12   -> context.getString(R.string.default_island2_name)
