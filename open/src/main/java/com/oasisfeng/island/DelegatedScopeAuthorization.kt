@@ -14,7 +14,9 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.RestrictionsManager
 import android.content.RestrictionsManager.*
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager.*
+import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+import android.content.pm.PackageManager.DONT_KILL_APP
+import android.content.pm.PackageManager.GET_META_DATA
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
@@ -78,13 +80,15 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val pkg = intent.getStringExtra(EXTRA_PACKAGE_NAME) ?: return
-        val user : UserHandle = intent.getParcelableExtra(EXTRA_USER) ?: return
-        onRequestReactedByUser(context, when (intent.action) {
+        val authorized = when (intent.action) {
             ACTION_AUTHORIZE -> true
             ACTION_REFUSE -> false
-            else -> return super.onReceive(context, intent)
-        }, intent.data?.schemeSpecificPart, pkg, user, intent.getStringExtra(REQUEST_KEY_DATA) ?: return)
+            else -> return super.onReceive(context, intent) }
+        val pkg = intent.getStringExtra(EXTRA_PACKAGE_NAME) ?: return
+        val user : UserHandle = intent.getParcelableExtra(EXTRA_USER) ?: return
+        val delegation = intent.getStringExtra(REQUEST_KEY_DATA) ?: return
+        val requestId = intent.data?.schemeSpecificPart
+        onRequestReactedByUser(context, authorized, requestId, pkg, user, delegation)
     }
 
     private fun onRequestReactedByUser(context: Context, authorized: Boolean, requestId: String?, pkg: String, user: UserHandle, delegation: String) {
