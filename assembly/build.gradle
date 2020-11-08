@@ -8,7 +8,7 @@ android {
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion this.minSdkVersion
-        targetSdkVersion 28     // Private APIs are accessed by module "open" and "fileprovider" (via indirectly loaded remote class)
+        targetSdkVersion 29     // Private APIs are accessed by module "open" and "fileprovider" (via indirectly loaded remote class)
         resConfigs "en", "zh"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
