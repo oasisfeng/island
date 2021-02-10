@@ -104,6 +104,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	private static final int INSTALL_FAILED_USER_RESTRICTED = -111;                                 // ...
 	private static final int INSTALL_FAILED_ABORTED = -115;
 	private static final String EXTRA_LEGACY_STATUS = "android.content.pm.extra.LEGACY_STATUS";		// PackageInstall.EXTRA_LEGACY_STATUS
+	private static final String SELF_PERMISSION = "com.oasisfeng.island.permission.INSTALLER";      // Declared in AndroidManifest.xml
 
 	@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -282,7 +283,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		}
 
 		final Intent callback = new Intent("INSTALL_STATUS").setPackage(getPackageName());
-		registerReceiver(mStatusCallback, new IntentFilter(callback.getAction()));
+		registerReceiver(mStatusCallback, new IntentFilter(callback.getAction()), SELF_PERMISSION, null);
 		mResultNeeded = getIntent().getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false);
 
 		mSession.commit(PendingIntent.getBroadcast(this, session_id, callback, FLAG_UPDATE_CURRENT).getIntentSender());
