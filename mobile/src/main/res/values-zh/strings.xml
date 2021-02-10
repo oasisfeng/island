@@ -74,6 +74,7 @@
     <string name="action_activate">激活</string>
     <string name="action_deactivate">解除</string>
     <string name="action_rescind">撤除</string>
+    <string name="action_close">关闭</string>
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜索</string>
@@ -169,7 +170,8 @@
     <string name="prompt_appops_loading">正在载入应用列表…</string>
     <string name="prompt_appops_no_such_apps">没有应用使用此权限</string>
     <string name="prompt_appops_revoke_for_all_users_apps">确认对所有用户应用（不涉及系统应用）撤销此权限？</string>
-    <string name="prompt_manage_cross_profile_apps">授权具有跨界互联能力的应用此项特权（部分系统应用可能无视此设置获得特权）</string>
+    <string name="prompt_manage_cross_profile_apps">授权具有跨界互联能力的应用此项特权</string>
+    <string name="prompt_manage_cross_profile_apps_footer">部分系统应用可能无视此设置享有特权</string>
     <string name="pref_quick_controls_header">通知区快捷控制</string>
     <string name="pref_island_watcher_summary">可封印诸界，中止其中所有应用的后台活动。再次启动其中的任何应用将会重新激活。</string>
     <string name="pref_app_watcher_summary">可重新冻结最近解冻的应用，撤销临时授予的权限。</string>

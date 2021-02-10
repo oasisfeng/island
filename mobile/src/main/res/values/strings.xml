@@ -77,6 +77,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_activate">Activate</string>
     <string name="action_deactivate">Deactivate</string>
     <string name="action_rescind">Rescind</string>
+    <string name="action_close">Close</string>
 
     <string name="menu_tip">Tip…</string>
     <string name="menu_search">Search</string>
@@ -172,7 +173,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="prompt_appops_loading">Loading app list…</string>
     <string name="prompt_appops_no_such_apps">No apps with this permission</string>
     <string name="prompt_appops_revoke_for_all_users_apps">Are you sure to revoke this permission for all user apps (system apps excluded)?</string>
-    <string name="prompt_manage_cross_profile_apps">Grant cross-land privilege to apps with this capability. (Some system apps may be always allowed despite this setting)</string>
+    <string name="prompt_manage_cross_profile_apps">Grant cross-land privilege to apps with this capability.</string>
+    <string name="prompt_manage_cross_profile_apps_footer">Some system apps may be always privileged despite this setting</string>
     <string name="pref_quick_controls_header">Quick controls in notification</string>
     <string name="pref_island_watcher_summary">Shortcut to deactivate Island, ceasing all the background activities inside. Island can then be activated on-demand by launching any of the apps inside.</string>
     <string name="pref_app_watcher_summary">Shortcut to freeze app recently unfrozen and revoke permissions temporarily granted.</string>

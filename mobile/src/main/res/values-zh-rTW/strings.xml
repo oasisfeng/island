@@ -62,7 +62,6 @@
     <string name="button_setup_island_with_root">通過 ROOT 建立壺中界</string>
 
     <string name="action_clone">分身</string>
-    <string name="action_clone_back">分身回界外</string>
     <string name="action_freeze">凍結</string>
     <string name="action_unfreeze">解除凍結</string>
     <string name="action_shortcut">建立“解凍並啟動”快速啟動方式</string>
@@ -76,6 +75,7 @@
     <string name="action_activate">啟用</string>
     <string name="action_deactivate">解除</string>
     <string name="action_rescind">撤除</string>
+    <string name="action_close">關閉</string>
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜尋</string>
@@ -171,7 +171,8 @@
     <string name="prompt_appops_loading">正在載入應用程式列表…</string>
     <string name="prompt_appops_no_such_apps">没有應用程式使用此權限</string>
     <string name="prompt_appops_revoke_for_all_users_apps">確認對所有用户應用程式（不涉及系统應用程式）撤銷此權限？</string>
-    <string name="prompt_manage_cross_profile_apps">授權具有跨界互聯能力的應用程式此項特權（部分系统應用程式可能無視此設定獲得特權）</string>
+    <string name="prompt_manage_cross_profile_apps">授權具有跨界互聯能力的應用程式此項特權</string>
+    <string name="prompt_manage_cross_profile_apps_footer">部分系统應用程式可能無視此設定享有特權</string>
     <string name="pref_quick_controls_header">通知區快速設定控制</string>
     <string name="pref_island_watcher_summary">可封印諸界，中止其中所有應用程式的背景活動。再次啟動其中的任何應用程式將會重新啟用。</string>
     <string name="pref_app_watcher_summary">可重新凍結最近解凍的應用程式，撤銷臨時授予的權限。</string>

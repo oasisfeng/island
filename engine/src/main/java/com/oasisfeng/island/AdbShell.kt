@@ -131,8 +131,6 @@ object AdbShell {
     }
 
     init {
-        if (Looper.getMainLooper() == null) Looper.prepareMainLooper()      // A prepared Looper is required for the calls below to succeed
+        if (Looper.getMainLooper() == null) @Suppress("DEPRECATION") Looper.prepareMainLooper()     // A prepared Looper is required for the calls below to succeed
     }
 }
-
-const val TAG = "Island.Adb"

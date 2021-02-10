@@ -8,6 +8,7 @@ import android.Manifest.permission.READ_PHONE_STATE
 import android.Manifest.permission.READ_SMS
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
 import android.content.BroadcastReceiver
@@ -97,10 +98,12 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                 val allowedPackages: Set<String> = policies.invoke(DPM::getCrossProfilePackages)
                 val allowed = BooleanArray(entries.size) { index -> pkgs[index].packageName in allowedPackages }
                 Dialogs.buildCheckList(activity, activity.getText(R.string.prompt_manage_cross_profile_apps),
-                        entries, allowed) { _, which, checked -> allowed[which] = checked }.withOkButton {
+                        entries, allowed) { _, which, checked -> allowed[which] = checked }
+                        .setNeutralButton(R.string.action_close) { _,_ ->
                             pkgs.mapIndexedNotNullTo(ArraySet()) { index, pkg -> if (allowed[index]) pkg.packageName else null }
                                     .toSet().also { policies.invoke(DPM::setCrossProfilePackages, it) }}
-                        .withCancelButton().show() }}
+                        .setPositiveButton(R.string.prompt_manage_cross_profile_apps_footer, null)
+                        .show().apply { getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false } }}
 
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && !Users.isOwner(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
