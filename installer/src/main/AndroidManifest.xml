@@ -1,6 +1,9 @@
 <manifest xmlns:tools="http://schemas.android.com/tools"
           package="com.oasisfeng.island.installer" xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <permission android:name="com.oasisfeng.island.permission.INSTALLER" android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.oasisfeng.island.permission.INSTALLER" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon" android:taskAffinity="">
