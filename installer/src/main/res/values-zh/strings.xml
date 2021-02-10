@@ -13,7 +13,7 @@
     <string name="dialog_install_failure_title">安装失败</string>
     <string name="dialog_install_unknown_failure_message">Android 系统的应用安装过程发生了内部错误</string>
     <string name="progress_dialog_installing">“%1$s”正在安装 %2$s</string>
-    <string name="progress_dialog_updating">“%1$s”正在安装 %2$s</string>
+    <string name="progress_dialog_updating">“%1$s”正在更新 %2$s</string>
     <string name="progress_dialog_cloning">“%1$s”正在克隆 %2$s</string>
 
     <string name="notification_caller_installed_app">“%1$s”已安装新应用“%2$s”</string>
