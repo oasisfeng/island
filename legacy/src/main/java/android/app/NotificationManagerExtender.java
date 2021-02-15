@@ -88,6 +88,7 @@ public class NotificationManagerExtender extends NotificationManager {
 	}
 
 	public NotificationManagerExtender(final Context context) {
+		super(context, null);
 		mDelegate = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 	}
 
