@@ -11,7 +11,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
-import android.content.res.AssetManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.RemoteException;
@@ -116,10 +115,6 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
 			IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 			.returning(String.class).throwing(RemoteException.class).withoutParams();
-	public static final @Nullable Hack.HackedMethod0<AssetManager, Void, Unchecked, Unchecked, Unchecked>
-			AssetManager_constructor = Hack.into(AssetManager.class).constructor().withoutParams();
-	public static final @Nullable Hack.HackedMethod1<Integer, AssetManager, Unchecked, Unchecked, Unchecked, String>
-			AssetManager_addAssetPath = Hack.into(AssetManager.class).method("addAssetPath").returning(int.class).withParam(String.class);
 	static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked>
 			ActivityManagerNative_getDefault = Hack.into("android.app.ActivityManagerNative")
 			.staticMethod("getDefault").fallbackReturning(null).withoutParams();

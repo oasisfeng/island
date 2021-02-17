@@ -26,6 +26,9 @@
             <PreferenceScreen android:title="Material Tap Target Prompt" android:summary="Apache License, Version 2.0">
                 <intent android:action="android.intent.action.VIEW" android:data="https://github.com/sjwall/MaterialTapTargetPrompt" />
             </PreferenceScreen>
+            <PreferenceScreen android:title="APKParser" android:summary="BSD License 2.0">
+                <intent android:action="android.intent.action.VIEW" android:data="https://github.com/jaredrummler/APKParser" />
+            </PreferenceScreen>
         </PreferenceCategory>
     </PreferenceScreen>
 

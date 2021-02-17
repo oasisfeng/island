@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_installer_label">应用安装器</string>
 
     <string name="confirm_installing">“%1$s”请求安装 %2$s。\n\n是否继续？</string>
@@ -7,21 +7,27 @@
     <string name="confirm_cloning">“%1$s”请求克隆 %2$s。\n\n是否继续？</string>
     <string name="description_for_installing_app">“%1$s” (%2$s) 版本 %3$s (%4$d)</string>
     <string name="description_for_cloning_app">“%1$s” (%2$s)</string>
-    <string name="description_for_installing_split">“%1$s” 的应用组件</string>
     <string name="label_unknown_app">应用</string>
     <string name="dialog_install_checkbox_always_allow">始终允许此来源安装应用</string>
-    <string name="dialog_install_failure_title">安装失败</string>
+    <string name="dialog_install_failure_title">应用安装失败</string>
     <string name="dialog_install_unknown_failure_message">Android 系统的应用安装过程发生了内部错误</string>
+    <string name="prompt_install_aborted">应用安装中止</string>
     <string name="progress_dialog_installing">“%1$s”正在安装 %2$s</string>
     <string name="progress_dialog_updating">“%1$s”正在更新 %2$s</string>
+    <string name="progress_dialog_expanding">“%1$s”正在扩展 %2$s</string>
     <string name="progress_dialog_cloning">“%1$s”正在克隆 %2$s</string>
 
-    <string name="notification_caller_installed_app">“%1$s”已安装新应用“%2$s”</string>
-    <string name="notification_caller_updated_app">“%1$s”已更新“%2$s”</string>
+    <string name="notification_caller_installed_app">“%1$s”已安装新应用 %2$s</string>
+    <string name="notification_caller_updated_app">“%1$s”已更新 %2$s</string>
     <string name="notification_caller_updated_self">\"%1$s\"已更新自己</string>
+    <string name="notification_caller_expanded_app">\"%1$s\"已扩展 %2$s</string>
+    <string name="notification_caller_cloned_app">\"%1$s\"已克隆 %2$s</string>
     <string name="notification_app_with_permissions">已获取的权限：%s</string>
-    <string name="notification_app_target_api">适配至 Android %s</string>
-    <string name="notification_app_target_pre_m_wo_sensitive_permissions">适配至 Android %s (无敏感权限)</string>
+    <string name="notification_app_version">版本: %s</string>
+    <string name="notification_app_version_update">版本: %1$s -> %2$s</string>
+    <string name="notification_app_target_android_version">适配 Android 版本: %s</string>
+    <string name="notification_app_target_android_version_update">适配 Android: %1$s -> %2$s</string>
+    <string name="notification_app_target_android_10_legacy_storage">10 (非隔离存储)</string>
     <string name="action_show_app_settings">应用设置</string>
 
     <string name="app_info_forwarder_title">在哪一个应用中显示关于 %1$s (%2$s) 的信息</string>

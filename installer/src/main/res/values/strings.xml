@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_installer_label">App Installer</string>
 
     <string name="confirm_installing">\"%1$s\" requests installing %2$s.\n\nAre you sure you want to continue?</string>
@@ -7,21 +7,27 @@
     <string name="confirm_cloning">\"%1$s\" requests cloning %2$s.\n\nAre you sure you want to continue?</string>
     <string name="description_for_installing_app">\"%1$s\" (%2$s) version %3$s (%4$d)</string>
     <string name="description_for_cloning_app">\"%1$s\" (%2$s)</string>
-    <string name="description_for_installing_split">app bundle for \"%1$s\"</string>
     <string name="label_unknown_app">an app</string>
     <string name="dialog_install_checkbox_always_allow">Always allow app installation from this source.</string>
-    <string name="dialog_install_failure_title">Failed to install</string>
+    <string name="dialog_install_failure_title">App installation failed</string>
     <string name="dialog_install_unknown_failure_message">Internal error occurred during the installation performed by Android system</string>
+    <string name="prompt_install_aborted">App installation aborted</string>
     <string name="progress_dialog_installing">\"%1$s\" is installing %2$s</string>
     <string name="progress_dialog_updating">\"%1$s\" is updating %2$s</string>
+    <string name="progress_dialog_expanding">\"%1$s\" is expanding %2$s</string>
     <string name="progress_dialog_cloning">\"%1$s\" is cloning %2$s</string>
 
     <string name="notification_caller_installed_app">\"%1$s\" installed \"%2$s\"</string>
     <string name="notification_caller_updated_app">\"%1$s\" updated \"%2$s\"</string>
     <string name="notification_caller_updated_self">\"%1$s\" updated itself"</string>
+    <string name="notification_caller_expanded_app">\"%1$s\" expanded %2$s</string>
+    <string name="notification_caller_cloned_app">\"%1$s\" cloned %2$s</string>
     <string name="notification_app_with_permissions">with permissions granted: %s</string>
-    <string name="notification_app_target_api">targeting Android %s</string>
-    <string name="notification_app_target_pre_m_wo_sensitive_permissions">targeting Android %s with no sensitive permissions</string>
+    <string name="notification_app_version">Version: %s</string>
+    <string name="notification_app_version_update">Version: %1$s -> %2$s</string>
+    <string name="notification_app_target_android_version">Target Android version: %s</string>
+    <string name="notification_app_target_android_version_update">Target Android: %1$s -> %2$s</string>
+    <string name="notification_app_target_android_10_legacy_storage">10 (legacy storage)</string>
     <string name="action_show_app_settings">App Settings</string>
 
     <string name="app_info_forwarder_title">Show info about %1$s (%2$s) in</string>

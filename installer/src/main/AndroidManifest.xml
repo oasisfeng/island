@@ -31,6 +31,8 @@
             </intent-filter>
         </activity>
 
+        <receiver android:name=".AppInstallerStatusReceiver" />
+
         <activity android:name=".AppInfoForwarderActivity"
                   android:taskAffinity=""
                   android:excludeFromRecents="true"

@@ -64,7 +64,7 @@ class AppSettingsHelperService: Service() {
 
 		if (intent.action == ACTION_QUERY_PACKAGE_RESTART) {
 			if (sLastPackageRestart?.run { first + MAX_DELAY > uptimeMillis && second == pkg && third == uid } == true) {
-				return AppInstallationNotifier.showNotification(context, pkg, UserHandles.of(UserHandles.getUserId(uid)),
+				return AppInstallationNotifier.showAppInfoNotification(context, INVALID_SESSION_ID, pkg,
 						Apps.of(context).getAppName(pkg), timeout = HELPER_NOTIFICATION_TIMEOUT) }
 
 			sLastPackageRestart = null
