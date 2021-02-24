@@ -7,7 +7,7 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_PHONE_STATE
 import android.Manifest.permission.READ_SMS
 import android.annotation.SuppressLint
-import android.app.Activity
+import android.app.ActionBar
 import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
@@ -44,10 +44,7 @@ import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
 import com.oasisfeng.island.shuttle.PendingIntentShuttle
-import com.oasisfeng.island.util.DPM
-import com.oasisfeng.island.util.DevicePolicies
-import com.oasisfeng.island.util.Modules
-import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.*
 
 /**
  * Settings for each managed profile, also as launcher activity in managed profile.
@@ -59,7 +56,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onResume() {
         super.onResume()
         val activity = activity
-        activity.title = preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
+        val multiple = Users.getProfilesManagedByIsland().size > 1
+        activity.title = (if (multiple) preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null) else null)
                 ?: IslandNameManager.getDefaultName(activity)
 
         val policies = DevicePolicies(activity)
@@ -73,8 +71,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
             setup<Preference>(R.string.key_island_watcher) { remove(this) }
             setup<Preference>(R.string.key_setup) { remove(this) }
-            return
-        } else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
+            return }
+        else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
 
         if (SDK_INT <= Q) {     // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
             setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
@@ -172,7 +170,6 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        activity.actionBar?.setDisplayHomeAsUpEnabled(true)
         preferenceManager.setStorageDeviceProtected()
         addPreferencesFromResource(R.xml.pref_island)
     }
@@ -180,6 +177,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         if (! Users.isOwner()) {
             inflater.inflate(R.menu.pref_island_actions, menu)
+            menu.findItem(R.id.menu_rename)?.isVisible = Users.getProfilesManagedByIsland().size > 1
             if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).isVisible = true }
     }
 
@@ -193,12 +191,13 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     }
 }
 
-class IslandSettingsActivity: Activity() {
+class IslandSettingsActivity: CallerAwareActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (intent.action != null && PendingIntentShuttle.collect(this)) return finish()    // Allow explicit launch intent without action
         setTheme(R.style.AppTheme_Settings)
+        actionBar?.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME)
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
     }
 
