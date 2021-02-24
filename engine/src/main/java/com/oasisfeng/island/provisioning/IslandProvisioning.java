@@ -217,7 +217,9 @@ public class IslandProvisioning extends IntentService {
 		}
 		Log.i(TAG, "Launching main activity in owner user...");
 		try {   // Since Android O, activities in owner user is invisible to managed profile.
-			new CrossProfile(context).startActivityInParentProfile(new Intent(ACTION_MAIN).addFlags(FLAG_ACTIVITY_NEW_TASK));
+			final Intent intent = new Intent(ACTION_MAIN).addFlags(FLAG_ACTIVITY_NEW_TASK);
+			CrossProfile.decorateIntentForActivityInParentProfile(context, intent);
+			context.startActivity(intent);
 			return true;
 		} catch (final RuntimeException e) { return false; }
 	}

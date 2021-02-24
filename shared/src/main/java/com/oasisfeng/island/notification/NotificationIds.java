@@ -40,6 +40,7 @@ public enum NotificationIds {
 	IslandWatcher(Channel.Watcher),
 	IslandAppWatcher(Channel.AppWatcher),
 	Authorization(Channel.Important),
+	Shuttle(Channel.Important),
 	Debug(Channel.Debug, 999);
 
 	public void post(final Context context, final Notification.Builder notification) {

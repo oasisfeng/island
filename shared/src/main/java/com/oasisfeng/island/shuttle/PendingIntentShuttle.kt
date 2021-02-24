@@ -2,6 +2,8 @@ package com.oasisfeng.island.shuttle
 
 import android.app.*
 import android.app.Activity.RESULT_FIRST_USER
+import android.app.Notification.GROUP_ALERT_SUMMARY
+import android.app.Notification.VISIBILITY_PUBLIC
 import android.app.PendingIntent.*
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,18 +16,20 @@ import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.net.Uri
 import android.os.*
+import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
+import android.os.Build.VERSION_CODES.P
 import android.view.*
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.engine.CrossProfile
+import com.oasisfeng.island.notification.NotificationIds
+import com.oasisfeng.island.notification.post
+import com.oasisfeng.island.shared.R
 import com.oasisfeng.island.util.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.Serializable
 import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
@@ -42,11 +46,9 @@ class PendingIntentShuttle: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
 		Log.d(TAG, "PendingIntentShuttle.onReceive($intent)")
-		if (intent.action.let { it == ACTION_LOCKED_BOOT_COMPLETED || it == ACTION_MY_PACKAGE_REPLACED }) {
-			Log.d(TAG, "Initiated by $intent")
-			if (Users.isOwner()) sendToAllUnlockedProfiles(context)
-			else sendToParentProfileByActivityIfNotYet(context)
-			return }    // We cannot initiate shuttle sending from to owner user on Android 8+, due to visibility restriction.
+		if (intent.action.let { it == ACTION_BOOT_COMPLETED || it == ACTION_MY_PACKAGE_REPLACED }) {
+			if (! Users.isOwner()) sendToParentProfileByActivityIfNotYet(context)
+			return }
 		if (intent.getLongExtra(ActivityOptions.EXTRA_USAGE_TIME_REPORT, -1) >= 0) {
 			intent.getParcelableExtra<Bundle>(ActivityOptions.EXTRA_USAGE_TIME_REPORT_PACKAGES)?.apply {
 				Log.v(TAG, "Callee report: ${keySet().joinToString()}") }
@@ -59,7 +61,8 @@ class PendingIntentShuttle: BroadcastReceiver() {
 				try { invokeClosureAndSendResult(context, payload) { code, extras -> setResult(code, null, extras) }}
 				catch (t: Throwable) { Log.w(TAG, "Error invoking $payload", t) }}
 			is PendingIntent -> {
-				require(payload.creatorPackage == context.packageName)
+				if (payload.creatorPackage != context.packageName)
+					return Unit.also { Log.w(TAG, "Drop unexpected shuttle by ${payload.creatorPackage}") }
 				save(context, payload) }
 			else -> Log.e(TAG, "Invalid payload type: ${payload?.javaClass} from: $intent") }
 	}
@@ -101,13 +104,27 @@ class PendingIntentShuttle: BroadcastReceiver() {
 
 		@ProfileUser fun sendToParentProfileByActivityIfNotYet(context: Context) {
 			if (mSentByActivity) return     // Activity start is relatively heavy and cross-profile toast will be shown.
-			try {
-				val intent = Intent(ACTION_SHUTTLE).putExtra(null, buildReverseShuttle(context))
-				CrossProfile(context).startActivityInParentProfile(intent.addFlags(SILENT_LAUNCH_FLAGS))
+			val intent = Intent(ACTION_SHUTTLE).putExtra(null, buildReverseShuttle(context)).addFlags(SILENT_LAUNCH_FLAGS)
+			CrossProfile.decorateIntentForActivityInParentProfile(context, intent)
+			if (isCredentialNeeded(context)) {
+				NotificationIds.Shuttle.post(context) { setOngoing(true).setVisibility(VISIBILITY_PUBLIC)
+						.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getColor(R.color.accent))
+						.setContentTitle(context.getString(R.string.notification_profile_shuttle_pending_title))
+						.setContentText(context.getString(R.string.notification_profile_shuttle_pending_text))
+						.setContentIntent(getActivity(context, 0, intent, FLAG_UPDATE_CURRENT))
+						.apply { if (SDK_INT >= O) setGroup("Shuttle").setGroupAlertBehavior(GROUP_ALERT_SUMMARY) }}
+			} else try {
+				context.startActivity(intent)
 				mSentByActivity = true
 			} catch (e: RuntimeException) { Log.e(TAG, "Error establishing shuttle to parent profile.", e) }
 		}
 		private var mSentByActivity: Boolean = false
+
+		/** Credential confirmation is needed if separate challenge (P+) is used and is locked by keyguard,
+		 *  even if "user" (credential protected storage) is unlocked */
+		@ProfileUser private fun isCredentialNeeded(context: Context) =
+				if (SDK_INT < P || DevicePolicies(context).invoke(DPM::isUsingUnifiedPassword)) false
+				else (context.getSystemService<KeyguardManager>()?.run { isDeviceLocked && isDeviceSecure } ?: false)
 
 		@OwnerUser fun sendToAllUnlockedProfiles(context: Context) {
 			check(Users.isOwner()) { "Must be called in owner user" }
@@ -115,17 +132,15 @@ class PendingIntentShuttle: BroadcastReceiver() {
 				if (it != Users.current()) sendToProfileIfUnlocked(context, it) }
 		}
 
-		@OwnerUser private fun sendToProfileIfUnlocked(context: Context, profile: UserHandle) = GlobalScope.launch(Dispatchers.Unconfined) {
-			val shuttle = retrieveShuttle(context, profile)
-			if (shuttle != null) try {
-				return@launch shuttle.send(context, 0, Intent().putExtra(null, buildReverseShuttle(context))) }
-			catch (e: CanceledException) {
-				Log.w(TAG, "Old shuttle (${Users.current().toId()} to ${profile.toId()}) is broken, rebuild now.") }
+		@OwnerUser private fun sendToProfileIfUnlocked(context: Context, profile: UserHandle): Job {
+			return GlobalScope.launch(Dispatchers.Unconfined) {
+				val shuttle = retrieveShuttle(context, profile)
+				if (shuttle != null) try {
+					return@launch shuttle.send(context, 0, Intent().putExtra(null, buildReverseShuttle(context))) } catch (e: CanceledException) {}
 
 			if (try { context.getSystemService(UserManager::class.java)!!.isUserUnlocked(profile) }
 					catch (e: SecurityException) { return@launch Unit.also { Log.w(TAG, "Error checking user unlocked state.", e) } })
-				sendToProfileByActivity(context, profile)
-			else Log.i(TAG, "Skip stopped or locked profile: ${profile.toId()}")
+				sendToProfileByActivity(context, profile) }
 		}
 
 		@OwnerUser internal suspend fun <R> sendToProfileAndShuttle(context: Context, profile: UserHandle, procedure: CtxFun<R>): R {
@@ -212,7 +227,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 		private fun save(context: Context, shuttle: PendingIntent) {
 			val user = shuttle.creatorUserHandle?.takeIf { it != Users.current() }?.toId()
 					?: return Unit.also { Log.e(TAG, "Not a shuttle: $shuttle") }
-			Log.d(TAG, "Received shuttle from $user")
+			NotificationIds.Shuttle.cancel(context)
 			val pack = buildLockerIntent(context).addFlags(FLAG_RECEIVER_FOREGROUND).putExtra(null, shuttle)
 			val locker = getBroadcast(context, user, pack, FLAG_UPDATE_CURRENT)
 			context.getSystemService(AlarmManager::class.java)!!.apply {    // To keep it in memory after process death.
@@ -318,8 +333,7 @@ class PendingIntentShuttle: BroadcastReceiver() {
 	@RequiresApi(O) class Initializer: Service() {  // Only supported on Android O+ (see IslandPersistentService in module "engine")
 
 		override fun onCreate() {
-			if (Users.isOwner()) sendToAllUnlockedProfiles(this)
-			else sendToParentProfileByActivityIfNotYet(this)
+			if (! Users.isOwner()) sendToParentProfileByActivityIfNotYet(this)
 		}
 
 		override fun onBind(intent: Intent?): IBinder? = null   // Return null to stop running

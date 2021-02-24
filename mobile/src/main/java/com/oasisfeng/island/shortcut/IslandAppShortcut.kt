@@ -189,7 +189,7 @@ object IslandAppShortcut {
 			@OwnerUser private fun prepareAndLaunch(context: Context, pkg: String, intent: Intent? = null, profile: UserHandle = Users.current()) {
 				val app = LauncherAppsCompat(context).getApplicationInfoNoThrows(pkg, MATCH_UNINSTALLED_PACKAGES, profile)
 						?: return Toast.makeText(context, R.string.toast_app_launch_failure, LENGTH_LONG).show()
-				Shuttle(context, to = profile).launch(at = GlobalScope, alwaysByActivity = true) {
+				Shuttle(context, to = profile).launch(at = GlobalScope, alwaysByActivity = false) {
 					if (app.hidden) IslandManager.ensureAppFreeToLaunch(this, pkg)
 					launch(this, pkg, intent) }
 			}
