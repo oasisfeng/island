@@ -1,26 +1,25 @@
 package com.oasisfeng.island.util;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.os.Process;
 import android.provider.DocumentsContract;
 
-import com.oasisfeng.island.shared.BuildConfig;
-
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.oasisfeng.island.engine.CrossProfile;
+
+import java.util.List;
+
 import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.CATEGORY_LAUNCHER;
-import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
 
 /**
  * Utility class to get module ID of common modules in Island.
@@ -62,17 +61,17 @@ public class Modules {
 	}
 
 	public static @NonNull ComponentName getMainLaunchActivity(final Context context) {
-		final Intent intent = new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER).setPackage(context.getPackageName());
-		final ComponentName launcher_activity = resolveActivity(context, intent);
-		if (launcher_activity != null) return launcher_activity;
-		if (BuildConfig.DEBUG) throw new IllegalStateException("UI module not installed");
-		return new ComponentName(MODULE_ENGINE, "com.oasisfeng.island.MainActivity");		// Hard-coded activity name as fallback.
+		final Intent intent = new Intent(ACTION_MAIN).addCategory(CrossProfile.CATEGORY_PARENT_PROFILE);
+		final int uid = Process.myUid();
+		for (final ResolveInfo resolve : queryActivities(context, intent)) {
+			final ActivityInfo activity = resolve.activityInfo;
+			if (activity.applicationInfo.uid == uid) return new ComponentName(activity.packageName, activity.name);
+		}
+		throw new IllegalStateException("UI module not installed");
 	}
 
-	private static ComponentName resolveActivity(final Context context, final Intent intent) {
-		@SuppressLint("WrongConstant") final ResolveInfo resolved = context.getPackageManager().resolveActivity(intent,
-				MATCH_DEFAULT_ONLY | GET_DISABLED_COMPONENTS | Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED);
-		return resolved == null ? null : new ComponentName(resolved.activityInfo.packageName, resolved.activityInfo.name);
+	private static List<ResolveInfo> queryActivities(final Context context, final Intent intent) {
+		return context.getPackageManager().queryIntentActivities(intent, MATCH_DISABLED_COMPONENTS | MATCH_DEFAULT_ONLY);
 	}
 
 	private static ComponentName sFileProviderComponent;

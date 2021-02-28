@@ -100,7 +100,7 @@ public class AppInfoForwarderActivity extends CallerAwareActivity {
 
 		final List<Intent> initial_intents = new ArrayList<>();
 		if (app_detail != null && ! caller_is_settings) {
-			if (user != null && Users.isProfileManagedByIsland(user)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
+			if (user != null && ! Users.isOwner(user) && Users.isProfileManagedByIsland(user)) {	// Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
 				final ActivityInfo activity = app_detail_resolve.activityInfo;
 				final int labelRes = activity.labelRes != 0 ? activity.labelRes : activity.applicationInfo.labelRes;
 				app_detail = new LabeledIntent(app_detail, activity.packageName, labelRes, activity.getIconResource());

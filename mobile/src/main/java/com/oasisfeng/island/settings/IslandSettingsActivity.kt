@@ -12,9 +12,10 @@ import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.ACTION_BOOT_COMPLETED
+import android.content.Intent.ACTION_MY_PACKAGE_REPLACED
 import android.content.pm.PackageManager.*
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
@@ -29,11 +30,13 @@ import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.ArraySet
+import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import com.oasisfeng.android.content.pm.enableComponent
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
 import com.oasisfeng.island.Config
@@ -191,6 +194,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     }
 }
 
+/** Only enabled in profile managed by Island, as a sole indicator for owner user to identify. */
 class IslandSettingsActivity: CallerAwareActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -214,13 +218,15 @@ class IslandSettingsActivity: CallerAwareActivity() {
     class Enabler: BroadcastReceiver() {    // One-time enabler for
 
         override fun onReceive(context: Context, intent: Intent) {      // ACTION_LOCKED_BOOT_COMPLETED is unnecessary for activity
-            if (Intent.ACTION_BOOT_COMPLETED == intent.action || Intent.ACTION_MY_PACKAGE_REPLACED == intent.action) context.packageManager.apply {
-                if (Users.isOwner()) return         // Not needed in mainland
-                setComponentEnabledSetting(ComponentName(context, IslandSettingsActivity::class.java), COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP)
-                setComponentEnabledSetting(ComponentName(context, Enabler::class.java), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
-            }
+            if (intent.action != ACTION_BOOT_COMPLETED && intent.action != ACTION_MY_PACKAGE_REPLACED) return
+            if (Users.isOwner()) return     // Should never happen
+            if (! DevicePolicies(context).isProfileOwner) return        // Profile managed by other app
+
+            Log.i(TAG, "Enabling ${IslandSettingsActivity::class.java.simpleName}")
+            context.enableComponent<IslandSettingsActivity>()
         }
     }
 }
 
 private const val INTERACT_ACROSS_PROFILES = "android.permission.INTERACT_ACROSS_PROFILES"
+private const val TAG = "Island.ISA"

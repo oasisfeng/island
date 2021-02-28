@@ -19,7 +19,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
  *
  * Created by Oasis on 2017/4/8.
  */
-public class ManualProvisioningReceiver extends BroadcastReceiver {
+public class ManualProvisioningReceiver extends BroadcastReceiver { // Full class name must start with "com.oasisfeng.island.provision", see MainActivity.onCreateInProfile()
 
 	@Override public void onReceive(final Context context, final Intent intent) {
 		final String action = intent.getAction();

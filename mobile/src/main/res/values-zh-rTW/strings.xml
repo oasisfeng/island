@@ -92,7 +92,7 @@
     <string name="dialog_greenify_version_too_low">綠色守護需要升级到更新的版本</string>
     <string name="dialog_reactivate_message">通往壺中界的入口被意外關閉，請再次授權裝置管理權限以重新開啟。</string>
     <string name="dialog_destroy_message">確定希望毀滅整個壺中界？其中的應用程式分身和所有資料將會完全煙滅，無法恢復。\n\n别擔心，外部的應用程式和資料不會受到任何影響。</string>
-    <string name="dialog_destroy_message_for_managed_user">在當前“界外”的管理狀態下，由於 Android 系统施加的限制，您將無法再建立新的壺中界，除非撤除對“界外”的管理權。\n\n確定仍然希望毀滅此界？</string>
+    <string name="dialog_destroy_message_for_managed_user">如果“界外”也在煉妖壺的管理下，由於 Android 系统施加的限制，您將無法再建立新的壺中界，除非撤除對“界外”的管理權。\n\n確定仍然希望毀滅此界？</string>
     <string name="dialog_rescind_message">確定希望撤除對“界外”的管理權？\n\n將來若希望重新啟用，必须再一次完成必要的流程，意味著如果没有 ROOT 權限，屆時需要摧毀現有的壺中界（如果已建立）並退出裝置上登入的所有帳號。</string>
     <string name="dialog_cannot_destroy_message">如果希望毀滅整个壺中界，請打開系统設定 -（帳戶和）帳號，點選“移除工作資料”。</string>
     <string name="dialog_critical_app_warning">這個應用程式（或服務）可能對於 Android 系统或其它應用程式的正常運作至關重要。如果繼續此操作，部分應用程式甚至整個系统可能因此變得不穩定或無法正常運作。\n\n確認繼續？</string>

@@ -94,7 +94,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_greenify_version_too_low">Greenify needs to be upgraded to a newer version.</string>
     <string name="dialog_reactivate_message">Island was unexpectedly deactivated, please grant the Device Admin permission to re-activate.</string>
     <string name="dialog_destroy_message">Are you sure you want to destroy the whole Island? You will LOSE ALL THE DATA IN ISLAND.\n\nDon\'t worry, apps and data outside Island will NEVER be affected.</string>
-    <string name="dialog_destroy_message_for_managed_user">In the current Mainland setup, you cannot re-create Island space unless the control for Mainland is rescinded.\n\nAre you sure you still want to destroy the Island?</string>
+    <string name="dialog_destroy_message_for_managed_user">If Mainland is also managed by Island, you cannot re-create Island space unless the control for Mainland is rescinded.\n\nAre you sure you still want to destroy the Island?</string>
     <string name="dialog_rescind_message">Are you sure to rescind?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_critical_app_warning">This app (or component) is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>

@@ -177,16 +177,18 @@ public class IslandSetup {
 
 	@ProfileUser public static void requestProfileRemoval(final Activity activity) {
 		if (Users.isOwner()) throw new IllegalStateException("Must be called in managed profile");
-		if (! DevicePolicies.isProfileOwner(activity, Users.current())) {
+		if (! new DevicePolicies(activity).isProfileOwner()) {
 			showPromptForProfileManualRemoval(activity);
 			return;
 		}
-		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setNeutralButton(R.string.action_destroy, (dd, ww) -> {
-			if (! DevicePolicies.isProfileOwner(activity, Users.owner)) destroyProfile(activity);
-			else new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning).setMessage(R.string.dialog_destroy_message_for_managed_user)
-					.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity))
-					.setPositiveButton(android.R.string.no, null).show();
-		}).setMessage(R.string.dialog_destroy_message).setPositiveButton(android.R.string.no, null).show();
+		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
+				.setMessage(R.string.dialog_destroy_message)
+				.setPositiveButton(android.R.string.no, null)
+				.setNeutralButton(R.string.action_destroy, (dd, ww) ->
+						new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
+								.setMessage(R.string.dialog_destroy_message_for_managed_user)
+								.setPositiveButton(android.R.string.no, null)
+								.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity)).show()).show();
 	}
 
 	private static void showPromptForProfileManualRemoval(final Activity activity) {

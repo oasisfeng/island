@@ -52,7 +52,6 @@ import kotlin.coroutines.suspendCoroutine
 		if (Users.isOwner()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
 				COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 		if (SDK_INT < O || ! DevicePolicies(context).isProfileOwner) return
-		if (SDK_INT >= Q && ! DevicePolicies.isProfileOwner(context, Users.owner)) return   // Requirement for Android Q+
 		if (SDK_INT < Q && ! context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()) return
 		if (NotificationIds.IslandWatcher.isBlocked(context)) return
 
@@ -81,7 +80,7 @@ import kotlin.coroutines.suspendCoroutine
 			if (SDK_INT >= Q) {
 				if (Users.isOwner()) {
 					intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)?.also { profile ->
-						GlobalScope.launch { requestQuietModeWithDummyHome(this@IslandDeactivationService, profile) }
+						GlobalScope.launch { requestQuietModeApi29(this@IslandDeactivationService, profile) }
 						return START_STICKY }   // Still ongoing
 				} else Shuttle(this, Users.owner).launch(at = GlobalScope, with = Users.current()) {
 					startService(Intent(this, IslandDeactivationService::class.java).putExtra(Intent.EXTRA_USER, it)) }
@@ -90,17 +89,18 @@ import kotlin.coroutines.suspendCoroutine
 			return START_NOT_STICKY
 		}
 
-		@RequiresApi(Q) private suspend fun requestQuietModeWithDummyHome(context: Context, profile: UserHandle) {
-			val dummyHome = ComponentName(context, DummyHomeActivity::class.java); val pm = context.packageManager
+		@OwnerUser @RequiresApi(Q) private suspend fun requestQuietModeApi29(context: Context, profile: UserHandle) {
+			if (! Users.isProfileManagedByIsland()) return startSystemSyncSettings()
 
 			Log.i(TAG, "Preparing to deactivating Island (${profile.toId()})...")
+			val dummyHome = ComponentName(context, DummyHomeActivity::class.java); val pm = context.packageManager
 			pm.setComponentEnabledSetting(dummyHome, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP)
 			for (index in 0 until 10) {
 				Log.i(TAG, "Acquiring default home...")
 				if (! makeDefaultHome(dummyHome)) {     // It may not work for the first few times,
 					delay(500); continue }              //   just try again in a short delay.
 
-				Log.i(TAG, "Deactivating Island...")
+				Log.i(TAG, "Deactivating Island ${profile.toId()}...")
 				val result = waitBroadcast(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE) {
 					requestQuietMode(profile) }
 
@@ -137,12 +137,15 @@ import kotlin.coroutines.suspendCoroutine
 
 			try { getSystemService(UserManager::class.java)!!.requestQuietModeEnabled(true, profile) }
 			catch (e: SecurityException) {   // Fall-back to manual control
-				Log.d(TAG, "Error deactivating Island ${profile.toId()}", e)
-				try {
-					startActivity(Intent(Settings.ACTION_SYNC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-					Toasts.showLong(applicationContext, R.string.toast_manual_quiet_mode) }
-				catch (_: ActivityNotFoundException) { Toasts.showLong(applicationContext, "Sorry, ROM is incompatible.") }
-			} finally { stopForeground(true) }
+				startSystemSyncSettings().also { Log.d(TAG, "Error deactivating Island ${profile.toId()}", e) }}
+			finally { stopForeground(true) }
+		}
+
+		private fun startSystemSyncSettings() {
+			try {
+				startActivity(Intent(Settings.ACTION_SYNC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+				Toasts.showLong(applicationContext, R.string.toast_manual_quiet_mode) }
+			catch (_: ActivityNotFoundException) { Toasts.showLong(applicationContext, "Sorry, ROM is incompatible.") }
 		}
 
 		override fun onBind(intent: Intent): IBinder? = null

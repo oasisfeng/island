@@ -91,7 +91,7 @@
     <string name="dialog_greenify_version_too_low">绿色守护需要升级到更新的版本</string>
     <string name="dialog_reactivate_message">通往壶中界的入口被意外关闭，请再次授予设备管理权限以重新开启。</string>
     <string name="dialog_destroy_message">确定希望毁灭整个壶中界？其中的应用分身和所有数据将会完全湮灭，无法恢复。\n\n别担心，外部的应用和数据不会受到任何影响。</string>
-    <string name="dialog_destroy_message_for_managed_user">在当前“界外”的管理状态下，由于 Android 系统施加的限制，您将无法再创建新的壶中界，除非撤除对“界外”的管理权。\n\n确定仍然希望毁灭此界？</string>
+    <string name="dialog_destroy_message_for_managed_user">如果“界外”也处于炼妖壶的管理，由于 Android 系统施加的限制，您将无法再创建新的壶中界，除非撤除对“界外”的管理权。\n\n确定仍然希望毁灭此界？</string>
     <string name="dialog_rescind_message">确定希望撤除对“界外”的管理权？\n\n将来若希望重新启用，必须再一次完成必要的流程，意味着如果没有 ROOT 权限，届时需要摧毁现有的壶中界（如果已创建）并退出设备上登录的所有账号。</string>
     <string name="dialog_cannot_destroy_message">如果希望毁灭整个壶中界，请打开系统设置 -（用户和）账号，点选“移除工作资料”。</string>
     <string name="dialog_critical_app_warning">这个应用（或组件）可能对于 Android 系统或其它应用的正常运作至关重要。如果继续此操作，部分应用甚至整个系统可能因此变得不稳定或无法正常运作。\n\n确认继续？</string>

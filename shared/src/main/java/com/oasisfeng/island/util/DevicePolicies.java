@@ -49,12 +49,6 @@ public class DevicePolicies {
 		return mDevicePolicyManager.isProfileOwnerApp(Modules.MODULE_ENGINE);
 	}
 
-	public static boolean isProfileOwner(final Context context, final UserHandle profile) {
-		if (SDK_INT >= P) return new DevicePolicies(context, profile).isProfileOwner();
-		final Optional<ComponentName> profile_owner = getProfileOwnerAsUser(context, Users.toId(profile));
-		return profile_owner != null && profile_owner.isPresent() && Modules.MODULE_ENGINE.equals(profile_owner.get().getPackageName());
-	}
-
 	public static @Nullable Optional<ComponentName> getProfileOwnerAsUser(final Context context, final UserHandle profile) {
 		if (SDK_INT >= Q) return null;
 		if (SDK_INT < P) return getProfileOwnerAsUser(context, UserHandles.getIdentifier(profile));

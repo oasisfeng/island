@@ -10,6 +10,8 @@ import com.oasisfeng.island.util.Users
 
 object CrossProfile {
 
+	const val CATEGORY_PARENT_PROFILE = "com.oasisfeng.island.category.PARENT_PROFILE"
+
 	/** The target activity must declare [CATEGORY_PARENT_PROFILE] and [Intent.CATEGORY_DEFAULT] in its intent-filter */
 	@JvmStatic fun decorateIntentForActivityInParentProfile(context: Context, intent: Intent) {
 		require(intent.data == null) { "Intent with data is not supported yet" }
@@ -32,5 +34,3 @@ object CrossProfile {
 	private fun List<ResolveInfo>.findForwarder()
 			= firstOrNull { it.activityInfo.packageName == "android" }//?.activityInfo?.run { ComponentName(packageName, name) }
 }
-
-private const val CATEGORY_PARENT_PROFILE = "com.oasisfeng.island.category.PARENT_PROFILE"

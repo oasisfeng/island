@@ -58,7 +58,7 @@ public class MainActivity extends FragmentActivity {
 			return;
 		}
 
-		if (! DevicePolicies.isProfileOwner(this, profile)) {	// Profile without owner or not managed by us, probably caused by provision interruption before device-admin is activated.
+		if (! Users.isProfileManagedByIsland(profile)) {	// Profile without owner or not managed by us, probably caused by provision interruption before device-admin is activated.
 			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(this, profile);
 			if (owner == null) {
 				Log.w(TAG, "Cannot detect profile owner");
@@ -101,12 +101,14 @@ public class MainActivity extends FragmentActivity {
 			return;
 		}
 		final PackageManager pm = getPackageManager();
-		final List<ResolveInfo> resolve = pm.queryBroadcastReceivers(new Intent(Intent.ACTION_USER_INITIALIZE).setPackage(Modules.MODULE_ENGINE), 0);
-		if (! resolve.isEmpty()) {
+		final List<ResolveInfo> resolves = pm.queryBroadcastReceivers(new Intent(Intent.ACTION_USER_INITIALIZE).setPackage(Modules.MODULE_ENGINE), 0);
+		final Optional<ResolveInfo> resolve = resolves.stream().filter(r ->
+				r.activityInfo.name.startsWith("com.oasisfeng.island.provision")).findFirst();
+		if (resolve.isPresent()) {
 			Log.w(TAG, "Manual provisioning is pending, resume it now.");
 			Analytics.$().event("profile_post_provision_pending").send();
-			final ActivityInfo receiver = resolve.get(0).activityInfo;
-			sendBroadcast(new Intent().setComponent(new ComponentName(receiver.packageName, receiver.name)));
+			final ActivityInfo receiver = resolve.get().activityInfo;
+			sendBroadcast(new Intent().setClassName(receiver.packageName, receiver.name));
 		} else {    // Receiver disabled but launcher entrance is left enabled. The best bet is just disabling the launcher entrance. No provisioning attempt any more.
 			Log.w(TAG, "Manual provisioning is finished, but launcher activity is still left enabled. Disable it now.");
 			Analytics.$().event("profile_post_provision_activity_leftover").send();

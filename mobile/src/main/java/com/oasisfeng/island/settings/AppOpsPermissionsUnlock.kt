@@ -15,14 +15,13 @@ import android.util.Log
 import com.oasisfeng.island.data.helper.hidden
 import com.oasisfeng.island.util.DPM
 import com.oasisfeng.island.util.DevicePolicies
-import com.oasisfeng.island.util.Users
 import kotlin.concurrent.thread
 
 class AppOpsPermissionsUnlock: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent?) {
 		if (intent?.action !in listOf(Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_LOCKED_BOOT_COMPLETED)) return
-		if (SDK_INT < P || ! DevicePolicies.isProfileOwner(context, Users.current())) return disableSelf(context)
+		if (SDK_INT < P || ! DevicePolicies(context).isProfileOwner) return disableSelf(context)
 
 		val async = goAsync()
 		thread(start = true) {
