@@ -4,18 +4,17 @@
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <receiver android:name=".IslandWatcher" android:enabled="@bool/since_api_28">
+        <receiver android:name=".IslandWatcher" android:enabled="@bool/since_api_28" android:directBootAware="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.app.action.NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED" />
                 <action android:name="android.app.action.APP_BLOCK_STATE_CHANGED" />
             </intent-filter>
         </receiver>
-        <service android:name=".IslandWatcher$IslandDeactivationService" />
+        <service android:name=".IslandWatcher$IslandDeactivationService" android:directBootAware="true" />
 
-        <receiver android:name=".IslandAppWatcher"
-                  android:enabled="@bool/since_api_26">
+        <receiver android:name=".IslandAppWatcher" android:enabled="@bool/since_api_26" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
                 <data android:scheme="package" />
@@ -24,12 +23,14 @@
         <provider android:name=".IslandAppWatcher$AppStateTracker"
                   android:authorities="com.oasisfeng.island.watcher"
                   android:exported="false"
-                  android:enabled="@bool/since_api_26" />
+                  android:enabled="@bool/since_api_26"
+                  android:directBootAware="true" />
 
         <activity android:name=".IslandWatcher$DummyHomeActivity"
                   android:theme="@android:style/Theme.NoDisplay"
                   android:hardwareAccelerated="false"
-                  android:enabled="false">
+                  android:enabled="false"
+                  android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

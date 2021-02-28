@@ -42,11 +42,11 @@ import kotlin.coroutines.suspendCoroutine
  *
  * Created by Oasis on 2019-2-25.
  */
-@ProfileUser class IslandWatcher : BroadcastReceiver() {
+@RequiresApi(P) class IslandWatcher : BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
 		Log.d(TAG, "onReceive: $intent")
-		if (intent.action !in listOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
+		if (SDK_INT < P || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
 						NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED,
 						NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)) return
 		if (Users.isOwner()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
@@ -62,6 +62,8 @@ import kotlin.coroutines.suspendCoroutine
 				.setContentText(context.getText(R.string.notification_island_watcher_text))
 				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_deactivate_island), PendingIntent.getService(context, 0,
 						Intent(context, IslandDeactivationService::class.java), FLAG_UPDATE_CURRENT)).build())
+				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_restart_island), PendingIntent.getService(context, 0,
+						Intent(context, IslandDeactivationService::class.java).setAction(Intent.ACTION_REBOOT), FLAG_UPDATE_CURRENT)).build())
 				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
 						NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
 	}
@@ -77,7 +79,9 @@ import kotlin.coroutines.suspendCoroutine
 	@RequiresApi(P) class IslandDeactivationService : Service() {
 
 		override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-			if (SDK_INT >= Q) {
+			if (intent?.action == Intent.ACTION_REBOOT) {
+				DevicePolicies(this).manager.lockNow(DevicePolicyManager.FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY) }
+			else if (SDK_INT >= Q) {
 				if (Users.isOwner()) {
 					intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)?.also { profile ->
 						GlobalScope.launch { requestQuietModeApi29(this@IslandDeactivationService, profile) }

@@ -4,6 +4,7 @@
     <string name="notification_app_watcher_title">%s 已解冻</string>
     <string name="notification_app_watcher_text">点击将其冻结</string>
     <string name="action_deactivate_island">封印</string>
+    <string name="action_restart_island">重启</string>
     <string name="action_settings">设置</string>
     <string name="action_dismiss">忽略</string>
 
