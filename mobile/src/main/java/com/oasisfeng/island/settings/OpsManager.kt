@@ -91,7 +91,7 @@ import kotlinx.coroutines.withContext
 		val pkg: String = info.packageName
 		val mRevoked = mOpsRevokedPkgs.contains(pkg)
 
-		internal val mSystem = Apps.isSystem(info)
+		val mSystem = Apps.isSystem(info)
 	}
 
 	private val mAppsHelper = Apps.of(activity)

@@ -32,7 +32,7 @@ import static java.util.Objects.requireNonNull;
  *
  * Created by Oasis on 2016/9/25.
  */
-public abstract class Users extends PseudoContentProvider {
+public class Users extends PseudoContentProvider {
 
 	public static @Nullable UserHandle profile;		// The first profile managed by Island (semi-immutable, until profile is created or destroyed)
 	public static UserHandle owner;     // TODO: Rename to "parent"
@@ -46,9 +46,11 @@ public abstract class Users extends PseudoContentProvider {
 	public static int currentId() { return CURRENT_ID; }
 
 	@Override public boolean onCreate() {
+		Log.v(TAG, "onCreate()");
 		final int priority = IntentFilter.SYSTEM_HIGH_PRIORITY - 1;
-		context().registerReceiver(mProfileChangeObserver, IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED,        // ACTION_MANAGED_PROFILE_ADDED is sent by DevicePolicyManagerService.setProfileEnabled()
-				Intent.ACTION_MANAGED_PROFILE_REMOVED, DevicePolicyManager.ACTION_PROFILE_OWNER_CHANGED).inPriority(priority)); // ACTION_PROFILE_OWNER_CHANGED is sent after "dpm set-profile-owner ..."
+		@SuppressLint("InlinedApi") final String ACTION_PROFILE_OWNER_CHANGED = DevicePolicyManager.ACTION_PROFILE_OWNER_CHANGED;
+		context().registerReceiver(mProfileChangeObserver, IntentFilters.forActions(Intent.ACTION_MANAGED_PROFILE_ADDED,// ACTION_MANAGED_PROFILE_ADDED is sent by DevicePolicyManagerService.setProfileEnabled()
+				Intent.ACTION_MANAGED_PROFILE_REMOVED, ACTION_PROFILE_OWNER_CHANGED).inPriority(priority));             // ACTION_PROFILE_OWNER_CHANGED is sent after "dpm set-profile-owner ..."
 		refreshUsers(context());
 		return true;
 	}

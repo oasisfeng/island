@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 29        // Not raised to 28 due to NotificationManagerExtender
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion this.minSdkVersion

@@ -85,10 +85,10 @@ import kotlin.coroutines.suspendCoroutine
 				if (Users.isOwner()) {
 					intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)?.also { profile ->
 						GlobalScope.launch { requestQuietModeApi29(this@IslandDeactivationService, profile) }
-						return START_STICKY }   // Still ongoing
-				} else Shuttle(this, Users.owner).launch(at = GlobalScope, with = Users.current()) {
-					startService(Intent(this, IslandDeactivationService::class.java).putExtra(Intent.EXTRA_USER, it)) }
-			} else requestQuietMode(Users.current())
+						return START_STICKY }}   // Still ongoing
+				else Shuttle(this, to = Users.owner).launch(with = Users.current()) {
+					startService(Intent(this, IslandDeactivationService::class.java).putExtra(Intent.EXTRA_USER, it)) }}
+			else requestQuietMode(Users.current())
 			stopSelf()
 			return START_NOT_STICKY
 		}
@@ -111,8 +111,7 @@ import kotlin.coroutines.suspendCoroutine
 				pm.setComponentEnabledSetting(dummyHome, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 				val user = result.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)
 				Log.i(TAG, "Island is deactivated: ${user?.toId()}")
-				return Toasts.showShort(context, "Island is deactivated.")
-			}
+				return Toasts.showShort(context, "Island is deactivated.") }
 		}
 
 		private fun makeDefaultHome(home: ComponentName): Boolean {

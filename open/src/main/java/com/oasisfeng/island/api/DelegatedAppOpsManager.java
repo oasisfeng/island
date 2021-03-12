@@ -89,7 +89,7 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 			Log.i(TAG, "IAppOpsService.setMode(" + op + ", " + uid + ", " + pkg + ", " + mode + ")");
 
 			final @UserIdInt int user_id = UserHandles.getUserId(uid);
-			if (user_id == UserHandles.getIdentifier(Users.current())) {
+			if (user_id == Users.currentId()) {
 				new AppOpsHelper(mContext).setMode(pkg, op, mode, uid);
 				return true;
 			}

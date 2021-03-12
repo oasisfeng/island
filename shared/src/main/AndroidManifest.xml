@@ -12,9 +12,9 @@
         <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
 
         <!-- Users -->
-        <provider android:name="com.oasisfeng.island.InternalContentProviders$_1"
+        <provider android:name="com.oasisfeng.island.util.Users"
                   android:initOrder="1000"
-                  android:authorities="${applicationId}.internal.1"
+                  android:authorities="${applicationId}.users"
                   android:directBootAware="true"
                   android:exported="false" />
 

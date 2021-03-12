@@ -106,7 +106,7 @@
         <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" android:exported="false"
                  android:directBootAware="true">
             <intent-filter>
-                <action android:name="android.app.action.PROVISION_MANAGED_PROFILE" />
+                <action android:name="android.app.action.PROVISION_MANAGED_PROFILE" /> <!-- For re-provisioning procedure, see IslandSettingsFragment -->
                 <action android:name="android.app.action.PROVISION_MANAGED_DEVICE" />
             </intent-filter>
         </service>
@@ -136,7 +136,8 @@
             </intent-filter>
         </receiver>
 
-        <provider android:name="com.oasisfeng.island.provisioning.AutoIncrementalProvision" android:authorities="${applicationId}.AIP" android:exported="false"/>
+        <provider android:name="com.oasisfeng.island.provisioning.AutoIncrementalProvision"
+            android:authorities="${applicationId}.AIP" android:exported="false" android:initOrder="999" />
 
         <receiver android:name="com.oasisfeng.island.AppUpdateReceiver" android:exported="false" android:directBootAware="true">
             <intent-filter>

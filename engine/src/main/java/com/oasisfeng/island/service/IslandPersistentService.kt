@@ -68,15 +68,17 @@ import com.oasisfeng.island.util.toId
             if (try { pm.getApplicationInfo(pkg, 0).enabled } catch (e: PackageManager.NameNotFoundException) { false })
                 bindPersistentServices(pkg)
             else unbindPersistentServices(pkg)
-        } else components.forEach {
-            val info = try { pm.getServiceInfo(ComponentName(pkg, it), MATCH_DISABLED_COMPONENTS or MATCH_UNINSTALLED_PACKAGES) }
+        } else components.forEach { className ->
+            val component = ComponentName(pkg, className)
+            val info = try { pm.getServiceInfo(component, MATCH_DISABLED_COMPONENTS or MATCH_UNINSTALLED_PACKAGES) }
             catch (e: PackageManager.NameNotFoundException) { return@forEach }  // Non-service component
-            if (info.isEnabled && ! info.applicationInfo.hidden) bindPersistentService(info)
+            if (info.isEnabled && ! info.applicationInfo.hidden) {
+                if (mConnections.none { it.mComponent == component }) bindPersistentService(info) }
             else unbindPersistentService(info.getComponentName()) }
     }}
 
     private fun unbindPersistentService(component: ComponentName) {
-        mConnections.removeIf { if (it.mComponent == component) { unbindService(it); true } else false }
+        mConnections.removeIf { (it.mComponent == component).also { matched -> if (matched) { unbindService(it) }}}
     }
 
     private fun unbindPersistentServices(pkg: String) {

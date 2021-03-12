@@ -1,6 +1,9 @@
 package com.oasisfeng.settings
 
-import android.content.*
+import android.content.ComponentName
+import android.content.ContentProvider
+import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.database.MatrixCursor
@@ -76,7 +79,7 @@ class AppSettingsProvider : ContentProvider() {
 	override fun insert(uri: Uri, values: ContentValues?): Uri? = null
 	override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?) = 0
 
-	private val mSharedPrefs by lazy @Suppress("DEPRECATION") {
+	private val mSharedPrefs by lazy { @Suppress("DEPRECATION")
 		android.preference.PreferenceManager.getDefaultSharedPreferences(context()) }
 }
 

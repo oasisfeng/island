@@ -15,7 +15,8 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 /**
  * Receiver for starting post-provisioning procedure for manual provisioning.
- * The enabled state of this receiver also serves as an indication of pending manual provisioning.
+ *
+ * The enabled state of this receiver in managed profile also serves as an indication of pending manual provisioning.
  *
  * Created by Oasis on 2017/4/8.
  */

@@ -44,12 +44,12 @@ public class Modules {
 		final String my_pkg = context.getPackageName();
 		final Intent intent = new Intent(DocumentsContract.PROVIDER_INTERFACE).setPackage(my_pkg);		// First query in current package
 		final PackageManager pm = context.getPackageManager();
-		List<ResolveInfo> resolves = pm.queryIntentContentProviders(intent, GET_DISABLED_COMPONENTS);
-		if (resolves != null && ! resolves.isEmpty()) {
+		List<ResolveInfo> resolves = pm.queryIntentContentProviders(intent, MATCH_DISABLED_COMPONENTS);
+		if (! resolves.isEmpty()) {
 			if (resolves.size() > 1) throw new IllegalStateException("More than 1 file provider: " + resolves);
 			return sFileProviderComponent = new ComponentName(my_pkg, resolves.get(0).providerInfo.name);
 		}
-		resolves = pm.queryIntentContentProviders(intent.setPackage(null), GET_DISABLED_COMPONENTS);	// Query in UID-shared packages
+		resolves = pm.queryIntentContentProviders(intent.setPackage(null), MATCH_DISABLED_COMPONENTS);	// Query in UID-shared packages
 		final int my_uid = Process.myUid();
 		for (final ResolveInfo resolve : resolves) {
 			final ProviderInfo provider = resolve.providerInfo;

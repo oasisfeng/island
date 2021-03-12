@@ -121,7 +121,7 @@
     <string name="toast_error_freezing_active_admin">无法冻结已激活设备管理器的应用</string>
     <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
     <string name="toast_app_launch_error">抱歉，启动应用时出现了异常。</string>
-    <string name="toast_app_launch_failure">未能启动“%s”</string>
+    <string name="toast_app_launch_failure">未能启动 %s</string>
     <string name="prompt_invalid_shortcut">快捷方式已失效，请重新创建</string>
     <string name="prompt_operation_failure_due_to_incompatibility">操作失败\n(可能由于 ROM 兼容性)</string>
 

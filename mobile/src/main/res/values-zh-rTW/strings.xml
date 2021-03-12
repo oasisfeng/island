@@ -122,7 +122,7 @@
     <string name="toast_error_freezing_active_admin">無法凍結已啟用裝置管理器的應用程式</string>
     <string name="toast_external_storage_permission_required">文件傳送門需要“儲存”權限以打通檔案瀏覽。</string>
     <string name="toast_app_launch_error">抱歉，啟動應用程式時出現了異常。</string>
-    <string name="toast_app_launch_failure">未能啟動“%s”</string>
+    <string name="toast_app_launch_failure">未能啟動 %s</string>
     <string name="prompt_invalid_shortcut">快速啟動方式已失效，請重新建立</string>
     <string name="prompt_operation_failure_due_to_incompatibility">操作失敗\n(可能由於 ROM 兼容性)</string>
 

@@ -22,7 +22,8 @@ object IslandNameManager {
 	}
 
 	fun getDefaultName(context: Context, profile: UserHandle = Users.current()) =
-		if (Users.getProfilesManagedByIsland().size > 1) getDefaultSpecificName(context, profile) else context.getString(R.string.default_island_name)
+		if (Users.getProfilesManagedByIsland().size > 1) getDefaultSpecificName(context, profile)
+		else context.getString(if (Users.isOwner(profile)) R.string.tab_mainland else R.string.default_island_name)
 
 	private fun getDefaultSpecificName(context: Context, profile: UserHandle = Users.current()) = when (val profileId = profile.toId()) {
 		0    -> context.getString(R.string.tab_mainland)

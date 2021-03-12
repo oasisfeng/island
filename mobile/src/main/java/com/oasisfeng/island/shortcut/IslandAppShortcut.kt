@@ -33,6 +33,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
 import com.oasisfeng.android.os.UserHandles
+import com.oasisfeng.android.util.Apps
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.data.helper.hidden
@@ -188,7 +189,7 @@ object IslandAppShortcut {
 
 			@OwnerUser private fun prepareAndLaunch(context: Context, pkg: String, intent: Intent? = null, profile: UserHandle = Users.current()) {
 				val app = LauncherAppsCompat(context).getApplicationInfoNoThrows(pkg, MATCH_UNINSTALLED_PACKAGES, profile)
-						?: return Toast.makeText(context, R.string.toast_app_launch_failure, LENGTH_LONG).show()
+						?: return Toast.makeText(context, context.getString(R.string.toast_app_launch_failure, Apps.of(context).getAppName(pkg)), LENGTH_LONG).show()
 				Shuttle(context, to = profile).launch(at = GlobalScope, alwaysByActivity = false) {
 					if (app.hidden) IslandManager.ensureAppFreeToLaunch(this, pkg)
 					launch(this, pkg, intent) }

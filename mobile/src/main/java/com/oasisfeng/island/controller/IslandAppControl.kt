@@ -12,6 +12,7 @@ import android.widget.Toast
 import com.oasisfeng.android.app.Activities
 import com.oasisfeng.android.content.IntentCompat
 import com.oasisfeng.android.ui.Dialogs
+import com.oasisfeng.android.util.Apps
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY
@@ -68,7 +69,7 @@ object IslandAppControl {
 			return analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, failure).send() }
 
 		if (! IslandManager.launchApp(context, pkg, app.user)) {
-			Toast.makeText(context, R.string.toast_app_launch_failure, Toast.LENGTH_LONG).show()
+			Toast.makeText(context, context.getString(R.string.toast_app_launch_failure, Apps.of(context).getAppName(pkg)), Toast.LENGTH_LONG).show()
 			analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, "launcher_activity_not_found").send() }
 	}
 
