@@ -63,12 +63,12 @@ import com.oasisfeng.island.util.Users
 		users.add(Users.owner)
 		users.addAll(Users.getProfilesManagedByIsland())
 		if (users.size <= 1)        // Managed mainland without Island
-			return switchToHeader(header)
+			return super.onHeaderClick(header, position)
 
 		val names = getAllNames(this)
 		val labels = users.map { user -> if (Users.isOwner(user)) getText(R.string.tab_mainland) else names[user] }.toTypedArray()
 		Dialogs.buildList(this, null, labels) { _, which ->
-			if (which == 0) switchToHeader(header)
+			if (which == 0) super.onHeaderClick(header, position)
 			else launchSettingsActivityAsUser(users[which])
 		}.show()
 	}
