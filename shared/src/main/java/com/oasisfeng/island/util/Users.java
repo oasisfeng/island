@@ -101,7 +101,10 @@ public class Users extends PseudoContentProvider {
 
 	public static boolean isProfileManagedByIsland() { return sCurrentProfileManagedByIsland; }
 	@OwnerUser public static boolean isProfileManagedByIsland(final UserHandle user) {
-		if (isOwner(user)) throw new IllegalArgumentException("Not working for profile parent user");
+		if (isOwner(user)) {
+			if (isOwner()) return sCurrentProfileManagedByIsland;
+			throw new IllegalArgumentException("Not working for profile parent user");
+		}
 		return sProfilesManagedByIsland.contains(user);
 	}
 	public static List<UserHandle> getProfilesManagedByIsland() { return sProfilesManagedByIsland/* already unmodifiable */; }
