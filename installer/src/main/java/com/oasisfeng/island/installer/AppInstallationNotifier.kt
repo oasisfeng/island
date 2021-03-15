@@ -78,9 +78,9 @@ internal object AppInstallationNotifier {
 			setOnlyAlertOnce(true).setContentText(makeProcedureText(context, install, completed = false)) } // No alert as abort is usually caused by user refusal.
 	}
 
-	fun onInstallFail(context: Context, sessionId: Int, install: AppInstallInfo) {
-		showNotification(context, sessionId, context.getText(R.string.dialog_install_failure_title)) {
-			setContentText(makeProcedureText(context, install, completed = false)) }    // TODO: Add action for fallback
+	fun onInstallFail(context: Context, sessionId: Int, install: AppInstallInfo, message: String) {
+		showNotification(context, sessionId, context.getString(R.string.dialog_install_failure_title, install.appLabel)) {
+			setContentText(message).style = BigTextStyle().bigText(message) }   // TODO: Add action for fallback
 	}
 
 	@JvmStatic fun cancel(context: Context, sessionId: Int) = NotificationIds.AppInstallation.cancel(context, sessionId.toString())

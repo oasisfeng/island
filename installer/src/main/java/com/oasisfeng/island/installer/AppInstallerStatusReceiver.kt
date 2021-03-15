@@ -48,7 +48,7 @@ class AppInstallerStatusReceiver: BroadcastReceiver() {
 				if (isMiui()) if (status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE && legacyStatus == INSTALL_FAILED_USER_RESTRICTED
 						|| status == PackageInstaller.STATUS_FAILURE && message == "INSTALL_FAILED_INTERNAL_ERROR: Permission Denied")
 							message += "\n\n${context.getString(R.string.prompt_miui_optimization)}".trimIndent()
-				AppInstallationNotifier.onInstallFail(context, sessionId, install)
+				AppInstallationNotifier.onInstallFail(context, sessionId, install, message)
 			}
 		}
 	}

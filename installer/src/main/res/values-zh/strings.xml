@@ -9,7 +9,7 @@
     <string name="description_for_cloning_app">“%1$s” (%2$s)</string>
     <string name="label_unknown_app">应用</string>
     <string name="dialog_install_checkbox_always_allow">始终允许此来源安装应用</string>
-    <string name="dialog_install_failure_title">应用安装失败</string>
+    <string name="dialog_install_failure_title">安装失败：%s</string>
     <string name="dialog_install_unknown_failure_message">Android 系统的应用安装过程发生了内部错误</string>
     <string name="prompt_install_aborted">应用安装中止</string>
     <string name="progress_dialog_installing">“%1$s”正在安装 %2$s</string>

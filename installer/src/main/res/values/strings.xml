@@ -9,7 +9,7 @@
     <string name="description_for_cloning_app">\"%1$s\" (%2$s)</string>
     <string name="label_unknown_app">an app</string>
     <string name="dialog_install_checkbox_always_allow">Always allow app installation from this source.</string>
-    <string name="dialog_install_failure_title">App installation failed</string>
+    <string name="dialog_install_failure_title">Failed to install: %s</string>
     <string name="dialog_install_unknown_failure_message">Internal error occurred during the installation performed by Android system</string>
     <string name="prompt_install_aborted">App installation aborted</string>
     <string name="progress_dialog_installing">\"%1$s\" is installing %2$s</string>
