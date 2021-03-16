@@ -26,6 +26,7 @@ import com.oasisfeng.island.Config
 import com.oasisfeng.island.analytics.Analytics
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.data.IslandAppInfo
+import com.oasisfeng.island.data.IslandAppListProvider
 import com.oasisfeng.island.data.helper.installed
 import com.oasisfeng.island.data.helper.isSystem
 import com.oasisfeng.island.engine.IslandManager
@@ -80,7 +81,10 @@ object IslandAppClones {
 		Log.i(TAG, "Result of cloning $pkg to $target: $result")
 
 		when (result) {
-			CLONE_RESULT_OK_INSTALL ->          analytics().event("clone_install").with(Analytics.Param.ITEM_ID, pkg).send()
+			CLONE_RESULT_OK_INSTALL -> {
+				IslandAppListProvider.getInstance(context).addPlaceholder(pkg, target)      // As visual feedback, since installation may take some time.
+				analytics().event("clone_install").with(Analytics.Param.ITEM_ID, pkg).send() }
+
 			CLONE_RESULT_OK_INSTALL_EXISTING -> analytics().event("clone_install_existing").with(Analytics.Param.ITEM_ID, pkg).send()
 			CLONE_RESULT_OK_GOOGLE_PLAY ->      analytics().event("clone_via_play").with(Analytics.Param.ITEM_ID, pkg).send()
 			CLONE_RESULT_ALREADY_CLONED ->      Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show()

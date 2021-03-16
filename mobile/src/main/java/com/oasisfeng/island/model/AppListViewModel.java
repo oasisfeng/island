@@ -88,7 +88,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	public interface Filter extends Predicate<IslandAppInfo> {
-		Filter Island = app -> app.shouldShowAsEnabled() && app.isInstalled();
+		Filter Island = app -> app.shouldShowAsEnabled() && (app.isInstalled() || app.isPlaceHolder());
 		Filter Mainland = app -> Users.isOwner(app.user) && (app.isSystem() || app.isInstalled());	// Including uninstalled system app
 	}
 
@@ -220,17 +220,19 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		Analytics.$().trace("app", app.packageName).trace("user", Users.toId(app.user)).trace("hidden", app.isHidden())
 				.trace("system", app.isSystem()).trace("critical", app.isCritical());
 		final boolean exclusive = mAppListProvider.isExclusive(app);
-		final boolean system = app.isSystem(), installed = app.isInstalled(), in_owner = Users.isOwner(app.user),
-				is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
+		final boolean system = app.isSystem(), installed = app.isInstalled(), placeholder = app.isPlaceHolder(),
+				in_owner = Users.isOwner(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
+		menu.findItem(R.id.menu_clone).setVisible(! placeholder);
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
-		menu.findItem(R.id.menu_reinstall).setVisible(! installed);
+		menu.findItem(R.id.menu_reinstall).setVisible(! installed && ! placeholder);
+		menu.findItem(R.id.menu_app_settings).setVisible(! placeholder);
 		menu.findItem(R.id.menu_remove).setVisible(installed && (exclusive ? system : (! system || app.shouldShowAsEnabled())));	// Disabled system app is treated as "removed".
 		menu.findItem(R.id.menu_uninstall).setVisible(installed && exclusive && ! system);	// "Uninstall" for exclusive user app, "Remove" for exclusive system app.
 		menu.findItem(R.id.menu_shortcut).setVisible(installed && is_managed && app.isLaunchable() && app.enabled);
 		menu.findItem(R.id.menu_greenify).setVisible(installed && is_managed && app.enabled);
 
-		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_suspend).setVisible(true).setTitle(app.isSuspended() ? "Unsuspend" : "Suspend");
+		if (BuildConfig.DEBUG) menu.findItem(R.id.menu_suspend).setVisible(! placeholder).setTitle(app.isSuspended() ? "Unsuspend" : "Suspend");
 	}
 
 	public void onPackagesUpdate(final Collection<IslandAppInfo> apps, final Menu menu) {

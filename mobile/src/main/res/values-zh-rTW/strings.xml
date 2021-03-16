@@ -17,6 +17,7 @@
     <string name="status_frozen">凍結</string>
     <string name="status_disabled">停用</string>
     <string name="status_uninstalled">未安裝</string>
+    <string name="status_pending">待完成</string>
     <string name="status_appendix_system">系统</string>
     <string name="status_appendix_critical">關鍵</string>
     <string name="status_appendix_cloned">有分身</string>

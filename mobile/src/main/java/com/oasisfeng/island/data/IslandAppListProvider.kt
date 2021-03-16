@@ -35,6 +35,25 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 		return if (Users.isOwner(profile)) super.get(pkg) else loadAppsInProfileIfNotYet(profile)[pkg]
 	}
 
+	fun addPlaceholder(pkg: String, profile: UserHandle) {
+		if (get(pkg, profile) != null) return
+		val info = getApplicationInfoIncludingUninstalled(pkg, profile) ?: return
+
+		Log.i(TAG, "Add placeholder for $pkg in profile ${profile.toId()}")
+		val app = IslandAppInfo(this, profile, info, null)
+		mIslandAppMap[profile]!![pkg] = app
+		notifyUpdate(setOf(app))
+	}
+
+	fun removePlaceholder(pkg: String, profile: UserHandle) {
+		val appsInProfile = mIslandAppMap[profile] ?: return
+		val app = appsInProfile[pkg] ?: return
+		if (! app.isPlaceHolder) return
+		Log.i(TAG, "Remove placeholder for $pkg in profile ${profile.toId()}")
+		appsInProfile.remove(pkg)
+		notifyUpdate(setOf(app))
+	}
+
 	fun isInstalled(pkg: String, profile: UserHandle) = get(pkg, profile)?.run { installed && shouldShowAsEnabled() } == true
 
 	fun isExclusive(app: IslandAppInfo): Boolean {
@@ -95,9 +114,11 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	private fun LauncherApps.getAppInfo(pkg: String, flags: Int, user: UserHandle): ApplicationInfo?
 			= LauncherAppsCompat.getApplicationInfoNoThrows(this, pkg, flags, user)
 	private fun getApplicationInfo(pkg: String, profile: UserHandle): ApplicationInfo? {
-		// Use MATCH_UNINSTALLED_PACKAGES to include frozen packages and then exclude non-installed packages with FLAG_INSTALLED.
-		val info = LauncherAppsCompat.getApplicationInfoNoThrows(mLauncherApps, pkg, MATCH_UNINSTALLED_PACKAGES, profile)
-		return info?.takeIf { it.installed }
+		// Use getApplicationInfoIncludingUninstalled() to include frozen packages and then exclude non-installed packages.
+		return getApplicationInfoIncludingUninstalled(pkg, profile)?.takeIf { it.installed }
+	}
+	private fun getApplicationInfoIncludingUninstalled(pkg: String, profile: UserHandle): ApplicationInfo? {
+		return LauncherAppsCompat.getApplicationInfoNoThrows(mLauncherApps, pkg, MATCH_UNINSTALLED_PACKAGES, profile)
 	}
 
 	fun refreshPackage(pkg: String, profile: UserHandle, add: Boolean) {
@@ -108,7 +129,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 			appsInProfile.remove(pkg)?.also { notifyRemoval(setOf(it)) }
 			return }
 		val last = appsInProfile[pkg]
-		val app = IslandAppInfo(this, profile, info, last)
+		val app = IslandAppInfo(this, profile, info, last?.takeIf { it.isPlaceHolder })
 		if (add && app.isHidden) {
 			Log.w(TAG, "Correct the flag for unhidden package: $pkg")
 			app.isHidden = false }

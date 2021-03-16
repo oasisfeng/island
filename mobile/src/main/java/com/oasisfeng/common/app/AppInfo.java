@@ -53,6 +53,7 @@ public class AppInfo extends ApplicationInfo {
 
 	public String getLabel() { return mLabel; }
 
+	public boolean isPlaceHolder() { return ! isSystem() && ! isInstalled(); }
 	public boolean isInstalled() { return (flags & ApplicationInfo.FLAG_INSTALLED) != 0; }
 	public boolean isSystem() { return (flags & ApplicationInfo.FLAG_SYSTEM) != 0; }
 	public boolean isSuspended() { return (flags & ApplicationInfo.FLAG_SUSPENDED) != 0; }

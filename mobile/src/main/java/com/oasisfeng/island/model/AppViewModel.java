@@ -22,6 +22,7 @@ import java.util.Comparator;
 public class AppViewModel extends BaseAppViewModel implements ObservableSortedList.Sortable<AppViewModel> {
 
 	public enum State {
+		Pending(0),     // Being cloned
 		Alive(1),
 		Frozen(2),
 		Disabled(3),	// System app only
@@ -33,16 +34,17 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 	}
 
 	private State checkState() {
-		if (! info().isInstalled()) return State.Uninstalled;
-		if (! info().shouldShowAsEnabled()) return State.Disabled;
-		if (info().isHidden()) return State.Frozen;
+		final IslandAppInfo info = info();
+		if (! info.isInstalled()) return info.isPlaceHolder() ? State.Pending : State.Uninstalled;
+		if (! info.shouldShowAsEnabled()) return State.Disabled;
+		if (info.isHidden()) return State.Frozen;
 		return State.Alive;
 	}
 
 	public CharSequence getStatusText(final Context context) {
 		final IslandAppInfo app = info();
 		final StringBuilder status = new StringBuilder();
-		if (! app.isInstalled()) status.append(context.getString(R.string.status_uninstalled));
+		if (! app.isInstalled()) status.append(context.getString(app.isPlaceHolder() ? R.string.status_pending : R.string.status_uninstalled));
 		else if (! app.enabled) status.append(context.getString(R.string.status_disabled));
 		else if (app.isHidden()) status.append(context.getString(R.string.status_frozen));
 		else status.append(context.getString(R.string.status_alive));

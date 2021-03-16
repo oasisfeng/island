@@ -17,6 +17,7 @@
     <string name="status_frozen">Frozen</string>
     <string name="status_disabled">Disabled</string>
     <string name="status_uninstalled">Not installed</string>
+    <string name="status_pending">Pending</string>
     <string name="status_appendix_system">system</string>
     <string name="status_appendix_critical">critical</string>
     <string name="status_appendix_cloned">cloned</string>
