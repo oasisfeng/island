@@ -65,6 +65,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         val policies = DevicePolicies(activity)
         val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser
 
+        if (SDK_INT !in P..Q) removeAppOpsRelated()     // Both Mainland and Island
+
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
@@ -76,7 +78,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             return }
         else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
 
-        if (SDK_INT <= Q) {     // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
+        if (SDK_INT in P..Q) {  // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
             setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
                     R.string.pref_privacy_read_phone_state_title, SDK_INT <= P)
             setupPreferenceForManagingAppOps(R.string.key_manage_read_sms, READ_SMS, AppOpsCompat.OP_READ_SMS,
@@ -121,6 +123,14 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             setOnPreferenceClickListener { true.also {
                 if (Users.isOwner()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}
+    }
+
+    private fun removeAppOpsRelated() {
+        setup<Preference>(R.string.key_privacy_appops) { remove(this) }
+        setup<Preference>(R.string.key_manage_read_phone_state) { remove(this) }
+        setup<Preference>(R.string.key_manage_read_sms) { remove(this) }
+        setup<Preference>(R.string.key_manage_location) { remove(this) }
+        setup<Preference>(R.string.key_manage_storage) { remove(this) }
     }
 
     private fun setupPreferenceForManagingAppOps(key: Int, permission: String, op: Int, @StringRes prompt: Int, precondition: Boolean = true) {

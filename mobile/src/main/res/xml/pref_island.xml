@@ -13,6 +13,7 @@
             android:selectable="false" />
 
         <com.oasisfeng.android.preference.WallOfTextPreference
+            android:key="@string/key_privacy_appops"
             android:summary="@string/pref_privacy_appops"
             android:selectable="false" />
 
