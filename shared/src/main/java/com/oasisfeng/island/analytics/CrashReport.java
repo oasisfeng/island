@@ -4,8 +4,10 @@ import android.os.Process;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.oasisfeng.android.util.Suppliers;
+import com.oasisfeng.island.IslandApplication;
 
 import java.util.function.Supplier;
 
@@ -24,6 +26,7 @@ public abstract class CrashReport {
 	static void setProperty(final String key, final boolean value) { sSingleton.get().setCustomKey(key, value); }
 
 	private static final Supplier<FirebaseCrashlytics> sSingleton = Suppliers.memoize(() -> {
+		FirebaseApp.initializeApp(IslandApplication.$());
 		final FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
 		crashlytics.setCrashlyticsCollectionEnabled(true/*BuildConfig.CRASHLYTICS_ENABLED*/);
 		crashlytics.setCustomKey("user", Process.myUserHandle().hashCode());			// Attach the current (Android) user ID to crash report.
