@@ -122,16 +122,17 @@
         <activity android:name="com.oasisfeng.island.settings.IslandSettingsActivity"
                   android:directBootAware="true"
                   android:label="@string/label_activity_island_settings"
-                  android:theme="@android:style/Theme.NoDisplay"
+                  android:theme="@style/AppTheme.Settings"
                   android:enabled="false"> <!-- Enabled explicitly by IslandSettingsActivity$Enabler, "directBootAware" to receive PendingIntentShuttle in user-locked state -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="com.oasisfeng.island.category.MANAGED_PROFILE" />
+            </intent-filter>
         </activity>
-
-        <activity-alias android:name="com.oasisfeng.island.settings.IslandSettingsActivityInMainland"
-                        android:targetActivity="com.oasisfeng.island.settings.IslandSettingsActivity" /> <!-- To avoid launcher icon in mainland -->
 
         <receiver android:name="com.oasisfeng.island.settings.AppOpsPermissionsUnlock" android:directBootAware="true">
             <intent-filter>

@@ -24,7 +24,6 @@ import com.oasisfeng.island.engine.ClonedHiddenSystemApps.Companion.setCloned
 import com.oasisfeng.island.engine.IslandManager
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.model.interactive
-import com.oasisfeng.island.model.interactiveFuture
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.OwnerUser
@@ -34,17 +33,17 @@ import org.jetbrains.annotations.NotNull
 
 object IslandAppControl {
 
-	@JvmStatic fun requestRemoval(vm: BaseAndroidViewModel, activity: Activity, app: IslandAppInfo) = vm.interactive(app.context()) {
+	@JvmStatic fun requestRemoval(activity: Activity, app: IslandAppInfo) {
 		analytics().event("action_uninstall").with(ITEM_ID, app.packageName).with(ITEM_CATEGORY, "system").send()
 
-		if (! unfreezeIfNeeded(app)) return@interactive
+		if (! unfreezeIfNeeded(app)) return
 
 		if (app.isSystem) {
 			analytics().event("action_disable_sys_app").with(ITEM_ID, app.packageName).send()
 			if (app.isCritical) Dialogs.buildAlert(activity, R.string.dialog_title_warning, R.string.dialog_critical_app_warning)
-					.withCancelButton().setPositiveButton(R.string.action_continue) { _,_ -> launchSystemAppSettings(vm, app) }.show()
+					.withCancelButton().setPositiveButton(R.string.action_continue) { _,_ -> launchSystemAppSettings(app) }.show()
 			else Dialogs.buildAlert(activity, 0, R.string.prompt_disable_sys_app_as_removal)
-					.withCancelButton().setPositiveButton(R.string.action_continue) { _,_ -> launchSystemAppSettings(vm, app) }.show() }
+					.withCancelButton().setPositiveButton(R.string.action_continue) { _,_ -> launchSystemAppSettings(app) }.show() }
 		else {
 			Activities.startActivity(activity, Intent(Intent.ACTION_UNINSTALL_PACKAGE)
 					.setData(Uri.fromParts("package", app.packageName, null)).putExtra(Intent.EXTRA_USER, app.user))
@@ -52,15 +51,15 @@ object IslandAppControl {
 				if (! activity.isDestroyed) AppStateTrackingHelper.requestSyncWhenResumed(activity, app.packageName, app.user) }
 	}
 
-	@JvmStatic fun launch(context: Context, vm: BaseAndroidViewModel, app: IslandAppInfo) {
+	@JvmStatic fun launch(context: Context, app: IslandAppInfo) {
 		analytics().event("action_launch").with(ITEM_ID, app.packageName).send()
 
-		if (app.isHidden) vm.interactive(context) { unfreezeAndLaunch(context, app) }
+		if (app.isHidden) unfreezeAndLaunch(context, app)
 		else if (! IslandManager.launchApp(context, app.packageName, app.user))      // Not frozen, launch the app directly. TODO: If isBlocked() ?
 			Toast.makeText(context, context.getString(R.string.toast_app_launch_failure, app.label), Toast.LENGTH_SHORT).show()
 	}
 
-	private suspend fun unfreezeAndLaunch(context: Context, app: IslandAppInfo) {
+	private fun unfreezeAndLaunch(context: Context, app: IslandAppInfo) {
 		val pkg = app.packageName
 		val failure = Shuttle(context, to = app.user).invoke { IslandManager.ensureAppFreeToLaunch(this, pkg) }
 
@@ -73,12 +72,10 @@ object IslandAppControl {
 			analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, "launcher_activity_not_found").send() }
 	}
 
-	private suspend fun launchSystemAppSettings(app: IslandAppInfo) {   // Stock app info activity requires the target app not hidden.
+	@JvmStatic fun launchSystemAppSettings(app: IslandAppInfo) {    // Stock app info activity requires the target app not hidden.
 		if (unfreezeIfNeeded(app))
 			app.context().getSystemService(LauncherApps::class.java)!!.startAppDetailsActivity(ComponentName(app.packageName, ""), app.user, null, null)
 	}
-	@JvmStatic fun launchSystemAppSettings(vm: BaseAndroidViewModel, app: IslandAppInfo)
-			= vm.interactive(app.context()) { launchSystemAppSettings(app) }
 
 	@JvmStatic fun launchExternalAppSettings(vm: BaseAndroidViewModel, app: @NotNull IslandAppInfo) {
 		val context = app.context()
@@ -90,23 +87,20 @@ object IslandAppControl {
 		vm.interactive(context) { if (unfreezeIfNeeded(app)) Activities.startActivity(context, intent) }
 	}
 
-	private suspend fun unfreezeIfNeeded(app: IslandAppInfo): Boolean {
+	private fun unfreezeIfNeeded(app: IslandAppInfo): Boolean {
 		return if (! app.isHidden) true else unfreeze(app)
 	}
 
-	private suspend fun freeze(app: IslandAppInfo): Boolean {
+	@JvmStatic fun freeze(app: IslandAppInfo): Boolean {
 		val frozen = Shuttle(app.context(), to = app.user).invoke(with = app.packageName) {
 			ensureAppHiddenState(this, it, true) }
 		if (frozen && app.isSystem) stopTreatingHiddenSysAppAsDisabled(app)
 		return frozen
 	}
 
-	@JvmStatic fun freeze(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { freeze(app) }
-
-	private suspend fun unfreeze(app: IslandAppInfo) = unfreeze(app.context(), app.user, app.packageName)
-	private suspend fun unfreeze(context: Context, profile: UserHandle, pkg: String)
+	@JvmStatic fun unfreeze(app: IslandAppInfo) = unfreeze(app.context(), app.user, app.packageName)
+	private fun unfreeze(context: Context, profile: UserHandle, pkg: String)
 			= Shuttle(context, to = profile).invoke { ensureAppHiddenState(this, pkg, false) }
-	@JvmStatic fun unfreeze(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) { unfreeze(app) }
 
 	@OwnerUser @ProfileUser private fun ensureAppHiddenState(context: Context, pkg: String, hidden: Boolean): Boolean {
 		val policies = DevicePolicies(context)
@@ -121,17 +115,17 @@ object IslandAppControl {
 		return false
 	}
 
-	@JvmStatic fun setSuspended(vm: BaseAndroidViewModel, app: IslandAppInfo, suspended: Boolean) = vm.interactiveFuture(app.context()) {
-		Shuttle(app.context(), to = app.user).invoke(with = app.packageName) { setPackageSuspended(this, it, suspended) }}
+	@JvmStatic fun setSuspended(app: IslandAppInfo, suspended: Boolean) =
+		Shuttle(app.context(), to = app.user).invoke(with = app.packageName) { setPackageSuspended(this, it, suspended) }
 	private fun setPackageSuspended(context: Context, pkg: String, suspended: Boolean)
 			= setPackagesSuspended(context, arrayOf(pkg), suspended).isEmpty()
 	fun setPackagesSuspended(context: Context, pkgs: Array<String>, suspended: Boolean): Array<String>
 			= DevicePolicies(context).invoke(DevicePolicyManager::setPackagesSuspended, pkgs, suspended)
 
-	@JvmStatic fun unfreezeInitiallyFrozenSystemApp(vm: BaseAndroidViewModel, app: IslandAppInfo) = vm.interactiveFuture(app.context()) {
+	@JvmStatic fun unfreezeInitiallyFrozenSystemApp(app: IslandAppInfo) =
 		Shuttle(app.context(), to = app.user).invoke(with = app.packageName) { IslandManager.ensureAppHiddenState(this, it, false) }.also {
-			if (it) stopTreatingHiddenSysAppAsDisabled(app) }}
+			if (it) stopTreatingHiddenSysAppAsDisabled(app) }
 
-	private suspend fun stopTreatingHiddenSysAppAsDisabled(app: IslandAppInfo)
+	private fun stopTreatingHiddenSysAppAsDisabled(app: IslandAppInfo)
 			= Shuttle(app.context(), to = app.user).invoke(with = app.packageName, function = ::setCloned)
 }

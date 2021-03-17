@@ -46,7 +46,6 @@ import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
-import com.oasisfeng.island.shuttle.PendingIntentShuttle
 import com.oasisfeng.island.util.*
 
 /**
@@ -199,20 +198,9 @@ class IslandSettingsActivity: CallerAwareActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (intent.action != null && PendingIntentShuttle.collect(this)) return finish()    // Allow explicit launch intent without action
-        setTheme(R.style.AppTheme_Settings)
-        actionBar?.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME)
+        if (callingPackage != packageName) actionBar?.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME)
+        else actionBar?.setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP, ActionBar.DISPLAY_HOME_AS_UP)
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        setVisible(true)    // Required due to "Theme.NoDisplay" being used for PendingIntentShuttle.
-    }
-
-    override fun finish() {
-        super.finish()
-        if (intent.flags and Intent.FLAG_ACTIVITY_NO_ANIMATION != 0) overridePendingTransition(0, 0)
     }
 
     class Enabler: BroadcastReceiver() {    // One-time enabler for

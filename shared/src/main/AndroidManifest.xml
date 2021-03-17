@@ -18,15 +18,10 @@
                   android:directBootAware="true"
                   android:exported="false" />
 
-        <receiver android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle" android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
-
-        <activity android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$ReceiverActivity"
-                  android:theme="@android:style/Theme.NoDisplay" android:directBootAware="true" android:exported="false">
+        <activity android:name="com.oasisfeng.island.shuttle.ShuttleCarrierActivity"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:directBootAware="true"
+                  android:exported="false">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.SHUTTLE" />
                 <category android:name="com.oasisfeng.island.category.PARENT_PROFILE" />
@@ -34,11 +29,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.oasisfeng.island.shuttle.PendingIntentShuttle$Initializer" android:exported="false">
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.PersistentService" />
-            </intent-filter>
-        </service>
+        <provider android:authorities="com.oasisfeng.island.shuttle" android:exported="false"
+                  android:name="com.oasisfeng.island.shuttle.ShuttleProvider" android:grantUriPermissions="true"/>
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"

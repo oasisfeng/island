@@ -8,7 +8,6 @@ import android.os.UserHandle
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
-import kotlinx.coroutines.GlobalScope
 
 object IslandNameManager {
 
@@ -35,7 +34,7 @@ object IslandNameManager {
 	}
 
 	@ProfileUser fun syncNameToOwnerUser(context: Context, name: String)    // TODO: syncNameToParentProfile() with proper "parent".
-			= Shuttle(context, to = Users.owner).launch(at = GlobalScope, with = Users.current()) { saveProfileName(this, it, name) }
+			= Shuttle(context, to = Users.owner).launch(with = Users.current()) { saveProfileName(this, it, name) }
 
 	@OwnerUser private fun saveProfileName(context: Context, profile: UserHandle, name: String)
 			= getStore(context).edit().putString(buildIslandNameKey(context, profile.toId()), name).apply()

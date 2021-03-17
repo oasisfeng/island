@@ -23,7 +23,6 @@ import com.oasisfeng.island.shuttle.ActivityShuttle
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.CallerAwareActivity
 import com.oasisfeng.island.util.Users
-import kotlinx.coroutines.GlobalScope
 import java.util.*
 
 /**
@@ -37,7 +36,7 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 		val user: UserHandle? = intent.getParcelableExtra(Intent.EXTRA_USER)
 		if (user != null && Settings.ACTION_APPLICATION_DETAILS_SETTINGS == intent.action) {  // For profiles other than default
 			intent.removeExtra(Intent.EXTRA_USER)
-			Shuttle(this, user).launch(at = GlobalScope, alwaysByActivity = true) {
+			Shuttle(this, user).launch {
 				startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 			return finish() }
 

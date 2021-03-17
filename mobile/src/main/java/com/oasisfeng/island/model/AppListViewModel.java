@@ -257,7 +257,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	public void onItemLaunchIconClick(final Context context, final IslandAppInfo app) {
-		IslandAppControl.launch(context, this, app);
+		IslandAppControl.launch(context, app);
 	}
 
 	public boolean onActionClick(final Context context, final MenuItem item) {
@@ -280,15 +280,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
-			IslandAppControl.unfreeze(this, app).thenAccept(result -> {
-				if (! result) return;
+			if (IslandAppControl.unfreeze(app)) {
 				refreshAppStateAsSysBugWorkaround(context, app);
 				clearSelection();
-			});
+			}
 		} else if (id == R.id.menu_app_settings) {
 			IslandAppControl.launchExternalAppSettings(this, app);
 		} else if (id == R.id.menu_remove || id == R.id.menu_uninstall) {
-			IslandAppControl.requestRemoval(this, requireNonNull(Activities.findActivityFrom(context)), selection.info());
+			IslandAppControl.requestRemoval(requireNonNull(Activities.findActivityFrom(context)), selection.info());
 		} else if (id == R.id.menu_reinstall) {
 			onReinstallRequested(context);
 		} else if (id == R.id.menu_shortcut) {
@@ -296,8 +295,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		} else if (id == R.id.menu_greenify) {
 			onGreenifyRequested(context);
 		} else if (id == R.id.menu_suspend) {
-			IslandAppControl.setSuspended(this, app, ! app.isSuspended()).thenAccept(done ->
-					Toast.makeText(context, done ? "Done" : "Failed", Toast.LENGTH_SHORT).show());
+			final boolean done = IslandAppControl.setSuspended(app, ! app.isSuspended());
+			Toast.makeText(context, done ? "Done" : "Failed", Toast.LENGTH_SHORT).show();
 		}
 		return true;
 	}
@@ -346,27 +345,24 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final String pkg = app.packageName;
 		final IslandAppInfo target = IslandAppListProvider.getInstance(context).get(pkg, profile);
 		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
-			IslandAppControl.unfreezeInitiallyFrozenSystemApp(this, app).thenAccept(unfrozen -> {
-				if (unfrozen) Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
-			});
+			if (IslandAppControl.unfreezeInitiallyFrozenSystemApp(app))
+				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 		} else if (target != null && target.isInstalled() && ! target.enabled) {	// Disabled system app is shown as "removed" (not cloned)
-			IslandAppControl.launchSystemAppSettings(this, target);
+			IslandAppControl.launchSystemAppSettings(target);
 			Toast.makeText(context, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show();
 		} else IslandAppClones.cloneApp(this, app, profile);
 	}
 
 	private void freezeApp(final Context context, final AppViewModel app_vm) {
 		final IslandAppInfo app = app_vm.info();
-		IslandAppControl.freeze(this, app).thenAccept(frozen -> {
-			if (frozen) {
-				// Select the next app for convenient continuous freezing.
-				final int next_index = indexOf(app_vm) + 1;
-				final AppViewModel next;
-				if (next_index < size() && (next = getAppAt(next_index)).state == AppViewModel.State.Alive) setSelection(next);
-				else clearSelection();
-			}
-			refreshAppStateAsSysBugWorkaround(context, app);
-		});
+		if (IslandAppControl.freeze(app)) {
+			// Select the next app for convenient continuous freezing.
+			final int next_index = indexOf(app_vm) + 1;
+			final AppViewModel next;
+			if (next_index < size() && (next = getAppAt(next_index)).state == AppViewModel.State.Alive) setSelection(next);
+			else clearSelection();
+		}
+		refreshAppStateAsSysBugWorkaround(context, app);
 	}
 
 	private void onShortcutRequested(final Context context) {

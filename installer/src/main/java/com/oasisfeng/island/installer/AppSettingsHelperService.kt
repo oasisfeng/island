@@ -16,7 +16,6 @@ import com.oasisfeng.android.util.Apps
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.Users
-import kotlinx.coroutines.GlobalScope
 
 private const val HELPER_NOTIFICATION_TIMEOUT = 10_000L
 
@@ -58,7 +57,7 @@ class AppSettingsHelperService: Service() {
 
 		val uptimeMillis = SystemClock.uptimeMillis()
 		if (intent.action == Intent.ACTION_PACKAGE_RESTARTED) {     // If triggered by system Settings, it will be followed by ACTION_QUERY_PACKAGE_RESTART immediately.
-			return Unit.also { Shuttle(context, to = Users.owner).launch(at = GlobalScope) {
+			return Unit.also { Shuttle(context, to = Users.owner).launch {
 				try { onPackageRestarted(pkg, uid, uptimeMillis) }
 				catch (e: RuntimeException) { analytics().logAndReport(TAG, "Error transferring ACTION_PACKAGE_RESTARTED to parent user", e) }}}}
 

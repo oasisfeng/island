@@ -76,7 +76,7 @@ object IslandAppClones {
 
 		if (SDK_INT >= O && cloneAppViaRoot(context, source, target)) return    // Prefer root routine to avoid overhead (it's instant)
 
-		val result = Shuttle(context, to = target).invoke(alwaysByActivity = true, with = source as ApplicationInfo) {
+ 		val result = Shuttle(context, to = target).invoke(with = source as ApplicationInfo) {
 			performAppCloningInProfile(this, it) }     // Cast to reduce the overhead
 		Log.i(TAG, "Result of cloning $pkg to $target: $result")
 

@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
@@ -65,7 +66,9 @@ import static android.content.Intent.CATEGORY_BROWSABLE;
 import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
@@ -160,13 +163,14 @@ public class IslandProvisioning extends IntentService {
 		// Disable unnecessarily enabled apps
 		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile(context);	// Users.isProfile() does not work before setProfileEnabled().
 
+		setupLauncherActivityInIsland(context);     // Must before setProfileEnabled() is invoked.
+
 		if (! is_manual_setup) {	// Enable the profile here, launcher will show all apps inside.
 			Log.d(TAG, "Enable profile now.");
 			policies.execute(DevicePolicyManager::setProfileEnabled);
 		}
 		Analytics.$().event("profile_post_provision_done").send();
 
-		disableLauncherActivity(context);
 		prefs.edit().putInt(PREF_KEY_PROVISION_STATE, POST_PROVISION_REV).apply();
 
 		if (! launchMainActivityInOwnerUser(context)) {
@@ -224,11 +228,19 @@ public class IslandProvisioning extends IntentService {
 		} catch (final RuntimeException e) { return false; }
 	}
 
-	@ProfileUser private static void disableLauncherActivity(final Context context) {		// To mark the finish of post-provisioning
-		try {
-			context.getPackageManager().setComponentEnabledSetting(Modules.getMainLaunchActivity(context), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-		} catch (final SecurityException e) {
-			// FIXME: No permission to alter another module.
+	@ProfileUser private static void setupLauncherActivityInIsland(final Context context) {
+		setLauncherActivitiesEnabledSetting(context, CrossProfile.CATEGORY_PARENT_PROFILE, false);
+		setLauncherActivitiesEnabledSetting(context, CrossProfile.CATEGORY_MANAGED_PROFILE, true);
+	}
+
+	static void setLauncherActivitiesEnabledSetting(final Context context, final String category, final boolean enabled) {
+		final PackageManager pm = context.getPackageManager();
+		final Intent intent = new Intent(ACTION_MAIN).addCategory(category);
+		for (final ResolveInfo resolve : pm.queryIntentActivities(intent, enabled ? MATCH_DISABLED_COMPONENTS : 0)) {
+			final ActivityInfo activity = resolve.activityInfo;
+			if (activity.applicationInfo.uid != Process.myUid()) continue;
+			pm.setComponentEnabledSetting(new ComponentName(activity.packageName, activity.name),
+					enabled ? COMPONENT_ENABLED_STATE_ENABLED : COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
 		}
 	}
 
@@ -251,7 +263,7 @@ public class IslandProvisioning extends IntentService {
 			if (provision_type == 1) ProfileOwnerManualProvisioning.start(context, policies);	// Simulate the stock managed profile provision
 		}
 		startProfileOwnerPostProvisioning(context, policies);
-		if (! owner) disableLauncherActivity(context);
+		if (! owner) setupLauncherActivityInIsland(context);
 	}
 
 	public static void startDeviceAndProfileOwnerSharedPostProvisioning(final Context context, final DevicePolicies policies) {
@@ -378,8 +390,9 @@ public class IslandProvisioning extends IntentService {
 
 		@Override protected void onCreate(@Nullable final Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			if (Users.isProfileManagedByIsland()) {		// This is true only after DevicePolicyManager.setProfileEnabled().
+			if (! DevicePolicyManager.ACTION_PROVISIONING_SUCCESSFUL.equals(getIntent().getAction())) {
 				Log.w(TAG, getClass().getSimpleName() + " should not be started after provisioning.");
+				finish();
 				return;
 			}
 			Dialogs.buildProgress(this, R.string.notification_provisioning_island_title).indeterminate().nonCancelable().show();

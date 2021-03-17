@@ -45,7 +45,6 @@ import com.oasisfeng.island.util.OwnerUser
 import com.oasisfeng.island.util.ProfileUser
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.toId
-import kotlinx.coroutines.GlobalScope
 import java.net.URISyntaxException
 
 object IslandAppShortcut {
@@ -171,7 +170,7 @@ object IslandAppShortcut {
 			Log.d(TAG, "Package event: $intent")
 			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
 			catch (e: NameNotFoundException) { return }     // Actual package uninstall
-			Shuttle(context, to = Users.owner).launch(at = GlobalScope) { updateIfNeeded(context, info) }
+			Shuttle(context, to = Users.owner).launch { updateIfNeeded(context, info) }
 		}}
 
 		override fun onCreate() {
@@ -190,7 +189,7 @@ object IslandAppShortcut {
 			@OwnerUser private fun prepareAndLaunch(context: Context, pkg: String, intent: Intent? = null, profile: UserHandle = Users.current()) {
 				val app = LauncherAppsCompat(context).getApplicationInfoNoThrows(pkg, MATCH_UNINSTALLED_PACKAGES, profile)
 						?: return Toast.makeText(context, context.getString(R.string.toast_app_launch_failure, Apps.of(context).getAppName(pkg)), LENGTH_LONG).show()
-				Shuttle(context, to = profile).launch(at = GlobalScope, alwaysByActivity = false) {
+				Shuttle(context, to = profile).launch {
 					if (app.hidden) IslandManager.ensureAppFreeToLaunch(this, pkg)
 					launch(this, pkg, intent) }
 			}

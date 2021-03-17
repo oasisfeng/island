@@ -2,8 +2,6 @@ package com.oasisfeng.island.settings
 
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
@@ -23,7 +21,6 @@ import com.oasisfeng.island.MainActivity
 import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.settings.IslandNameManager.getAllNames
-import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Users
@@ -75,13 +72,10 @@ import com.oasisfeng.island.util.Users
 
 	private fun launchSettingsActivityAsUser(profile: UserHandle) {
 		val la = getSystemService<LauncherApps>()!!
-		val activities = la.getActivityList(packageName, profile)
-		if (activities.isEmpty())
-			return Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show()
-		activities.firstOrNull { IslandSettingsActivity::class.java.name != it.componentName.className }?.also {
-			val component = it.componentName
-			Shuttle(this, true, profile).launch {
-				startActivity(Intent().setComponent(component).addFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_NO_ANIMATION)) }}
+		val activities = la.getActivityList(packageName, profile).map { it.componentName }
+		val settingsActivity = activities.firstOrNull { it.className == IslandSettingsActivity::class.java.name}
+				?: return Toast.makeText(this, R.string.prompt_island_not_yet_setup, Toast.LENGTH_LONG).show()
+		la.startMainActivity(settingsActivity, profile, null, null)
 	}
 
 	/** This method stops fragment injection in malicious applications. Make sure to deny any unknown fragments here.  */

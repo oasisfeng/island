@@ -23,11 +23,6 @@ import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import kotlin.Unit;
 
 import static android.content.Context.APP_OPS_SERVICE;
@@ -77,7 +72,7 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 			else return super.doTransact(code, data, reply, flags);
 		}
 
-		@RequiresApi(P) protected boolean setMode(final Parcel data) throws RemoteException {
+		@RequiresApi(P) protected boolean setMode(final Parcel data) {
 			if (SDK_INT < P) throw new SecurityException("Island has no privilege to setMode() before Android P.");
 
 			data.enforceInterface(DESCRIPTOR);
@@ -97,17 +92,9 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 			if (! Users.isProfileManagedByIsland(user))
 				throw new IllegalArgumentException("User " + user_id + " is not managed by Island");
 
-			try {	// Cross-profile synchronized invocation with 2s timeout.
-				final CompletableFuture<Unit> future = new Shuttle(mContext, user).launchAsFuture(context -> {
-					new AppOpsHelper(context).setMode(pkg, op, mode, uid); return Unit.INSTANCE;
-				});
-				if (future != null) future.get(2, TimeUnit.SECONDS);
-			} catch (final ExecutionException e) {
-				final Throwable cause = e.getCause();
-				if (cause instanceof RuntimeException) throw (RuntimeException) cause;
-				if (cause instanceof RemoteException) throw (RemoteException) cause;
-				throw new RemoteException("Failed to setMode() due to " + e.getCause());
-			} catch (final InterruptedException | TimeoutException ignored) {}
+			new Shuttle(mContext, user).launch(context -> {
+				new AppOpsHelper(context).setMode(pkg, op, mode, uid); return Unit.INSTANCE;
+			});
 			return true;
 		}
 
