@@ -25,9 +25,8 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		Pending(0),     // Being cloned
 		Alive(1),
 		Frozen(2),
-		Disabled(3),	// System app only
-		Uninstalled(4),	// System app only
-		Unknown(5);
+		Disabled(3),    // System app only
+		Uninstalled(4); // System app only
 
 		State(final int order) { this.order = order; }
 		final int order;

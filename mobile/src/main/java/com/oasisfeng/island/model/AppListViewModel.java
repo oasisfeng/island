@@ -146,7 +146,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			if (text.startsWith("package:")) {
 				final String pkg = text.substring(8);
 				filters = filters.and(app -> app.packageName.equals(pkg));
-			} else {    // TODO: Support T9 Pinyin
+			} else {
 				final String text_lc = text.toLowerCase();
 				filters = filters.and(app -> app.packageName.toLowerCase().contains(text_lc) || app.getLabel().toLowerCase().contains(text_lc));
 			}

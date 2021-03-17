@@ -94,6 +94,7 @@ object IslandAppClones {
 						.setNeutralButton(R.string.action_learn_more) { _,_ -> WebContent.view(context, Config.URL_FAQ.get()) }
 						.setPositiveButton(android.R.string.cancel, null).show()
 				else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show() }
+
 			CLONE_RESULT_UNKNOWN_SYS_MARKET -> {
 				val info = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).resolveActivityInfo(context.packageManager, 0)
 				if (info != null && info.applicationInfo.isSystem)
@@ -111,7 +112,7 @@ object IslandAppClones {
 				return true
 			}
 		} catch (e: PackageManager.NameNotFoundException) {
-			Log.i(TAG, "Failed to clone app via root: $pkg")
+			Log.i(TAG, "Cannot clone app via root: $pkg")
 			if (result != null && result.isNotEmpty()) analytics().logAndReport(TAG, "Error executing: $cmd",
 					ExecutionException("ROOT: " + cmd + ", result: " + java.lang.String.join(" \\n ", result), null))
 		}

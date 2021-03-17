@@ -195,4 +195,4 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	}
 }
 
-private const val TAG = "Island.AppListProv"
+private const val TAG = "Island.ALP"

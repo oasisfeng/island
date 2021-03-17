@@ -119,8 +119,11 @@ public class Users extends PseudoContentProvider {
 		return uid % PER_USER_RANGE;
 	}
 
-	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent i) {
-		Log.i(TAG, "Profile changed");
+	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+		final boolean added = Intent.ACTION_MANAGED_PROFILE_ADDED.equals(intent.getAction());
+		final UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
+		Log.i(TAG, (added ? "Profile added: " : "Profile removed: ") + (user != null ? String.valueOf(toId(user)) : "null"));
+
 		refreshUsers(context);
 	}};
 

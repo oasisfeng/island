@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
-import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.Q
@@ -17,7 +16,6 @@ import android.os.UserHandle
 import android.provider.Settings
 import com.oasisfeng.android.base.Versions
 import com.oasisfeng.android.content.IntentCompat
-import com.oasisfeng.island.installer.AppInfoForwarderActivity.CALLER_PLACEHOLDER_FOR_SETTINGS
 import com.oasisfeng.island.installer.AppInstallerUtils.hasRequestedLegacyExternalStorage
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.util.Users
@@ -34,7 +32,7 @@ internal object AppInstallationNotifier {
 		val title: String = makeProcedureText(context, install, completed = false)
 
 		showNotification(context, sessionId, title) {
-			setSubText(install.callerLabel).setGroup(install.caller).setContentText(install.appId) }
+			setSubText(install.callerLabel).setGroup(install.caller).setContentText(install.appId).setShowWhen(true) }
 	}
 
 	@JvmStatic fun onPackageInfoReady(context: Context, sessionId: Int, install: AppInstallInfo, current: PackageInfo?): CharSequence? {
@@ -65,7 +63,8 @@ internal object AppInstallationNotifier {
 
 		return details.takeIf { it.isNotEmpty() }?.toString().also {
 			showNotification(context, sessionId, makeProcedureText(context, install, completed = false)) {
-				setOnlyAlertOnce(true).setSubText(install.appId).setContentText(it).style = BigTextStyle().bigText(it) }}
+				setOnlyAlertOnce(true).setShowWhen(true).setSubText(install.appId)
+						.setContentText(it).style = BigTextStyle().bigText(it) }}
 	}
 
 	@JvmStatic fun onPackageInstalled(context: Context, sessionId: Int, pkg: String, install: AppInstallInfo) {
@@ -75,12 +74,12 @@ internal object AppInstallationNotifier {
 
 	fun onInstallAbort(context: Context, sessionId: Int, install: AppInstallInfo) {
 		showNotification(context, sessionId, context.getText(R.string.prompt_install_aborted)) {
-			setOnlyAlertOnce(true).setContentText(makeProcedureText(context, install, completed = false)) } // No alert as abort is usually caused by user refusal.
+			setOnlyAlertOnce(true).setShowWhen(true).setContentText(makeProcedureText(context, install, completed = false)) } // No alert as abort is usually caused by user refusal.
 	}
 
 	fun onInstallFail(context: Context, sessionId: Int, install: AppInstallInfo, message: String) {
 		showNotification(context, sessionId, context.getString(R.string.dialog_install_failure_title, install.appLabel)) {
-			setContentText(message).style = BigTextStyle().bigText(message) }   // TODO: Add action for fallback
+			setShowWhen(true).setContentText(message).style = BigTextStyle().bigText(message) }   // TODO: Add action for fallback
 	}
 
 	@JvmStatic fun cancel(context: Context, sessionId: Int) = NotificationIds.AppInstallation.cancel(context, sessionId.toString())
@@ -120,7 +119,7 @@ internal object AppInstallationNotifier {
 	private fun addAppInfoAction(context: Context, n: Notification.Builder, pkg: String, user: UserHandle) {
 		val forwarder = Intent(IntentCompat.ACTION_SHOW_APP_INFO).setClass(context, AppInfoForwarderActivity::class.java)
 				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, pkg).putExtra(Intent.EXTRA_USER, user)
-				.putExtra(Intent.EXTRA_REFERRER, Uri.parse("android-app://$CALLER_PLACEHOLDER_FOR_SETTINGS"))  // Otherwise app settings is launched instead.
+		AppInfoForwarderActivity.markAsLaunchedBySettings(forwarder)    // Otherwise app settings is launched instead.
 		val action = PendingIntent.getActivity(context, 0, forwarder, PendingIntent.FLAG_UPDATE_CURRENT)
 		@Suppress("DEPRECATION") n.setContentIntent(action).addAction(R.drawable.ic_settings_applications_white_24dp,
 				context.getString(R.string.action_show_app_settings), action)

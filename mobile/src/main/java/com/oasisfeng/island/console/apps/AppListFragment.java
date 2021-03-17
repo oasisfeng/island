@@ -185,5 +185,5 @@ public class AppListFragment extends Fragment {
 	private @Nullable UserGuide mUserGuide;
 	private ServiceConnection mIslandManagerConnection;
 
-	private static final String TAG = "Island.AppsUI";
+	private static final String TAG = "Island.ALF";
 }

@@ -1,5 +1,6 @@
 package com.oasisfeng.island.api;
 
+import android.annotation.SuppressLint;
 import android.app.AppOpsManager;
 import android.app.DerivedAppOpsManager;
 import android.content.Context;
@@ -41,7 +42,7 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 		return new DelegatedAppOpsManager(context).mBinderProxy;
 	}
 
-	private DelegatedAppOpsManager(final Context context) throws ReflectiveOperationException {
+	@SuppressLint("MissingPermission") private DelegatedAppOpsManager(final Context context) throws ReflectiveOperationException {
 		mBinderProxy = sHelper.inject(this, context, APP_OPS_SERVICE, (c, delegate) -> new AppOpsBinderProxy(c, DELEGATION_APP_OPS, delegate));
 		final Hacks.AppOpsManager aom = Hack.into(this).with(Hacks.AppOpsManager.class);
 
@@ -104,5 +105,5 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 		private static final java.lang.String DESCRIPTOR = "com.android.internal.app.IAppOpsService";
 	}
 
-	private static final String TAG = "Island.DAOM";
+	@SuppressWarnings("SpellCheckingInspection") private static final String TAG = "Island.DAOM";
 }

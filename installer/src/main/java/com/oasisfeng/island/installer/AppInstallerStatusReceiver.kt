@@ -40,8 +40,8 @@ class AppInstallerStatusReceiver: BroadcastReceiver() {
 
 				var message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
 				if (message == null) message = context.getString(R.string.dialog_install_unknown_failure_message)
-				else if (status == PackageInstaller.STATUS_FAILURE_INVALID && message.endsWith("base package")) {    // Possible message: "Full install must include a base package"
-					return Unit.also { Log.i(TAG, "APK is split, previous session dropped.") }}
+				else if (status == PackageInstaller.STATUS_FAILURE_INVALID && message.endsWith("base package"))     // Possible message: "Full install must include a base package"
+					return Unit.also { Log.i(TAG, "APK is split, previous session dropped.") }
 
 				Analytics.`$`().event("installer_failure").with(Analytics.Param.CONTENT, message).send()
 

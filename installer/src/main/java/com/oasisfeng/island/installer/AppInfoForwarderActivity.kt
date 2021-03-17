@@ -5,14 +5,12 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.ACTION_SEARCH
 import android.content.pm.LabeledIntent
-import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
 import android.content.pm.PackageManager.MATCH_SYSTEM_ONLY
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Bundle
-import android.os.Parcelable
 import android.os.UserHandle
 import android.provider.Settings
 import android.text.TextUtils
@@ -34,14 +32,12 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 		super.onCreate(savedInstanceState)
 		val intent = intent.setComponent(null).setPackage(null)
 		val user: UserHandle? = intent.getParcelableExtra(Intent.EXTRA_USER)
-		if (user != null && Settings.ACTION_APPLICATION_DETAILS_SETTINGS == intent.action) {  // For profiles other than default
+		if (user != null && intent.action == Settings.ACTION_APPLICATION_DETAILS_SETTINGS) {  // For profiles other than default
 			intent.removeExtra(Intent.EXTRA_USER)
 			Shuttle(this, user).launch {
 				startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-			return finish() }
-
-		val pkg = intent.getStringExtra(IntentCompat.EXTRA_PACKAGE_NAME)
-		if (pkg != null) startActivity(buildTargetIntent(pkg, user, intent))
+		} else intent.getStringExtra(IntentCompat.EXTRA_PACKAGE_NAME)?.also { pkg ->
+			startActivity(buildTargetIntent(pkg, user, intent)) }
 		finish()
 	}
 
@@ -86,7 +82,7 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 		pm.queryIntentActivities(marketIntent, 0).forEach { resolve -> val activity = resolve.activityInfo
 			if (activity.packageName == caller) return@forEach
 			initialIntents.add(Intent(marketIntent).setClassName(activity.packageName, activity.name))
-			targetResolves.map { it.activityInfo }.first { activity.packageName == it.packageName && activity.labelRes == it.labelRes
+			targetResolves.map { it.activityInfo }.firstOrNull { activity.packageName == it.packageName && activity.labelRes == it.labelRes
 					&& TextUtils.equals(activity.nonLocalizedLabel, it.nonLocalizedLabel) }?.also {
 				excludes.add(ComponentName(it.packageName, it.name)) }}
 
@@ -100,6 +96,11 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 
 	private fun isCallerIslandButNotForwarder(caller: String?): Boolean {
 		return packageName == caller && intent.flags and Intent.FLAG_ACTIVITY_FORWARD_RESULT == 0
+	}
+
+	companion object {
+		fun markAsLaunchedBySettings(intent: Intent) =
+				intent.putExtra(Intent.EXTRA_REFERRER, Uri.parse("android-app://$CALLER_PLACEHOLDER_FOR_SETTINGS"))
 	}
 }
 

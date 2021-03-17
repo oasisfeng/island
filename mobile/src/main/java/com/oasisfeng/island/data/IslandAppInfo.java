@@ -8,6 +8,8 @@ import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 
+import androidx.annotation.Nullable;
+
 import com.oasisfeng.android.util.Suppliers;
 import com.oasisfeng.common.app.AppInfo;
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps;
@@ -86,7 +88,7 @@ public class IslandAppInfo extends AppInfo {
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 
-	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base, final IslandAppInfo last) {
+	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base, final @Nullable IslandAppInfo last) {
 		super(provider, base, last);
 		this.user = user;
 	}
