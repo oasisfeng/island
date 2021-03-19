@@ -158,6 +158,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 				AppInstallerStatusReceiver.createCallback(this, install, mSessionId);  // Sync AppInstallInfo by updating PendingIntent
 
+				getPackageManager().getPackageInstaller().updateSessionAppLabel(mSessionId, install.getAppLabel());
 				return Unit.INSTANCE;
 			});
 		} catch (final IOException e) { Log.w(TAG, "Error opening " + data, e); }
