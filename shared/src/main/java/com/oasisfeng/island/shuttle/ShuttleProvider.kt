@@ -100,9 +100,9 @@ class ShuttleProvider: ContentProvider() {
 @Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class ShuttleResult<R>(private val bundle: Bundle?) {
 
-	companion object { internal val NOT_READY = ShuttleResult<Any>(null) }
+	companion object { internal val NOT_READY = ShuttleResult<Any>(Bundle()) }
 
-	fun isNotReady() = this == NOT_READY
+	fun isNotReady() = bundle === NOT_READY.bundle
 	@Suppress("UNCHECKED_CAST") fun get(): R = bundle?.get(null) as R
 	override fun toString() = when(this) {
 		NOT_READY -> "ShuttleResult{NOT_READY}"
