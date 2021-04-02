@@ -68,6 +68,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         if (SDK_INT !in P..Q) removeAppOpsRelated()     // Both Mainland and Island
 
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
+            setup<Preference>(R.string.key_cross_profile) { remove(this) }
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
                 setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_GOD_MODE.get())) }}}
