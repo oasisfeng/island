@@ -12,6 +12,10 @@
 
     <PreferenceCategory android:title="@string/pref_cat_app_launch_shortcuts">
 
+        <EditTextPreference android:key="@string/key_launch_shortcut_prefix"
+            android:title="@string/pref_launch_shortcut_prefix_title"
+            android:defaultValue="@string/default_launch_shortcut_prefix" />
+
         <!--<SwitchPreference
             android:key="@string/setting_alt_shortcut_badge"
             android:title="@string/pref_alt_shortcut_badge_title"

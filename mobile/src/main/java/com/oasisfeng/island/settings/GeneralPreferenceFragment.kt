@@ -39,6 +39,8 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
         super.onCreate(savedInstanceState)
         val settings = IslandSettings(activity)
 
+        if (SDK_INT >= O) setup<Preference>(R.string.key_launch_shortcut_prefix) { remove(this) }
+
         setupSetting(settings.DynamicShortcutLabel(), visible = SDK_INT >= O, onChange = @RequiresApi(O) { true.also {
             Toast.makeText(activity, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
             Handler().post { IslandAppShortcut.updateAllPinned(activity) }}})

@@ -100,8 +100,11 @@ object IslandAppShortcut {
 			= (if (app is IslandAppInfo) app.label else app.loadLabel(context.packageManager)).let {
 			buildLabelPrefix(context, settings, app)?.plus(it) ?: it }
 
-	private fun buildLabelPrefix(context: Context, settings: IslandSettings, app: ApplicationInfo)
-			= if (settings.DynamicShortcutLabel().enabled) getDynamicPrefix(context, app) else null
+	private fun buildLabelPrefix(context: Context, settings: IslandSettings, app: ApplicationInfo) = when {
+		SDK_INT < O -> @Suppress("DEPRECATION") android.preference.PreferenceManager.getDefaultSharedPreferences(context)
+				.getString(context.getString(R.string.key_launch_shortcut_prefix), context.getString(R.string.default_launch_shortcut_prefix))
+		settings.DynamicShortcutLabel().enabled -> getDynamicPrefix(context, app)
+		else -> null }
 
 	private fun getDynamicPrefix(context: Context, app: ApplicationInfo)
 			= if (app.hidden) context.getString(R.string.default_launch_shortcut_prefix) else null

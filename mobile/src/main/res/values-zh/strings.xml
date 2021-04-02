@@ -135,6 +135,7 @@
 
     <string name="pref_general_header">常规</string>
     <string name="pref_cat_app_launch_shortcuts">应用启动快捷方式</string>
+    <string name="pref_launch_shortcut_prefix_title">应用启动快捷方式的名称前缀</string>
     <string name="pref_alt_shortcut_badge_title">界内使用替代角标 (试验性)</string>
     <string name="pref_alt_shortcut_badge_summary">对界外和界内的应用启动快捷方式使用不同的角标。\n(某些设备可能不支持)</string>
     <string name="pref_dynamic_shortcut_label_title">动态快捷方式</string>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- General -->
+    <string translatable="false" name="key_launch_shortcut_prefix">launch_shortcut_prefix</string>
     <string translatable="false" name="key_show_admin_message">show_admin_message</string>
     <string translatable="false" name="key_preserve_app_ops">preserve_app_ops</string>
     <!-- Island (per-profile) -->
