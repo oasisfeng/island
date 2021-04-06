@@ -70,7 +70,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         if (Users.isOwner() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_cross_profile) { remove(this) }
             setup<Preference>(R.string.key_device_owner_setup) {
-                summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_featurs)
+                summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_features)
                 setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_GOD_MODE.get())) }}}
             setup<Preference>(R.string.key_privacy) { if (SDK_INT > Q) remove(this) else isEnabled = false }   // Show but disabled, as a feature preview.
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
@@ -120,7 +120,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             if (Users.isOwner()) {
                 if (! isProfileOrDeviceOwner) return@setup remove(this)
                 setTitle(R.string.pref_rescind_title)
-                summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_device_owner_featurs) + "\n" }
+                summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_device_owner_features) + "\n" }
             setOnPreferenceClickListener { true.also {
                 if (Users.isOwner()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}

@@ -156,7 +156,7 @@ object IslandAppShortcut {
 
 	private fun getAppIconLargeDrawable(context: Context, am: ActivityManager, app: ApplicationInfo): Drawable?
 			= if (app.icon == 0) null else try { context.packageManager.getResourcesForApplication(app)
-				.getDrawableForDensity(app.icon , am.launcherLargeIconDensity, null) }
+				.getDrawableForDensity(app.icon, am.launcherLargeIconDensity, null) }
 			catch (_: NameNotFoundException) { null } catch (_: Resources.NotFoundException) { null }
 
 	private fun showToastForShortcutFailure(context: Context)

@@ -136,7 +136,6 @@
     <string name="pref_general_header">常规</string>
     <string name="pref_cat_app_launch_shortcuts">应用启动快捷方式</string>
     <string name="pref_launch_shortcut_prefix_title">应用启动快捷方式的名称前缀</string>
-    <string name="pref_alt_shortcut_badge_title">界内使用替代角标 (试验性)</string>
     <string name="pref_alt_shortcut_badge_summary">对界外和界内的应用启动快捷方式使用不同的角标。\n(某些设备可能不支持)</string>
     <string name="pref_dynamic_shortcut_label_title">动态快捷方式</string>
     <string name="pref_dynamic_shortcut_label_summary">在应用冻结时为应用启动快捷方式添加前缀，在应用解冻时去掉前缀。\n(某些启动器可能不支持)</string>
@@ -184,7 +183,7 @@
     <string name="pref_rescind_summary">撤销炼妖壶对设备的全局管理权。所有的应用和数据都将保留（解冻），但你将无法再：\n\n</string>
     <string name="pref_device_owner_title">让掌控力延伸至界外</string>
     <string name="pref_device_owner_summary">授予炼妖壶管理界外的权限，你将可以：\n\n</string>
-    <string name="pref_device_owner_featurs">· 冻结和管理界外的应用\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全封印）</string>
+    <string name="pref_device_owner_features">· 冻结和管理界外的应用\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全封印）</string>
 
     <string name="pref_setup_header">管理</string>
 
@@ -208,8 +207,8 @@
 
     <!-- New User Guide -->
 
-    <string name="prompt_freeze_title">冻结壶中界的应用</string>
-    <string name="prompt_freeze_text">被冻结应用会完全消失，看起来就像是卸载了一样，直到将其解冻。\n\n在冻结状态的应用绝对无法做任何事情。</string>
+    <string name="prompt_freeze_title">冻结应用</string>
+    <string name="prompt_freeze_text">被冻结的应用会完全消失，看起来就像是卸载了一样，直到将其解冻。\n\n在冻结状态的应用绝对无法做任何事情。</string>
     <string name="prompt_clone_title">在壶中界创造应用的分身</string>
     <string name="prompt_clone_text">界外的应用可以在壶中界获得分身。\n\n应用的分身就像是新安装的应用副本，有自己独立的数据。他们只共享应用的执行文件以节省空间。</string>
 

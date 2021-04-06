@@ -140,7 +140,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_general_header">General</string>
     <string name="pref_cat_app_launch_shortcuts">App launch shortcuts</string>
     <string name="pref_launch_shortcut_prefix_title">Launch shortcut prefix</string>
-    <string name="pref_alt_shortcut_badge_title">Alternative badge in Island (Experimental)</string>
     <string name="pref_alt_shortcut_badge_summary">Use different badge for app launch shortcuts in Mainland and Island.\n(May not work on some devices)</string>
     <string name="pref_dynamic_shortcut_label_title">Dynamic shortcut label</string>
     <string name="pref_dynamic_shortcut_label_summary">Add prefix to shortcut label when app is frozen, and remove the prefix when app is unfrozen.\n(May not work on some launchers)</string>
@@ -188,7 +187,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_rescind_summary">Rescind the privilege on Mainland. All your apps and data will be intact (unfrozen), but you could no longer:\n\n</string>
     <string name="pref_device_owner_title">Extend the power to Mainland</string>
     <string name="pref_device_owner_summary">If activated, you can:\n\n</string>
-    <string name="pref_device_owner_featurs">· Freeze apps in Mainland\n· Supervise app permissions in Mainland (Android 9+)\n· Use some device global features (e.g. full ADB Secure).</string>
+    <string name="pref_device_owner_features">· Freeze apps in Mainland\n· Use some device global features (e.g. full ADB Secure).</string>
 
     <string name="pref_setup_header">Setup</string>
 
@@ -212,8 +211,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <!-- New User Guide -->
 
-    <string name="prompt_freeze_title">Freeze app in Island</string>
-    <string name="prompt_freeze_text">Once frozen, the app in Island will vanish until being explicit unfrozen.\n\nApp could do absolutely nothing in frozen state.</string>
+    <string name="prompt_freeze_title">Freeze app</string>
+    <string name="prompt_freeze_text">Once frozen, the app will vanish until being explicit unfrozen.\n\nApp could do absolutely nothing in frozen state.</string>
     <string name="prompt_clone_title">Clone app to Island</string>
     <string name="prompt_clone_text">App in mainland can be cloned into Island.\n\nThe clone acts as a newly installed instance and has its own data, separated from its mainland twin. They only share the executable binaries to conserve space.</string>
 

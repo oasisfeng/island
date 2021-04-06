@@ -39,7 +39,8 @@ public class UserGuide {
 	public MenuItem.OnMenuItemClickListener getAvailableTip() {
 		final @Nullable UserHandle profile = mAppListViewModel.getCurrentProfile();
 		if (profile == null) return null;
-		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && Users.isOwner(profile) && mAppSelection != null && ! mAppSelection.isSystem())
+		if (! mAppScope.isMarked(SCOPE_KEY_TIP_CLONE) && Users.isOwner(profile)
+				&& mAppSelection != null && ! mAppSelection.isSystem())
 			return mTipClone;
 		if (! mAppScope.isMarked(SCOPE_KEY_TIP_FREEZE) && Users.isProfileManagedByIsland(profile)
 				&& mAppSelection != null && mAppSelection.state == AppViewModel.State.Alive)
