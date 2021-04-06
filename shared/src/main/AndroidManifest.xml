@@ -29,7 +29,8 @@
         </activity>
 
         <provider android:authorities="com.oasisfeng.island.shuttle" android:exported="false"
-                  android:name="com.oasisfeng.island.shuttle.ShuttleProvider" android:grantUriPermissions="true"/>
+                  android:name="com.oasisfeng.island.shuttle.ShuttleProvider" android:grantUriPermissions="true"
+                  android:directBootAware="true" />
 
         <!-- Disable the default heavy-weight initialization of Firebase -->
         <provider android:name="com.google.firebase.provider.FirebaseInitProvider"
