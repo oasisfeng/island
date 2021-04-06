@@ -204,7 +204,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 					updateAppList();
 					Analytics.log(TAG, "tab-island-" + UserHandles.getIdentifier(profile));
 					return;
-				}
+				} else tabs.removeTab(tab);     // In case it is removed elsewhere (e.g. by ADB shell)
 			}
 		}
 		tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
