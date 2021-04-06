@@ -25,6 +25,7 @@ import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.SetupActivity;
+import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
@@ -47,6 +48,9 @@ public class MainActivity extends FragmentActivity {
 			} else startSetupWizard();		// Running in non-primary user or profile not managed by Island. TODO: Proper handling?
 			return;
 		}
+		final String caller = CallerAwareActivity.getCallingPackage(this);
+		if (Modules.MODULE_ENGINE.equals(caller)) Users.refreshUsers(this);     // Possibly started by IslandProvisioning, refresh user state as profile or its owner may be changed.
+
 		if (mIsDeviceOwner = new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) {
 			startMainUi(savedInstanceState);	// As device owner, always show main UI.
 			return;
