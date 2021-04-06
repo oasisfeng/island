@@ -62,14 +62,14 @@
 
         <!--<activity android:name="android.__dummy__" android:exported="true" android:icon="@mipmap/ic_dummy" />-->
 
-        <service android:name="com.oasisfeng.island.shortcut.IslandAppShortcut$ShortcutUpdater"
+        <service android:name="com.oasisfeng.island.shortcut.IslandAppShortcut$ShortcutSyncService"
                  android:exported="false" android:enabled="@bool/since_api_26">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.PersistentService" />
             </intent-filter>
         </service>
 
-        <receiver android:name="com.oasisfeng.island.shortcut.ShortcutsRepairer">
+        <receiver android:name="com.oasisfeng.island.shortcut.ShortcutsUpdater">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

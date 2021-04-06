@@ -165,7 +165,7 @@ object IslandAppShortcut {
 	private fun isCrossProfile(userId: Int) = userId != Users.current().toId()
 	private val ApplicationInfo.userId; get() = UserHandles.getUserId(uid)
 
-	@ProfileUser @RequiresApi(O) class ShortcutUpdater: Service() {
+	@ProfileUser @RequiresApi(O) class ShortcutSyncService: Service() {
 
 		private val mPackageObserver = object: BroadcastReceiver() { override fun onReceive(context: Context, intent: Intent) {
 			val pkg = intent.data?.schemeSpecificPart ?: return
@@ -247,15 +247,13 @@ object IslandAppShortcut {
 	}
 }
 
-class ShortcutsRepairer: BroadcastReceiver() {
+class ShortcutsUpdater: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent?) {
 		if (SDK_INT < O || intent?.action != ACTION_MY_PACKAGE_REPLACED && intent?.action != ACTION_BOOT_COMPLETED) return
 		try {
 			IslandAppShortcut.updateAllPinned(context)
 		} catch (e: IllegalStateException) { return }   // User is locked
-		context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
-				PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
 	}
 }
 
