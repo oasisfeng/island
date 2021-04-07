@@ -1,10 +1,7 @@
 package com.oasisfeng.island.featured;
 
-import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.provider.Settings;
 
 import androidx.annotation.DrawableRes;
@@ -15,14 +12,12 @@ import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.oasisfeng.android.app.Activities;
 import com.oasisfeng.android.base.Scopes;
 import com.oasisfeng.android.databinding.ObservableSortedList;
 import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter;
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
-import com.oasisfeng.android.util.SafeAsyncTask;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.adb.AdbSecure;
@@ -34,22 +29,16 @@ import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.mobile.databinding.FeaturedEntryBinding;
 import com.oasisfeng.island.settings.IslandSettingsFragment;
 import com.oasisfeng.island.settings.SettingsActivity;
-import com.oasisfeng.island.setup.IslandSetup;
-import com.oasisfeng.island.setup.SetupActivity;
-import com.oasisfeng.island.setup.SetupViewModel;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import eu.chainfire.libsuperuser.Shell;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
@@ -121,16 +110,6 @@ public class FeaturedListViewModel extends AndroidViewModel {
 					vm -> AdbSecure.toggleAdbSecure(activity, Objects.equals(vm.button.getValue(), R.string.action_enable), false));
 		}
 
-		if (SHOW_ALL || is_mainland_owner && ! Users.hasProfile() && policies.isActiveDeviceOwner())    // New profile can not be setup if owner user is in managed profile mode.
-			addFeature(app, "setup_island", R.string.featured_setup_island_title, R.string.setup_island_intro, 0, R.string.featured_button_setup, c -> {
-				if (SetupViewModel.checkManagedProvisioningPrerequisites(c, true) == null) {
-					startSetupActivityCleanly(c);		// Prefer ManagedProvision, which could also fallback to root routine.
-				} else SafeAsyncTask.execute(activity, a -> Shell.SU.available(), (cc, su_available) -> {
-					if (su_available) IslandSetup.requestProfileOwnerSetupWithRoot(activity);
-					else WebContent.view(cc, Uri.parse(Config.URL_SETUP.get()));
-				});
-			});
-
 		if (SHOW_ALL || ! is_mainland_owner)
 			addFeature(app, "managed_mainland", R.string.featured_managed_mainland_title, R.string.featured_managed_mainland_description, 0,
 					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(activity, IslandSettingsFragment.class));
@@ -143,16 +122,6 @@ public class FeaturedListViewModel extends AndroidViewModel {
 				"rikka.appops", "rikka.appops.pro");
 
 		features.endBatchedUpdates();
-	}
-
-	private static void startSetupActivityCleanly(final Context context) {
-		// Finish all tasks of Island first to avoid state inconsistency.
-		final ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-		if (am != null) {
-			final List<ActivityManager.AppTask> tasks = am.getAppTasks();
-			if (tasks != null) for (final ActivityManager.AppTask task : tasks) task.finishAndRemoveTask();
-		}
-		Activities.startActivity(context, new Intent(context, SetupActivity.class));
 	}
 
 	private boolean addFeaturedApp(final @StringRes int title, final @StringRes int description, final @DrawableRes int icon, final String... pkgs) {

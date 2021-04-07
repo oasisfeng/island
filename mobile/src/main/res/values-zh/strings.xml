@@ -37,7 +37,6 @@
     <string name="featured_saf_enhancer_description">为不兼容存储访问框架，但支持通过外部相机应用拍照的应用（如“微信”）提供跨界的图片访问能力。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops 可选择性剥夺指定应用的部分能力，即使授予了相关权限。</string>
-    <string name="featured_setup_island_title">创建一个独立的壶中界</string>
 
     <string name="setup_profile_welcome">欢迎来到壶中界</string>
     <string name="setup_island_intro">壶中界是一个独立的应用和数据空间。可以为应用选择性的在壶中界创造分身，也可以将应用单独安装在壶中界。

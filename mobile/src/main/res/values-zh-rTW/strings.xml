@@ -39,7 +39,6 @@
     <string name="featured_saf_enhancer_description">為不支援儲存瀏覽框架，但支持通過外部相機應用程式拍照的應用程式（如“微信”）提供跨界的圖片瀏覽能力。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops 可選擇性剝奪指定應用程式的部分能力，即使授權了相關權限。</string>
-    <string name="featured_setup_island_title">建立一個獨立的壺中界</string>
 
     <string name="setup_profile_welcome">歡迎來到壺中界</string>
     <string name="setup_island_intro">壺中界是一個獨立的應用程式和資料。可以為應用程式選擇性的在壺中界建立分身，也可以將應用程式單獨安裝在壺中界。
