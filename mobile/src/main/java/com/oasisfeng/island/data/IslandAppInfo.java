@@ -67,7 +67,8 @@ public class IslandAppInfo extends AppInfo {
 	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
 		if (! Users.isOwner(user) && ! isHidden()) {		// Accurate detection for non-frozen app in Island
 			if (sLaunchableNonFrozenIslandAppsCache != null) return sLaunchableNonFrozenIslandAppsCache.contains(packageName);
-			return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty();
+			try { return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty(); }
+			catch (final SecurityException e) { return false; } // "SecurityException: Cannot retrieve activities for unrelated profile NNN" appeared on OPPO A3s and Vivo 1718 (both Android 8.1).
 		}
 		if (sPotentiallyLaunchableAppsCache != null) return sPotentiallyLaunchableAppsCache.contains(packageName);
 		return super.checkLaunchable(flags_for_resolve);	// Inaccurate detection for frozen app (false-positive if launcher activity is actually disabled)

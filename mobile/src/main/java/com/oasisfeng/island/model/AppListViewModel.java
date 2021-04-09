@@ -222,7 +222,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 		final boolean system = app.isSystem(), installed = app.isInstalled(), placeholder = app.isPlaceHolder(),
 				in_owner = Users.isOwner(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
-		menu.findItem(R.id.menu_clone).setVisible(! placeholder);
+		menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile());
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
 		menu.findItem(R.id.menu_reinstall).setVisible(! installed && ! placeholder);
