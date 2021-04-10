@@ -72,11 +72,9 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_features)
                 setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_GOD_MODE.get())) }}}
-            setup<Preference>(R.string.key_privacy) { if (SDK_INT > Q) remove(this) else isEnabled = false }   // Show but disabled, as a feature preview.
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
             setup<Preference>(R.string.key_island_watcher) { remove(this) }
-            setup<Preference>(R.string.key_setup) { remove(this) }
-            return }
+            setup<Preference>(R.string.key_setup) { remove(this) } }
         else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
 
         if (SDK_INT in P..Q) {  // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
@@ -88,8 +86,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                     R.string.pref_privacy_location_title)
             if (Settings.Global.getInt(activity.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) != 0)
                 setupPreferenceForManagingAppOps(R.string.key_manage_storage, READ_EXTERNAL_STORAGE,
-                        AppOpsCompat.OP_READ_EXTERNAL_STORAGE, R.string.pref_privacy_storage_title)
-        } else setup<Preference>(R.string.key_privacy) { remove(this) }
+                        AppOpsCompat.OP_READ_EXTERNAL_STORAGE, R.string.pref_privacy_storage_title) }
 
         setup<Preference>(R.string.key_cross_profile) {
             if (SDK_INT <= Q || ! isProfileOrDeviceOwner) return@setup remove(this)
