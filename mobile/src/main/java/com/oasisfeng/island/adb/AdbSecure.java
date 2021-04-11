@@ -48,20 +48,21 @@ public class AdbSecure {
 
 		if (Users.hasProfile() && ! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {
 			final Context app_context = activity.getApplicationContext();
-			MethodShuttle.runInProfile(activity, context -> {
-				final DevicePolicies device_policies = new DevicePolicies(context);	// The "policies" instance can not be passed into profile.
-				if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-				else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
-				return enabling;
-			}).whenComplete((enabled, e) -> {
-				if (e != null) {
-					Analytics.$().logAndReport(TAG, "Error setting featured button", e);
-					Toast.makeText(app_context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
-				} else {
-					LiveUserRestriction.notifyUpdate(app_context);	// Request explicit update, since observer does not work across users.
-					showPromptForAdbSecureProtection(activity, enabled);
-				}
-			});
+			final boolean enabled;
+			try {
+				enabled = new Shuttle(activity, Users.profile).invoke(context -> {
+					final DevicePolicies device_policies = new DevicePolicies(context);    // The "policies" instance can not be passed into profile.
+					if (enabling) device_policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
+					else device_policies.execute(DevicePolicyManager::clearUserRestriction, DISALLOW_DEBUGGING_FEATURES);
+					return enabling;
+				});
+			} catch(final RuntimeException e) {
+				Analytics.$().logAndReport(TAG, "Error setting featured button", e);
+				Toast.makeText(app_context, R.string.toast_internal_error, Toast.LENGTH_LONG).show();
+				return;
+			}
+			LiveUserRestriction.notifyUpdate(app_context);	// Request explicit update, since observer does not work across users.
+			showPromptForAdbSecureProtection(activity, enabled);
 		} else showPromptForAdbSecureProtection(activity, enabling);
 	}
 

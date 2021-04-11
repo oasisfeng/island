@@ -43,9 +43,9 @@ class FeatureActionActivity : CallerAwareActivity() {
         AsyncTask.execute {
             findApp(query)?.also { activity ->
                 val pkg = activity.componentName.packageName
-                MethodShuttle.runInProfile(this) { context ->
-                    if (IslandManager.ensureAppFreeToLaunch(context, pkg).isEmpty())
-                        IslandManager.launchApp(context, pkg, Users.current()) }
+                Shuttle(this, Users.profile ?: return@also).launch {
+                    if (IslandManager.ensureAppFreeToLaunch(this, pkg).isEmpty())
+                        IslandManager.launchApp(this, pkg, Users.current()) }
                 if (caller == PACKAGE_GOOGLE_SEARCH || caller == PACKAGE_GOOGLE_ASSISTANT_GO)    // Send action acknowledgement to Google Assistant
                     FirebaseUserActions.getInstance().end(Action.Builder(ACTIVATE_ACTION).setMetadata(Metadata.Builder().setUpload(false))
                             .setObject(activity.label.toString(), data.toString()).build())
