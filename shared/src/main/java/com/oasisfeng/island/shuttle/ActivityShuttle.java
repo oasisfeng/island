@@ -25,7 +25,8 @@ public class ActivityShuttle {
 	}
 
 	public static ComponentName getForwarder(final Context context) {
-		return selectForwarder(context.getPackageManager().queryIntentActivities(new Intent(ServiceShuttle.ACTION_BIND_SERVICE), 0));
+		final Intent intent = new Intent(Intent.ACTION_SEND).setType("*/*");    // Forwarding added by IslandProvisioning
+		return selectForwarder(context.getPackageManager().queryIntentActivities(intent, 0));
 	}
 
 	private static ComponentName selectForwarder(final List<ResolveInfo> candidates) {

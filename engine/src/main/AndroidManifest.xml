@@ -31,7 +31,6 @@
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" tools:ignore="ProtectedPermissions" /> <!-- ServiceShuttle -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> <!-- Required to start ACTION_INSTALL_PACKAGE since Android O -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- MethodShuttle -->
@@ -72,20 +71,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- ServiceShuttleActivity (non-exported) -->
-        <activity android:name="com.oasisfeng.island.InternalActivity$_1"
-                  android:exported="false"
-                  android:hardwareAccelerated="false"
-                  android:resumeWhilePausing="true"
-                  android:excludeFromRecents="true"
-                  android:theme="@android:style/Theme.NoDisplay"
-                  android:taskAffinity=":shuttle" >
-            <intent-filter>
-                <action android:name="com.oasisfeng.island.action.BIND_SERVICE" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
         <service android:name="com.oasisfeng.island.service.IslandPersistentService"
                  android:permission="android.permission.BIND_DEVICE_ADMIN">
             <intent-filter>
@@ -96,12 +81,6 @@
         <provider android:authorities="com.oasisfeng.island.settings"
                   android:name="com.oasisfeng.settings.AppSettingsProvider"
                   android:exported="false" />
-
-        <service android:name="com.oasisfeng.island.shuttle.MethodShuttle$MethodShuttleService" android:exported="false">
-            <intent-filter android:priority="-1">
-                <action android:name="com.oasisfeng.island.shuttle.IMethodShuttle" />
-            </intent-filter>
-        </service>
 
         <service android:name="com.oasisfeng.island.provisioning.IslandProvisioning" android:exported="false"
                  android:directBootAware="true">

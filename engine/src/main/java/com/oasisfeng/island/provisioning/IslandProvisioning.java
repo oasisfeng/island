@@ -41,7 +41,6 @@ import com.oasisfeng.island.engine.CrossProfile;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
-import com.oasisfeng.island.shuttle.ServiceShuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.OwnerUser;
@@ -337,9 +336,6 @@ public class IslandProvisioning extends IntentService {
 	@ProfileUser private static void startProfileOwnerPostProvisioningForNonOwnerProfile(final Context context, final DevicePolicies policies) {
 		policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		enableAdditionalForwarding(context, policies);
-
-		// Prepare ServiceShuttle
-		policies.addCrossProfileIntentFilter(new IntentFilter(ServiceShuttle.ACTION_BIND_SERVICE), FLAG_MANAGED_CAN_ACCESS_PARENT);
 
 		// Prepare API
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(Api.latest.ACTION_FREEZE).withDataSchemes("package", "packages"), FLAG_MANAGED_CAN_ACCESS_PARENT);

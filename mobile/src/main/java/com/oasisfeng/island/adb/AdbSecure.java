@@ -16,7 +16,7 @@ import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.data.LiveUserRestriction;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.security.SecurityPrompt;
-import com.oasisfeng.island.shuttle.MethodShuttle;
+import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Permissions;
 import com.oasisfeng.island.util.Users;
