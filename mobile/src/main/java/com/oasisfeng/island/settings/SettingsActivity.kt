@@ -57,13 +57,13 @@ import com.oasisfeng.island.util.Users
 			return super.onHeaderClick(header, position)
 
 		val users = ArrayList<UserHandle>() // Support multiple managed-profiles
-		users.add(Users.owner)
+		users.add(Users.getParentProfile())
 		users.addAll(Users.getProfilesManagedByIsland())
 		if (users.size <= 1)        // Managed mainland without Island
 			return super.onHeaderClick(header, position)
 
 		val names = getAllNames(this)
-		val labels = users.map { user -> if (Users.isOwner(user)) getText(R.string.tab_mainland) else names[user] }.toTypedArray()
+		val labels = users.map { user -> if (Users.isParentProfile(user)) getText(R.string.tab_mainland) else names[user] }.toTypedArray()
 		Dialogs.buildList(this, null, labels) { _, which ->
 			if (which == 0) super.onHeaderClick(header, position)
 			else launchSettingsActivityAsUser(users[which])

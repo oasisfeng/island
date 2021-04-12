@@ -71,7 +71,7 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 		if (SDK_INT >= O) chooser.putExtra(IntentCompat.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE, isCallerNotSettings)
 		val initialIntents: MutableList<Intent> = ArrayList()
 		if (isCallerNotSettings && detailsActivity != null) {
-			if (user != null && ! Users.isOwner(user) && Users.isProfileManagedByIsland(user)) {    // Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
+			if (user != null && ! Users.isParentProfile(user) && Users.isProfileManagedByIsland(user)) {    // Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
 				val labelRes = detailsActivity.run { if (labelRes != 0) labelRes else applicationInfo.labelRes }
 				initialIntents.add(LabeledIntent(details, detailsActivity.packageName, labelRes, detailsActivity.iconResource))
 			} else initialIntents.add(details) }

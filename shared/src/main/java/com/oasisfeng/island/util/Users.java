@@ -35,9 +35,10 @@ import static java.util.Objects.requireNonNull;
 public class Users extends PseudoContentProvider {
 
 	public static @Nullable UserHandle profile;		// The first profile managed by Island (semi-immutable, until profile is created or destroyed)
-	public static UserHandle owner;     // TODO: Rename to "parent"
+	private static UserHandle mParentProfile;
 
 	public static boolean hasProfile() { return profile != null; }
+	public static UserHandle getParentProfile() { return mParentProfile; }
 
 	private static final UserHandle CURRENT = Process.myUserHandle();
 	private static final int CURRENT_ID = toId(CURRENT);
@@ -57,23 +58,25 @@ public class Users extends PseudoContentProvider {
 
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
-		final List<UserHandle> owner_and_profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
-		final List<UserHandle> profiles_managed_by_island = new ArrayList<>(owner_and_profiles.size() - 1);
-		if (isOwner()) {
+		final List<UserHandle> profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
+		final List<UserHandle> profiles_managed_by_island = new ArrayList<>(profiles.size() - 1);
+		mParentProfile = profiles.get(0);
+		if (mParentProfile.equals(CURRENT)) {      // Running in parent profile
+
 			final String ui_module = Modules.getMainLaunchActivity(context).getPackageName();
 			final LauncherApps la = context.getSystemService(LauncherApps.class);
 			final String activity_in_owner = la.getActivityList(ui_module, CURRENT).get(0).getName();
-			for (final UserHandle user : owner_and_profiles) {
-				if (isOwner(user)) owner = user;
-				else for (final LauncherActivityInfo activity : la.getActivityList(ui_module, user))
+			for (int i = 1/* skip parent */; i < profiles.size(); i ++) {
+				final UserHandle profile = profiles.get(i);
+				for (final LauncherActivityInfo activity : la.getActivityList(ui_module, profile))
 					if (! activity.getName().equals(activity_in_owner)) {
-						profiles_managed_by_island.add(user);
-						Log.i(TAG, "Profile managed by Island: " + toId(user));
-					} else Log.i(TAG, "Profile not managed by Island: " + toId(user));
+						profiles_managed_by_island.add(profile);
+						Log.i(TAG, "Profile managed by Island: " + toId(profile));
+					} else Log.i(TAG, "Profile not managed by Island: " + toId(profile));
 			}
-		} else for (final UserHandle user : owner_and_profiles) {
-			if (isOwner(user)) owner = user;
-			else if (user.equals(CURRENT)) {
+		} else for (int i = 1/* skip parent */; i < profiles.size(); i ++) {
+			final UserHandle user = profiles.get(i);
+			if (user.equals(CURRENT)) {
 				profiles_managed_by_island.add(user);
 				Log.i(TAG, "Profile managed by Island: " + toId(user));
 			} else Log.w(TAG, "Skip sibling profile (may not managed by Island): " + toId(user));
@@ -95,14 +98,15 @@ public class Users extends PseudoContentProvider {
 		return um.isQuietModeEnabled(user);
 	}
 
-	public static boolean isOwner() { return CURRENT_ID == 0; }	// TODO: Support non-system primary user
-	public static boolean isOwner(final UserHandle user) { return toId(user) == 0; }
-	public static boolean isOwner(final int user_id) { return user_id == 0; }
+	// TODO: Support secondary user with managed profile.
+	public static boolean isParentProfile() { return CURRENT_ID == toId(mParentProfile); }
+	public static boolean isParentProfile(final UserHandle user) { return user.equals(mParentProfile); }
+	public static boolean isParentProfile(final int user_id) { return user_id == toId(mParentProfile); }
 
 	public static boolean isProfileManagedByIsland() { return sCurrentProfileManagedByIsland; }
 	@OwnerUser public static boolean isProfileManagedByIsland(final UserHandle user) {
-		if (isOwner(user)) {
-			if (isOwner()) return sCurrentProfileManagedByIsland;
+		if (isParentProfile(user)) {
+			if (isParentProfile()) return sCurrentProfileManagedByIsland;
 			throw new IllegalArgumentException("Not working for profile parent user");
 		}
 		return sProfilesManagedByIsland.contains(user);

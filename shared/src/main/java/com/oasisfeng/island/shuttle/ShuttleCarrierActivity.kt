@@ -55,7 +55,7 @@ class ShuttleCarrierActivity: Activity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		if (Users.isOwner()) {
+		if (Users.isParentProfile()) {
 			ShuttleProvider.collect(this, intent)
 			setResult(RESULT_OK, Intent(null, Uri.parse(ShuttleProvider.CONTENT_URI))   // Send reverse shuttle back
 					.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION))

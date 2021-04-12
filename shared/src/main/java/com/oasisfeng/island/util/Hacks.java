@@ -50,7 +50,7 @@ public class Hacks {
 		Hack.setAssertionFailureHandler(e -> {
 			Log.e("Compatibility", e.getDebugInfo());
 			if (BuildConfig.DEBUG) throw new IllegalStateException("Incompatibility", e);
-			if (Users.isOwner()) Analytics.$().report(e);
+			if (Users.isParentProfile()) Analytics.$().report(e);
 		});
 	}
 
@@ -63,7 +63,7 @@ public class Hacks {
 	 *
 	 * See PackageManagerService.updateFlagsForPackage()
 	 */
-	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isOwner() ? 0 : MATCH_ANY_USER);
+	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isParentProfile() ? 0 : MATCH_ANY_USER);
 	public static final int RESOLVE_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer>

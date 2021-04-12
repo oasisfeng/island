@@ -107,7 +107,7 @@ public class IslandProvisioning extends IntentService {
 	/** This is the normal procedure after ManagedProvision finished its provisioning, running in profile. */
 	@ProfileUser public static void onProfileProvisioningComplete(final Context context, final Intent intent) {
 		Log.d(TAG, "onProfileProvisioningComplete");
-		if (Users.isOwner()) return;		// Nothing to do for managed device provisioning.
+		if (Users.isParentProfile()) return;		// Nothing to do for managed device provisioning.
 		start(context, intent.getAction());
 	}
 
@@ -119,7 +119,7 @@ public class IslandProvisioning extends IntentService {
 	@WorkerThread private static void proceed(final Context context, final Intent intent) {
 		if (DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE.equals(intent.getAction())) {
 			Log.d(TAG, "Re-provisioning Mainland.");
-			if (! Users.isOwner()) throw new IllegalStateException("Not running in owner user");
+			if (! Users.isParentProfile()) throw new IllegalStateException("Not running in owner user");
 			startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
 			Toasts.show(context, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
@@ -130,7 +130,7 @@ public class IslandProvisioning extends IntentService {
 			Toasts.show(context, R.string.toast_reprovision_done, Toast.LENGTH_SHORT);
 			return;
 		}
-		if (Users.isOwner() && DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
+		if (Users.isParentProfile() && DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(intent.getAction())) {	// ACTION_DEVICE_OWNER_CHANGED is added in Android 6.
 			Analytics.$().event("device_provision_manual_start").send();
 			startDeviceOwnerPostProvisioning(context, new DevicePolicies(context));
 			return;
@@ -160,7 +160,7 @@ public class IslandProvisioning extends IntentService {
 		// Prepare critical apps
 		enableCriticalAppsIfNeeded(context, policies);
 		// Disable unnecessarily enabled apps
-		if (! Users.isOwner()) hideUnnecessaryAppsInManagedProfile(context);	// Users.isProfile() does not work before setProfileEnabled().
+		if (! Users.isParentProfile()) hideUnnecessaryAppsInManagedProfile(context);	// Users.isProfile() does not work before setProfileEnabled().
 
 		setupLauncherActivityInIsland(context);     // Must before setProfileEnabled() is invoked.
 
@@ -213,9 +213,9 @@ public class IslandProvisioning extends IntentService {
 		final LauncherApps apps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
 		if (apps == null) return false;
 		final ComponentName activity = Modules.getMainLaunchActivity(context);
-		if (apps.isActivityEnabled(activity, Users.owner)) {
+		if (apps.isActivityEnabled(activity, Users.getParentProfile())) {
 			Log.i(TAG, "Launching main activity in owner user..");
-			apps.startMainActivity(activity, Users.owner, null, null);
+			apps.startMainActivity(activity, Users.getParentProfile(), null, null);
 			return true;
 		}
 		Log.i(TAG, "Launching main activity in owner user...");
@@ -253,7 +253,7 @@ public class IslandProvisioning extends IntentService {
 
 	@OwnerUser @ProfileUser @WorkerThread public static void reprovisionManagedProfile(final Context context) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		final boolean owner = Users.isOwner();
+		final boolean owner = Users.isParentProfile();
 		if (! owner) {
 			// Always perform all the required provisioning steps covered by stock ManagedProvisioning, in case something is missing there.
 			// This is also required for manual provision via ADB shell.
@@ -266,7 +266,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	public static void startDeviceAndProfileOwnerSharedPostProvisioning(final Context context, final DevicePolicies policies) {
-		final boolean owner = Users.isOwner();
+		final boolean owner = Users.isParentProfile();
 		if (SDK_INT >= O) {
 			final Set<String> ids = Collections.singleton(AFFILIATION_ID);
 			final Set<String> current_ids = policies.invoke(DevicePolicyManager::getAffiliationIds);
@@ -314,7 +314,7 @@ public class IslandProvisioning extends IntentService {
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual and incremental provisioning. */
 	@WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
-		final boolean owner = Users.isOwner();
+		final boolean owner = Users.isParentProfile();
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
@@ -376,7 +376,7 @@ public class IslandProvisioning extends IntentService {
 		final Notification.Builder builder = new Notification.Builder(this)
 				.setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS).setUsesChronometer(true)
 				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getColor(R.color.accent))
-				.setContentTitle(getText(Users.isOwner() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
+				.setContentTitle(getText(Users.isParentProfile() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
 				.setContentText(getText(R.string.notification_provisioning_text));
 		return SDK_INT < O ? builder : builder.setBadgeIconType(BADGE_ICON_SMALL).setColorized(true);
 	});

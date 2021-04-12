@@ -89,7 +89,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	public interface Filter extends Predicate<IslandAppInfo> {
 		Filter Island = app -> app.shouldShowAsEnabled() && (app.isInstalled() || app.isPlaceHolder());
-		Filter Mainland = app -> Users.isOwner(app.user) && (app.isSystem() || app.isInstalled());	// Including uninstalled system app
+		Filter Mainland = app -> Users.isParentProfile(app.user) && (app.isSystem() || app.isInstalled());	// Including uninstalled system app
 	}
 
 	private Predicate<IslandAppInfo> activeFilters() {
@@ -137,7 +137,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (profile == null) return;
 		Log.d(TAG, "Profile: " + UserHandles.getIdentifier(profile));
 
-		final Filter profile_filter = Users.isOwner(profile) ? Filter.Mainland : Filter.Island;
+		final Filter profile_filter = Users.isParentProfile(profile) ? Filter.Mainland : Filter.Island;
 		Predicate<IslandAppInfo> filters = mFilterShared.and(profile_filter);
 		if (getFilterIncludeHiddenSystemApps().getValue() != Boolean.TRUE)
 			filters = filters.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
@@ -176,8 +176,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mFilterShared = IslandAppListProvider.excludeSelf(app);
 
 		final UserHandle user = savedState.get(Intent.EXTRA_USER);
-		setCurrentProfile(user != null && (Users.isOwner(user) || Users.isProfileManagedByIsland(user)) ? user
-				: Users.profile != null ? Users.profile : Users.owner);
+		setCurrentProfile(user != null && (Users.isParentProfile(user) || Users.isProfileManagedByIsland(user)) ? user
+				: Users.hasProfile() ? Users.profile : Users.getParentProfile());
 
 		final String filter_text = getQueryText().getValue();
 		if (! TextUtils.isEmpty(filter_text)) onQueryTextSubmit(filter_text);
@@ -208,7 +208,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			}
 		}
 		tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
-		setCurrentProfile(Users.owner);
+		setCurrentProfile(Users.getParentProfile());
 		updateAppList();
 		Analytics.log(TAG, "tab-mainland");
 	}
@@ -221,7 +221,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				.trace("system", app.isSystem()).trace("critical", app.isCritical());
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 		final boolean system = app.isSystem(), installed = app.isInstalled(), placeholder = app.isPlaceHolder(),
-				in_owner = Users.isOwner(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
+				in_owner = Users.isParentProfile(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
 		menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile());
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
@@ -306,15 +306,15 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (targets.isEmpty()) throw new IllegalStateException("No Island");
 		final String pkg = app.packageName;
 		if (targets.size() == 1) {     // Single Island, no need to show menu
-			final boolean from_mainland = Users.isOwner(app.user); final UserHandle profile;
+			final boolean from_mainland = Users.isParentProfile(app.user); final UserHandle profile;
 			if (from_mainland && ! mAppListProvider.isInstalled(pkg, profile = targets.keySet().iterator().next())) {
 				requestToCloneAppToProfile(context, app, profile);
-			} else if (! from_mainland && ! mAppListProvider.isInstalled(pkg, Users.owner)) {
+			} else if (! from_mainland && ! mAppListProvider.isInstalled(pkg, Users.getParentProfile())) {
 				requestToCloneAppToMainland(context, pkg);
 			} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_LONG).show();
 			return;
 		}
-		targets.put(Users.owner, context.getString(R.string.tab_mainland));
+		targets.put(Users.getParentProfile(), context.getString(R.string.tab_mainland));
 		final UserHandle[] profiles = targets.keySet().toArray(new UserHandle[0]);      // Including owner user
 		final String[] names = targets.values().toArray(new String[0]);
 

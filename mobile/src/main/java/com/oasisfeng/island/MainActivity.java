@@ -41,7 +41,7 @@ public class MainActivity extends FragmentActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (! Users.isOwner()) {
+		if (! Users.isParentProfile()) {
 			if (Users.isProfileManagedByIsland()) {    // Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
 				onCreateInProfile();
 				finish();
@@ -55,12 +55,12 @@ public class MainActivity extends FragmentActivity {
 			startMainUi(savedInstanceState);	// As device owner, always show main UI.
 			return;
 		}
-		final UserHandle profile = Users.profile;
-		if (profile == null) {					// Nothing setup yet
+		if (! Users.hasProfile()) {					// Nothing setup yet
 			Log.i(TAG, "Profile not setup yet");
 			startSetupWizard();
 			return;
 		}
+		final UserHandle profile = Users.profile;
 
 		if (! Users.isProfileManagedByIsland(profile)) {	// Profile without owner or not managed by us, probably caused by provision interruption before device-admin is activated.
 			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(this, profile);

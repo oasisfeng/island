@@ -31,7 +31,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 		// Tab "Discovery" and "Mainland" are always present
 		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery),/* selected = */false)
 		val currentProfile = currentProfile
-		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland),/* selected = */Users.owner == currentProfile)
+		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland),/* selected = */Users.isParentProfile(currentProfile))
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)

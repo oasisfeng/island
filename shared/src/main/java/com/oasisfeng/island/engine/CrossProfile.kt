@@ -16,7 +16,7 @@ object CrossProfile {
 	/** The target activity must declare [CATEGORY_PARENT_PROFILE] and [Intent.CATEGORY_DEFAULT] in its intent-filter */
 	@JvmStatic fun decorateIntentForActivityInParentProfile(context: Context, intent: Intent) {
 		require(intent.data == null) { "Intent with data is not supported yet" }
-		check(! Users.isOwner()) { "Must not be called in parent profile" }
+		check(! Users.isParentProfile()) { "Must not be called in parent profile" }
 		intent.addCategory(CATEGORY_PARENT_PROFILE)
 		val candidates = queryActivities(context, intent)
 		if (candidates.isEmpty()) throw ActivityNotFoundException("No matched activity for $intent")

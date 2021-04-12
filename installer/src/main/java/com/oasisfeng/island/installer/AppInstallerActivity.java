@@ -282,7 +282,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		Analytics.$().event("installer_fallback").with(LOCATION, intent.getDataString()).with(ITEM_CATEGORY, reason).with(CONTENT, e != null ? e.toString() : null).send();
 		for (final String category : Optional.ofNullable(intent.getCategories()).orElse(Collections.emptySet())) intent.removeCategory(category);
 
-		if (SDK_INT >= O && ! Users.isOwner() && SCHEME_PACKAGE.equals(intent.getScheme())) {	// Scheme "package" is no go in managed profile since Android O.
+		if (SDK_INT >= O && ! Users.isParentProfile() && SCHEME_PACKAGE.equals(intent.getScheme())) {	// Scheme "package" is no go in managed profile since Android O.
 			final String pkg = requireNonNull(intent.getData()).getSchemeSpecificPart();
 			ApplicationInfo info = Apps.of(this).getAppInfo(pkg);
 			if (info == null) info = intent.getParcelableExtra(InstallerExtras.EXTRA_APP_INFO);

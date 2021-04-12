@@ -51,7 +51,7 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 		final StringBuilder appendixes = new StringBuilder();
 		if (isSystem()) appendixes.append(", ").append(context.getString(R.string.status_appendix_system));
 		if (app.isCritical()) appendixes.append(", ").append(context.getString(R.string.status_appendix_critical));
-		if (Users.isOwner(app.user)) {
+		if (Users.isParentProfile(app.user)) {
 			if (! exclusive) appendixes.append(", ").append(context.getString(R.string.status_appendix_cloned));
 		} else if (exclusive) appendixes.append(", ").append(context.getString(R.string.status_appendix_exclusive));
 		if (BuildConfig.DEBUG && app.isSuspended()) appendixes.append(", suspended");     // TODO

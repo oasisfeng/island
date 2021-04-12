@@ -87,8 +87,8 @@ public class SetupViewModel implements Parcelable {
 			return buildErrorVM(R.string.setup_error_missing_managed_provisioning, reason("lack_managed_provisioning"));
 
 		// Check for incomplete provisioning, before DPM.isProvisioningAllowed() check which returns true in this case.
-		if (Users.profile == null) for (final int profile_id : IslandManager.getProfileIdsIncludingDisabled(context)) {
-			if (Users.isOwner(profile_id)) continue;
+		if (! Users.hasProfile()) for (final int profile_id : IslandManager.getProfileIdsIncludingDisabled(context)) {
+			if (Users.isParentProfile(profile_id)) continue;
 			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(context, UserHandles.of(profile_id));
 			if (owner == null || ! owner.isPresent()) continue;
 			final ComponentName profile_owner = owner.get();

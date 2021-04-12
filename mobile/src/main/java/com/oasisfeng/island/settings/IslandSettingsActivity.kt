@@ -67,7 +67,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
         if (SDK_INT !in P..Q) removeAppOpsRelated()     // Both Mainland and Island
 
-        if (Users.isOwner() && ! isProfileOrDeviceOwner) {
+        if (Users.isParentProfile() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_cross_profile) { remove(this) }
             setup<Preference>(R.string.key_device_owner_setup) {
                 summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_features)
@@ -105,21 +105,21 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                         .setPositiveButton(R.string.prompt_manage_cross_profile_apps_footer, null)
                         .show().apply { getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false } }}
 
-        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && !Users.isOwner(), NotificationIds.IslandWatcher)
+        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isParentProfile(), NotificationIds.IslandWatcher)
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
 
         setup<Preference>(R.string.key_reprovision) {
-            if (Users.isOwner() && ! isProfileOrDeviceOwner) return@setup remove(this)
+            if (Users.isParentProfile() && ! isProfileOrDeviceOwner) return@setup remove(this)
             setOnPreferenceClickListener { true.also { @SuppressLint("InlinedApi")
                 val action = if (policies.isActiveDeviceOwner) ACTION_PROVISION_MANAGED_DEVICE else ACTION_PROVISION_MANAGED_PROFILE
                 ContextCompat.startForegroundService(activity, Intent(action).setPackage(Modules.MODULE_ENGINE)) }}}
         setup<Preference>(R.string.key_destroy) {
-            if (Users.isOwner()) {
+            if (Users.isParentProfile()) {
                 if (! isProfileOrDeviceOwner) return@setup remove(this)
                 setTitle(R.string.pref_rescind_title)
                 summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_device_owner_features) + "\n" }
             setOnPreferenceClickListener { true.also {
-                if (Users.isOwner()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
+                if (Users.isParentProfile()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}
     }
 
@@ -185,7 +185,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (! Users.isOwner()) {
+        if (! Users.isParentProfile()) {
             inflater.inflate(R.menu.pref_island_actions, menu)
             menu.findItem(R.id.menu_rename)?.isVisible = Users.getProfilesManagedByIsland().size > 1
             if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).isVisible = true }
@@ -215,7 +215,7 @@ class IslandSettingsActivity: CallerAwareActivity() {
 
         override fun onReceive(context: Context, intent: Intent) {      // ACTION_LOCKED_BOOT_COMPLETED is unnecessary for activity
             if (intent.action != ACTION_BOOT_COMPLETED && intent.action != ACTION_MY_PACKAGE_REPLACED) return
-            if (Users.isOwner()) return     // Should never happen
+            if (Users.isParentProfile()) return     // Should never happen
             if (! DevicePolicies(context).isProfileOwner) return        // Profile managed by other app
 
             Log.i(TAG, "Enabling ${IslandSettingsActivity::class.java.simpleName}")

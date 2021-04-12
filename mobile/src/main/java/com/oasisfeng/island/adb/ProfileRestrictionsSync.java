@@ -26,13 +26,13 @@ public class ProfileRestrictionsSync extends BroadcastReceiver {
 		final String action = intent.getAction();
 		if (! Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action) && ! Intent.ACTION_BOOT_COMPLETED.equals(action)) return;
 		final DevicePolicies policies = new DevicePolicies(context);
-		if (Users.isOwner() || ! policies.isProfileOwner()) {	// This receiver is not needed in owner user or profile not managed by Island.
+		if (Users.isParentProfile() || ! policies.isProfileOwner()) {	// This receiver is not needed in owner user or profile not managed by Island.
 			context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, getClass()),
 					PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
 			return;
 		}
 		final UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
-		final Bundle owner_restrictions = um.getUserRestrictions(Users.owner);
+		final Bundle owner_restrictions = um.getUserRestrictions(Users.getParentProfile());
 		final Bundle profile_restrictions = policies.invoke(DevicePolicyManager::getUserRestrictions);
 		final boolean enabled_in_owner = owner_restrictions.getBoolean(DISALLOW_DEBUGGING_FEATURES);
 		if (profile_restrictions.getBoolean(DISALLOW_DEBUGGING_FEATURES) != enabled_in_owner) {

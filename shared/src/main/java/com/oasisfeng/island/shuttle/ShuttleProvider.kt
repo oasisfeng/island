@@ -56,12 +56,12 @@ class ShuttleProvider: ContentProvider() {
 	}
 
 	private fun initialize() {
-		if (Users.isOwner())
+		if (Users.isParentProfile())
 			return Users.getProfilesManagedByIsland().forEach {
 				if (isReady(context, it)) Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
 				else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
 
-		if (isReady(context, Users.owner)) Log.d(TAG, "Shuttle to parent profile: ready")
+		if (isReady(context, Users.getParentProfile())) Log.d(TAG, "Shuttle to parent profile: ready")
 		else Log.i(TAG, "Shuttle to parent profile: not ready")
 
 		initializeInIsland()

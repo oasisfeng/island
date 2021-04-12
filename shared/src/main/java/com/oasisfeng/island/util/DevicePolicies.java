@@ -177,7 +177,7 @@ public class DevicePolicies {
 	}
 
 	public boolean isProfileOrDeviceOwnerOnCallingUser() {
-		return isProfileOwner() || Users.isOwner() && isActiveDeviceOwner();
+		return isProfileOwner() || Users.isParentProfile() && isActiveDeviceOwner();
 	}
 
 	public DevicePolicies(final Context context) {

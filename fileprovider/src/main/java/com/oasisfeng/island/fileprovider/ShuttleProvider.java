@@ -14,13 +14,13 @@ import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-import com.oasisfeng.island.util.Users;
-
-import java.io.FileNotFoundException;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+
+import com.oasisfeng.island.util.Users;
+
+import java.io.FileNotFoundException;
 
 import static android.os.Build.VERSION_CODES.O;
 
@@ -37,7 +37,7 @@ public class ShuttleProvider extends ContentProvider {
 		mShuttleAuthority = info.authority;
 		final String host = info.authority.substring(0, info.authority.lastIndexOf(".shuttle"));	// Authority without trailing ".shuttle"
 		Users.refreshUsers(context);	// Users may not be ready at this point, due to the parallel nature of provider initialization.
-		mTargetAuthority = Users.toId(Users.isOwner() && Users.profile != null ? Users.profile : Users.owner) + "@" + host;		// Add user ID.
+		mTargetAuthority = Users.toId(Users.isParentProfile() && Users.hasProfile() ? Users.profile : Users.getParentProfile()) + "@" + host;		// Add user ID.
 		Log.d(TAG, "Target authority: " + mTargetAuthority);
 		super.attachInfo(context, info);
 	}

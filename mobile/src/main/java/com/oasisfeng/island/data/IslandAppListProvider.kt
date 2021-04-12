@@ -32,7 +32,7 @@ import kotlin.streams.asSequence
 class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 
 	operator fun get(pkg: String, profile: UserHandle): IslandAppInfo? {
-		return if (Users.isOwner(profile)) super.get(pkg) else loadAppsInProfileIfNotYet(profile)[pkg]
+		return if (Users.isParentProfile(profile)) super.get(pkg) else loadAppsInProfileIfNotYet(profile)[pkg]
 	}
 
 	fun addPlaceholder(pkg: String, profile: UserHandle) {
@@ -57,8 +57,8 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	fun isInstalled(pkg: String, profile: UserHandle) = get(pkg, profile)?.run { installed && shouldShowAsEnabled() } == true
 
 	fun isExclusive(app: IslandAppInfo): Boolean {
-		if (Users.isOwner(app.user) && ! Users.hasProfile()) return true
-		return Users.getProfilesManagedByIsland().asSequence().plus(Users.owner).minus(app.user).all { profile ->
+		if (Users.isParentProfile(app.user) && ! Users.hasProfile()) return true
+		return Users.getProfilesManagedByIsland().asSequence().plus(Users.getParentProfile()).minus(app.user).all { profile ->
 			! isInstalled(app.packageName, profile) }
 	}
 
@@ -79,7 +79,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	}
 
 	fun installedApps(profile: UserHandle): Stream<IslandAppInfo> {
-		return if (Users.isOwner(profile)) installedAppsInOwnerUser() else loadAppsInProfileIfNotYet(profile).values.stream()
+		return if (Users.isParentProfile(profile)) installedAppsInOwnerUser() else loadAppsInProfileIfNotYet(profile).values.stream()
 	}
 
 	private fun loadAppsInProfileIfNotYet(profile: UserHandle): Map<String, IslandAppInfo>

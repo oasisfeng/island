@@ -176,7 +176,7 @@ public class IslandSetup {
 	}
 
 	@ProfileUser public static void requestProfileRemoval(final Activity activity) {
-		if (Users.isOwner()) throw new IllegalStateException("Must be called in managed profile");
+		if (Users.isParentProfile()) throw new IllegalStateException("Must be called in managed profile");
 		if (! new DevicePolicies(activity).isProfileOwner()) {
 			showPromptForProfileManualRemoval(activity);
 			return;
@@ -203,7 +203,7 @@ public class IslandSetup {
 	}
 
 	@ProfileUser private static void destroyProfile(final Activity activity) {
-		if (Users.isOwner()) throw new IllegalStateException("Must be called in managed profile.");
+		if (Users.isParentProfile()) throw new IllegalStateException("Must be called in managed profile.");
 		final DevicePolicies policies = new DevicePolicies(activity);
 		try {
 			policies.execute(DevicePolicyManager::clearCrossProfileIntentFilters);

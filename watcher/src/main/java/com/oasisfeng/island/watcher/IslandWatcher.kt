@@ -49,7 +49,7 @@ import kotlin.coroutines.suspendCoroutine
 		if (SDK_INT < P || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
 						NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED,
 						NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)) return
-		if (Users.isOwner()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
+		if (Users.isParentProfile()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
 				COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 		if (SDK_INT < O || ! DevicePolicies(context).isProfileOwner) return
 		if (SDK_INT < Q && ! context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()) return
@@ -82,11 +82,11 @@ import kotlin.coroutines.suspendCoroutine
 			if (intent?.action == Intent.ACTION_REBOOT) {
 				DevicePolicies(this).manager.lockNow(DevicePolicyManager.FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY) }
 			else if (SDK_INT >= Q) {
-				if (Users.isOwner()) {
+				if (Users.isParentProfile()) {
 					intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)?.also { profile ->
 						GlobalScope.launch { requestQuietModeApi29(this@IslandDeactivationService, profile) }
 						return START_STICKY }}   // Still ongoing
-				else Shuttle(this, to = Users.owner).launch(with = Users.current()) {
+				else Shuttle(this, to = Users.getParentProfile()).launch(with = Users.current()) {
 					startService(Intent(this, IslandDeactivationService::class.java).putExtra(Intent.EXTRA_USER, it)) }}
 			else requestQuietMode(Users.current())
 			stopSelf()
@@ -157,7 +157,7 @@ import kotlin.coroutines.suspendCoroutine
 	class DummyHomeActivity : Activity() {
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
-			if (Users.isOwner()) packageManager.setComponentEnabledSetting( // In case of unexpected interruption
+			if (Users.isParentProfile()) packageManager.setComponentEnabledSetting( // In case of unexpected interruption
 					ComponentName(this, javaClass), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 			startActivity(Intent(Intent.ACTION_MAIN).addCategory(CATEGORY_HOME))
 			finish()

@@ -65,7 +65,7 @@ public class IslandAppInfo extends AppInfo {
 			() -> checkLaunchable(Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | MATCH_DISABLED_COMPONENTS), 1, SECONDS);
 
 	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
-		if (! Users.isOwner(user) && ! isHidden()) {		// Accurate detection for non-frozen app in Island
+		if (! Users.isParentProfile(user) && ! isHidden()) {		// Accurate detection for non-frozen app in Island
 			if (sLaunchableNonFrozenIslandAppsCache != null) return sLaunchableNonFrozenIslandAppsCache.contains(packageName);
 			try { return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty(); }
 			catch (final SecurityException e) { return false; } // "SecurityException: Cannot retrieve activities for unrelated profile NNN" appeared on OPPO A3s and Vivo 1718 (both Android 8.1).
@@ -75,7 +75,7 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	public static void cacheLaunchableApps(final Context context) {
-		if (Users.profile != null) sLaunchableNonFrozenIslandAppsCache = requireNonNull((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
+		if (Users.hasProfile()) sLaunchableNonFrozenIslandAppsCache = requireNonNull((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
 				.getActivityList(null, Users.profile).stream().map(lai -> lai.getComponentName().getPackageName()).collect(toSet());
 		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager().queryIntentActivities(
 				new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | MATCH_DISABLED_COMPONENTS);
@@ -96,7 +96,7 @@ public class IslandAppInfo extends AppInfo {
 
 	@Override public StringBuilder buildToString(final Class<?> clazz) {
 		final StringBuilder builder = super.buildToString(clazz).append(", user ").append(Users.toId(user));
-		if (isHidden()) builder.append(! Users.isOwner(user) && shouldTreatHiddenSysAppAsDisabled() ? ", hidden (as disabled)" : ", hidden");
+		if (isHidden()) builder.append(! Users.isParentProfile(user) && shouldTreatHiddenSysAppAsDisabled() ? ", hidden (as disabled)" : ", hidden");
 		return builder;
 	}
 
