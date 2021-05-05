@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string translatable="false" name="setting_dynamic_shortcut_label">dynamic_shortcut_label</string>
+    <string translatable="false" name="setting_app_settings_helper">app_settings_helper</string>
+    <string translatable="false" name="setting_app_settings_helper_extended">app_settings_helper_extended</string>
 </resources>

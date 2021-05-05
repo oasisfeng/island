@@ -32,4 +32,21 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/pref_cat_app_settings_helper">
+
+        <SwitchPreference
+            android:key="@string/setting_app_settings_helper"
+            android:title="@string/pref_app_settings_title"
+            android:summary="@string/pref_app_settings_summary" />
+
+        <CheckBoxPreference
+            android:key="@string/setting_app_settings_helper_extended"
+            android:dependency="@string/setting_app_settings_helper"
+            android:title="@string/pref_app_settings_extended_title"
+            android:summary="@string/pref_app_settings_extended_summary"
+            android:persistent="false"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

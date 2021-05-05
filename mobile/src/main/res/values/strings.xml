@@ -143,6 +143,11 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_dynamic_shortcut_label_title">Dynamic shortcut label</string>
     <string name="pref_dynamic_shortcut_label_summary">Add prefix to shortcut label when app is frozen, and remove the prefix when app is unfrozen.\n(May not work on some launchers)</string>
     <string name="prompt_updating_shortcuts">Updating shortcuts…</string>
+    <string name="pref_cat_app_settings_helper">App settings helper</string>
+    <string name="pref_app_settings_title">Pop-up notification</string>
+    <string name="pref_app_settings_summary">When an app is force-stopped in system App Info UI, show a transient pop-up notification for convenient opening app-specific settings in app management tools.</string>
+    <string name="pref_app_settings_extended_title">Include apps installed by Island</string>
+    <string name="pref_app_settings_extended_summary">Show app settings helper even for apps installed by Island. (Useful if no "App details" entry in system App Info UI.)</string>
 
     <string name="pref_show_admin_message_title">Extra info in \"Action not allowed\" dialog</string>
     <string name="pref_show_admin_message_summary">Show Island-specific extra information in the \"Action not allowed\" system dialog.</string>

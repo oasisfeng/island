@@ -44,7 +44,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".AppSettingsHelperService" android:exported="false" android:label="App Settings Helper">
+        <service android:name=".AppSettingsHelperService" android:exported="false">
+            <meta-data android:name="key" android:value="@string/setting_app_settings_helper" />
             <intent-filter>
                 <action android:name="com.oasisfeng.island.PersistentService" />
             </intent-filter>

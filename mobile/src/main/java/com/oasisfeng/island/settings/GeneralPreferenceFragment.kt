@@ -70,6 +70,9 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
                                 val cm = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                                 cm?.setPrimaryClip(ClipData.newPlainText(null, cmd))
                             }.show() }}}}
+
+        setupSetting(settings.AppSettingsHelper())
+        setupSetting(settings.AppSettingsHelperExtended())
     }
 
     private fun setupSetting(setting: BooleanSetting, visible: Boolean = true, onChange: (Preference.() -> Boolean)? = null)

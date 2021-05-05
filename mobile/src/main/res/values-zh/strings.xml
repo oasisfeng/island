@@ -139,6 +139,11 @@
     <string name="pref_dynamic_shortcut_label_title">动态快捷方式</string>
     <string name="pref_dynamic_shortcut_label_summary">在应用冻结时为应用启动快捷方式添加前缀，在应用解冻时去掉前缀。\n(某些启动器可能不支持)</string>
     <string name="prompt_updating_shortcuts">正在更新现有快捷方式…</string>
+    <string name="pref_cat_app_settings_helper">应用设置助手</string>
+    <string name="pref_app_settings_title">弹出式通知</string>
+    <string name="pref_app_settings_summary">在系统的应用设置界面中“强制停止”一个应用后，短暂显示一个弹出式通知，方便快捷打开应用管理类工具中针对该应用的设置。</string>
+    <string name="pref_app_settings_extended_title">包括通过“炼妖壶”安装的应用</string>
+    <string name="pref_app_settings_extended_summary">即使对“炼妖壶”安装的应用，也显示“应用设置助手”。（方便应用设置界面中没有“应用详情”项的手机系统）</string>
 
     <string name="pref_show_admin_message_title">在操作限制界面中显示提示信息</string>
     <string name="pref_show_admin_message_summary">在系统弹出的“不允许执行此操作”对话框中显示针对性的提示信息。</string>
