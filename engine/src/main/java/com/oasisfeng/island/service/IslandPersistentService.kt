@@ -11,6 +11,7 @@ import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.Q
 import android.os.IBinder
 import android.os.Looper
+import android.os.MessageQueue
 import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -26,7 +27,7 @@ import com.oasisfeng.island.util.toId
 
     override fun onCreate() {
         Log.d(TAG, "Initializing persistent services...")
-        Looper.getMainLooper().queue.addIdleHandler { false.also { bindPersistentServices() }}
+        Looper.getMainLooper().queue.addIdleHandler(mInitializer)
     }
 
     private fun bindPersistentServices(pkg: String? = null) {
@@ -48,6 +49,7 @@ import com.oasisfeng.island.util.toId
     }
 
     override fun onDestroy() {
+        Looper.getMainLooper().queue.removeIdleHandler(mInitializer)
         mConnections.forEach {
             try { unbindService(it) }
             catch (e: RuntimeException) { Log.e(TAG, "Error disconnecting ${it.mComponent}", e) }}
@@ -56,6 +58,7 @@ import com.oasisfeng.island.util.toId
     override fun unbindService(conn: ServiceConnection) = super.unbindService(conn).also {
         if (conn is PersistentServiceConnection) Log.i(TAG, "Stopping persistence service: ${conn.mComponent.flattenToShortString()}") }
 
+    private val mInitializer = MessageQueue.IdleHandler { false.also { bindPersistentServices() } }
     private val mConnections = ArrayList<PersistentServiceConnection>()
 
     private inner class PersistentServiceConnection(val mComponent: ComponentName) : ServiceConnection {
