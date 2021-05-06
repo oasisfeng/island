@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import kotlin.Unit;
 
@@ -135,30 +136,39 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			final InputStream input = getContentResolver().openInputStream(data);
 			if (input != null) ApkAnalyzer.analyzeAsync(this, input, info -> {
 				if (info != null) {
-					final ApplicationInfo app = info.applicationInfo; final String appId = info.packageName;
-					install.setAppId(appId);
-					install.setVersionName(info.versionName);
-					install.setAppLabel(app.loadLabel(getPackageManager())); // loadLabel() is overridden in ApplicationInfoEx
-					install.setTargetSdkVersion(app.targetSdkVersion);
-					install.setRequestedLegacyExternalStorage(AppInstallerUtils.hasRequestedLegacyExternalStorage(app));
+					final String appId = info.packageName;
 					if (info.splitNames != null) {
-						install.setMode(INHERIT);
-						install.setDetails(info.splitNames[0]);
-						AppInstallationNotifier.cancel(this, mSessionId);   // Cancel the notification of previous session
+						mInstallInfo.setMode(INHERIT);
+						mInstallInfo.setDetails(info.splitNames[0]);
+						mSessionId.thenAccept(id -> AppInstallationNotifier.cancel(this, id));  // Cancel the notification of previous session
 
 						performInstall(data, appId);
+
+						return Unit.INSTANCE;
 					} else try {
 						final ApplicationInfo current = getPackageManager().getApplicationInfo(appId, MATCH_UNINSTALLED_PACKAGES);
-						install.setMode((current.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? UPDATE : INSTALL);
+						mInstallInfo.setMode((current.flags & ApplicationInfo.FLAG_INSTALLED) != 0 ? UPDATE : INSTALL);
 					} catch (final PackageManager.NameNotFoundException ignored) {}
+
+					final ApplicationInfo app = info.applicationInfo;
+					mInstallInfo.setAppId(appId);
+					mInstallInfo.setVersionName(info.versionName);
+					mInstallInfo.setAppLabel(app.loadLabel(getPackageManager())); // loadLabel() is overridden in ApplicationInfoEx
+					mInstallInfo.setTargetSdkVersion(app.targetSdkVersion);
+					mInstallInfo.setRequestedLegacyExternalStorage(AppInstallerUtils.hasRequestedLegacyExternalStorage(app));
 				}
 
-				install.setDetails(AppInstallationNotifier.onPackageInfoReady(this, mSessionId,
-						install, Apps.of(this).getPackageInfo(install.getAppId(), MATCH_UNINSTALLED_PACKAGES)));
+				mSessionId.thenAccept(sessionId -> {
+					final CharSequence details = AppInstallationNotifier.onPackageInfoReady(this, sessionId,
+							mInstallInfo, Apps.of(this).getPackageInfo(install.getAppId(), MATCH_UNINSTALLED_PACKAGES));
+					mInstallInfo.setDetails(details);
 
-				AppInstallerStatusReceiver.createCallback(this, install, mSessionId);  // Sync AppInstallInfo by updating PendingIntent
+					AppInstallerStatusReceiver.createCallback(this, install, sessionId);  // Sync AppInstallInfo by updating PendingIntent
 
-				getPackageManager().getPackageInstaller().updateSessionAppLabel(mSessionId, install.getAppLabel());
+					try {
+						getPackageManager().getPackageInstaller().updateSessionAppLabel(sessionId, mInstallInfo.getAppLabel());
+					} catch (final SecurityException ignored) {}    // May throw "SecurityException: Caller has no access to session 0."
+				});
 				return Unit.INSTANCE;
 			});
 		} catch (final IOException e) { Log.w(TAG, "Error opening " + data, e); }
@@ -246,10 +256,13 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		final SessionParams params = new SessionParams(base_pkg == null ? MODE_FULL_INSTALL : MODE_INHERIT_EXISTING);
 		if (mInstallInfo.getAppId() != null) params.setAppPackageName(mInstallInfo.getAppId());
 		if (mInstallInfo.getAppLabel() != null) params.setAppLabel(mInstallInfo.getAppLabel());
-		if (mInstallInfo.getCallerUid() != Process.INVALID_UID) params.setOriginatingUid(mInstallInfo.getCallerUid());
+		if (mInstallInfo.getCallerUid() != INVALID_UID) params.setOriginatingUid(mInstallInfo.getCallerUid());
 		if (SDK_INT >= O) params.setInstallReason(PackageManager.INSTALL_REASON_USER);
+		final int session_id;
 		try {
-			mSession = installer.openSession(mSessionId = installer.createSession(params));
+			session_id = installer.createSession(params);
+			mSession = installer.openSession(session_id);
+			mSessionId.complete(session_id);
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet())
 				try (final OutputStream out = mSession.openWrite(entry.getKey(), 0, - 1)) {
 					final byte[] buffer = new byte[STREAM_BUFFER_SIZE];
@@ -266,12 +279,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			for (final Map.Entry<String, InputStream> entry : input_streams.entrySet()) IoUtils.closeQuietly(entry.getValue());
 		}
 
-		final PendingIntent callback = AppInstallerStatusReceiver.createCallback(this, mInstallInfo, mSessionId);
+		final PendingIntent callback = AppInstallerStatusReceiver.createCallback(this, mInstallInfo, session_id);
 		mSession.commit(callback.getIntentSender());
 		mSession.close();
 		mSession = null;        // Otherwise it will be abandoned in onDestroy().
 
-		AppInstallationNotifier.onInstallStart(this, mSessionId, mInstallInfo);
+		AppInstallationNotifier.onInstallStart(this, session_id, mInstallInfo);
 		if (getIntent().getBooleanExtra(Intent.EXTRA_RETURN_RESULT, false)) setResult(Activity.RESULT_OK);
 
 		new Handler().postDelayed(this::finish, 500);   // A slight delay to keep in foreground, for activity launch of STATUS_PENDING_USER_ACTION.
@@ -374,7 +387,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 
 	private AppInstallInfo mInstallInfo;
 	private PackageInstaller.Session mSession;
-	private int mSessionId;
+	private final CompletableFuture<Integer> mSessionId = new CompletableFuture<>();
 
 	private static final String TAG = "Island.AIA";
 }
