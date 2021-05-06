@@ -60,7 +60,7 @@ class AppSettingsHelperService: Service() {
 
 		val uptimeMillis = SystemClock.uptimeMillis()
 		if (intent.action == Intent.ACTION_PACKAGE_RESTARTED) {     // If triggered by system Settings, it will be followed by ACTION_QUERY_PACKAGE_RESTART immediately.
-			return Unit.also { Shuttle(context, to = Users.getParentProfile()).launch {
+			return Unit.also { Shuttle(context, to = Users.getParentProfile()).launchNoThrows {     // Shuttle may not be ready as persistent service is started early
 				try { onPackageRestarted(pkg, uid, uptimeMillis) }
 				catch (e: RuntimeException) { analytics().logAndReport(TAG, "Error transferring ACTION_PACKAGE_RESTARTED to parent user", e) }}}}
 
