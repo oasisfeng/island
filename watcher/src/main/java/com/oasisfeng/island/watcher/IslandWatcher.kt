@@ -60,8 +60,10 @@ import kotlin.coroutines.suspendCoroutine
 				.setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
 				.setContentTitle(context.getText(R.string.notification_island_watcher_title))
 				.setContentText(context.getText(R.string.notification_island_watcher_text))
-				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_deactivate_island), PendingIntent.getService(context, 0,
-						Intent(context, IslandDeactivationService::class.java), FLAG_UPDATE_CURRENT)).build())
+				.apply {
+					if (Shuttle(context, to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner })
+						addAction(Notification.Action.Builder(null, context.getText(R.string.action_deactivate_island), PendingIntent.getService(context, 0,
+							Intent(context, IslandDeactivationService::class.java), FLAG_UPDATE_CURRENT)).build()) }
 				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_restart_island), PendingIntent.getService(context, 0,
 						Intent(context, IslandDeactivationService::class.java).setAction(Intent.ACTION_REBOOT), FLAG_UPDATE_CURRENT)).build())
 				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
