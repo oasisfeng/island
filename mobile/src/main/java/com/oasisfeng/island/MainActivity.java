@@ -21,7 +21,6 @@ import com.oasisfeng.android.os.Loopers;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.analytics.Analytics.Property;
 import com.oasisfeng.island.console.apps.AppListFragment;
-import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
 import com.oasisfeng.island.setup.SetupActivity;
@@ -62,37 +61,23 @@ public class MainActivity extends FragmentActivity {
 		}
 		final UserHandle profile = Users.profile;
 
-		if (! Users.isProfileManagedByIsland(profile)) {	// Profile without owner or not managed by us, probably caused by provision interruption before device-admin is activated.
-			final Optional<ComponentName> owner = DevicePolicies.getProfileOwnerAsUser(this, profile);
-			if (owner == null) {
-				Log.w(TAG, "Cannot detect profile owner");
-				startMainUi(savedInstanceState);
-			} else if (! owner.isPresent()) {
-				Log.w(TAG, "Profile without owner");
-				if (IslandManager.launchApp(this, getPackageName(), profile)) finish();	// Try starting Island in profile to finish the provisioning.
-				else startSetupWizard();		// Cannot resume the provisioning, probably this profile is not created by us, go ahead with normal setup.
-			} else {			// Profile is not owned by us, show setup wizard.
+		final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
+		final List<LauncherActivityInfo> our_activities_in_launcher;
+		if (launcher_apps != null && ! (our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile)).isEmpty()
+				&& our_activities_in_launcher.get(0).getComponentName().getClassName().equals(MainActivity.class.getName())) {
+			// Main activity is left enabled, probably due to pending post-provisioning in manual setup. Some domestic ROMs may block implicit broadcast, causing ACTION_USER_INITIALIZE being dropped.
+			Analytics.$().event("profile_provision_leftover").send();
+			Log.w(TAG, "Setup in Island is not complete, continue it now.");
+			try {
+				launcher_apps.startMainActivity(our_activities_in_launcher.get(0).getComponentName(), profile, null, null);
+			} catch (final RuntimeException e) {
+				Analytics.$().logAndReport(TAG, "Error starting self in profile " + Users.toId(profile), e);
 				startSetupWizard();
 			}
-		} else {
-			final LauncherApps launcher_apps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
-			final List<LauncherActivityInfo> our_activities_in_launcher;
-			if (launcher_apps != null && ! (our_activities_in_launcher = launcher_apps.getActivityList(getPackageName(), profile)).isEmpty()
-					&& our_activities_in_launcher.get(0).getComponentName().getClassName().equals(MainActivity.class.getName())) {
-				// Main activity is left enabled, probably due to pending post-provisioning in manual setup. Some domestic ROMs may block implicit broadcast, causing ACTION_USER_INITIALIZE being dropped.
-				Analytics.$().event("profile_provision_leftover").send();
-				Log.w(TAG, "Setup in Island is not complete, continue it now.");
-				try {
-					launcher_apps.startMainActivity(our_activities_in_launcher.get(0).getComponentName(), profile, null, null);
-				} catch (final RuntimeException e) {
-					Analytics.$().logAndReport(TAG, "Error starting self in profile " + Users.toId(profile), e);
-					startSetupWizard();
-				}
-				finish();
-				return;
-			}
-			startMainUi(savedInstanceState);
+			finish();
+			return;
 		}
+		startMainUi(savedInstanceState);
 	}
 
 	private void onCreateInProfile() {
