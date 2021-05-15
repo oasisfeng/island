@@ -42,7 +42,7 @@ public class ShuttleProvider extends ContentProvider {
 		super.attachInfo(context, info);
 	}
 
-	@Override public boolean onCreate() { //noinspection ConstantConditions
+	@Override public boolean onCreate() {
 		mResolver = getContext().getContentResolver();
 		return true;
 	}

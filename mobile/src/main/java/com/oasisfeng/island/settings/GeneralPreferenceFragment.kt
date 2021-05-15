@@ -37,16 +37,16 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val settings = IslandSettings(activity)
+        val context = activity; val settings = IslandSettings(context)
 
         if (SDK_INT >= O) setup<Preference>(R.string.key_launch_shortcut_prefix) { remove(this) }
 
         setupSetting(settings.DynamicShortcutLabel(), visible = SDK_INT >= O, onChange = @RequiresApi(O) { true.also {
-            Toast.makeText(activity, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
-            Handler().post { IslandAppShortcut.updateAllPinned(activity) }}})
+            Toast.makeText(context, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
+            Handler().post { IslandAppShortcut.updateAllPinned(context) }}})
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
-            val policies by lazy { DevicePolicies(activity) }
+            val policies by lazy { DevicePolicies(context) }
             if (! policies.isProfileOrDeviceOwnerOnCallingUser) return@setup remove(this)
 
             isChecked = policies.invoke(DPM::getShortSupportMessage) != null
@@ -56,7 +56,7 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
 
         setup<TwoStatePreference>(R.string.key_preserve_app_ops) {
             if (SDK_INT < P) return@setup remove(this)
-            if (Permissions.has(activity, GET_APP_OPS_STATS)) lock(true)
+            if (Permissions.has(context, GET_APP_OPS_STATS)) lock(true)
             else onChange { enabled -> false/* never toggle instantly */.also {
                 if (! enabled || refreshActivationStateForPreserveAppOps()) return@also
                 CoroutineScope(Dispatchers.Main).launch {
@@ -64,10 +64,10 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
                     launch(Dispatchers.IO) { Shell.SU.run(cmd) }.join()
 
                     if (refreshActivationStateForPreserveAppOps()) return@launch
-                    Dialogs.buildAlert(activity, null, getString(R.string.prompt_adb_app_ops_command) + "\n\n" + cmd)
+                    Dialogs.buildAlert(context, null, getString(R.string.prompt_adb_app_ops_command) + "\n\n" + cmd)
                             .withOkButton { refreshActivationStateForPreserveAppOps() }
                             .setNeutralButton(R.string.action_copy) { _,_ ->
-                                val cm = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                val cm = context?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                                 cm?.setPrimaryClip(ClipData.newPlainText(null, cmd))
                             }.show() }}}}
 

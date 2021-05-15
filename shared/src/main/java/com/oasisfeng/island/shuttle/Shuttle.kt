@@ -7,11 +7,12 @@ import com.oasisfeng.island.util.Users
 class Shuttle(val context: Context, val to: UserHandle) {
 
 	/** @return Job if launched in coroutine, otherwise null. */
-	fun launch(function: Context.() -> Unit) = if (to == Users.current()) { function(context) } else shuttle(function)
+	fun launch(function: Context.() -> Unit) =
+			if (to == Users.current()) { function(context) } else shuttle(function)
 	fun launchNoThrows(function: Context.() -> Unit) =
 			if (to == Users.current()) { function(context); true } else shuttleNoThrows(function)
-	fun <R> invoke(function: Context.() -> R)
-			= if (to == Users.current()) context.function() else shuttle(function)
+	fun <R> invoke(function: Context.() -> R) =
+			if (to == Users.current()) context.function() else shuttle(function)
 
 	/* Helpers to avoid redundant local variables. ("inline" is used to ensure only "Context.() -> R" function is shuttled) */
 	inline fun <A> launch(with: A, crossinline function: Context.(A) -> Unit) { launch { function(with) }}

@@ -69,6 +69,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Process.INVALID_UID;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
@@ -126,7 +127,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		}
 
 		@SuppressLint("InlinedApi") final AppInstallInfo install = this.mInstallInfo
-				= new AppInstallInfo(getApplicationContext(), caller, callerInfo != null ? callerInfo.uid : Process.INVALID_UID);
+				= new AppInstallInfo(getApplicationContext(), caller, callerInfo != null ? callerInfo.uid : INVALID_UID);
 		if (SCHEME_PACKAGE.equals(data.getScheme())) {
 			final String cloningAppId = data.getSchemeSpecificPart();
 			install.setMode(CLONE);

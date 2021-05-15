@@ -42,11 +42,8 @@ interface Analytics {
 	enum class Property(val key: String) {
 		DeviceOwner("device_owner"),
 		IslandSetup("island_setup"),
-		EncryptionRequired("encryption_required"),
-		DeviceEncrypted("device_encrypted"),
 		RemoteConfigAvailable("remote_config_avail"),
-		FileShuttleEnabled("file_shuttle_enabled");
-
+		FileShuttleEnabled("file_shuttle_enabled"),
 	}
 
 	fun setProperty(property: Property, @Size(max = 36) value: String)

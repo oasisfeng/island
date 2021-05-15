@@ -111,6 +111,7 @@ public class Users extends PseudoContentProvider {
 		}
 		return sProfilesManagedByIsland.contains(user);
 	}
+	/** Excluding parent profile */
 	public static List<UserHandle> getProfilesManagedByIsland() { return sProfilesManagedByIsland/* already unmodifiable */; }
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }

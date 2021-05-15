@@ -6,6 +6,7 @@ import android.content.pm.LauncherApps
 import android.os.AsyncTask
 import android.os.Bundle
 import android.widget.Toast
+import androidx.core.content.getSystemService
 import com.google.firebase.appindexing.Action
 import com.google.firebase.appindexing.Action.Builder.ACTIVATE_ACTION
 import com.google.firebase.appindexing.Action.Metadata
@@ -54,7 +55,7 @@ class FeatureActionActivity : CallerAwareActivity() {
     }
 
     private fun findApp(query: String): LauncherActivityInfo? {     // TODO: Support frozen apps in Island
-        (getSystemService(LAUNCHER_APPS_SERVICE) as LauncherApps).getActivityList(null, Users.profile).also { candidates ->
+        getSystemService<LauncherApps>()!!.getActivityList(null, Users.profile).also { candidates ->
             if (query.all(Char::isLetterOrDigit))
                 candidates.filter { candidate -> candidate.componentName.packageName.contains(query, ignoreCase = true) }.apply {
                     if (size in 1..3) return this[0]        // Not a good query word if more than 3 matches

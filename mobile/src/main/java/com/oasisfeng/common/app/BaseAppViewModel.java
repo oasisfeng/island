@@ -28,7 +28,6 @@ public class BaseAppViewModel extends ViewModel {
 
 	public boolean isSystem() { return (info.flags & FLAG_SYSTEM) != 0; }
 
-	@SuppressWarnings("unused")		// Used by data binding
 	public void onViewAttached(final View v) {
 		if (mIconLoadingStarted) return;
 		mIconLoadingStarted = true;

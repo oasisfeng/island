@@ -13,10 +13,9 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.MessageQueue
 import android.os.Process
-import android.util.Log
 import androidx.annotation.RequiresApi
 import com.oasisfeng.island.PersistentService
-import com.oasisfeng.island.util.toId
+import com.oasisfeng.island.util.UserPrefixedLog as Log
 
 /**
  * Persistent helper service.
@@ -39,7 +38,7 @@ import com.oasisfeng.island.util.toId
     private fun bindPersistentService(service: ServiceInfo) {
         val component = ComponentName(service.packageName, service.name)
         val componentName = component.flattenToShortString()
-        Log.i(TAG, "Starting persistent service: $componentName in user ${Process.myUserHandle().toId()}")
+        Log.i(TAG, "Starting persistent service: $componentName")
 
         val connection = PersistentServiceConnection(component)
         mConnections.add(connection)

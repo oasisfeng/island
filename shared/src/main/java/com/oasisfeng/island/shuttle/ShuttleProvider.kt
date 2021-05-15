@@ -70,11 +70,12 @@ class ShuttleProvider: ContentProvider() {
 	private fun initializeInIsland() {
 		val uri = Uri.parse(CONTENT_URI)
 		if (context.isUriPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
-			Log.d(TAG, "Shuttle in ${Users.current().toId()}: ready")
-		else ShuttleCarrierActivity.sendToParentProfileQuietlyIfPossible(context) {
+			return Unit.also { Log.d(TAG, "Shuttle in ${Users.current().toId()}: ready") }
+
+		Log.d(TAG, "Shuttle in ${Users.current().toId()}: establishing...")
+		ShuttleCarrierActivity.sendToParentProfileQuietlyIfPossible(context) {
 			addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
 			clipData = ClipData(TAG, emptyArray(), ClipData.Item(uri)) }
-				.also { Log.d(TAG, "Shuttle in ${Users.current().toId()}: establishing...") }
 	}
 
 	override fun onCreate() = true.also { initialize() }
