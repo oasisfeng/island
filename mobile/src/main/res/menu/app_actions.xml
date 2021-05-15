@@ -2,11 +2,11 @@
 <menu xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" tools:ignore="AppCompatResource" >
     <item android:id="@+id/menu_freeze"   android:showAsAction="ifRoom|withText" android:title="@string/action_freeze" android:icon="@drawable/ic_lock_24dp" />
     <item android:id="@+id/menu_unfreeze" android:showAsAction="ifRoom|withText" android:title="@string/action_unfreeze" android:icon="@drawable/ic_unlock_24dp" />
+    <item android:id="@+id/menu_app_settings" android:showAsAction="ifRoom" android:title="@string/action_app_settings" android:icon="@drawable/ic_settings_applications_white_24dp" />
     <item android:id="@+id/menu_clone"    android:showAsAction="ifRoom|withText" android:title="@string/action_clone" android:icon="@drawable/ic_add_to_photos_24dp" />
 
     <item android:id="@+id/menu_suspend"  android:title="Suspend" android:showAsAction="never" android:visible="false" />
 
-    <item android:id="@+id/menu_app_settings" android:showAsAction="ifRoom" android:title="@string/action_app_settings" android:icon="@drawable/ic_settings_applications_white_24dp" />
 
     <item android:id="@+id/menu_greenify"     android:title="@string/action_greenify" android:showAsAction="never" />
     <item android:id="@+id/menu_shortcut"     android:title="@string/action_shortcut" android:showAsAction="never" />

@@ -62,6 +62,9 @@ import java.util.function.Predicate;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import static android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM;
+import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
+import static android.view.MenuItem.SHOW_AS_ACTION_WITH_TEXT;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -213,7 +216,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		Analytics.log(TAG, "tab-mainland");
 	}
 
-	public void updateActions(final Menu menu) {
+	public void updateActions(final Menu menu, final boolean cloneTipHidden) {
+		mCloneTipHidden = cloneTipHidden;
 		final AppViewModel selection = mSelection.getValue();
 		if (selection == null) return;
 		final IslandAppInfo app = selection.info();
@@ -222,7 +226,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 		final boolean system = app.isSystem(), installed = app.isInstalled(), placeholder = app.isPlaceHolder(),
 				in_owner = Users.isParentProfile(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
-		menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile());
+		menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile())
+				.setShowAsAction(cloneTipHidden ? (SHOW_AS_ACTION_IF_ROOM | SHOW_AS_ACTION_WITH_TEXT) : SHOW_AS_ACTION_NEVER);
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
 		menu.findItem(R.id.menu_reinstall).setVisible(! installed && ! placeholder);
@@ -241,7 +246,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			if (filters.test(app)) {
 				putApp(app.packageName, new AppViewModel(app));
 			} else removeApp(app.packageName, app.user);
-		updateActions(menu);
+		updateActions(menu, mCloneTipHidden);
 	}
 
 	private void removeApp(final String pkg, final UserHandle user) {
@@ -253,7 +258,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final Predicate<IslandAppInfo> filters = activeFilters();
 		for (final IslandAppInfo app : apps)
 			if (filters.test(app)) removeApp(app.packageName);
-		updateActions(menu);
+		updateActions(menu, mCloneTipHidden);
 	}
 
 	public void onItemLaunchIconClick(final Context context, final IslandAppInfo app) {
@@ -459,6 +464,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private final boolean mOwnerUserManaged;
 	private Predicate<IslandAppInfo> mActiveFilters;		// The active composite filters
 	private final Handler mHandler = new Handler(Looper.getMainLooper());
+	private boolean mCloneTipHidden;
 
 	private static final String TAG = "Island.Apps";
 }

@@ -36,6 +36,10 @@ public class UserGuide {
 
 	public final ObservableField<MaterialTapTargetPrompt.Builder> prompt_action = new ObservableField<>();
 
+	public boolean isCloneTipHidden() {
+		return mAppScope.isMarked(SCOPE_KEY_TIP_CLONE);
+	}
+
 	public MenuItem.OnMenuItemClickListener getAvailableTip() {
 		final @Nullable UserHandle profile = mAppListViewModel.getCurrentProfile();
 		if (profile == null) return null;

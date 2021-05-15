@@ -52,7 +52,10 @@ public class AppListFragment extends Fragment {
 
 		IslandAppListProvider.getInstance(activity).registerObserver(mAppChangeObserver);
 		vm.mFeatured.visible.observe(this, visible -> invalidateOptionsMenu());
-		vm.mSelection.observe(this, s -> { invalidateOptionsMenu(); mViewModel.updateActions(mBinding.toolbar.getMenu()); });
+		vm.mSelection.observe(this, s -> {
+			invalidateOptionsMenu();
+			mViewModel.updateActions(mBinding.toolbar.getMenu(), mUserGuide == null || mUserGuide.isCloneTipHidden());
+		});
 		vm.getFilterIncludeHiddenSystemApps().observe(this, filter -> mViewModel.updateAppList());
 		vm.getFilterText().observe(this, text -> mViewModel.updateAppList());
 	}
