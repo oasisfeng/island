@@ -77,7 +77,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             setup<Preference>(R.string.key_setup) { remove(this) } }
         else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
 
-        if (SDK_INT in P..Q) {  // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
+        if (SDK_INT in P..Q && isProfileOrDeviceOwner) { // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
             setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
                     R.string.pref_privacy_read_phone_state_title, SDK_INT <= P)
             setupPreferenceForManagingAppOps(R.string.key_manage_read_sms, READ_SMS, AppOpsCompat.OP_READ_SMS,
