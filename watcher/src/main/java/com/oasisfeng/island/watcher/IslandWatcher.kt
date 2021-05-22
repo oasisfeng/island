@@ -5,6 +5,7 @@ import android.app.Notification.CATEGORY_STATUS
 import android.app.Notification.VISIBILITY_PUBLIC
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.admin.DevicePolicyManager
+import android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_PER_USER
 import android.content.*
 import android.content.Intent.CATEGORY_DEFAULT
 import android.content.Intent.CATEGORY_HOME
@@ -25,6 +26,7 @@ import android.os.UserManager
 import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.oasisfeng.android.content.pm.getSystemService
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.hack.Hack
 import com.oasisfeng.island.notification.NotificationIds
@@ -68,6 +70,7 @@ import kotlin.coroutines.suspendCoroutine
 	}
 
 	private fun Notification.Builder.addRestartActionIfSupported(context: Context) = this.also {
+		if (context.getSystemService<DevicePolicyManager>()?.storageEncryptionStatus != ENCRYPTION_STATUS_ACTIVE_PER_USER) return@also
 		try { if (! Shuttle(context,to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner }) return@also }
 		catch (e: IllegalStateException) { return@also }        // Shuttle not may be ready yet
 
