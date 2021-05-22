@@ -281,8 +281,12 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		}
 
 		final PendingIntent callback = AppInstallerStatusReceiver.createCallback(this, mInstallInfo, session_id);
-		mSession.commit(callback.getIntentSender());
-		mSession.close();
+		try {
+			mSession.commit(callback.getIntentSender());
+		} catch (final RuntimeException e) {    // e.g. "SecurityException: Can't install packages while in secure FRP"
+			Toasts.showLong(this, e.toString());
+			return;
+		} finally { mSession.close(); }
 		mSession = null;        // Otherwise it will be abandoned in onDestroy().
 
 		AppInstallationNotifier.onInstallStart(this, session_id, mInstallInfo);
