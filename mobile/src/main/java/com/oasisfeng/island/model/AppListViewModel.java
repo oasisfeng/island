@@ -350,7 +350,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final String pkg = app.packageName;
 		final IslandAppInfo target = IslandAppListProvider.getInstance(context).get(pkg, profile);
 		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
-			if (IslandAppControl.unfreezeInitiallyFrozenSystemApp(app))
+			if (IslandAppControl.unfreezeInitiallyFrozenSystemApp(target))
 				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
 		} else if (target != null && target.isInstalled() && ! target.enabled) {	// Disabled system app is shown as "removed" (not cloned)
 			IslandAppControl.launchSystemAppSettings(target);
