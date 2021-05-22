@@ -41,6 +41,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 }
 
 private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, profile: UserHandle, state: ProfileState) {
+	if (tab.parent == null) return      // No longer in use
 	Log.d(TAG, "Update tab icon for profile ${profile.toId()}: $state")
 	val icon = context.getDrawable(R.drawable.ic_island_black_24dp)!!
 	icon.setTint(context.getColor(if (state == ProfileState.UNAVAILABLE) R.color.state_frozen else R.color.state_alive))
