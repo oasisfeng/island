@@ -26,9 +26,11 @@ class ShuttleProvider: ContentProvider() {
 		fun <R> call(context: Context, profile: UserHandle, function: ContextFun<R>): ShuttleResult<R> {
 			val bundle = Bundle(1).apply { putParcelable(null, Closure(function)) }
 			val uri = buildCrossProfileUri(profile.toId())
-			return try { ShuttleResult(context.contentResolver.call(uri, function.javaClass.name, null, bundle)) }
-			catch (e: SecurityException) { @Suppress("UNCHECKED_CAST")
-				if (isReady(context, profile)) throw e else ShuttleResult.NOT_READY as ShuttleResult<R> }
+			try { return ShuttleResult(context.contentResolver.call(uri, function.javaClass.name, null, bundle)) }
+			catch (e: RuntimeException) { // "SecurityException" or "IllegalArgumentException: Unknown authority 0@..." if shuttle is not ready
+				if ((e is SecurityException || e is IllegalArgumentException) && ! isReady(context, profile)) @Suppress("UNCHECKED_CAST")
+					return ShuttleResult.NOT_READY as ShuttleResult<R>
+				throw e }
 		}
 
 		fun isReady(c: Context, profile: UserHandle) = c.isUriPermissionGranted(buildCrossProfileUri(profile.toId()))
