@@ -172,7 +172,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				});
 				return Unit.INSTANCE;
 			});
-		} catch (final IOException e) { Log.w(TAG, "Error opening " + data, e); }
+		} catch (final IOException | SecurityException e) { Log.w(TAG, "Error opening " + data, e); }
 
 		if (! silent_install) {     // PackageInstaller requires confirmation, thus no need for pre-confirmation on our side.
 			performInstall(data, null);
