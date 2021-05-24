@@ -38,6 +38,30 @@ class ShuttleProvider: ContentProvider() {
 		private fun Context.isUriPermissionGranted(uri: Uri, uid: Int = Process.myUid()) =
 				checkUriPermission(uri, 0, uid, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PERMISSION_GRANTED
 
+		fun initialize(context: Context) {
+			Log.v(TAG, "Initializing...")
+			if (Users.isParentProfile())
+				return Users.getProfilesManagedByIsland().forEach {
+					if (isReady(context, it)) Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
+					else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
+
+			if (isReady(context, Users.getParentProfile())) Log.d(TAG, "Shuttle to parent profile: ready")
+			else Log.i(TAG, "Shuttle to parent profile: not ready")
+
+			initializeInIsland(context)
+		}
+
+		private fun initializeInIsland(context: Context) {
+			val uri = Uri.parse(CONTENT_URI)
+			if (context.isUriPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
+				return Unit.also { Log.d(TAG, "Shuttle in ${Users.current().toId()}: ready") }
+
+			Log.d(TAG, "Shuttle in ${Users.current().toId()}: establishing...")
+			ShuttleCarrierActivity.sendToParentProfileQuietlyIfPossible(context) {
+				addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+				clipData = ClipData(TAG, emptyArray(), ClipData.Item(uri)) }
+		}
+
 		@OwnerUser @ProfileUser fun collect(context: Context, intent: Intent) {
 			(intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri)?.also {    // data or clipData
 				Log.d(TAG, "[${Users.currentId()}] Received: $it")
@@ -57,30 +81,7 @@ class ShuttleProvider: ContentProvider() {
 		return if (result == null || result == Unit) null else Bundle().apply { put(null, result) }
 	}
 
-	private fun initialize() {
-		if (Users.isParentProfile())
-			return Users.getProfilesManagedByIsland().forEach {
-				if (isReady(context, it)) Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
-				else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
-
-		if (isReady(context, Users.getParentProfile())) Log.d(TAG, "Shuttle to parent profile: ready")
-		else Log.i(TAG, "Shuttle to parent profile: not ready")
-
-		initializeInIsland()
-	}
-
-	private fun initializeInIsland() {
-		val uri = Uri.parse(CONTENT_URI)
-		if (context.isUriPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
-			return Unit.also { Log.d(TAG, "Shuttle in ${Users.current().toId()}: ready") }
-
-		Log.d(TAG, "Shuttle in ${Users.current().toId()}: establishing...")
-		ShuttleCarrierActivity.sendToParentProfileQuietlyIfPossible(context) {
-			addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-			clipData = ClipData(TAG, emptyArray(), ClipData.Item(uri)) }
-	}
-
-	override fun onCreate() = true.also { initialize() }
+	override fun onCreate() = true.also { initialize(context) }
 
 	override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = null
 	override fun getType(uri: Uri): String? = null

@@ -6,9 +6,11 @@ import android.app.Notification.GROUP_ALERT_SUMMARY
 import android.app.Notification.VISIBILITY_PUBLIC
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
+import android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
@@ -40,6 +42,7 @@ class ShuttleCarrierActivity: Activity() {
 						.setContentIntent(PendingIntent.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT))
 						.apply { if (SDK_INT >= O) setGroup("Shuttle").setGroupAlertBehavior(GROUP_ALERT_SUMMARY) }}}
 
+			Log.d(TAG, "Starting trampoline to Mainland...")
 			context.startActivity(intent)   // Start self in current profile as a trampoline to startActivityForResult() cross-profile.
 		}
 		/** Credential confirmation is needed if separate challenge (P+) is used and is locked by keyguard,
@@ -56,11 +59,14 @@ class ShuttleCarrierActivity: Activity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		if (Users.isParentProfile()) {
+			Log.d(TAG, "Carrier is started in Mainland.")
 			ShuttleProvider.collect(this, intent)
 			setResult(RESULT_OK, Intent(null, Uri.parse(ShuttleProvider.CONTENT_URI))   // Send reverse shuttle back
 					.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION))
 			finish()
 		} else try {
+			Log.d(TAG, "Starting carrier in Mainland...")
+			DevicePolicies(this).addCrossProfileIntentFilter(IntentFilter(ACTION), FLAG_PARENT_CAN_ACCESS_MANAGED)
 			startActivityForResult(intent.setAction(ACTION).setComponent(null).removeFlag(FLAG_ACTIVITY_NEW_TASK).also {
 				CrossProfile.decorateIntentForActivityInParentProfile(this, it) }, 1) }
 		catch (e: RuntimeException) { finish(); Log.e(TAG, "Error establishing shuttle to parent profile.", e) }

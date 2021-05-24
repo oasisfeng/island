@@ -41,6 +41,7 @@ import com.oasisfeng.island.engine.CrossProfile;
 import com.oasisfeng.island.engine.IslandManager;
 import com.oasisfeng.island.engine.R;
 import com.oasisfeng.island.notification.NotificationIds;
+import com.oasisfeng.island.shuttle.ShuttleProvider;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Modules;
 import com.oasisfeng.island.util.OwnerUser;
@@ -315,6 +316,9 @@ public class IslandProvisioning extends IntentService {
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual and incremental provisioning. */
 	@WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		final boolean owner = Users.isParentProfile();
+
+		if (! owner) ShuttleProvider.Companion.initialize(context);  // Initialization of shuttle requires foreground activity to avoid its activity start being blocked.
+
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
