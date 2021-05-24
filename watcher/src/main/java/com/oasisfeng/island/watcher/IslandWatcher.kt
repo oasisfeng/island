@@ -61,21 +61,22 @@ import kotlin.coroutines.suspendCoroutine
 				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
 				.setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
 				.setContentTitle(context.getText(R.string.notification_island_watcher_title))
-				.setContentText(context.getText(R.string.notification_island_watcher_text))
-				.addRestartActionIfSupported(context)
+				.apply { if (addDeactivateActionIfSupported(context)) setContentText(context.getText(R.string.notification_island_watcher_text_for_deactivate))
+					else setContentText(context.getText(R.string.notification_island_watcher_text_for_deactivate)) }
 				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_restart_island), PendingIntent.getService(context, 0,
 						Intent(context, IslandDeactivationService::class.java).setAction(Intent.ACTION_REBOOT), FLAG_UPDATE_CURRENT)).build())
 				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
 						NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
 	}
 
-	private fun Notification.Builder.addRestartActionIfSupported(context: Context) = this.also {
-		if (context.getSystemService<DevicePolicyManager>()?.storageEncryptionStatus != ENCRYPTION_STATUS_ACTIVE_PER_USER) return@also
-		try { if (! Shuttle(context,to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner }) return@also }
-		catch (e: IllegalStateException) { return@also }        // Shuttle not may be ready yet
+	private fun Notification.Builder.addDeactivateActionIfSupported(context: Context): Boolean {
+		if (context.getSystemService<DevicePolicyManager>()?.storageEncryptionStatus != ENCRYPTION_STATUS_ACTIVE_PER_USER) return false
+		try { if (! Shuttle(context,to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner }) return false }
+		catch (e: IllegalStateException) { return false }        // Shuttle not may be ready yet
 
 		val action = PendingIntent.getService(context, 0, Intent(context, IslandDeactivationService::class.java), FLAG_UPDATE_CURRENT)
 		addAction(Notification.Action.Builder(null, context.getText(R.string.action_deactivate_island), action).build())
+		return true
 	}
 
 	private fun getAppIcon(context: Context): Bitmap {
