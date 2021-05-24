@@ -26,6 +26,7 @@ import android.os.UserManager
 import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import com.oasisfeng.android.content.pm.getSystemService
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.hack.Hack
@@ -54,30 +55,35 @@ import kotlin.coroutines.suspendCoroutine
 		if (Users.isParentProfile()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
 				COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 		if (SDK_INT < O || ! DevicePolicies(context).isProfileOwner) return
-		if (SDK_INT < Q && ! context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()) return
+
+		val hasShortcutHostPermission = context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()
 		if (NotificationIds.IslandWatcher.isBlocked(context)) return
 
-		NotificationIds.IslandWatcher.post(context) { setOngoing(true).setGroup(GROUP).setGroupSummary(true)
-				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
-				.setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
-				.setContentTitle(context.getText(R.string.notification_island_watcher_title))
-				.apply { if (addDeactivateActionIfSupported(context)) setContentText(context.getText(R.string.notification_island_watcher_text_for_deactivate))
-					else setContentText(context.getText(R.string.notification_island_watcher_text_for_deactivate)) }
-				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_restart_island), PendingIntent.getService(context, 0,
-						Intent(context, IslandDeactivationService::class.java).setAction(Intent.ACTION_REBOOT), FLAG_UPDATE_CURRENT)).build())
-				.addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
-						NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
+		val supportsDeactivate = if (SDK_INT < Q) hasShortcutHostPermission else isParentProfileOwner(context)
+		val supportsRestart = context.getSystemService<DevicePolicyManager>()?.storageEncryptionStatus == ENCRYPTION_STATUS_ACTIVE_PER_USER
+		if (! supportsDeactivate && ! supportsRestart) return
+
+		NotificationIds.IslandWatcher.post(context) {
+			setOngoing(true).setGroup(GROUP).setGroupSummary(true)
+			setSmallIcon(R.drawable.ic_landscape_black_24dp).setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
+			setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
+			setContentTitle(context.getText(R.string.notification_island_watcher_title))
+			setContentText(context.getText(if (supportsDeactivate) R.string.notification_island_watcher_text_for_deactivate
+					else R.string.notification_island_watcher_text_for_restart))
+			if (supportsDeactivate) addServiceAction(context, R.string.action_deactivate_island)
+			if (supportsRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
+			addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
+				NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
 	}
 
-	private fun Notification.Builder.addDeactivateActionIfSupported(context: Context): Boolean {
-		if (context.getSystemService<DevicePolicyManager>()?.storageEncryptionStatus != ENCRYPTION_STATUS_ACTIVE_PER_USER) return false
-		try { if (! Shuttle(context,to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner }) return false }
-		catch (e: IllegalStateException) { return false }        // Shuttle not may be ready yet
-
-		val action = PendingIntent.getService(context, 0, Intent(context, IslandDeactivationService::class.java), FLAG_UPDATE_CURRENT)
-		addAction(Notification.Action.Builder(null, context.getText(R.string.action_deactivate_island), action).build())
-		return true
+	private fun Notification.Builder.addServiceAction(context: Context, @StringRes label: Int, action: String? = null) {
+		addAction(Notification.Action.Builder(null, context.getText(label), PendingIntent.getService(context, 0,
+			Intent(context, IslandDeactivationService::class.java).setAction(action), FLAG_UPDATE_CURRENT)).build())
 	}
+
+	private fun isParentProfileOwner(context: Context) =
+		try { Shuttle(context, to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner }}
+		catch (e: IllegalStateException) { false }
 
 	private fun getAppIcon(context: Context): Bitmap {
 		val size = context.resources.getDimensionPixelSize(android.R.dimen.app_icon_size)
