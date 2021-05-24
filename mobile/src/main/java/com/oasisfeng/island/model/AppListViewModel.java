@@ -466,5 +466,5 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private final Handler mHandler = new Handler(Looper.getMainLooper());
 	private boolean mCloneTipHidden;
 
-	private static final String TAG = "Island.Apps";
+	private static final String TAG = "Island.ALVM";
 }

@@ -71,7 +71,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 		Users.getProfilesManagedByIsland().forEach { profile ->
 			val appsInProfile = mIslandAppMap[profile] ?: return@forEach
 			val entry = appsInProfile[pkg] ?: return@forEach
-			Log.d(TAG, "Label updated for $pkg in profile $profile: $label")
+			Log.d(TAG, "Label updated for $pkg in profile ${profile.toId()}: $label")
 			val newEntry = IslandAppInfo(this, Users.profile, entry, null)
 			appsInProfile[pkg] = newEntry
 			notifyUpdate(setOf(newEntry))
