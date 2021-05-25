@@ -173,9 +173,9 @@ object IslandAppShortcut {
 			Log.d(TAG, "Package event: $intent")
 			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
 			catch (e: NameNotFoundException) { return }     // Actual package uninstall
-			try { Shuttle(context, to = Users.getParentProfile()).launch { updateIfNeeded(context, info) } }
-			catch (e: IllegalStateException) { Log.w(TAG, "Not updating shortcut for $pkg due to shuttle not ready.") } // May not established yet
-		}}
+
+			Shuttle(context, to = Users.getParentProfile()).launchNoThrows { updateIfNeeded(context, info) }}
+		}
 
 		override fun onCreate() {
 			registerReceiver(mPackageObserver, IntentFilter(ACTION_PACKAGE_REMOVED).apply {
