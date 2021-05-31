@@ -1,0 +1,16 @@
+<resources>
+    <string name="notification_island_watcher_title">O espaço do Island está ativo</string>
+    <string name="notification_island_watcher_text">Desativar a fim de parar todas as atividades internas em segundo plano.</string>
+    <string name="notification_app_watcher_title">%s está ativo</string>
+    <string name="notification_app_watcher_text">Clique para suspender de novo</string>
+    <string name="action_deactivate_island">Desativar</string>
+    <string name="action_settings">Configurações</string>
+    <string name="action_dismiss">Descartar</string>
+
+    <string name="toast_manual_quiet_mode">Desativação falhou, por favor faça-o manualmente.</string>
+
+    <string name="notification_permission_was_granted_title">Permissão \"%s\" foi concedida</string>
+    <string name="notification_permission_was_granted_text">Gostaria de anular esta permissão?</string>
+    <string name="action_revoke_granted">Anular</string>
+    <string name="action_keep_granted">Manter concedida</string>
+</resources>
