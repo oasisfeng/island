@@ -4,12 +4,13 @@ Island for Android
 
 ## Build Instructions
 
-Island depends on ["deagle" library](https://github.com/oasisfeng/deagle), which must be cloned alongside Island in the same path.
+Island depends on ["deagle" library](https://github.com/oasisfeng/deagle) and ["setupwizard" library](https://android.googlesource.com/platform/frameworks/opt/setupwizard), which must be cloned alongside Island in the same path.
 
 ```
 \--
   \- island
   \- deagle
+  \- setupwizard
 ```
 
 This project is constructed into several modules, with **assembly** module as the build portal,
