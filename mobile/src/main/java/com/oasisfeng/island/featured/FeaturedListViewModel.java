@@ -2,12 +2,13 @@ package com.oasisfeng.island.featured;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Handler;
 import android.provider.Settings;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,9 +20,13 @@ import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
+import com.oasisfeng.common.app.BaseAndroidViewModel;
 import com.oasisfeng.island.Config;
 import com.oasisfeng.island.adb.AdbSecure;
 import com.oasisfeng.island.analytics.Analytics;
+import com.oasisfeng.island.controller.IslandAppClones;
+import com.oasisfeng.island.data.IslandAppInfo;
+import com.oasisfeng.island.data.IslandAppListProvider;
 import com.oasisfeng.island.data.LiveUserRestriction;
 import com.oasisfeng.island.files.IslandFiles;
 import com.oasisfeng.island.mobile.BR;
@@ -52,9 +57,10 @@ import static androidx.recyclerview.widget.ItemTouchHelper.START;
  * Created by Oasis on 2018/5/18.
  */
 @ParametersAreNonnullByDefault
-public class FeaturedListViewModel extends AndroidViewModel {
+public class FeaturedListViewModel extends BaseAndroidViewModel {
 
 	private static final String SCOPE_TAG_PREFIX_FEATURED = "featured_";
+	private static final String PACKAGE_ICEBOX = "com.catchingnow.icebox";
 	private static final boolean SHOW_ALL = false;		// For debugging purpose
 
 	public NonNullMutableLiveData<Boolean> visible = new NonNullMutableLiveData<>(Boolean.FALSE);
@@ -118,6 +124,18 @@ public class FeaturedListViewModel extends AndroidViewModel {
 		addFeaturedApp(R.string.featured_saf_enhancer_title, R.string.featured_saf_enhancer_description, R.drawable.ic_launcher_saf_enhancer,
 				"app.gwo.safenhancer.lite", "app.gwo.safenhancer");
 
+		if (! addFeaturedApp(R.string.featured_icebox_title, R.string.featured_icebox_description, R.drawable.ic_launcher_icebox, PACKAGE_ICEBOX)
+				&& Users.hasProfile() && IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.profile) == null) {
+			new Handler().postDelayed(() -> {	// Dirty workaround due to IslandAppListProvider updated after onResume()
+				if (activity.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)
+						&& IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.profile) != null)
+					update(activity);
+			}, 1_000);
+			final IslandAppInfo icebox_in_mainland = IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.getParentProfile());
+			if (icebox_in_mainland != null) addFeature(app, "icebox", R.string.featured_icebox_title, R.string.featured_icebox_description,
+					R.drawable.ic_launcher_icebox, R.string.action_clone, c -> IslandAppClones.cloneApp(this, icebox_in_mainland, Users.profile));
+		}
+
 		addFeaturedApp(R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,
 				"rikka.appops", "rikka.appops.pro");
 
@@ -162,7 +180,11 @@ public class FeaturedListViewModel extends AndroidViewModel {
 
 	public FeaturedListViewModel(final Application app) { super(app); mApps = Apps.of(app); }
 
+	@Override public String getTag() { return TAG; }
+
 	private final Apps mApps;
 
 	private static final AtomicInteger sOrderGenerator = new AtomicInteger();
+
+	@SuppressWarnings("SpellCheckingInspection") private static final String TAG = "Island.FLVM";
 }
