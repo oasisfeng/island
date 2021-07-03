@@ -12,10 +12,7 @@ import android.util.Size
 import android.util.SizeF
 import android.util.SparseArray
 import com.oasisfeng.android.os.UserHandles
-import com.oasisfeng.island.util.OwnerUser
-import com.oasisfeng.island.util.ProfileUser
-import com.oasisfeng.island.util.Users
-import com.oasisfeng.island.util.toId
+import com.oasisfeng.island.util.*
 import java.io.Serializable
 import java.util.*
 
@@ -44,6 +41,7 @@ class ShuttleProvider: ContentProvider() {
 				return Users.getProfilesManagedByIsland().forEach {
 					if (isReady(context, it)) Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
 					else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
+			if (! DevicePolicies(context).isProfileOwner) return
 
 			if (isReady(context, Users.getParentProfile())) Log.d(TAG, "Shuttle to parent profile: ready")
 			else Log.i(TAG, "Shuttle to parent profile: not ready")
