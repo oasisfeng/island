@@ -273,7 +273,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 		final int id = item.getItemId();
 		if (id == R.id.menu_clone) {
-			requestToCloneApp(context, app);
+			requestToCloneApp((Activity) context, app);
 			clearSelection();
 		} else if (id == R.id.menu_freeze) {// Select the next alive app, or clear selection.
 			Analytics.$().event("action_freeze").with(ITEM_ID, pkg).send();
@@ -301,29 +301,29 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			onGreenifyRequested(context);
 		} else if (id == R.id.menu_suspend) {
 			final boolean done = IslandAppControl.setSuspended(app, ! app.isSuspended());
-			Toast.makeText(context, done ? "Done" : "Failed", Toast.LENGTH_SHORT).show();
+			Toast.makeText(context, done ? "Done" : "Failed", LENGTH_SHORT).show();
 		}
 		return true;
 	}
 
-	private void requestToCloneApp(final Context context, final IslandAppInfo app) {
-		final Map<UserHandle, String> targets = new HashMap<>(IslandNameManager.getAllNames(context));
+	private void requestToCloneApp(final Activity activity, final IslandAppInfo app) {
+		final Map<UserHandle, String> targets = new HashMap<>(IslandNameManager.getAllNames(activity));
 		if (targets.isEmpty()) throw new IllegalStateException("No Island");
 		final String pkg = app.packageName;
 		if (targets.size() == 1) {     // Single Island, no need to show menu
 			final boolean from_mainland = Users.isParentProfile(app.user); final UserHandle profile;
 			if (from_mainland && ! mAppListProvider.isInstalled(pkg, profile = targets.keySet().iterator().next())) {
-				requestToCloneAppToProfile(context, app, profile);
+				requestToCloneAppToProfile(activity, app, profile);
 			} else if (! from_mainland && ! mAppListProvider.isInstalled(pkg, Users.getParentProfile())) {
-				requestToCloneAppToMainland(context, pkg);
-			} else Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_LONG).show();
+				requestToCloneAppToMainland(activity, pkg);
+			} else Toast.makeText(activity, R.string.toast_already_cloned, Toast.LENGTH_LONG).show();
 			return;
 		}
-		targets.put(Users.getParentProfile(), context.getString(R.string.tab_mainland));
+		targets.put(Users.getParentProfile(), activity.getString(R.string.tab_mainland));
 		final UserHandle[] profiles = targets.keySet().toArray(new UserHandle[0]);      // Including owner user
 		final String[] names = targets.values().toArray(new String[0]);
 
-		final Dialogs.Builder dialog = Dialogs.buildAlert(Activities.findActivityFrom(context), R.string.prompt_clone_app_to, 0);
+		final Dialogs.Builder dialog = Dialogs.buildAlert(activity, R.string.prompt_clone_app_to, 0);
 		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(dialog.getContext(),
 				android.R.layout.select_dialog_item, android.R.id.text1, names) {
 
@@ -336,14 +336,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			@Override public boolean hasStableIds() { return true; }
 		};
 		dialog.setSingleChoiceItems(adapter, -1, (d, which) -> {
-			if (which == 0) requestToCloneAppToMainland(context, pkg);
-			else requestToCloneAppToProfile(context, app, profiles[which]);
+			if (which == 0) requestToCloneAppToMainland(activity, pkg);
+			else requestToCloneAppToProfile(activity, app, profiles[which]);
 			d.dismiss();
 		}).show();
 	}
 
-	private static void requestToCloneAppToMainland(final Context context, final String pkg) {
-		Activities.startActivity(context, new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
+	private static void requestToCloneAppToMainland(final Activity activity, final String pkg) {
+		activity.startActivity(new Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)));
 	}
 
 	private void requestToCloneAppToProfile(final Context context, final IslandAppInfo app, final UserHandle profile) {
@@ -351,10 +351,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final IslandAppInfo target = IslandAppListProvider.getInstance(context).get(pkg, profile);
 		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled()) {	// Frozen system app shown as disabled, just unfreeze it.
 			if (IslandAppControl.unfreezeInitiallyFrozenSystemApp(target))
-				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), Toast.LENGTH_SHORT).show();
+				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, app.getLabel()), LENGTH_SHORT).show();
 		} else if (target != null && target.isInstalled() && ! target.enabled) {	// Disabled system app is shown as "removed" (not cloned)
 			IslandAppControl.launchSystemAppSettings(target);
-			Toast.makeText(context, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show();
+			Toast.makeText(context, R.string.toast_enable_disabled_system_app, LENGTH_SHORT).show();
 		} else IslandAppClones.cloneApp(this, app, profile);
 	}
 
