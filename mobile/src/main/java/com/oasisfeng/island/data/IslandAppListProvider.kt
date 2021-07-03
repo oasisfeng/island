@@ -14,10 +14,16 @@ import android.util.Log
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.common.app.AppListProvider
+import com.oasisfeng.island.data.helper.hidden
 import com.oasisfeng.island.data.helper.installed
+import com.oasisfeng.island.data.helper.isSystem
+import com.oasisfeng.island.data.helper.suspended
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps
 import com.oasisfeng.island.provisioning.CriticalAppsManager
 import com.oasisfeng.island.provisioning.SystemAppsManager
+import com.oasisfeng.island.shuttle.Shuttle
+import com.oasisfeng.island.util.DPM
+import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.toId
 import java.util.function.Predicate
@@ -105,7 +111,15 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 		val visible = mLauncherApps.getActivityList(null, profile).asSequence().map { it.applicationInfo }.associateBy { it.packageName }  // Collect all unfrozen apps first in one API call.
 		Log.d(TAG, "Refresh apps in Island ${profile.toId()}")
 		return installedAppsInOwnerUser().asSequence().mapNotNull { visible[it.packageName] ?: getAppInfo(it.packageName, profile) }
-			.associateByTo(ArrayMap(), ApplicationInfo::packageName, { IslandAppInfo(this, profile, it, null) })
+			.associateByTo(ArrayMap(), ApplicationInfo::packageName, { IslandAppInfo(this, profile, it.migrateIfNeeded(), null) })
+	}
+
+	/** Do app-level correction for legacy reason (inconsistency caused by old version of Island) */
+	private fun ApplicationInfo.migrateIfNeeded() = apply {
+		if (suspended && isSystem && ! hidden)
+			Shuttle(context(), UserHandle.getUserHandleForUid(uid)).launch(with = packageName) {
+				val failed = DevicePolicies(this).invoke(DPM::setPackagesSuspended, arrayOf(it), false)
+				if (failed.isEmpty()) Log.i(TAG, "Unsuspended $it") else Log.e(TAG, "Failed to unsuspend $it") }
 	}
 
 	private fun getAppInfo(pkg: String, profile: UserHandle): ApplicationInfo? {
