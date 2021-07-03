@@ -118,7 +118,7 @@ object IslandAppShortcut {
 		val drawable = getAppIconDrawable(context, context.getSystemService()!!, app)
 		return ShortcutInfo.Builder(context, shortcutId).setIntent(intent).setShortLabel(label).apply {
 			setIcon(Icon.createWithAdaptiveBitmap(drawable.toBitmap(sm.iconMaxWidth, sm.iconMaxHeight)))
-			if (SDK_INT >= Q) setLongLived(true).setLocusId(LocusId(shortcutId))
+			if (SDK_INT >= Q) setLocusId(LocusId(shortcutId))
 		}.build()
 	}
 
