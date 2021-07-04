@@ -62,9 +62,7 @@ import java.util.function.Predicate;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import static android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM;
-import static android.view.MenuItem.SHOW_AS_ACTION_NEVER;
-import static android.view.MenuItem.SHOW_AS_ACTION_WITH_TEXT;
+import static android.widget.Toast.LENGTH_SHORT;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -226,8 +224,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 		final boolean system = app.isSystem(), installed = app.isInstalled(), placeholder = app.isPlaceHolder(),
 				in_owner = Users.isParentProfile(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
-		menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile())
-				.setShowAsAction(cloneTipHidden ? (SHOW_AS_ACTION_IF_ROOM | SHOW_AS_ACTION_WITH_TEXT) : SHOW_AS_ACTION_NEVER);
+		final MenuItem clone = menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile());
+		if (! cloneTipHidden) {     // Move "Clone" before "App Settings" if the clone tip is not hidden yet.
+			menu.removeItem(clone.getItemId());
+			menu.add(clone.getGroupId(), clone.getItemId(), menu.findItem(R.id.menu_app_settings).getOrder() - 1, clone.getTitle());
+		}
 		menu.findItem(R.id.menu_freeze).setVisible(installed && is_managed && ! app.isHidden() && app.enabled);
 		menu.findItem(R.id.menu_unfreeze).setVisible(installed && is_managed && app.isHidden());
 		menu.findItem(R.id.menu_reinstall).setVisible(! installed && ! placeholder);
