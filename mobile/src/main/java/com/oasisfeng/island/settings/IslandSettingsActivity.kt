@@ -46,6 +46,7 @@ import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
+import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
 
 /**
@@ -58,9 +59,11 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onResume() {
         super.onResume()
         val activity = activity
-        val multiple = Users.getProfilesManagedByIsland().size > 1
-        activity.title = (if (multiple) preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null) else null)
-                ?: IslandNameManager.getDefaultName(activity)
+        val multipleIslands = try { Shuttle(activity, to = Users.getParentProfile()).invoke {
+            Users.getProfilesManagedByIsland().size > 1 }} catch (e: RuntimeException) { false }
+        activity.title = if (! multipleIslands) IslandNameManager.getSoleIslandDefaultName(activity)
+            else preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
+                ?: IslandNameManager.getDefaultSpecificName(activity)
 
         val policies = DevicePolicies(activity)
         val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser

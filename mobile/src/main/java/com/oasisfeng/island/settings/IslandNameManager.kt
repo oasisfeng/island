@@ -20,11 +20,14 @@ object IslandNameManager {
 				store.getString(buildIslandNameKey(context, profile.toId()), null) ?: getDefaultSpecificName(context, profile) }}}
 	}
 
-	fun getDefaultName(context: Context, profile: UserHandle = Users.current()) =
-		if (Users.getProfilesManagedByIsland().size > 1) getDefaultSpecificName(context, profile)
-		else context.getString(if (Users.isParentProfile(profile)) R.string.tab_mainland else R.string.default_island_name)
+	fun getDefaultName(context: Context, profile: UserHandle = Users.current()) = when {
+		Users.getProfilesManagedByIsland().size > 1 -> getDefaultSpecificName(context, profile)
+		Users.isParentProfile(profile) -> context.getString(R.string.tab_mainland)
+		else -> getSoleIslandDefaultName(context) }
 
-	private fun getDefaultSpecificName(context: Context, profile: UserHandle = Users.current()) = when (val profileId = profile.toId()) {
+	fun getSoleIslandDefaultName(context: Context) = context.getString(R.string.default_island_name)
+
+	fun getDefaultSpecificName(context: Context, profile: UserHandle = Users.current()) = when (val profileId = profile.toId()) {
 		0    -> context.getString(R.string.tab_mainland)
 		10   -> context.getString(R.string.default_island0_name)
 		11   -> context.getString(R.string.default_island1_name)
