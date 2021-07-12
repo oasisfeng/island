@@ -12,6 +12,7 @@ import android.util.Size
 import android.util.SizeF
 import android.util.SparseArray
 import com.oasisfeng.android.os.UserHandles
+import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.util.*
 import java.io.Serializable
 import java.util.*
@@ -25,8 +26,9 @@ class ShuttleProvider: ContentProvider() {
 			val uri = buildCrossProfileUri(profile.toId())
 			try { return ShuttleResult(context.contentResolver.call(uri, function.javaClass.name, null, bundle)) }
 			catch (e: RuntimeException) { // "SecurityException" or "IllegalArgumentException: Unknown authority 0@..." if shuttle is not ready
-				if ((e is SecurityException || e is IllegalArgumentException) && ! isReady(context, profile)) @Suppress("UNCHECKED_CAST")
-					return ShuttleResult.NOT_READY as ShuttleResult<R>
+				if (e is SecurityException || e is IllegalArgumentException) {
+					if (isReady(context, profile)) analytics().logAndReport(TAG, "Error shuttling $function", e)
+					@Suppress("UNCHECKED_CAST") return ShuttleResult.NOT_READY as ShuttleResult<R> }
 				throw e }
 		}
 
