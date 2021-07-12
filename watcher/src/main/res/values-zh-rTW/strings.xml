@@ -7,7 +7,7 @@
     <string name="action_settings">設定</string>
     <string name="action_dismiss">忽略</string>
 
-    <string name="toast_manual_quiet_mode">停止工作資料失敗，請手動關閉。</string>
+    <string name="toast_manual_quiet_mode">請在“工作資料夾”設定中手動關閉。</string>
 
     <string name="notification_permission_was_granted_title">已授權权限“%s”</string>
     <string name="notification_permission_was_granted_text">是否撤銷此權限？</string>

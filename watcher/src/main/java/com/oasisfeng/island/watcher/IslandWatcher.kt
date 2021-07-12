@@ -15,19 +15,15 @@ import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Icon
+import android.os.*
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
 import android.os.Build.VERSION_CODES.Q
-import android.os.Bundle
-import android.os.IBinder
-import android.os.UserHandle
-import android.os.UserManager
 import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
-import com.oasisfeng.android.content.pm.getSystemService
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.hack.Hack
 import com.oasisfeng.island.notification.NotificationIds
@@ -54,14 +50,16 @@ import kotlin.coroutines.suspendCoroutine
 						NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)) return
 		if (Users.isParentProfile()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
 				COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
-		if (SDK_INT < O || ! DevicePolicies(context).isProfileOwner) return
+		if (SDK_INT < O) return
+		val policies = DevicePolicies(context)
+		if (! policies.isProfileOwner) return
 
 		val hasShortcutHostPermission = context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()
 		if (NotificationIds.IslandWatcher.isBlocked(context)) return
 
 		val supportsDeactivate = if (SDK_INT < Q) hasShortcutHostPermission else isParentProfileOwner(context)
-		val supportsRestart = context.getSystemService<DevicePolicyManager>()?.storageEncryptionStatus == ENCRYPTION_STATUS_ACTIVE_PER_USER
-		if (! supportsDeactivate && ! supportsRestart) return
+		val supportsRestart = ! policies.invoke(DPM::isUsingUnifiedPassword)
+				&& policies.manager.storageEncryptionStatus == ENCRYPTION_STATUS_ACTIVE_PER_USER
 
 		NotificationIds.IslandWatcher.post(context) {
 			setOngoing(true).setGroup(GROUP).setGroupSummary(true)
@@ -72,6 +70,8 @@ import kotlin.coroutines.suspendCoroutine
 					else R.string.notification_island_watcher_text_for_restart))
 			if (supportsDeactivate) addServiceAction(context, R.string.action_deactivate_island)
 			if (supportsRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
+			if (! supportsDeactivate && ! supportsRestart)
+				addServiceAction(context, R.string.action_deactivate_island, Settings.ACTION_SYNC_SETTINGS)
 			addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
 				NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
 	}
@@ -96,8 +96,14 @@ import kotlin.coroutines.suspendCoroutine
 	@RequiresApi(P) class IslandDeactivationService : Service() {
 
 		override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-			if (intent?.action == Intent.ACTION_REBOOT) {
+			val action = intent?.action
+			if (action == Intent.ACTION_REBOOT) {
 				DevicePolicies(this).manager.lockNow(DevicePolicyManager.FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY) }
+			else if (action == Settings.ACTION_SYNC_SETTINGS)
+				try {
+					startActivity(Intent(Settings.ACTION_SYNC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+					Toasts.showLong(applicationContext, R.string.toast_manual_quiet_mode) }
+				catch (_: ActivityNotFoundException) { Toasts.showLong(applicationContext, "Sorry, ROM is incompatible.") }
 			else if (SDK_INT >= Q) {
 				if (Users.isParentProfile()) {
 					intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)?.also { profile ->

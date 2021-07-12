@@ -9,7 +9,7 @@
     <string name="action_settings">Settings</string>
     <string name="action_dismiss">Dismiss</string>
 
-    <string name="toast_manual_quiet_mode">Failed to deactivate, please toggle manually.</string>
+    <string name="toast_manual_quiet_mode">Please deactivate in \"Work profile settings\" manually.</string>
 
     <string name="notification_permission_was_granted_title">Permission \"%s\" was granted</string>
     <string name="notification_permission_was_granted_text">Would you like to revoke this permission?</string>
