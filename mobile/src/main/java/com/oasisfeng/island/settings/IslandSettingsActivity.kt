@@ -59,9 +59,9 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onResume() {
         super.onResume()
         val activity = activity
-        val multipleIslands = try { Shuttle(activity, to = Users.getParentProfile()).invoke {
+        mMultipleIslands = try { Shuttle(activity, to = Users.getParentProfile()).invoke {
             Users.getProfilesManagedByIsland().size > 1 }} catch (e: RuntimeException) { false }
-        activity.title = if (! multipleIslands) IslandNameManager.getSoleIslandDefaultName(activity)
+        activity.title = if (! mMultipleIslands) IslandNameManager.getSoleIslandDefaultName(activity)
             else preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
                 ?: IslandNameManager.getDefaultSpecificName(activity)
 
@@ -190,7 +190,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         if (! Users.isParentProfile()) {
             inflater.inflate(R.menu.pref_island_actions, menu)
-            menu.findItem(R.id.menu_rename)?.isVisible = Users.getProfilesManagedByIsland().size > 1
+            menu.findItem(R.id.menu_rename)?.isVisible = mMultipleIslands
             if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).isVisible = true }
     }
 
@@ -202,6 +202,8 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private var mMultipleIslands: Boolean = false
 }
 
 /** Only enabled in profile managed by Island, as a sole indicator for owner user to identify. */
