@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.os.Process;
@@ -58,6 +59,7 @@ public class Users extends PseudoContentProvider {
 
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
+		mDebugBuild = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
 		final List<UserHandle> profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
 		final List<UserHandle> profiles_managed_by_island = new ArrayList<>(profiles.size() - 1);
 		mParentProfile = profiles.get(0);
@@ -69,7 +71,7 @@ public class Users extends PseudoContentProvider {
 			for (int i = 1/* skip parent */; i < profiles.size(); i ++) {
 				final UserHandle profile = profiles.get(i);
 				for (final LauncherActivityInfo activity : la.getActivityList(ui_module, profile))
-					if (! activity.getName().equals(activity_in_owner)) {
+					if (! activity.getName().equals(activity_in_owner)) {   // Separate "Island Settings" launcher activity is enabled, only if profile is managed by Island.
 						profiles_managed_by_island.add(profile);
 						Log.i(TAG, "Profile managed by Island: " + toId(profile));
 					} else Log.i(TAG, "Profile not managed by Island: " + toId(profile));
@@ -105,14 +107,19 @@ public class Users extends PseudoContentProvider {
 
 	public static boolean isProfileManagedByIsland() { return sCurrentProfileManagedByIsland; }
 	@OwnerUser public static boolean isProfileManagedByIsland(final UserHandle user) {
+		ensureParentProfile();
 		if (isParentProfile(user)) {
 			if (isParentProfile()) return sCurrentProfileManagedByIsland;
 			throw new IllegalArgumentException("Not working for profile parent user");
 		}
 		return sProfilesManagedByIsland.contains(user);
 	}
+
 	/** Excluding parent profile */
-	public static List<UserHandle> getProfilesManagedByIsland() { return sProfilesManagedByIsland/* already unmodifiable */; }
+	@OwnerUser public static List<UserHandle> getProfilesManagedByIsland() {
+		ensureParentProfile();
+		return sProfilesManagedByIsland/* already unmodifiable */;
+	}
 
 	public static int toId(final UserHandle user) { return user.hashCode(); }
 
@@ -124,6 +131,10 @@ public class Users extends PseudoContentProvider {
 		return uid % PER_USER_RANGE;
 	}
 
+	private static void ensureParentProfile() {
+		if (mDebugBuild && ! isParentProfile()) throw new IllegalStateException("Not called in owner user");
+	}
+
 	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
 		final boolean added = Intent.ACTION_MANAGED_PROFILE_ADDED.equals(intent.getAction());
 		final UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
@@ -132,8 +143,10 @@ public class Users extends PseudoContentProvider {
 		refreshUsers(context);
 	}};
 
-	private static final int PER_USER_RANGE = 100000;
+	private static boolean mDebugBuild;
 	private static List<UserHandle> sProfilesManagedByIsland = null;	// Intentionally left null to fail early if this class is accidentally used in non-default process.
 	private static boolean sCurrentProfileManagedByIsland = false;
+
+	private static final int PER_USER_RANGE = 100000;
 	private static final String TAG = "Island.Users";
 }
