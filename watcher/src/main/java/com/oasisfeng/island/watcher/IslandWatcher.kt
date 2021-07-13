@@ -24,6 +24,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
+import com.oasisfeng.android.content.pm.getSystemService
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.hack.Hack
 import com.oasisfeng.island.notification.NotificationIds
@@ -45,33 +46,34 @@ import kotlin.coroutines.suspendCoroutine
 
 	override fun onReceive(context: Context, intent: Intent) {
 		Log.d(TAG, "onReceive: $intent")
-		if (SDK_INT < P || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
-						NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED,
-						NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)) return
+		if (SDK_INT < P || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_BOOT_COMPLETED,
+				Intent.ACTION_MY_PACKAGE_REPLACED, NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED,
+				NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)) return
 		if (Users.isParentProfile()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
 				COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 		if (SDK_INT < O) return
 		val policies = DevicePolicies(context)
 		if (! policies.isProfileOwner) return
-
-		val hasShortcutHostPermission = context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()
 		if (NotificationIds.IslandWatcher.isBlocked(context)) return
 
-		val supportsDeactivate = if (SDK_INT < Q) hasShortcutHostPermission else isParentProfileOwner(context)
-		val supportsRestart = ! policies.invoke(DPM::isUsingUnifiedPassword)
+		val locked = context.getSystemService<UserManager>()?.isUserUnlocked == false
+		val canDeactivate = if (SDK_INT >= Q) isParentProfileOwner(context)
+			else ! locked && context.getSystemService(LauncherApps::class.java)!!.hasShortcutHostPermission()   // hasShortcutHostPermission() below throws IllegalStateException: "User N is locked or not running"
+		val canRestart = ! locked && ! policies.invoke(DPM::isUsingUnifiedPassword)
 				&& policies.manager.storageEncryptionStatus == ENCRYPTION_STATUS_ACTIVE_PER_USER
+		val needsManualDeactivate = ! locked && ! canDeactivate
+		if (! canDeactivate && ! canRestart && ! needsManualDeactivate) return
 
 		NotificationIds.IslandWatcher.post(context) {
 			setOngoing(true).setGroup(GROUP).setGroupSummary(true)
 			setSmallIcon(R.drawable.ic_landscape_black_24dp).setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
 			setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
 			setContentTitle(context.getText(R.string.notification_island_watcher_title))
-			setContentText(context.getText(if (supportsDeactivate) R.string.notification_island_watcher_text_for_deactivate
+			setContentText(context.getText(if (canDeactivate || ! canRestart) R.string.notification_island_watcher_text_for_deactivate
 					else R.string.notification_island_watcher_text_for_restart))
-			if (supportsDeactivate) addServiceAction(context, R.string.action_deactivate_island)
-			if (supportsRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
-			if (! supportsDeactivate && ! supportsRestart)
-				addServiceAction(context, R.string.action_deactivate_island, Settings.ACTION_SYNC_SETTINGS)
+			if (canDeactivate) addServiceAction(context, R.string.action_deactivate_island)
+			if (canRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
+			if (needsManualDeactivate) addServiceAction(context, R.string.action_deactivate_island, Settings.ACTION_SYNC_SETTINGS)
 			addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
 				NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
 	}
