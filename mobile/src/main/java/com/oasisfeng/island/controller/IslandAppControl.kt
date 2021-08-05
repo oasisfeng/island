@@ -20,7 +20,7 @@ import com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.data.helper.AppStateTrackingHelper
-import com.oasisfeng.island.engine.ClonedHiddenSystemApps.Companion.setCloned
+import com.oasisfeng.island.engine.ClonedHiddenSystemApps
 import com.oasisfeng.island.engine.IslandManager
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.model.interactive
@@ -127,5 +127,5 @@ object IslandAppControl {
 			if (it) stopTreatingHiddenSysAppAsDisabled(app) }
 
 	private fun stopTreatingHiddenSysAppAsDisabled(app: IslandAppInfo)
-			= Shuttle(app.context(), to = app.user).invoke(with = app.packageName, function = ::setCloned)
+			= Shuttle(app.context(), to = app.user).invoke(with = app.packageName) { ClonedHiddenSystemApps.setCloned(this, it) }
 }
