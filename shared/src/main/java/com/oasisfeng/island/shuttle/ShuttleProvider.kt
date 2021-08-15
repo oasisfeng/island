@@ -32,11 +32,11 @@ class ShuttleProvider: ContentProvider() {
 				throw e }
 		}
 
-		private fun isReady(c: Context, profile: UserHandle) = c.isUriPermissionGranted(buildCrossProfileUri(profile.toId()))
+		private fun isReady(c: Context, profile: UserHandle) = c.isPermissionGranted(buildCrossProfileUri(profile.toId()))
 		@OwnerUser private fun isBackwardReady(c: Context, profile: UserHandle) =
-			c.isUriPermissionGranted(Uri.parse(CONTENT_URI), uid = UserHandles.getUid(profile.toId(), Process.myUid()))
+			c.isPermissionGranted(Uri.parse(CONTENT_URI), uid = UserHandles.getUid(profile.toId(), Process.myUid()))
 
-		private fun Context.isUriPermissionGranted(uri: Uri, uid: Int = Process.myUid()) =
+		private fun Context.isPermissionGranted(uri: Uri, uid: Int = Process.myUid()) =
 				checkUriPermission(uri, 0, uid, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PERMISSION_GRANTED
 
 		fun initialize(context: Context) {
@@ -61,7 +61,7 @@ class ShuttleProvider: ContentProvider() {
 
 		private fun initializeInIsland(context: Context) {
 			val uri = Uri.parse(CONTENT_URI)
-			if (context.isUriPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
+			if (context.isPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
 				return Unit.also { Log.d(TAG, "Shuttle in ${Users.current().toId()}: ready") }
 
 			Log.d(TAG, "Shuttle in ${Users.current().toId()}: establishing...")
@@ -80,7 +80,7 @@ class ShuttleProvider: ContentProvider() {
 				Uri.Builder().scheme(SCHEME_CONTENT).encodedAuthority("$profileId@$AUTHORITY").build()
 
 		private const val AUTHORITY = "com.oasisfeng.island.shuttle"
-		const val CONTENT_URI = "content://$AUTHORITY"
+		const val CONTENT_URI = "$SCHEME_CONTENT://$AUTHORITY"
 	}
 
 	override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {

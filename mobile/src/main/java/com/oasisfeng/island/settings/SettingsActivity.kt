@@ -105,7 +105,8 @@ import com.oasisfeng.island.util.Users
 				val info = activity.packageManager.getPackageInfo(activity.packageName, 0)
 				var summary: String
 				if (BuildConfig.DEBUG) {
-					summary = info.versionName + " (" + info.versionCode + ")"
+					val ago = System.currentTimeMillis() - info.lastUpdateTime
+					summary = "${info.versionName} (${info.versionCode}, ${ago / 60_000} minutes ago)"
 					if (activity.packageName != Modules.MODULE_ENGINE) try {
 						val engine = activity.packageManager.getPackageInfo(Modules.MODULE_ENGINE, 0)
 						summary += ", Engine: " + engine.versionName + " (" + engine.versionCode + ")" }
