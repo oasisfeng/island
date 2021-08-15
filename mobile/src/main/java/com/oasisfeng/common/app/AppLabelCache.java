@@ -46,6 +46,7 @@ class AppLabelCache implements ComponentCallbacks {
 			}
 
 			@Override protected void onPostExecute(final CharSequence raw_label) {
+				if (raw_label.length() == 0) return;    // Break mysterious loop caused by warning "IOException: Failed to load asset path '...'" in loadLabel().
 				final String label = filterString(raw_label.toString());
 				mStore.edit().putInt(version_key, version).putString(pkg, label).apply();
 				if (Objects.equals(label, cached_label)) return;	// Unchanged
