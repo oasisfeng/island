@@ -32,7 +32,9 @@ class ShuttleProvider: ContentProvider() {
 				throw e }
 		}
 
-		fun isReady(c: Context, profile: UserHandle) = c.isUriPermissionGranted(buildCrossProfileUri(profile.toId()))
+		private fun isReady(c: Context, profile: UserHandle) = c.isUriPermissionGranted(buildCrossProfileUri(profile.toId()))
+		@OwnerUser private fun isBackwardReady(c: Context, profile: UserHandle) =
+			c.isUriPermissionGranted(Uri.parse(CONTENT_URI), uid = UserHandles.getUid(profile.toId(), Process.myUid()))
 
 		private fun Context.isUriPermissionGranted(uri: Uri, uid: Int = Process.myUid()) =
 				checkUriPermission(uri, 0, uid, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PERMISSION_GRANTED
@@ -41,7 +43,9 @@ class ShuttleProvider: ContentProvider() {
 			Log.v(TAG, "Initializing...")
 			if (Users.isParentProfile())
 				return Users.getProfilesManagedByIsland().forEach {
-					if (isReady(context, it)) Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
+					if (isReady(context, it)) {
+						Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
+						if (! isBackwardReady(context, it)) initializeBackwardShuttle(context, it) }
 					else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
 			if (! DevicePolicies(context).isProfileOwner) return
 
@@ -49,6 +53,10 @@ class ShuttleProvider: ContentProvider() {
 			else Log.i(TAG, "Shuttle to parent profile: not ready")
 
 			initializeInIsland(context)
+		}
+
+		private fun initializeBackwardShuttle(context: Context, profile: UserHandle) {
+			Shuttle(context, to = profile).launchNoThrows { initializeInIsland(this) }
 		}
 
 		private fun initializeInIsland(context: Context) {
