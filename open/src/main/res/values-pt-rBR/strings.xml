@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_delegated_scope_auth_title">Pedido de autorização de %s</string>
+    <string name="prompt_unblock_notification_for_auth_request">Desbloquear as notificações para mostrar o pedido de autorização</string>
+    <string name="notification_delegated_scope_auth_text">Permitir para %s, sempre?</string>
+    <string name="action_authorize">Autorizar</string>
+    <string name="label_delegation_package_access">Suspender e ativar os apps</string>
+    <string name="label_delegation_permission_grant">Controlar a permissão do tempo de execução para os apps (incluir suspensão)</string>
+    <string name="label_delegation_app_ops">Gerenciar App Ops (restrições de permissão)</string>
+</resources>
