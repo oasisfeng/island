@@ -30,12 +30,12 @@
     <string name="featured_fx_description">“文件傳送門”提供的穿越結界的瀏覽檔案能力基於 Android 的“儲存瀏覽框架”。但並非所有的應用程式都支援“儲存瀏覽框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支援“儲存瀏覽框架”，只需在壺中界啟動它，選擇下拉選單中的“Connect to Storage”，然後從側邊欄選擇對應傳送門即可瀏覽外部資料。</string>
     <string name="featured_adb_secure_title">ADB 安全封印</string>
     <string name="featured_adb_secure_island_title">ADB 安全封印（僅限壺中界）</string>
-    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 終端執行危險指令（如安裝 APK、修改關鍵系统設定）的權限。\n\n如果授權煉妖壺對“界外”的管理權，還可以在整个裝置層面限制 ADB 终端權限（包括阻止物理連接的外部裝置透過 USB 讀取資料或不經用户授權直接安裝應用程式）。</string>
+    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 終端執行危險指令（如安裝 APK、修改關鍵系统設定）的權限。\n\n如果授權煉妖壺對“界外”的管理權，還可以在整個裝置層面限制 ADB 终端權限（包括阻止物理連接的外部裝置透過 USB 讀取資料或不經用户授權直接安裝應用程式）。</string>
     <string name="featured_managed_mainland_title">將控制擴展至“界外”</string>
     <string name="featured_managed_mainland_description">不僅可以凍結界外的應用程式，還能獲得一些此模式下獨有的功能。（詳細介绍參考線上說明文件）</string>
     <string name="featured_greenify_title">綠色守護</string>
     <string name="featured_greenify_description">在螢幕關閉後，自動凍結選擇的應用程式，除非它們仍然在工作中。</string>
-    <string name="featured_saf_enhancer_title">SAF 增强器 Lite</string>
+    <string name="featured_saf_enhancer_title">SAF 增強器 Lite</string>
     <string name="featured_saf_enhancer_description">為不支援儲存瀏覽框架，但支持通過外部相機應用程式拍照的應用程式（如“微信”）提供跨界的圖片瀏覽能力。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops 可選擇性剝奪指定應用程式的部分能力，即使授權了相關權限。</string>
@@ -135,11 +135,17 @@
     <string name="settings_title">設定</string>
 
     <string name="pref_general_header">一般</string>
-    <string name="pref_cat_app_launch_shortcuts">應用程式啟動快捷方式</string>
+    <string name="pref_cat_app_launch_shortcuts">應用程式快捷啟動方式</string>
+    <string name="pref_launch_shortcut_prefix_title">應用程式快捷啟動方式的名稱前綴</string>
     <string name="pref_alt_shortcut_badge_summary">對界外和界内的應用程式啟動快捷方式使用不同的角標。\n(某些裝置可能不支持)</string>
     <string name="pref_dynamic_shortcut_label_title">動態快速啟動方式</string>
     <string name="pref_dynamic_shortcut_label_summary">在應用程式凍結時为應用程式啟動快速啟動方式添加前缀，在應用程式解凍時去掉前缀。\n(某些啟動器可能不支持)</string>
     <string name="prompt_updating_shortcuts">正在更新現有快速啟動方式…</string>
+    <string name="pref_cat_app_settings_helper">應用程式設定助手</string>
+    <string name="pref_app_settings_title">彈出式通知</string>
+    <string name="pref_app_settings_summary">在系统的應用程式設定界面中“強制停止”一個應用程式後，短暫顯示一個彈出式通知，方便快捷打開應用程式管理類工具中針對該應用程式的設定。</string>
+    <string name="pref_app_settings_extended_title">包括通過“煉妖壺”安裝的應用程式</string>
+    <string name="pref_app_settings_extended_summary">即使對“煉妖壺”安裝的應用程式，也顯示“應用程式設定助手”。（方便應用程式設定界面中沒有“應用程式詳情”項的手機系統）</string>
 
     <string name="pref_show_admin_message_title">在操作限制界面中顯示提示訊息</string>
     <string name="pref_show_admin_message_summary">在系统彈出的“不允許執行此操作”對話框中顯示針對性的提示訊息。</string>

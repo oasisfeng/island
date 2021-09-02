@@ -1,9 +1,11 @@
 <resources>
     <string name="notification_island_watcher_title">壺中界 運轉中</string>
     <string name="notification_island_watcher_text_for_deactivate">“封印”可終止其中所有的背景活動</string>
+    <string name="notification_island_watcher_text_for_restart">“重新啟動”以回收其使用的資源。</string>
     <string name="notification_app_watcher_title">%s 已解凍</string>
-    <string name="notification_app_watcher_text">點擊將其解凍</string>
+    <string name="notification_app_watcher_text">點擊將其凍結</string>
     <string name="action_deactivate_island">封印</string>
+    <string name="action_restart_island">重新啟動</string>
     <string name="action_settings">設定</string>
     <string name="action_dismiss">忽略</string>
 
