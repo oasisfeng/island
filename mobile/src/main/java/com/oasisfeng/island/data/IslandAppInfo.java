@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
+import android.util.ArrayMap;
 
 import androidx.annotation.Nullable;
 
@@ -17,6 +18,7 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -26,6 +28,7 @@ import static android.content.Intent.CATEGORY_LAUNCHER;
 import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -66,7 +69,10 @@ public class IslandAppInfo extends AppInfo {
 
 	@Override protected boolean checkLaunchable(final int flags_for_resolve) {
 		if (! Users.isParentProfile(user) && ! isHidden()) {		// Accurate detection for non-frozen app in Island
-			if (sLaunchableNonFrozenIslandAppsCache != null) return sLaunchableNonFrozenIslandAppsCache.contains(packageName);
+			if (sLaunchableNonFrozenIslandAppsCache != null) {
+				final Set<String> launchable = sLaunchableNonFrozenIslandAppsCache.get(user);
+				if (launchable != null) return launchable.contains(packageName);
+			}
 			try { return ! requireNonNull((LauncherApps) context().getSystemService(LAUNCHER_APPS_SERVICE)).getActivityList(packageName, user).isEmpty(); }
 			catch (final SecurityException e) { return false; } // "SecurityException: Cannot retrieve activities for unrelated profile NNN" appeared on OPPO A3s and Vivo 1718 (both Android 8.1).
 		}
@@ -75,8 +81,15 @@ public class IslandAppInfo extends AppInfo {
 	}
 
 	public static void cacheLaunchableApps(final Context context) {
-		if (Users.hasProfile()) sLaunchableNonFrozenIslandAppsCache = requireNonNull((LauncherApps) context.getSystemService(LAUNCHER_APPS_SERVICE))
-				.getActivityList(null, Users.profile).stream().map(lai -> lai.getComponentName().getPackageName()).collect(toSet());
+		if (Users.hasProfile()) {
+			sLaunchableNonFrozenIslandAppsCache = new ArrayMap<>();
+			final LauncherApps la = requireNonNull(context.getSystemService(LauncherApps.class));
+			for (final UserHandle profile : Users.getProfilesManagedByIsland()) {
+				final Set<String> apps = la.getActivityList(null, profile).stream().map(lai ->
+						lai.getComponentName().getPackageName()).collect(toSet());
+				sLaunchableNonFrozenIslandAppsCache.put(profile, apps);
+			}
+		}
 		@SuppressLint("WrongConstant") final List<ResolveInfo> activities = context.getPackageManager().queryIntentActivities(
 				new Intent(ACTION_MAIN).addCategory(CATEGORY_LAUNCHER), Hacks.RESOLVE_ANY_USER_AND_UNINSTALLED | MATCH_DISABLED_COMPONENTS);
 		sPotentiallyLaunchableAppsCache = activities.stream().map(resolve -> resolve.activityInfo.packageName).collect(toSet());
@@ -84,7 +97,7 @@ public class IslandAppInfo extends AppInfo {
 
 	public static void invalidateLaunchableAppsCache() { sLaunchableNonFrozenIslandAppsCache = null; sPotentiallyLaunchableAppsCache = null; }
 
-	private static Set<String> sLaunchableNonFrozenIslandAppsCache;
+	private static Map<UserHandle, Set<String>> sLaunchableNonFrozenIslandAppsCache;
 	private static Set<String> sPotentiallyLaunchableAppsCache;
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
