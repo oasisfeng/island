@@ -1,10 +1,17 @@
 package com.oasisfeng.island.shuttle;
 
+import static android.content.Context.USER_SERVICE;
+import static java.util.Objects.requireNonNull;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.UserHandle;
+import android.os.UserManager;
+
+import com.oasisfeng.island.util.Users;
 
 import java.util.List;
 
@@ -14,6 +21,14 @@ import java.util.List;
  * Created by Oasis on 2019-3-4.
  */
 public class ActivityShuttle {
+
+	public static boolean canForwardTo(final Context context, final UserHandle user) {
+		final List<UserHandle> profiles = requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles();
+		for (final UserHandle profile : profiles) {
+			if (! Users.isParentProfile(profile)) return profile.equals(user);
+		}
+		return false;
+	}
 
 	public static Intent forceNeverForwarding(final PackageManager pm, final Intent intent) {
 		final List<ResolveInfo> candidates = pm.queryIntentActivities(intent, 0);

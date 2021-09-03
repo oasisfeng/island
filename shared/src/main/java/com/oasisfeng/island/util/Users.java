@@ -83,7 +83,7 @@ public class Users extends PseudoContentProvider {
 				Log.i(TAG, "Profile managed by Island: " + toId(user));
 			} else Log.w(TAG, "Skip sibling profile (may not managed by Island): " + toId(user));
 		}
-		profile = profiles_managed_by_island.isEmpty() ? null : profiles_managed_by_island.get(0);
+		profile = profiles_managed_by_island.isEmpty() ? null : profiles_managed_by_island.get(profiles_managed_by_island.size() - 1);
 		final UserManager um = context.getSystemService(UserManager.class);
 		profiles_managed_by_island.sort(Comparator.comparing(um::getSerialNumberForUser));
 		sProfilesManagedByIsland = Collections.unmodifiableList(profiles_managed_by_island);

@@ -59,7 +59,7 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 					return intent.setClassName(this, it.activityInfo.name) }}
 
 			if (isCallerNotSettings && user != null && user != Users.current()) {
-				if (user == Users.profile) details.component = ActivityShuttle.getForwarder(this) // Forwarding added in IslandProvisioning
+				if (ActivityShuttle.canForwardTo(this, user)) details.component = ActivityShuttle.getForwarder(this) // Forwarding added in IslandProvisioning
 				else details.setComponent(componentName).putExtra(Intent.EXTRA_USER, user)
 			} else ActivityShuttle.forceNeverForwarding(pm, details)
 
