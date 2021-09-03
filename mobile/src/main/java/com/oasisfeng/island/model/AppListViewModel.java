@@ -1,5 +1,10 @@
 package com.oasisfeng.island.model;
 
+import static android.widget.Toast.LENGTH_SHORT;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
@@ -55,17 +60,12 @@ import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import static android.widget.Toast.LENGTH_SHORT;
-import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
 
 /**
  * View model for apps
@@ -308,8 +308,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	private void requestToCloneApp(final Activity activity, final IslandAppInfo app) {
-		final Map<UserHandle, String> targets = new HashMap<>(IslandNameManager.getAllNames(activity));
-		if (targets.isEmpty()) throw new IllegalStateException("No Island");
+		final Map<UserHandle, String> names = IslandNameManager.getAllNames(activity);
+		if (names.isEmpty()) throw new IllegalStateException("No Island");
+		final Map<UserHandle, String> targets = new LinkedHashMap<>(names.size() + 1);
+		targets.put(Users.getParentProfile(), activity.getString(R.string.tab_mainland));
+		targets.putAll(names);
 		final String pkg = app.packageName;
 		if (targets.size() == 1) {     // Single Island, no need to show menu
 			final boolean from_mainland = Users.isParentProfile(app.user); final UserHandle profile;
@@ -320,13 +323,12 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else Toast.makeText(activity, R.string.toast_already_cloned, Toast.LENGTH_LONG).show();
 			return;
 		}
-		targets.put(Users.getParentProfile(), activity.getString(R.string.tab_mainland));
 		final UserHandle[] profiles = targets.keySet().toArray(new UserHandle[0]);      // Including owner user
-		final String[] names = targets.values().toArray(new String[0]);
+		final String[] labels = targets.values().toArray(new String[0]);
 
 		final Dialogs.Builder dialog = Dialogs.buildAlert(activity, R.string.prompt_clone_app_to, 0);
 		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(dialog.getContext(),
-				android.R.layout.select_dialog_item, android.R.id.text1, names) {
+				android.R.layout.select_dialog_item, android.R.id.text1, labels) {
 
 			@Override public @NonNull View getView(final int position, @Nullable final View convertView, @NonNull final ViewGroup parent) {
 				final View view = super.getView(position, convertView, parent);
@@ -337,8 +339,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			@Override public boolean hasStableIds() { return true; }
 		};
 		dialog.setSingleChoiceItems(adapter, -1, (d, which) -> {
-			if (which == 0) requestToCloneAppToMainland(activity, pkg);
-			else requestToCloneAppToProfile(activity, app, profiles[which]);
+			final UserHandle profile = profiles[which];
+			if (Users.isParentProfile(profile)) requestToCloneAppToMainland(activity, pkg);
+			else requestToCloneAppToProfile(activity, app, profile);
 			d.dismiss();
 		}).show();
 	}

@@ -21,6 +21,7 @@ import com.oasisfeng.pattern.PseudoContentProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static android.content.Context.USER_SERVICE;
@@ -64,7 +65,6 @@ public class Users extends PseudoContentProvider {
 		final List<UserHandle> profiles_managed_by_island = new ArrayList<>(profiles.size() - 1);
 		mParentProfile = profiles.get(0);
 		if (mParentProfile.equals(CURRENT)) {      // Running in parent profile
-
 			final String ui_module = Modules.getMainLaunchActivity(context).getPackageName();
 			final LauncherApps la = context.getSystemService(LauncherApps.class);
 			final String activity_in_owner = la.getActivityList(ui_module, CURRENT).get(0).getName();
@@ -84,6 +84,8 @@ public class Users extends PseudoContentProvider {
 			} else Log.w(TAG, "Skip sibling profile (may not managed by Island): " + toId(user));
 		}
 		profile = profiles_managed_by_island.isEmpty() ? null : profiles_managed_by_island.get(0);
+		final UserManager um = context.getSystemService(UserManager.class);
+		profiles_managed_by_island.sort(Comparator.comparing(um::getSerialNumberForUser));
 		sProfilesManagedByIsland = Collections.unmodifiableList(profiles_managed_by_island);
 		try { sCurrentProfileManagedByIsland = new DevicePolicies(context).isProfileOwner(); }
 		catch (final RuntimeException e) { Log.e(TAG, "Error checking current profile", e); }
