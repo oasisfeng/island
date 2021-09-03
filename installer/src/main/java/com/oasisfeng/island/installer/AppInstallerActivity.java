@@ -1,5 +1,30 @@
 package com.oasisfeng.island.installer;
 
+import static android.Manifest.permission.MANAGE_DOCUMENTS;
+import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
+import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
+import static android.content.pm.PackageInstaller.SessionParams.MODE_INHERIT_EXISTING;
+import static android.content.pm.PackageManager.GET_PERMISSIONS;
+import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
+import static android.os.Process.INVALID_UID;
+import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
+import static android.widget.Toast.LENGTH_LONG;
+import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
+import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
+import static com.oasisfeng.island.analytics.Analytics.Param.LOCATION;
+import static com.oasisfeng.island.installer.AppInstallInfo.Mode.CLONE;
+import static com.oasisfeng.island.installer.AppInstallInfo.Mode.INHERIT;
+import static com.oasisfeng.island.installer.AppInstallInfo.Mode.INSTALL;
+import static com.oasisfeng.island.installer.AppInstallInfo.Mode.UPDATE;
+import static java.util.Objects.requireNonNull;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -55,30 +80,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import kotlin.Unit;
-
-import static android.Manifest.permission.MANAGE_DOCUMENTS;
-import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
-import static android.app.AppOpsManager.MODE_ALLOWED;
-import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
-import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
-import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
-import static android.content.pm.PackageInstaller.SessionParams.MODE_INHERIT_EXISTING;
-import static android.content.pm.PackageManager.GET_PERMISSIONS;
-import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.O;
-import static android.os.Build.VERSION_CODES.P;
-import static android.os.Process.INVALID_UID;
-import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
-import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
-import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
-import static com.oasisfeng.island.analytics.Analytics.Param.LOCATION;
-import static com.oasisfeng.island.installer.AppInstallInfo.Mode.CLONE;
-import static com.oasisfeng.island.installer.AppInstallInfo.Mode.INHERIT;
-import static com.oasisfeng.island.installer.AppInstallInfo.Mode.INSTALL;
-import static com.oasisfeng.island.installer.AppInstallInfo.Mode.UPDATE;
-import static java.util.Objects.requireNonNull;
 
 /**
  * App installer with following capabilities:
@@ -253,7 +254,6 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			return;
 		}
 
-		final PackageInstaller installer = getPackageManager().getPackageInstaller();
 		final SessionParams params = new SessionParams(base_pkg == null ? MODE_FULL_INSTALL : MODE_INHERIT_EXISTING);
 		if (mInstallInfo.getAppId() != null) params.setAppPackageName(mInstallInfo.getAppId());
 		if (mInstallInfo.getAppLabel() != null) params.setAppLabel(mInstallInfo.getAppLabel());
@@ -261,6 +261,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		if (SDK_INT >= O) params.setInstallReason(PackageManager.INSTALL_REASON_USER);
 		final int session_id;
 		try {
+			final PackageInstaller installer = getPackageManager().getPackageInstaller();
 			session_id = installer.createSession(params);
 			mSession = installer.openSession(session_id);
 			mSessionId.complete(session_id);
@@ -307,7 +308,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			if (info != null) {
 				intent.setData(Uri.fromFile(new File(info.publicSourceDir)));
  				if (info.splitPublicSourceDirs != null && info.splitPublicSourceDirs.length > 0)
-					Toast.makeText(getApplicationContext(), R.string.toast_split_apk_clone_fallback_warning, Toast.LENGTH_LONG).show();
+					Toast.makeText(getApplicationContext(), R.string.toast_split_apk_clone_fallback_warning, LENGTH_LONG).show();
 			}
 		}
 
@@ -360,7 +361,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			if (isSourceQualified(caller_app_info)) return true;
 			source_label = caller_app_info.loadLabel(pm);
 		}
-		Toasts.show(this, source_label + " does not declare " + REQUEST_INSTALL_PACKAGES, Toast.LENGTH_LONG);
+		Toasts.show(this, source_label + " does not declare " + REQUEST_INSTALL_PACKAGES, LENGTH_LONG);
 		return false;
 	}
 

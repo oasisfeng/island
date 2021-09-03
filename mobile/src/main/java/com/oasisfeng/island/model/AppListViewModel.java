@@ -141,9 +141,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		final Filter profile_filter = Users.isParentProfile(profile) ? Filter.Mainland : Filter.Island;
 		Predicate<IslandAppInfo> filters = mFilterShared.and(profile_filter);
 		if (getFilterIncludeHiddenSystemApps().getValue() != Boolean.TRUE)
-			filters = filters.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());
+			filters = filters.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());  // Exclude system apps without launcher activity
 		final String text = getQueryText().getValue();
-		if (! TextUtils.isEmpty(text)) {
+		if (text != null && text.length() != 0) {
 			if (text.startsWith("package:")) {
 				final String pkg = text.substring(8);
 				filters = filters.and(app -> app.packageName.equals(pkg));

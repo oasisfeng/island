@@ -61,7 +61,7 @@ public class Users extends PseudoContentProvider {
 	/** This method should not be called under normal circumstance. */
 	public static void refreshUsers(final Context context) {
 		mDebugBuild = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-		final List<UserHandle> profiles = requireNonNull((UserManager) context.getSystemService(USER_SERVICE)).getUserProfiles();
+		final List<UserHandle> profiles = requireNonNull(context.getSystemService(UserManager.class)).getUserProfiles();
 		final List<UserHandle> profiles_managed_by_island = new ArrayList<>(profiles.size() - 1);
 		mParentProfile = profiles.get(0);
 		if (mParentProfile.equals(CURRENT)) {      // Running in parent profile
