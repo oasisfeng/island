@@ -10,6 +10,7 @@ import android.app.AlertDialog;
 import android.app.Application;
 import android.app.SearchManager;
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -422,7 +423,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 	private static void reinstallSystemApp(final Context context, final IslandAppInfo app) {
 		final DevicePolicies policies = new DevicePolicies(context);
-		policies.execute(DevicePolicyManager::enableSystemApp, app.packageName);
+		policies.execute((DevicePolicies.TriConsumer<DevicePolicyManager, ComponentName, String>) DevicePolicyManager::enableSystemApp, app.packageName);
 	}
 
 	/** Possible 10s delay before the change broadcast could be received (due to Android issue 225880), so we force a refresh immediately. */

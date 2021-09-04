@@ -332,7 +332,7 @@ public class IslandProvisioning extends IntentService {
 		// Some Samsung devices default to restrict all 3rd-party cross-profile services (IMEs, accessibility and etc).
 		policies.execute(DevicePolicyManager::setPermittedInputMethods, null);
 		policies.execute(DevicePolicyManager::setPermittedAccessibilityServices, null);
-		if (SDK_INT >= O) policies.invoke(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
+		if (SDK_INT >= O) policies.execute(DevicePolicyManager::setPermittedCrossProfileNotificationListeners, null);
 
 		if (! owner) startProfileOwnerPostProvisioningForNonOwnerProfile(context, policies);
 	}
