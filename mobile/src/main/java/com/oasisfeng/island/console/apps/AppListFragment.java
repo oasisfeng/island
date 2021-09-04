@@ -62,15 +62,8 @@ public class AppListFragment extends Fragment {
 
 	@Override public void onResume() {
 		super.onResume();
-		if (SystemClock.uptimeMillis() - mTimeLastPaused < 1_000) return;	// Avoid updating for brief pausing caused by cross-profile functionality.
 		if (mViewModel.mFeatured.visible.getValue()) mViewModel.mFeatured.update(requireActivity());
 	}
-
-	@Override public void onPause() {
-		super.onPause();
-		mTimeLastPaused = SystemClock.uptimeMillis();
-	}
-	private long mTimeLastPaused;
 
 	@Override public void onStop() {
 		super.onStop();

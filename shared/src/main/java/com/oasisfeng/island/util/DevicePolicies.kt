@@ -124,7 +124,6 @@ class DevicePolicies {
 
     /* Helpers for general APIs in DevicePolicyManager */
     interface TriConsumer<A, B, C> { fun accept(a: A, b: B, c: C) }
-    interface TriFunction<A, B, C, R> { fun apply(a: A, b: B, c: C): R }
     interface QuadConsumer<A, B, C, D> { fun accept(a: A, b: B, c: C, d: D) }
 
     /* Java */fun execute(callee: BiConsumer<DPM, ComponentName>) = callee.accept(manager, sAdmin)
@@ -133,7 +132,6 @@ class DevicePolicies {
     /* Java */fun <A, B> execute(callee: QuadConsumer<DPM, ComponentName, A, B>, a: A, b: B) = callee.accept(manager, sAdmin, a, b)
     fun <A, B> execute(callee: Function4<DPM, ComponentName, A, B, Unit>, a: A, b: B) = callee.invoke(manager, sAdmin, a, b)
     operator fun <T> invoke(callee: Function2<DPM, ComponentName, T>): T = callee.invoke(manager, sAdmin)
-    /* Java */fun <A, T> invoke(callee: TriFunction<DPM, ComponentName, A, T>, a: A): T = callee.apply(manager, sAdmin, a)
     operator fun <A, T> invoke(callee: Function3<DPM, ComponentName, A, T>, a: A): T = callee.invoke(manager, sAdmin, a)
     operator fun <A, B, T> invoke(callee: Function4<DPM, ComponentName, A, B, T>, a: A, b: B): T = callee.invoke(manager, sAdmin, a, b)
     operator fun <A, B, C, T> invoke(callee: Function5<DPM, ComponentName, A, B, C, T>, a: A, b: B, c: C): T = callee.invoke(manager, sAdmin, a, b, c)

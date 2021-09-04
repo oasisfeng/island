@@ -62,7 +62,7 @@ object IslandManager {
     }
 
     @JvmStatic fun getProfileIdsIncludingDisabled(context: Context): IntArray =
-        Hacks.UserManager_getProfileIds?.invoke(Users.currentId(), false)?.on(context.getSystemService()!!)
+        context.getSystemService<UserManager>()!!.getProfileIds(Users.currentId(), false)
             ?: context.getSystemService<UserManager>()!!.userProfiles.map(UserHandle::toId).toIntArray() // Fallback to profiles without disabled.
 }
 

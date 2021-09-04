@@ -91,9 +91,9 @@ public class Hacks {
 	static final Hack.HackedMethod0<String, DevicePolicyManager, Unchecked, Unchecked, Unchecked>
 			DevicePolicyManager_getDeviceOwner = Hack.into(DevicePolicyManager.class).method("getDeviceOwner")
 			.returning(String.class).fallbackReturning(null).withoutParams();
-	public static final @Nullable Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
-			UserManager_getProfileIds = SDK_INT > O_MR1 ? null : Hack.into(UserManager.class).method("getProfileIds")
-			.returning(int[].class).withParams(int.class, boolean.class);
+	public static final Hack.HackedMethod2<int[], UserManager, Unchecked, Unchecked, Unchecked, Integer, Boolean>
+			UserManager_getProfileIds = Hack.onlyIf(SDK_INT <= O_MR1).into(UserManager.class).method("getProfileIds")
+			.returning(int[].class).fallbackReturning(null).withParams(int.class, boolean.class);
 	public static final Hack.HackedMethod3<Context, Context, NameNotFoundException, Unchecked, Unchecked, String, Integer, UserHandle>
 			Context_createPackageContextAsUser = Hack.into(Context.class).method("createPackageContextAsUser").returning(Context.class)
 			.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(String.class, int.class, UserHandle.class);
@@ -116,12 +116,12 @@ public class Hacks {
 	static final Hack.HackedMethod0<IBinder, Activity, Unchecked, Unchecked, Unchecked>
 			Activity_getActivityToken = Hack.into(Activity.class).method("getActivityToken")
 			.returning(IBinder.class).fallbackReturning(null).withoutParams();
+	static final Hack.HackedMethod1<Integer, Object, RemoteException, Unchecked, Unchecked, IBinder>
+			IActivityManager_getLaunchedFromUid = Hack.into("android.app.IActivityManager")
+			.method("getLaunchedFromUid").returning(int.class).throwing(RemoteException.class).withParam(IBinder.class);
 	static final Hack.HackedMethod1<String, Object, RemoteException, Unchecked, Unchecked, IBinder>
 			IActivityManager_getLaunchedFromPackage = Hack.into("android.app.IActivityManager")
 			.method("getLaunchedFromPackage").returning(String.class).throwing(RemoteException.class).withParam(IBinder.class);
-	public static final @Nullable Hack.HackedMethod0<ActivityOptions, Activity, Unchecked, Unchecked, Unchecked>
-			Activity_getActivityOptions = Hack.into(Activity.class)
-			.method("getActivityOptions").returning(ActivityOptions.class).withoutParams();
 
 	@Keep @ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 
@@ -160,7 +160,7 @@ public class Hacks {
 
 	@Keep public interface UserManagerHack extends Hack.Mirror<UserManager> {
 
-		@Keep @Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror {
+		@Keep @Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror<Object> {
 			int getId();
 			UserHandle getUserHandle();
 		}
