@@ -40,8 +40,8 @@
 
     <Preference
         android:key="@string/key_cross_profile"
-        android:title="Manage cross-land privilege"
-        android:summary="Manage the apps with cross-land privilege."
+        android:title="@string/pref_manage_cross_profile_title"
+        android:summary="@string/pref_manage_cross_profile_summary"
         android:persistent="false" />
 
     <PreferenceCategory android:key="@string/key_watcher" android:title="@string/pref_quick_controls_header">

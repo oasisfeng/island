@@ -275,9 +275,9 @@ public class IslandProvisioning extends IntentService {
 				policies.execute(DevicePolicyManager::setAffiliationIds, ids);
 			} catch (final SecurityException ignored) {}	// SecurityException will be thrown if profile is not managed by Island.
 
-			policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_BLUETOOTH_SHARING);    // Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_MANAGED_PROFILES
+			policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_BLUETOOTH_SHARING);    // Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_MANAGED_PROFILES
 		}
-		if (owner) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
+		if (owner) policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
 
 		try {
 			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
@@ -310,7 +310,7 @@ public class IslandProvisioning extends IntentService {
 	/** All the initializations for mainland as device owner. */
 	@OwnerUser public static void startDeviceOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
-		if (SDK_INT >= O) policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
+		if (SDK_INT >= O) policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_ADD_MANAGED_PROFILE);	// Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_DEVICE_OWNERS
 	}
 
 	/** All the preparations after the provisioning procedure of system ManagedProvisioning, also shared by manual and incremental provisioning. */
@@ -338,7 +338,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	@ProfileUser private static void startProfileOwnerPostProvisioningForNonOwnerProfile(final Context context, final DevicePolicies policies) {
-		policies.addUserRestrictionIfNeeded(context, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
+		policies.addUserRestrictionIfNeeded(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING);
 		enableAdditionalForwarding(context, policies);
 
 		// Prepare API

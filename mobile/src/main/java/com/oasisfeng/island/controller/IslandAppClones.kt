@@ -121,7 +121,7 @@ object IslandAppClones {
 
 	@JvmStatic @ProfileUser private fun performAppCloningInProfile(context: Context, appInfo: ApplicationInfo): Int {
 		val pkg = appInfo.packageName; val policies = DevicePolicies(context)
-		policies.clearUserRestrictionsIfNeeded(context, UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
+		policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
 
 		if (SDK_INT >= P && policies.manager.isAffiliatedUser) try {
 			if (policies.invoke(DevicePolicyManager::installExistingPackage, pkg))

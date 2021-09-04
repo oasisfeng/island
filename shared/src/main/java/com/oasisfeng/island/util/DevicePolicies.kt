@@ -14,7 +14,6 @@ import android.os.Build.VERSION_CODES.P
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
-import android.util.Log
 import androidx.annotation.RequiresApi
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
 import com.oasisfeng.android.os.UserHandles
@@ -58,39 +57,23 @@ class DevicePolicies {
 
     /** @return true if successfully enabled, false if package not found or not system app.
      *  @see DevicePolicyManager.enableSystemApp */
-    fun enableSystemApp(pkg: String): Boolean {
-        try {
-            manager.enableSystemApp(sAdmin, pkg)
-            return true }
-        catch (e: RuntimeException) {
-            // May throw NPE if package not found (on Android 5.x, see commit 637baaf0db76f9e1e51eeab077ffb85da0ff9308 in platform_frameworks_base)
-            // 	 or IllegalArgumentException (on Android 6+) if package is not present on this device.
-            if (e is NullPointerException || e is IllegalArgumentException) return false
-            throw e }
-    }
+    fun enableSystemApp(pkg: String): Boolean =
+        try { manager.enableSystemApp(sAdmin, pkg); true }
+        catch (e: IllegalArgumentException) { false }   // When package is not present on this device.
 
     /** @see DevicePolicyManager.enableSystemApp */
-    fun enableSystemAppByIntent(intent: Intent): Boolean =
-        try {
-            manager.enableSystemApp(sAdmin, intent) > 0
-        } catch (e: IllegalArgumentException) {
-            // This exception may be thrown on Android 5.x (but not 6.0+) if non-system apps also match this intent.
-            // System apps should have been enabled before this exception is thrown, so we just ignore it.
-            Log.w(TAG, "System apps may not be enabled for: $intent")
-            true
-        }
+    fun enableSystemAppByIntent(intent: Intent): Boolean = manager.enableSystemApp(sAdmin, intent) > 0
 
-    fun addUserRestrictionIfNeeded(context: Context, key: String) {
+    fun addUserRestrictionIfNeeded(key: String) {
         if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
         if (! manager.getUserRestrictions(sAdmin).containsKey(key))
             manager.addUserRestriction(sAdmin, key)
     }
 
-    fun clearUserRestrictionsIfNeeded(context: Context, vararg keys: String) {
-        val restrictions by lazy { manager.getUserRestrictions(sAdmin) }
-        for (key in keys) {
-            if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
-            if (restrictions.containsKey(key)) manager.clearUserRestriction(sAdmin, key) }
+    fun clearUserRestrictionsIfNeeded(key: String) {
+        if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
+        if (manager.getUserRestrictions(sAdmin).containsKey(key))
+            manager.clearUserRestriction(sAdmin, key)
     }
 
     /** @see DevicePolicyManager.isPackageSuspended */
@@ -149,11 +132,11 @@ class DevicePolicies {
     fun <A> execute(callee: Function3<DPM, ComponentName, A, Unit>, a: A) = callee.invoke(manager, sAdmin, a)
     /* Java */fun <A, B> execute(callee: QuadConsumer<DPM, ComponentName, A, B>, a: A, b: B) = callee.accept(manager, sAdmin, a, b)
     fun <A, B> execute(callee: Function4<DPM, ComponentName, A, B, Unit>, a: A, b: B) = callee.invoke(manager, sAdmin, a, b)
-    fun <T> invoke(callee: Function2<DPM, ComponentName, T>): T = callee.invoke(manager, sAdmin)
+    operator fun <T> invoke(callee: Function2<DPM, ComponentName, T>): T = callee.invoke(manager, sAdmin)
     /* Java */fun <A, T> invoke(callee: TriFunction<DPM, ComponentName, A, T>, a: A): T = callee.apply(manager, sAdmin, a)
-    fun <A, T> invoke(callee: Function3<DPM, ComponentName, A, T>, a: A): T = callee.invoke(manager, sAdmin, a)
-    fun <A, B, T> invoke(callee: Function4<DPM, ComponentName, A, B, T>, a: A, b: B): T = callee.invoke(manager, sAdmin, a, b)
-    fun <A, B, C, T> invoke(callee: Function5<DPM, ComponentName, A, B, C, T>, a: A, b: B, c: C): T = callee.invoke(manager, sAdmin, a, b, c)
+    operator fun <A, T> invoke(callee: Function3<DPM, ComponentName, A, T>, a: A): T = callee.invoke(manager, sAdmin, a)
+    operator fun <A, B, T> invoke(callee: Function4<DPM, ComponentName, A, B, T>, a: A, b: B): T = callee.invoke(manager, sAdmin, a, b)
+    operator fun <A, B, C, T> invoke(callee: Function5<DPM, ComponentName, A, B, C, T>, a: A, b: B, c: C): T = callee.invoke(manager, sAdmin, a, b, c)
 
     val manager: DevicePolicyManager
     private val mAppContext: Context
