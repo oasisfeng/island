@@ -73,7 +73,7 @@ import kotlin.coroutines.suspendCoroutine
 					else R.string.notification_island_watcher_text_for_restart))
 			if (canDeactivate) addServiceAction(context, R.string.action_deactivate_island)
 			if (canRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
-			if (needsManualDeactivate) addServiceAction(context, R.string.action_deactivate_island, Settings.ACTION_SYNC_SETTINGS)
+			if (needsManualDeactivate) addServiceAction(context, R.string.action_deactivate_island_manually, Settings.ACTION_SYNC_SETTINGS)
 			addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
 				NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
 	}

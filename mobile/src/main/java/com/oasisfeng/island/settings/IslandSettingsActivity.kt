@@ -108,7 +108,9 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                         .setPositiveButton(R.string.prompt_manage_cross_profile_apps_footer, null)
                         .show().apply { getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false } }}
 
-        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isParentProfile(), NotificationIds.IslandWatcher)
+        setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isParentProfile(), NotificationIds.IslandWatcher) {
+            if (SDK_INT >= Q) summary = getString(R.string.pref_island_watcher_summary) +
+                    "\n" + getString(R.string.pref_island_watcher_summary_appendix_api29) }
         setupNotificationChannelTwoStatePreference(R.string.key_app_watcher, SDK_INT >= O, NotificationIds.IslandAppWatcher)
 
         setup<Preference>(R.string.key_reprovision) {
@@ -141,12 +143,14 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             } else remove(this) }
     }
 
-    private fun setupNotificationChannelTwoStatePreference(@StringRes key: Int, visible: Boolean, notificationId: NotificationIds) {
+    private fun setupNotificationChannelTwoStatePreference(@StringRes key: Int, visible: Boolean,
+            notificationId: NotificationIds, block: (TwoStatePreference.() -> Unit)? = null) {
         setup<TwoStatePreference>(key) {
             if (visible && SDK_INT >= O) {
                 isChecked = ! notificationId.isBlocked(context)
                 setOnPreferenceChangeListener { _, _ -> true.also { context.startActivity(notificationId.buildChannelSettingsIntent(context)) }}
             } else remove(this)
+            block?.invoke(this)
         }
     }
 

@@ -186,6 +186,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="prompt_manage_cross_profile_apps_footer">Some system apps may be always privileged despite this setting</string>
     <string name="pref_quick_controls_header">Quick controls in notification</string>
     <string name="pref_island_watcher_summary">Shortcut to deactivate Island, ceasing all the background activities inside. Island can then be activated on-demand by launching any of the apps inside.</string>
+    <string name="pref_island_watcher_summary_appendix_api29">If Mainland is not managed by Island, deactivation requires a few manual steps through system Settings.</string>
     <string name="pref_app_watcher_summary">Shortcut to freeze app recently unfrozen and revoke permissions temporarily granted.</string>
     <string name="pref_reprovision_title">Repair</string>
     <string name="pref_reprovision_summary">This may help to fix some issues. All apps and data will be preserved.</string>
