@@ -11,9 +11,7 @@ import android.app.ActionBar
 import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
+import android.content.*
 import android.content.Intent.ACTION_BOOT_COMPLETED
 import android.content.Intent.ACTION_MY_PACKAGE_REPLACED
 import android.content.pm.PackageManager.*
@@ -48,6 +46,7 @@ import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.DevicePolicies.PreferredActivityIntentFilter
 
 /**
  * Settings for each managed profile, also as launcher activity in managed profile.
@@ -65,7 +64,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
             else preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
                 ?: IslandNameManager.getDefaultSpecificName(activity)
 
-        val policies = DevicePolicies(activity)
+        val policies = DevicePolicies(activity.applicationContext)
         val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser
 
         if (SDK_INT !in P..Q) removeAppOpsRelated()     // Both Mainland and Island
@@ -107,6 +106,18 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
                                     .toSet().also { policies.invoke(DPM::setCrossProfilePackages, it) }}
                         .setPositiveButton(R.string.prompt_manage_cross_profile_apps_footer, null)
                         .show().apply { getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false } }}
+
+        setup<TwoStatePreference>(R.string.key_preferred_installer) {
+            if (Users.isParentProfile()) return@setup remove(this)
+            val installer = PreferredActivityIntentFilter.AppInstaller
+            isChecked = DevicePolicies(activity).isPreferredActivity(installer)
+            onChange { enabled ->
+                if (! enabled) policies.clearPersistentPreferredActivity(installer)
+                else policies.setPersistentPreferredActivityIfNotPreferred(installer)
+
+                policies.isPreferredActivity(installer).let { preferred -> if (enabled) preferred else ! preferred }
+            }
+        }
 
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isParentProfile(), NotificationIds.IslandWatcher) {
             if (SDK_INT >= Q) summary = getString(R.string.pref_island_watcher_summary) +

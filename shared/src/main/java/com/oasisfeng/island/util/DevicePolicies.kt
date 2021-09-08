@@ -2,10 +2,10 @@ package com.oasisfeng.island.util
 
 import android.annotation.SuppressLint
 import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.content.ContentResolver.SCHEME_CONTENT
+import android.content.Intent.ACTION_VIEW
+import android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS
 import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
@@ -14,6 +14,7 @@ import android.os.Build.VERSION_CODES.P
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
 import com.oasisfeng.android.os.UserHandles
@@ -138,6 +139,55 @@ class DevicePolicies {
 
     val manager: DevicePolicyManager
     private val mAppContext: Context
+
+    enum class PreferredActivityIntentFilter(private val action: String, decorator: IntentFilter.() -> Unit) {
+        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME) }),
+        AppInstaller(@Suppress("DEPRECATION") Intent.ACTION_INSTALL_PACKAGE,
+            { addAction(ACTION_VIEW); addDataScheme(SCHEME_CONTENT); addDataType("application/vnd.android.package-archive") });
+
+        fun getMatchingIntent() = Intent(action).apply {
+            filter.categoriesIterator().forEach(this::addCategory)
+            val scheme = filter.schemesIterator()?.run { if (hasNext()) next() else null }
+            val type = filter.typesIterator()?.run { if (hasNext()) next() else null }
+            setDataAndType(scheme?.let { Uri.fromParts(scheme, "any", null) }, type)
+        }
+
+        val filter: IntentFilter = IntentFilter(action).apply { addCategory(Intent.CATEGORY_DEFAULT) }.apply(decorator)
+    }
+
+    fun setPersistentPreferredActivityIfNotPreferred(filter: PreferredActivityIntentFilter) {
+        val activity = getActivityIfPreferred(filter) ?: return
+        manager.addPersistentPreferredActivity(sAdmin, filter.filter, activity)
+        Log.d(TAG, "Set PPA [${filter.name}] to ${activity.flattenToShortString()}")
+    }
+
+    fun clearPersistentPreferredActivity(filter: PreferredActivityIntentFilter) {
+        Log.d(TAG, "clearPersistentPreferredActivity(${filter.name})")
+        val activity = getActivityIfPreferred(filter) ?: return
+
+        val allOtherEnabled = PreferredActivityIntentFilter.values().filter {
+            it != filter && isPreferredActivity(it) }
+        manager.clearPackagePersistentPreferredActivities(sAdmin, activity.packageName)
+        allOtherEnabled.forEach { setPersistentPreferredActivityIfNotPreferred(it) }
+    }
+
+    fun isPreferredActivity(filter: PreferredActivityIntentFilter) = getActivityIfPreferred(filter) != null
+
+    private fun getActivityIfPreferred(filter: PreferredActivityIntentFilter): ComponentName? {
+        val intent = filter.getMatchingIntent()
+        val resolve = mAppContext.packageManager.resolveActivity(intent, 0)
+        return resolve?.activityInfo?.run {
+            val activity = findUniqueMatchingActivity(filter)
+            if (packageName == activity.packageName && name == activity.className) activity else null }
+    }
+
+    private fun findUniqueMatchingActivity(filter: PreferredActivityIntentFilter): ComponentName {
+        val uid = Process.myUid()
+        val resolves = mAppContext.packageManager.queryIntentActivities(filter.getMatchingIntent(), MATCH_DISABLED_COMPONENTS)
+            .filter { it.activityInfo.applicationInfo.uid == uid }
+        check(resolves.size == 1) { "More than 1 activity matches ${filter.name}: $resolves" }
+        return resolves[0].activityInfo.run { ComponentName(packageName, name) }
+    }
 
     companion object {
 

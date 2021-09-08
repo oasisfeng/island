@@ -44,6 +44,12 @@
         android:summary="@string/pref_manage_cross_profile_summary"
         android:persistent="false" />
 
+    <SwitchPreference
+        android:key="@string/key_preferred_installer"
+        android:title="@string/pref_always_use_app_installer_title"
+        android:summary="@string/pref_prefer_app_installer_summary"
+        android:persistent="false" />
+
     <PreferenceCategory android:key="@string/key_watcher" android:title="@string/pref_quick_controls_header">
 
         <SwitchPreference
