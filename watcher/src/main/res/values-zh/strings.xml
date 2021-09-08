@@ -11,6 +11,8 @@
     <string name="action_dismiss">忽略</string>
 
     <string name="toast_manual_quiet_mode">请在“工作资料设置”中手动关闭。</string>
+    <string name="prompt_island_deactivated">炼妖壶已封印</string>
+    <string name="prompt_failed_deactivating_island">炼妖壶封印失败</string>
 
     <string name="notification_permission_was_granted_title">已授予权限“%s”</string>
     <string name="notification_permission_was_granted_text">是否撤销此权限？</string>

@@ -11,7 +11,8 @@
     <string name="action_dismiss">Dismiss</string>
 
     <string name="toast_manual_quiet_mode">Please deactivate in \"Work profile settings\" manually.</string>
-
+    <string name="prompt_island_deactivated">Island is deactivated.</string>
+    <string name="prompt_failed_deactivating_island">Failed to deactivate Island.</string>
     <string name="notification_permission_was_granted_title">Permission \"%s\" was granted</string>
     <string name="notification_permission_was_granted_text">Would you like to revoke this permission?</string>
     <string name="action_revoke_granted">Revoke</string>
