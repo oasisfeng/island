@@ -11,7 +11,7 @@
     <string name="dialog_install_checkbox_always_allow">始終允許此來源安裝應用程式</string>
     <string name="dialog_install_failure_title">安裝失敗：%s</string>
     <string name="dialog_install_unknown_failure_message">Android 系統的應用程式安裝過程發生了內部錯誤</string>
-    <string name="prompt_install_aborted">應用安裝中止</string>
+    <string name="prompt_install_aborted">應用程式安裝中止</string>
     <string name="progress_dialog_installing">「%1$s」正在安裝 %2$s</string>
     <string name="progress_dialog_updating">「%1$s」正在更新 %2$s</string>
     <string name="progress_dialog_expanding">「%1$s」正在展開 %2$s</string>
