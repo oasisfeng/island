@@ -17,26 +17,28 @@
     <string name="status_frozen">凍結</string>
     <string name="status_disabled">停用</string>
     <string name="status_uninstalled">未安裝</string>
-    <string name="status_pending">待完成</string>
-    <string name="status_appendix_system">系统</string>
+    <string name="status_pending">尚未就緒</string>
+    <string name="status_appendix_system">系統</string>
     <string name="status_appendix_critical">關鍵</string>
     <string name="status_appendix_cloned">有分身</string>
     <string name="status_appendix_exclusive">僅存於此界</string>
 
     <string name="featured_button_setup">啟用</string>
     <string name="featured_file_shuttle_title">文件傳送門</string>
-    <string name="featured_file_shuttle_description">借助“虛空之陣”實現穿越結界的瀏覽檔案能力，讓文件可以更輕鬆的往返壺中界。布此陣需要通過 USB 連接的電腦使用 ADB 指令。</string>
+    <string name="featured_file_shuttle_description">借助「虛空之陣」實現穿越結界的瀏覽檔案能力，讓文件可以更輕鬆的往返壺中界。布此陣需要透過 USB 連接的電腦使用 ADB 指令。</string>
     <string name="featured_fx_title">FX File Explorer</string>
-    <string name="featured_fx_description">“文件傳送門”提供的穿越結界的瀏覽檔案能力基於 Android 的“儲存瀏覽框架”。但並非所有的應用程式都支援“儲存瀏覽框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支援“儲存瀏覽框架”，只需在壺中界啟動它，選擇下拉選單中的“Connect to Storage”，然後從側邊欄選擇對應傳送門即可瀏覽外部資料。</string>
+    <string name="featured_fx_description">「文件傳送門」提供的穿越結界的瀏覽檔案能力基於 Android 的「儲存瀏覽框架」。但並非所有的應用程式都支援「儲存瀏覽框架」，甚至包括一些主流檔案管理工具。\n\nFX File Explorer 完全支援「儲存瀏覽框架」，只需在壺中界啟動它，選擇下拉選單中的「Connect to Storage」，然後從側邊欄選擇對應傳送門即可瀏覽外部資料。</string>
     <string name="featured_adb_secure_title">ADB 安全封印</string>
     <string name="featured_adb_secure_island_title">ADB 安全封印（僅限壺中界）</string>
-    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 終端執行危險指令（如安裝 APK、修改關鍵系统設定）的權限。\n\n如果授權煉妖壺對“界外”的管理權，還可以在整個裝置層面限制 ADB 终端權限（包括阻止物理連接的外部裝置透過 USB 讀取資料或不經用户授權直接安裝應用程式）。</string>
-    <string name="featured_managed_mainland_title">將控制擴展至“界外”</string>
-    <string name="featured_managed_mainland_description">不僅可以凍結界外的應用程式，還能獲得一些此模式下獨有的功能。（詳細介绍參考線上說明文件）</string>
+    <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 終端執行危險指令（如安裝 APK、修改關鍵系統設定）的權限。\n\n如果授權煉妖壺對「界外」的管理權，還可以在整個裝置層面限制 ADB 終端權限（包括阻止物理連接的外部裝置透過 USB 讀取資料或不經用戶授權直接安裝應用程式）。</string>
+    <string name="featured_managed_mainland_title">將控制擴展至「界外」</string>
+    <string name="featured_managed_mainland_description">不僅可以凍結界外的應用程式，還能獲得一些此模式下獨有的功能。（詳細介紹參考線上說明文件）</string>
     <string name="featured_greenify_title">綠色守護</string>
     <string name="featured_greenify_description">在螢幕關閉後，自動凍結選擇的應用程式，除非它們仍然在工作中。</string>
     <string name="featured_saf_enhancer_title">SAF 增強器 Lite</string>
-    <string name="featured_saf_enhancer_description">為不支援儲存瀏覽框架，但支持通過外部相機應用程式拍照的應用程式（如“微信”）提供跨界的圖片瀏覽能力。</string>
+    <string name="featured_saf_enhancer_description">為不支援儲存瀏覽框架，但支援透過外部相機應用程式拍照的應用程式（如「微信」）提供跨界的圖片瀏覽能力。</string>
+    <string name="featured_icebox_title">冰箱</string>
+    <string name="featured_icebox_description">輕鬆愉悅的應用凍結和啟動體驗。請確保在冰箱的工作模式設定中選擇“煉妖壺”。將其複製至壺中界即可管理和啟動壺中界的應用。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops 可選擇性剝奪指定應用程式的部分能力，即使授權了相關權限。</string>
 
@@ -44,28 +46,28 @@
     <string name="setup_island_intro">壺中界是一個獨立的應用程式和資料。可以為應用程式選擇性的在壺中界建立分身，也可以將應用程式單獨安裝在壺中界。
 壺中界的應用程式瀏覽到的個人資料（通訊錄、通話紀錄等）是完全隔離，獨立於外部的，它們即便被授權了相關的權限，也無法瀏覽到外部的個人資料。
 \n\n應用程式分身的資料也獨立於外部的該應用程式，互不影響。壺中界的應用程式還可以在需要的時候被凍結，使其看起來完全消失無蹤，也無法進行任何後台行為。
-\n\n開始建立壺中界，意味著你同意授權“工作資料”（壺中界底層機制）的管理權限。我們不會收集您的隱私資料，詳情請參考我們在 Google Play 商店中的隱私政策。</string>
+\n\n開始建立壺中界，意味著你同意授權「工作資料」（壺中界底層機制）的管理權限。我們不會收集您的隱私資料，詳情請參考我們在 Google Play 商店中的隱私政策。</string>
     <string name="setup_accept">同意</string>
-    <string name="setup_error_managed_profile_not_supported">抱歉，此裝置不支援必需的“Android 工作資料”特性。</string>
-    <string name="setup_error_provisioning_incomplete">壺中界的建立不完整，在此之前的建立嘗試可能並未成功。\n\n<b>如果您的裝置或其它三方工具施加了“自啟動”（或類似的）限制，請務必首先將壺中界解除限制或加入白名單，然後再次建立壺中界。</b></string>
+    <string name="setup_error_managed_profile_not_supported">抱歉，此裝置不支援必需的「Android 工作資料」特性。</string>
+    <string name="setup_error_provisioning_incomplete">壺中界的建立不完整，在此之前的建立嘗試可能並未成功。\n\n<b>如果您的裝置或其它三方工具施加了「自啟動」（或類似的）限制，請務必首先將壺中界解除限制或加入白名單，然後再次建立壺中界。</b></string>
     <string name="setup_error_managed_device">抱歉，由於此裝置已被 <b>%1$s</b> 接管，壺中界無法建立。</string>
-    <string name="setup_error_missing_managed_provisioning">抱歉，由於此裝置並未完整支援必需的“Android 工作資料”特性。</string>
-    <string name="setup_solution_for_cancelled_provision">建立壺中界遇到了困難？\n\n如果你遇到了錯誤訊息，請點擊“繼續”打開線上的故障排除指南，並參考其中給出的解決方案。\n\n如果故障排除指南未能解決問題，而您的裝置已 ROOT，也可以嘗試使用 ROOT 權限建立壺中界。</string>
+    <string name="setup_error_missing_managed_provisioning">抱歉，由於此裝置並未完整支援必需的「Android 工作資料」特性。</string>
+    <string name="setup_solution_for_cancelled_provision">建立壺中界遇到了困難？\n\n如果你遇到了錯誤訊息，請點擊「繼續」打開線上的故障排除指南，並參考其中給出的解決方案。\n\n如果故障排除指南未能解決問題，而您的裝置已 ROOT，也可以嘗試使用 ROOT 權限建立壺中界。</string>
 
     <string name="tip_empty_app_list">空空如也\n請切換至其它列表</string>
 
     <string name="field_app_id">應用程式 ID: %1$s</string>
-    <string name="button_instructions_online">線上说明 (web)</string>
+    <string name="button_instructions_online">線上說明 (web)</string>
     <string name="button_account_settings">帳號設定</string>
     <string name="button_have_checked">我已檢查</string>
     <string name="button_setup_troubleshooting">故障排除指南 (web)</string>
-    <string name="button_setup_island_with_root">通過 ROOT 建立壺中界</string>
+    <string name="button_setup_island_with_root">透過 ROOT 建立壺中界</string>
 
     <string name="action_clone">分身</string>
     <string name="action_freeze">凍結</string>
     <string name="action_unfreeze">解除凍結</string>
-    <string name="action_shortcut">建立“解凍並啟動”快速啟動方式</string>
-    <string name="action_greenify">委託“綠色守護”自動凍結</string>
+    <string name="action_shortcut">建立「解凍並啟動」快速啟動方式</string>
+    <string name="action_greenify">委託「綠色守護」自動凍結</string>
     <string name="action_app_settings">應用程式設定</string>
     <string name="action_remove">移除分身</string>
     <string name="action_uninstall">解除安裝</string>
@@ -82,31 +84,31 @@
     <string name="menu_filter">過濾</string>
     <string name="menu_settings">設定</string>
 
-    <string name="filter_include_hidden_system_components">+ 隱藏的系统組件</string>
+    <string name="filter_include_hidden_system_components">+ 隱藏的系統元件</string>
 
     <string name="dialog_title_warning">注意</string>
-    <string name="dialog_manual_setup"><b>致高級使用者</b>：\n這一限制可以透過在 USB 連接的電腦上進行手動操作繞過。</string>
-    <string name="dialog_clone_incapable_explanation">抱歉，在 Android 5.1 之前，缺少內建的應用程式商店（如 Google Play）將無法完成應用程式分身。請參考“常見問題解答”中提供的解決方案。</string>
+    <string name="dialog_manual_setup"><b>致進階使用者</b>：\n這一限制可以透過在 USB 連接的電腦上進行手動操作繞過。</string>
+    <string name="dialog_clone_incapable_explanation">抱歉，在 Android 5.1 之前，缺少內建的應用程式商店（如 Google Play）將無法完成應用程式分身。請參考「常見問題解答」中提供的解決方案。</string>
     <string name="dialog_greenify_title">與綠色守護的協同</string>
     <string name="dialog_greenify_explanation">基於節省記憶體和電量的原則，壺中界自身是後台純淨的，因此需要借助綠色守護精巧的狀態檢測和休眠管理實現應用程式的自動凍結（以休眠之名）。</string>
-    <string name="dialog_greenify_version_too_low">綠色守護需要升级到更新的版本</string>
+    <string name="dialog_greenify_version_too_low">綠色守護需要升級到更新的版本</string>
     <string name="dialog_reactivate_message">通往壺中界的入口被意外關閉，請再次授權裝置管理權限以重新開啟。</string>
-    <string name="dialog_destroy_message">確定希望毀滅整個壺中界？其中的應用程式分身和所有資料將會完全煙滅，無法恢復。\n\n别擔心，外部的應用程式和資料不會受到任何影響。</string>
-    <string name="dialog_destroy_message_for_managed_user">如果“界外”也在煉妖壺的管理下，由於 Android 系统施加的限制，您將無法再建立新的壺中界，除非撤除對“界外”的管理權。\n\n確定仍然希望毀滅此界？</string>
-    <string name="dialog_rescind_message">確定希望撤除對“界外”的管理權？\n\n將來若希望重新啟用，必须再一次完成必要的流程，意味著如果没有 ROOT 權限，屆時需要摧毀現有的壺中界（如果已建立）並退出裝置上登入的所有帳號。</string>
-    <string name="dialog_cannot_destroy_message">如果希望毀滅整个壺中界，請打開系统設定 -（帳戶和）帳號，點選“移除工作資料”。</string>
-    <string name="dialog_critical_app_warning">這個應用程式（或服務）可能對於 Android 系统或其它應用程式的正常運作至關重要。如果繼續此操作，部分應用程式甚至整個系统可能因此變得不穩定或無法正常運作。\n\n確認繼續？</string>
-    <string name="dialog_reinstall_system_app_warning">這個系统應用程式（或服務）因為某些原因並未安裝。如果繼續此操作，整個系统可能因此變得不穩定或無法正常運作。\n\n確認繼續？</string>
-    <string name="dialog_mainland_device_admin">接管“界外”需要授權裝置管理權限。</string>
+    <string name="dialog_destroy_message">確定希望毀滅整個壺中界？其中的應用程式分身和所有資料將會完全煙滅，無法復原。\n\n別擔心，外部的應用程式和資料不會受到任何影響。</string>
+    <string name="dialog_destroy_message_for_managed_user">如果「界外」也在煉妖壺的管理下，由於 Android 系統施加的限制，您將無法再建立新的壺中界，除非撤除對「界外」的管理權。\n\n確定仍然希望毀滅此界？</string>
+    <string name="dialog_rescind_message">確定希望撤除對「界外」的管理權？\n\n將來若希望重新啟用，必須再一次完成必要的流程，意味著如果沒有 ROOT 權限，屆時需要摧毀現有的壺中界（如果已建立）並退出裝置上登入的所有帳號。</string>
+    <string name="dialog_cannot_destroy_message">如果希望毀滅整個壺中界，請打開系統設定 -（帳戶和）帳號，點選「移除工作資料」。</string>
+    <string name="dialog_critical_app_warning">這個應用程式（或服務）可能對於 Android 系統或其它應用程式的正常運作至關重要。如果繼續此操作，部分應用程式甚至整個系統可能因此變得不穩定或無法正常運作。\n\n確認繼續？</string>
+    <string name="dialog_reinstall_system_app_warning">這個系統應用程式（或服務）因為某些原因並未安裝。如果繼續此操作，整個系統可能因此變得不穩定或無法正常運作。\n\n確認繼續？</string>
+    <string name="dialog_mainland_device_admin">接管「界外」需要授權裝置管理權限。</string>
     <string name="dialog_island_setup_failed">抱歉，建立壺中界時出現了異常。（階段 %1$d）</string>
 
     <string name="action_continue">繼續</string>
     <string name="action_learn_more">詳細了解</string>
     <string name="action_install">安裝</string>
-    <string name="action_upgrade">升级</string>
+    <string name="action_upgrade">升級</string>
     <string name="action_destroy">毀滅</string>
 
-    <string name="prompt_disable_sys_app_as_removal">系统應用程式（或服務）只能被停用，與解除安裝應用程式的效果相似。\n\n由於没有權限直接停用應用程式，接下來即將打開系统的應用程式設定界面，屆時請點擊“停用”按钮。</string>
+    <string name="prompt_disable_sys_app_as_removal">系統應用程式（或服務）只能被停用，與解除安裝應用程式的效果相似。\n\n由於沒有權限直接停用應用程式，接下來即將打開系統的應用程式設定介面，屆時請點擊「停用」按鈕。</string>
     <string name="prompt_clone_app_to">將應用程式複製至…</string>
     <string name="toast_enable_disabled_system_app">請重新啟用此分身</string>
 
@@ -114,20 +116,20 @@
     <string name="toast_successfully_cloned">%1$s 已完成分身</string>
     <string name="toast_cannot_clone">抱歉，無法為 %1$s 分身。</string>
     <string name="toast_already_cloned">分身已存在</string>
-    <string name="toast_shortcut_failed">快速啟動方式建立失败</string>
+    <string name="toast_shortcut_failed">快速啟動方式建立失敗</string>
     <string name="toast_greenify_failed">綠色化失敗</string>
-    <string name="toast_internal_error">抱歉，出現了内部異常，請退出後重新嘗試。</string>
+    <string name="toast_internal_error">抱歉，出現了內部異常，請退出後重新嘗試。</string>
     <string name="toast_error_freeze_failure">凍結失敗</string>
     <string name="toast_error_unfreeze_failure">解凍失敗</string>
     <string name="toast_error_freezing_active_admin">無法凍結已啟用裝置管理器的應用程式</string>
-    <string name="toast_external_storage_permission_required">文件傳送門需要“儲存”權限以打通檔案瀏覽。</string>
+    <string name="toast_external_storage_permission_required">文件傳送門需要「儲存」權限以打通檔案瀏覽。</string>
     <string name="toast_app_launch_error">抱歉，啟動應用程式時出現了異常。</string>
     <string name="toast_app_launch_failure">未能啟動 %s</string>
     <string name="prompt_invalid_shortcut">快速啟動方式已失效，請重新建立</string>
-    <string name="prompt_operation_failure_due_to_incompatibility">操作失敗\n(可能由於 ROM 兼容性)</string>
+    <string name="prompt_operation_failure_due_to_incompatibility">操作失敗\n(可能由於 ROM 相容性)</string>
 
     <!-- General words -->
-    <string name="open_settings">打開系统設定</string>
+    <string name="open_settings">打開系統設定</string>
     <string name="prompt_invalid_input">輸入無效</string>
 
     <!-- Settings -->
@@ -135,11 +137,11 @@
     <string name="settings_title">設定</string>
 
     <string name="pref_general_header">一般</string>
-    <string name="pref_cat_app_launch_shortcuts">應用程式快捷啟動方式</string>
-    <string name="pref_launch_shortcut_prefix_title">應用程式快捷啟動方式的名稱前綴</string>
-    <string name="pref_alt_shortcut_badge_summary">對界外和界内的應用程式啟動快捷方式使用不同的角標。\n(某些裝置可能不支持)</string>
+    <string name="pref_cat_app_launch_shortcuts">應用程式啟動捷徑</string>
+    <string name="pref_launch_shortcut_prefix_title">應用啟動捷徑的名稱前綴</string>
+    <string name="pref_alt_shortcut_badge_summary">對界外和界內的應用程式啟動捷徑使用不同的角標。\n(某些裝置可能不支援)</string>
     <string name="pref_dynamic_shortcut_label_title">動態快速啟動方式</string>
-    <string name="pref_dynamic_shortcut_label_summary">在應用程式凍結時为應用程式啟動快速啟動方式添加前缀，在應用程式解凍時去掉前缀。\n(某些啟動器可能不支持)</string>
+    <string name="pref_dynamic_shortcut_label_summary">在應用程式凍結時為應用程式啟動快速啟動方式添加前綴，在應用程式解凍時去掉前綴。\n(某些啟動器可能不支援)</string>
     <string name="prompt_updating_shortcuts">正在更新現有快速啟動方式…</string>
     <string name="pref_cat_app_settings_helper">應用程式設定助手</string>
     <string name="pref_app_settings_title">彈出式通知</string>
@@ -147,21 +149,21 @@
     <string name="pref_app_settings_extended_title">包括通過“煉妖壺”安裝的應用程式</string>
     <string name="pref_app_settings_extended_summary">即使對“煉妖壺”安裝的應用程式，也顯示“應用程式設定助手”。（方便應用程式設定界面中沒有“應用程式詳情”項的手機系統）</string>
 
-    <string name="pref_show_admin_message_title">在操作限制界面中顯示提示訊息</string>
-    <string name="pref_show_admin_message_summary">在系统彈出的“不允許執行此操作”對話框中顯示針對性的提示訊息。</string>
-    <string name="pref_preserve_app_ops">為解凍的應用程式恢復權限審查 (App Ops)</string>
-    <string name="pref_preserve_app_ops_description">Android 系统不會為凍結的應用程式保留已設定的權限審查（亦稱 App Ops，如“後台限制”、“顯示在其它應用程式的上層”），煉妖壺可以在解凍後將其恢復。</string>
+    <string name="pref_show_admin_message_title">在操作限制介面中顯示提示訊息</string>
+    <string name="pref_show_admin_message_summary">在系統彈出的「不允許執行此操作」對話框中顯示針對性的提示訊息。</string>
+    <string name="pref_preserve_app_ops">為解凍的應用程式復原權限審查 (App Ops)</string>
+    <string name="pref_preserve_app_ops_description">Android 系統不會為凍結的應用程式保留已設定的權限審查（亦稱 App Ops，如「後台限制」、「顯示在其它應用程式的上層」），煉妖壺可以在解凍後將其復原。</string>
     <string name="pref_preserve_app_ops_adb_footnote">\n\n（在首次開啟時需要執行一條 ADB 指令）</string>
-    <string name="prompt_adb_app_ops_command">請在 ADB 命令視窗行執行這條指令：\n\n</string>
+    <string name="prompt_adb_app_ops_command">請在 ADB 指令視窗行執行這條指令：\n\n</string>
     <string name="action_copy">複製至剪貼簿</string>
 
     <string name="pref_scoped_settings_header">分空間的獨立設定</string>
     <string name="prompt_island_not_yet_setup">壺中界尚未建立</string>
     <string name="action_rename">重新命名</string>
     <string name="pref_privacy_header">隱私保護</string>
-    <string name="pref_privacy_summary">壺中界里的應用程式無法瀏覽您在外部的應用程式和私人資料（如 聯絡人、通話紀錄、照片、文件等），除了裝置全局的資料：（包括但不限於）
+    <string name="pref_privacy_summary">壺中界裡的應用程式無法瀏覽您在外部的應用程式和私人資料（如 聯絡人、通話紀錄、照片、文件等），除了裝置全域的資料：（包括但不限於）
         \n\n· 裝置唯一標示（Android 10 已禁止）\n· 簡訊\n· 裝置的地理位置</string>
-    <string name="pref_privacy_appops">從 Android 9 開始，以上幾項裝置全局資料也能通過以下“權限審查”對特定應用程式的權限加以限制。\n\n在這里撤銷的權限，即使用户在應用程式中授權，應用程式亦無法瀏覽该權限保護的資料。</string>
+    <string name="pref_privacy_appops">從 Android 9 開始，以上幾項裝置全域資料也能透過以下「權限審查」對特定應用程式的權限加以限制。\n\n在這裡撤銷的權限，即使用戶在應用程式中授權，應用程式亦無法瀏覽該權限保護的資料。</string>
     <string name="pref_privacy_read_phone_state_title">讀取裝置標示及通訊狀態</string>
     <string name="pref_privacy_read_phone_state_summary">撤銷此權限將影響應用程式檢查通訊狀態的能力</string>
     <string name="pref_privacy_read_sms_title">讀取簡訊</string>
@@ -170,32 +172,32 @@
     <string name="pref_privacy_storage_title">瀏覽個人儲存空間 (實驗性)</string>
     <string name="pref_privacy_storage_summary">注意：撤銷此權限可能導致應用程式異常</string>
     <string name="label_prefix_for_system_app">[內建]</string>
-    <string name="label_suffix_permission_granted">(用户已授權)</string>
-    <string name="action_revoke_all">批量撤銷…</string>
+    <string name="label_suffix_permission_granted">(用戶已授權)</string>
+    <string name="action_revoke_all">批次撤銷…</string>
     <string name="action_done">完成</string>
     <string name="prompt_appops_loading">正在載入應用程式列表…</string>
-    <string name="prompt_appops_no_such_apps">没有應用程式使用此權限</string>
-    <string name="prompt_appops_revoke_for_all_users_apps">確認對所有用户應用程式（不涉及系统應用程式）撤銷此權限？</string>
+    <string name="prompt_appops_no_such_apps">沒有應用程式使用此權限</string>
+    <string name="prompt_appops_revoke_for_all_users_apps">確認對所有用戶應用程式（不涉及系統應用程式）撤銷此權限？</string>
     <string name="prompt_manage_cross_profile_apps">授權具有跨界互聯能力的應用程式此項特權</string>
-    <string name="prompt_manage_cross_profile_apps_footer">部分系统應用程式可能無視此設定享有特權</string>
+    <string name="prompt_manage_cross_profile_apps_footer">部分系統應用程式可能無視此設定享有特權</string>
     <string name="pref_quick_controls_header">通知區快速設定控制</string>
     <string name="pref_island_watcher_summary">可封印諸界，中止其中所有應用程式的背景活動。再次啟動其中的任何應用程式將會重新啟用。</string>
-    <string name="pref_app_watcher_summary">可重新凍結最近解凍的應用程式，撤銷臨時授予的權限。</string>
+    <string name="pref_app_watcher_summary">可重新凍結最近解凍的應用程式，復原臨時授予的權限。</string>
     <string name="pref_reprovision_title">修繕壺中界</string>
-    <string name="pref_reprovision_summary">有助於解决出現的問題。所有的應用程式和資料都將保留。</string>
-    <string name="pref_destroy_title">徹底摧毁</string>
+    <string name="pref_reprovision_summary">有助於解決出現的問題。所有的應用程式和資料都將保留。</string>
+    <string name="pref_destroy_title">徹底摧毀</string>
     <string name="pref_destroy_summary">永久的銷毀此界，連同其中的所有應用程式及其資料。</string>
     <string name="pref_rescind_title">撤除管理權</string>
-    <string name="pref_rescind_summary">撤銷煉妖壺對裝置的全局管理權。所有的應用程式和資料都將保留（解凍），但你將無法再：\n\n</string>
+    <string name="pref_rescind_summary">復原煉妖壺對裝置的全域管理權。所有的應用程式和資料都將保留（解凍），但你將無法再：\n\n</string>
     <string name="pref_device_owner_title">讓掌控力延伸至界外</string>
     <string name="pref_device_owner_summary">授權煉妖壺管理界外的權限，你將可以：\n\n</string>
-    <string name="pref_device_owner_features">· 凍結和管理界外的應用程式\n· 使用某些需要裝置全局管理權的特性（如完整的 ADB 安全封印）</string>
+    <string name="pref_device_owner_features">· 凍結和管理界外的應用程式\n· 使用某些需要裝置全域管理權的特性（如完整的 ADB 安全封印）</string>
 
     <string name="pref_setup_header">管理</string>
 
     <string name="pref_about_header">關於</string>
     <string name="pref_about_version_title">版本</string>
-    <string name="pref_about_open_source_title">這是一个開源項目</string>
+    <string name="pref_about_open_source_title">這是一個開源項目</string>
     <string name="pref_about_open_source_summary">歡迎來 GitHub 瀏覽我們</string>
     <string name="pref_about_licenses_title">授權</string>
 
@@ -206,21 +208,21 @@
     <string name="prompt_security_confirmation_to_disable">是否停用這個功能？</string>
     <string name="prompt_security_confirmation_activating">啟用安全確認？</string>
     <string name="prompt_security_confirmation_deactivating">解除安全確認？</string>
-    <string name="prompt_enable_adb_debug">一並啟用 ADB 偵錯？</string>
+    <string name="prompt_enable_adb_debug">一併啟用 ADB 偵錯？</string>
     <string name="toast_security_confirmation_activated">安全確認已啟用</string>
     <string name="toast_security_confirmation_deactivated">安全確認已解除</string>
-    <string name="toast_security_confirmation_failure">安全確認失敗，請重试。</string>
+    <string name="toast_security_confirmation_failure">安全確認失敗，請重試。</string>
 
     <!-- New User Guide -->
 
     <string name="prompt_freeze_title">凍結應用程式</string>
-    <string name="prompt_freeze_text">被凍結的應用程式会完全消失，看起來就像是解除安裝了一樣，直到將其解凍。\n\n在凍結狀態的應用程式絕對無法做任何事情。</string>
+    <string name="prompt_freeze_text">被凍結的應用程式會完全消失，看起來就像是解除安裝了一樣，直到將其解凍。\n\n在凍結狀態的應用程式絕對無法做任何事情。</string>
     <string name="prompt_clone_title">在壺中界建立應用程式的分身</string>
     <string name="prompt_clone_text">界外的應用程式可以在壺中界獲得分身。\n\n應用程式的分身就像是新安裝的應用程式副本，有自己獨立的資料。他們只分享應用程式的執行程式以節省空間。</string>
 
     <!-- Tip cards -->
 
     <string name="tip_action_ignore">忽略</string>
-    <string name="tip_critical_package_required">關鍵應用程式（或組件）</string>
-    <string name="tip_critical_package_message">“%1$s”是一个關鍵的系统應用程式（或組件），需保留以確保壺中界的正常運作。\n\n立即採取行動以避免預期之外的應用程式或系统功能異常。</string>
+    <string name="tip_critical_package_required">關鍵應用程式（或元件）</string>
+    <string name="tip_critical_package_message">「%1$s」是一個關鍵的系統應用程式（或元件），需保留以確保壺中界的正常運作。\n\n立即採取行動以避免預期之外的應用程式或系統功能異常。</string>
 </resources>

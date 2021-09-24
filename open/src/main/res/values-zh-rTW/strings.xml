@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notification_delegated_scope_auth_title">授權請求 來自 %s</string>
-    <string name="prompt_unblock_notification_for_auth_request">請恢復通知以顯示授權請求</string>
+    <string name="prompt_unblock_notification_for_auth_request">請復原通知以顯示授權請求</string>
     <string name="notification_delegated_scope_auth_text">允許其（在任何時候）%s</string>
     <string name="action_authorize">同意</string>
     <string name="label_delegation_package_access">凍結及解凍應用程式</string>
