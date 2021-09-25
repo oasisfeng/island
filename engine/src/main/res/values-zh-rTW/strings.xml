@@ -5,9 +5,9 @@
     <string name="permission_freeze_app_label">凍結煉妖壺管理的應用程式</string>
     <string name="permission_freeze_app_description">這個應用程式被授權可隨時凍結及解凍煉妖壺管理的任意應用程式</string>
     <string name="permission_launch_app_label">啟動煉妖壺管理的應用程式</string>
-    <string name="permission_launch_app_description">這個應用程式被授權可啟動煉妖壺管理的任何應用程式，凍結的應用程式将在啟動前解凍。</string>
+    <string name="permission_launch_app_description">這個應用程式被授權可啟動煉妖壺管理的任何應用程式，凍結的應用程式將在啟動前解凍。</string>
     <string name="permission_suspend_app_label">暫停煉妖壺管理的應用程式</string>
-    <string name="permission_suspend_app_description">這個應用程式被授權可隨時暫停及恢復煉妖壺管理的任意應用程式</string>
+    <string name="permission_suspend_app_description">這個應用程式被授權可隨時暫停及復原煉妖壺管理的任意應用程式</string>
 
     <string name="notification_provisioning_island_title">正在準備 壺中界…</string>
     <string name="notification_provisioning_mainland_title">正在接管 界外…</string>
