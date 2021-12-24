@@ -7,12 +7,14 @@ import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_INHERIT_EXISTING;
+import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.INVALID_UID;
 import static android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES;
 import static android.widget.Toast.LENGTH_LONG;
@@ -259,6 +261,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		if (mInstallInfo.getAppLabel() != null) params.setAppLabel(mInstallInfo.getAppLabel());
 		if (mInstallInfo.getCallerUid() != INVALID_UID) params.setOriginatingUid(mInstallInfo.getCallerUid());
 		if (SDK_INT >= O) params.setInstallReason(PackageManager.INSTALL_REASON_USER);
+		if (SDK_INT >= S) params.setRequireUserAction(USER_ACTION_NOT_REQUIRED);
 		final int session_id;
 		try {
 			final PackageInstaller installer = getPackageManager().getPackageInstaller();
