@@ -59,6 +59,7 @@ import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARE
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.Intent.ACTION_INSTALL_PACKAGE;
 import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.ACTION_OPEN_DOCUMENT_TREE;
 import static android.content.Intent.ACTION_SEND;
 import static android.content.Intent.ACTION_SEND_MULTIPLE;
 import static android.content.Intent.ACTION_VIEW;
@@ -359,6 +360,8 @@ public class IslandProvisioning extends IntentService {
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
 			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_SEND_MULTIPLE).withDataType("*/*"), FLAGS_BIDIRECTIONAL);
 		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
+		// For Storage Access Framework
+		policies.addCrossProfileIntentFilter(new IntentFilter(ACTION_OPEN_DOCUMENT_TREE), FLAGS_BIDIRECTIONAL);
 		// For web browser
 		policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_VIEW).withCategory(CATEGORY_BROWSABLE).withDataSchemes("http", "https", "ftp"),
 				FLAG_PARENT_CAN_ACCESS_MANAGED);
