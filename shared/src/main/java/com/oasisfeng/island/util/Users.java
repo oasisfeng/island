@@ -1,5 +1,9 @@
 package com.oasisfeng.island.util;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N_MR1;
+import static java.util.Objects.requireNonNull;
+
 import android.annotation.SuppressLint;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -23,11 +27,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import static android.content.Context.USER_SERVICE;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N_MR1;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Utility class for user-related helpers. Only works within the process where this provider is declared to be running.
@@ -102,6 +101,7 @@ public class Users extends PseudoContentProvider {
 		return um.isQuietModeEnabled(user);
 	}
 
+	public static boolean isSystemUser() { return CURRENT_ID == 0; }
 	// TODO: Support secondary user with managed profile.
 	public static boolean isParentProfile() { return CURRENT_ID == toId(mParentProfile); }
 	public static boolean isParentProfile(final UserHandle user) { return user.equals(mParentProfile); }

@@ -1,5 +1,10 @@
 package com.oasisfeng.island.util;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.O_MR1;
+import static android.os.Build.VERSION_CODES.P;
+import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
+
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
@@ -34,11 +39,6 @@ import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.O_MR1;
-import static android.os.Build.VERSION_CODES.P;
-import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
-
 /**
  * All reflection-based hacks should be defined here
  *
@@ -57,13 +57,13 @@ public class Hacks {
 	private static final int MATCH_ANY_USER = 0x00400000;		// Requires INTERACT_ACROSS_USERS since Android P.
 	/**
 	 * When used in @ApplicationInfoFlags or @PackageInfoFlags:
-	 *   For owner user, GET_UNINSTALLED_PACKAGES implicitly set MATCH_ANY_USER.
+	 *   For system user, GET_UNINSTALLED_PACKAGES implicitly set MATCH_ANY_USER.
 	 *   For managed profile, MATCH_ANY_USER requires permission INTERACT_ACROSS_USERS since Android P.
 	 * When used in @ComponentInfoFlags or @ResolveInfoFlags: MATCH_ANY_USER is always allowed.
 	 *
 	 * See PackageManagerService.updateFlagsForPackage()
 	 */
-	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isParentProfile() ? 0 : MATCH_ANY_USER);
+	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isSystemUser() ? 0 : MATCH_ANY_USER);
 	public static final int RESOLVE_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer>
