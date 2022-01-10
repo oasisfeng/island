@@ -6,7 +6,6 @@ import static android.os.Build.VERSION_CODES.P;
 import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -63,7 +62,7 @@ public class Hacks {
 	 *
 	 * See PackageManagerService.updateFlagsForPackage()
 	 */
-	public static final int GET_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isSystemUser() ? 0 : MATCH_ANY_USER);
+	public static final int MATCH_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | (Users.isSystemUser() ? 0 : MATCH_ANY_USER);
 	public static final int RESOLVE_ANY_USER_AND_UNINSTALLED = PackageManager.MATCH_UNINSTALLED_PACKAGES | MATCH_ANY_USER;
 
 	public static final Hack.HackedField<ApplicationInfo, Integer>

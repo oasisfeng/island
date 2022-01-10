@@ -100,7 +100,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_rescind_message">Are you sure to rescind?\n\nYou will have to go through the setup flow again to bring it back, that means Island space and all accounts must be removed first if your device is not rooted.</string>
     <string name="dialog_cannot_destroy_message">To remove the whole Island space, please open system \"Settings - Accounts\" and select \"Remove work profile\".</string>
     <string name="dialog_critical_app_warning">This app (or component) is critical for the Android system or other apps to work properly. If proceed, some apps or the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
-    <string name="dialog_reinstall_system_app_warning">This system app (or component) is not installed for some reason. If proceed, the whole system may become unstable or malfunctional.\n\nDo you really want to proceed?</string>
+    <string name="dialog_reinstall_system_app_warning">This system app (or component) is not installed for some reason. If proceed, the whole system may become unstable or malfunctioning.\n\nDo you really want to proceed?</string>
     <string name="dialog_mainland_device_admin">Device Admin privilege is required to manage Mainland.</string>
     <string name="dialog_island_setup_failed">Sorry, something went wrong in Island setup. (stage %1$d)</string>
 

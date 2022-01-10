@@ -211,14 +211,14 @@ object IslandAppShortcut {
 
 		private fun launch(uri: Uri) {
 			when(uri.scheme) {
-				SCHEME_ANDROID_APP/* legacy */ -> launch0(uri)
-				SCHEME_APP -> launch0(uri.buildUpon().scheme(SCHEME_ANDROID_APP).build())
+				SCHEME_ANDROID_APP/* legacy */ -> launchForAndroidAppScheme(uri)
+				SCHEME_APP -> launchForAndroidAppScheme(uri.buildUpon().scheme(SCHEME_ANDROID_APP).build())
 
 				SCHEME_PACKAGE -> prepareAndLaunch(this, uri.schemeSpecificPart)
 				else -> showInvalidShortcutToast() }
 		}
 
-		private fun launch0(uri: Uri) {
+		private fun launchForAndroidAppScheme(uri: Uri) {
 			val parsed = try { parseUri(uri.toString(), URI_ANDROID_APP_SCHEME) }
 			catch (e: URISyntaxException) { return showInvalidShortcutToast() }
 			val intent = if (! uri.encodedPath.isNullOrEmpty() || uri.encodedFragment != null) parsed else null // Null for pure app launch

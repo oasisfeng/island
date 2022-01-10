@@ -38,16 +38,16 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 			mProfileStates.get(profile).observe(activity, { updateTabIconForProfileState(activity, tab, profile, it) })
 			tabs.addTab(tab,/* selected = */profile == currentProfile) }
 	}
-}
 
-private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, profile: UserHandle, state: ProfileState) {
-	if (tab.parent == null) return      // No longer in use
-	Log.d(TAG, "Update tab icon for profile ${profile.toId()}: $state")
-	val icon = context.getDrawable(R.drawable.ic_island_black_24dp)!!
-	icon.setTint(context.getColor(if (state == ProfileState.UNAVAILABLE) R.color.state_frozen else R.color.state_alive))
-	try { tab.icon = context.packageManager.getUserBadgedIcon(icon, profile) }
-	// (Mostly "vivo" devices before Android Q) "SecurityException: You need MANAGE_USERS permission to: check if specified user a managed profile outside your profile group"
-	catch (e: SecurityException) { if (SDK_INT >= Q) analytics().logAndReport(TAG, "Error getting user badged icon", e) }
+	private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, profile: UserHandle, state: ProfileState) {
+		if (tab.parent == null) return      // No longer in use
+		Log.d(TAG, "Update tab icon for profile ${profile.toId()}: $state")
+		val icon = context.getDrawable(R.drawable.ic_island_black_24dp)!!
+		icon.setTint(context.getColor(if (state == ProfileState.UNAVAILABLE) R.color.state_frozen else R.color.state_alive))
+		try { tab.icon = context.packageManager.getUserBadgedIcon(icon, profile) }
+		// (Mostly "vivo" devices before Android Q) "SecurityException: You need MANAGE_USERS permission to: check if specified user a managed profile outside your profile group"
+		catch (e: SecurityException) { if (SDK_INT >= Q) analytics().logAndReport(TAG, "Error getting user badged icon", e) }
+	}
 }
 
 private const val TAG = "Island.MVM"
