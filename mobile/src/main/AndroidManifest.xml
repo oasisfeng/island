@@ -141,6 +141,14 @@
             </intent-filter>
         </receiver>
 
+        <service android:name="com.oasisfeng.island.controller.PrivilegedRemoteWorker" />
+
+        <provider android:name="com.oasisfeng.shizuku.NonRootShizukuProvider"
+                  android:authorities="${applicationId}.shizuku"
+                  android:multiprocess="false"
+                  android:exported="true"
+                  android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" /> <!-- "INTERACT_ACROSS_USERS_FULL" to protect this provider from being accessed by normal apps -->
+
     </application>
 
 </manifest>

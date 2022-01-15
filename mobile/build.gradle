@@ -60,6 +60,9 @@ dependencies {
     implementation 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     implementation 'uk.co.samuelwall:material-tap-target-prompt:2.0.1'
 
+    implementation 'dev.rikka.shizuku:api:12.1.0'
+    implementation 'dev.rikka.shizuku:provider:12.1.0'
+
     debugImplementation 'androidx.compose.ui:ui-tooling:1.1.0-rc01'         // Implementation for @Preview (only needed by Android Studio)
 
     androidTestImplementation 'org.mockito:mockito-android:2.8.9'

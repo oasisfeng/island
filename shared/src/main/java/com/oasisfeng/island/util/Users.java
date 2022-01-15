@@ -2,6 +2,8 @@ package com.oasisfeng.island.util;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N_MR1;
+import static android.os.Build.VERSION_CODES.Q;
+import static com.oasisfeng.island.analytics.AnalyticsKt.analytics;
 import static java.util.Objects.requireNonNull;
 
 import android.annotation.SuppressLint;
@@ -13,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.graphics.drawable.Drawable;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -135,6 +138,14 @@ public class Users extends PseudoContentProvider {
 
 	private static void ensureParentProfile() {
 		if (mDebugBuild && ! isParentProfile()) throw new IllegalStateException("Not called in owner user");
+	}
+
+	public static Drawable getUserBadgedIcon(final Context context, final Drawable icon, final UserHandle user) {
+		 try { return context.getPackageManager().getUserBadgedIcon(icon, user); }
+		 catch (final SecurityException e) {    // (Mostly "vivo" devices before Android Q) "SecurityException: You need MANAGE_USERS permission to: check if specified user a managed profile outside your profile group"
+		 	if (SDK_INT >= Q) analytics().logAndReport(TAG, "Error getting user badged icon", e);
+		 	return icon;
+		 }
 	}
 
 	private final BroadcastReceiver mProfileChangeObserver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {

@@ -1,5 +1,11 @@
 package com.oasisfeng.island.featured;
 
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
+import static androidx.lifecycle.Transformations.map;
+import static androidx.recyclerview.widget.ItemTouchHelper.END;
+import static androidx.recyclerview.widget.ItemTouchHelper.START;
+
 import android.app.Application;
 import android.content.Context;
 import android.os.Handler;
@@ -44,12 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static android.os.UserManager.DISALLOW_DEBUGGING_FEATURES;
-import static androidx.lifecycle.Transformations.map;
-import static androidx.recyclerview.widget.ItemTouchHelper.END;
-import static androidx.recyclerview.widget.ItemTouchHelper.START;
 
 /**
  * View-model for featured list
@@ -133,7 +133,8 @@ public class FeaturedListViewModel extends BaseAndroidViewModel {
 			}, 1_000);
 			final IslandAppInfo icebox_in_mainland = IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.getParentProfile());
 			if (icebox_in_mainland != null) addFeature(app, "icebox", R.string.featured_icebox_title, R.string.featured_icebox_description,
-					R.drawable.ic_launcher_icebox, R.string.action_clone, c -> IslandAppClones.cloneApp(this, icebox_in_mainland, Users.profile));
+					R.drawable.ic_launcher_icebox, R.string.action_clone,
+					c -> new IslandAppClones(activity, this, icebox_in_mainland).request());
 		}
 
 		addFeaturedApp(R.string.featured_appops_title, R.string.featured_appops_description, R.drawable.ic_launcher_appops,
