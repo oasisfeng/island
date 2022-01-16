@@ -36,20 +36,24 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  *
  * Created by Oasis on 2016/8/5.
  */
-public class AppInfo extends ApplicationInfo {
+public abstract class AppInfo extends ApplicationInfo {
 
 	protected static final int PRIVATE_FLAG_HIDDEN = 1;
 
-	protected AppInfo(final AppListProvider<? extends AppInfo> provider, final ApplicationInfo base, final @Nullable AppInfo last) {
+	protected AppInfo(final AppListProvider<? extends AppInfo> provider, final ApplicationInfo base,
+	                  final @Nullable AppInfo last, final @Nullable CharSequence label) {
 		super(base);
 		mProvider = provider;
-		mLabel = nonLocalizedLabel != null ? nonLocalizedLabel.toString() : provider.getCachedOrTempLabel(this);
+		mLabel = label != null ? label.toString() : nonLocalizedLabel != null ? nonLocalizedLabel.toString()
+				: provider.getCachedOrTempLabel(this);
 		if (last != null) {
 			mLastInfo = last;
 			last.mLastInfo = null;	// Only store the adjacent last.
 			if (TextUtils.equals(sourceDir, last.sourceDir)) mCachedIcon = last.mCachedIcon;    // Reuse icon if package source-dir is unchanged.
 		}
 	}
+
+	protected abstract AppInfo cloneWithLabel(final CharSequence label);
 
 	public String getLabel() { return mLabel; }
 

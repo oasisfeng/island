@@ -1,5 +1,13 @@
 package com.oasisfeng.island.data;
 
+import static android.content.Context.LAUNCHER_APPS_SERVICE;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_LAUNCHER;
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toSet;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -21,15 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import static android.content.Context.LAUNCHER_APPS_SERVICE;
-import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.CATEGORY_LAUNCHER;
-import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
-import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * Island-specific {@link AppInfo}
@@ -102,8 +101,17 @@ public class IslandAppInfo extends AppInfo {
 
 	@Override public IslandAppInfo getLastInfo() { return (IslandAppInfo) super.getLastInfo(); }
 
+	public IslandAppInfo cloneWithLabel(final CharSequence label) {
+		return new IslandAppInfo((IslandAppListProvider) mProvider, user, this, getLastInfo(), label);
+	}
+
 	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base, final @Nullable IslandAppInfo last) {
-		super(provider, base, last);
+		this(provider, user, base, last, null);
+	}
+
+	private IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base,
+	                      final @Nullable IslandAppInfo last, final @Nullable CharSequence label) {
+		super(provider, base, last, label);
 		this.user = user;
 	}
 
