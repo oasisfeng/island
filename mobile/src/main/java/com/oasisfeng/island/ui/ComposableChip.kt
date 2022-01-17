@@ -1,7 +1,6 @@
 package com.oasisfeng.island.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,12 +27,12 @@ import androidx.compose.ui.unit.dp
 }
 
 @Composable fun ToggleableChip(label: String, checked: Boolean, onValueChange: (Boolean) -> Unit) {
-    Surface(shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, color = MaterialTheme.colors.primary),
-        modifier = Modifier.padding(8.dp)) {
+    val fillColor = if (checked) MaterialTheme.colors.primary else Color.Transparent
+    val textColor = contentColorFor(if (checked) fillColor else MaterialTheme.colors.background) // contentColorFor() does not work for Color.Transparent
 
-        val color = if (checked) MaterialTheme.colors.primary else Color.Transparent
-        Row(modifier = Modifier.background(color).toggleable(value = checked, onValueChange = onValueChange)) {
-            Text(text = label, color = MaterialTheme.colors.contentColorFor(color),
-                style = MaterialTheme.typography.body2, modifier = Modifier.padding(12.dp)) }
-    }
+    Surface(shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, color = MaterialTheme.colors.primary),
+        modifier = Modifier.padding(8.dp), color = fillColor) {
+
+        Row(modifier = Modifier/*.background(fillColor)*/.toggleable(value = checked, onValueChange = onValueChange)) {
+            Text(text = label, color = textColor, style = MaterialTheme.typography.body1, modifier = Modifier.padding(12.dp)) }}
 }

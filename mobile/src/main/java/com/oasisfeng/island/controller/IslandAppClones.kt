@@ -9,6 +9,9 @@ import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_SYSTEM_ONLY
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.content.res.Configuration
+import android.content.res.Configuration.UI_MODE_NIGHT_MASK
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.*
@@ -20,6 +23,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.IntDef
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.fragment.app.FragmentActivity
@@ -39,6 +44,7 @@ import com.oasisfeng.island.controller.IslandAppControl.launchSystemAppSettings
 import com.oasisfeng.island.controller.IslandAppControl.unfreezeInitiallyFrozenSystemApp
 import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.data.IslandAppListProvider
+import com.oasisfeng.island.data.LiveProfileStates
 import com.oasisfeng.island.data.helper.installed
 import com.oasisfeng.island.data.helper.isSystem
 import com.oasisfeng.island.engine.IslandManager
@@ -48,6 +54,7 @@ import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.model.interactive
 import com.oasisfeng.island.settings.IslandNameManager.getAllNames
 import com.oasisfeng.island.shuttle.Shuttle
+import com.oasisfeng.island.ui.IslandTheme
 import com.oasisfeng.island.util.*
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +104,8 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			val user = e.key
 			val res = if (Users.isParentProfile(user)) R.drawable.ic_portrait_24dp else R.drawable.ic_island_black_24dp
 			val drawable: Drawable = context.getDrawable(res)!!
+			val dark = (context.resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
+			drawable.setTint(context.getColor(if (dark) android.R.color.white else android.R.color.black))		// TODO: Decouple
 			if (shouldShowBadge) Users.getUserBadgedIcon(context, drawable, user) else drawable })
 
 		val isShizukuAvailable = try { Shizuku.getVersion() >= 11 } catch (e: RuntimeException) { false }

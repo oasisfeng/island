@@ -4,8 +4,9 @@ import android.graphics.drawable.Drawable
 import android.os.UserHandle
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -21,6 +22,7 @@ import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.controller.IslandAppClones
 import com.oasisfeng.island.controller.IslandAppClones.Companion.AppCloneMode
 import com.oasisfeng.island.mobile.R
+import com.oasisfeng.island.ui.IslandTheme
 import com.oasisfeng.island.ui.MutexChipGroup
 
 class AppClonesBottomSheet(
@@ -33,7 +35,8 @@ class AppClonesBottomSheet(
     @Composable @Preview @OptIn(ExperimentalMaterialApi::class)
     fun compose(showShizuku: Boolean, showPlayStore: Boolean, mode: MutableState<Int?>) {
         val selectedMode: MutableState<Int?> = rememberSaveable { mode }
-        Column(modifier = Modifier.padding(16.dp)) {
+
+        IslandTheme { Column(modifier = Modifier.padding(16.dp)) {
             if (showShizuku || showPlayStore) {
                 MutexChipGroup(ArrayList<Pair<String, Int>>(2).apply {
                     if (showShizuku) {
@@ -42,13 +45,13 @@ class AppClonesBottomSheet(
                         add("via Google Play Store" to IslandAppClones.MODE_PLAY_STORE) }
                 }, selectedMode, arrangement = Arrangement.Center) }
 
-            ListItem(text = { Text(stringResource(R.string.prompt_clone_app_to)) })
+            ListItem(text = { Text(stringResource(R.string.prompt_clone_app_to), color = MaterialTheme.colors.onBackground) })
 
             for ((user, label) in targets) {
                 val icon = icons?.get(user)?.toBitmap()?.asImageBitmap()
-                ListItem(text = { Text(label) },
-                    icon = { if (icon != null) Surface(shape = CircleShape) { Image(icon, null) }},
+                ListItem(text = { Text(label, color = MaterialTheme.colors.onBackground) },
+                    icon = { if (icon != null) Image(icon, null) },
                     modifier = if (isCloned(user)) Modifier.alpha(ContentAlpha.disabled)
                     else Modifier.clickable { clone(user, selectedMode.value ?: IslandAppClones.MODE_INSTALLER) }) }}
-    }
+    }}
 }
