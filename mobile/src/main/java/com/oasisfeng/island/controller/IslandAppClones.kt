@@ -9,7 +9,6 @@ import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_SYSTEM_ONLY
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.Drawable
@@ -23,8 +22,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.IntDef
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.fragment.app.FragmentActivity
@@ -39,12 +36,10 @@ import com.oasisfeng.island.Config
 import com.oasisfeng.island.analytics.Analytics
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.clone.AppClonesBottomSheet
-import com.oasisfeng.island.ui.ModelBottomSheetFragment
 import com.oasisfeng.island.controller.IslandAppControl.launchSystemAppSettings
 import com.oasisfeng.island.controller.IslandAppControl.unfreezeInitiallyFrozenSystemApp
 import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.data.IslandAppListProvider
-import com.oasisfeng.island.data.LiveProfileStates
 import com.oasisfeng.island.data.helper.installed
 import com.oasisfeng.island.data.helper.isSystem
 import com.oasisfeng.island.engine.IslandManager
@@ -54,7 +49,7 @@ import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.model.interactive
 import com.oasisfeng.island.settings.IslandNameManager.getAllNames
 import com.oasisfeng.island.shuttle.Shuttle
-import com.oasisfeng.island.ui.IslandTheme
+import com.oasisfeng.island.ui.ModelBottomSheetFragment
 import com.oasisfeng.island.util.*
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.Dispatchers
@@ -76,21 +71,6 @@ import kotlin.annotation.AnnotationTarget.TYPE
  * Refactored by Oasis on 2018-9-30.
  */
 class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewModel, val app: IslandAppInfo) {
-
-	companion object {
-		private const val CLONE_RESULT_ALREADY_CLONED = 0
-		private const val CLONE_RESULT_OK_INSTALL = 1
-		private const val CLONE_RESULT_OK_INSTALL_EXISTING = 2
-		private const val CLONE_RESULT_OK_GOOGLE_PLAY = 10
-		private const val CLONE_RESULT_UNKNOWN_SYS_MARKET = 11
-		private const val CLONE_RESULT_NO_SYS_MARKET = -1
-
-		@IntDef(MODE_INSTALLER, MODE_PLAY_STORE, MODE_SHIZUKU) @Target(TYPE) @Retention(SOURCE)
-		annotation class AppCloneMode
-		const val MODE_INSTALLER = 0
-		const val MODE_PLAY_STORE = 1
-		const val MODE_SHIZUKU = 2
-	}
 
 	fun request() {
 		val names = getAllNames(context)
@@ -233,47 +213,64 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 		return false
 	}
 
-	@ProfileUser private fun performAppCloningInProfile(context: Context, app: ApplicationInfo, installedByPlayStore: Boolean): Int {
-		val policies = DevicePolicies(context)
-		policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
-
-		if (SDK_INT >= P && policies.manager.isAffiliatedUser) try {
-			if (policies.invoke(DevicePolicyManager::installExistingPackage, pkg))
-				return CLONE_RESULT_OK_INSTALL_EXISTING
-			Log.e(TAG, "Error cloning existent user app: $pkg")     // Fall-through
-		} catch (e: RuntimeException) { analytics().logAndReport(TAG, "Error cloning existent user app: $pkg", e) } // Fall-through
-
-		if (! IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies)) {    // Fallback to install via app store
-			val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).addFlags(FLAG_ACTIVITY_NEW_TASK)
-			policies.enableSystemAppByIntent(marketIntent)
-			val marketApp = context.packageManager.resolveActivity(marketIntent, MATCH_SYSTEM_ONLY)?.activityInfo?.applicationInfo
-			return when {
-				marketApp == null || ! marketApp.isSystem -> CLONE_RESULT_NO_SYS_MARKET
-				marketApp.packageName != WellKnownPackages.PACKAGE_GOOGLE_PLAY_STORE -> CLONE_RESULT_UNKNOWN_SYS_MARKET.also {
-					context.startActivity(marketIntent) }
-				else -> CLONE_RESULT_OK_GOOGLE_PLAY.also {
-					policies.enableSystemApp(WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES)     // Special dependency
-					context.startActivity(marketIntent) }}}
-
-		if (installedByPlayStore && Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME)) try {
-			context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
-				.setPackage(GooglePlayStore.PACKAGE_NAME).addFlags(FLAG_ACTIVITY_NEW_TASK))
-			return CLONE_RESULT_OK_GOOGLE_PLAY
-		} catch (e: ActivityNotFoundException) { Log.e(TAG, "Error launching Google Play Store to clone $pkg", e) }
-
-		@Suppress("DEPRECATION") val intent = Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
-				.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, context.packageName).addFlags(FLAG_ACTIVITY_NEW_TASK)
-				.putExtra(InstallerExtras.EXTRA_APP_INFO, app).addCategory(context.packageName) // Launch App Installer
-		policies.enableSystemAppByIntent(intent)
-		context.startActivity(intent)
-		return CLONE_RESULT_OK_INSTALL
-	}
 
 	private fun isInstalledByPlayStore(context: Context, pkg: String) =
 		if (SDK_INT >= VERSION_CODES.R) {
 			context.packageManager.getInstallSourceInfo(pkg).run {
 				GooglePlayStore.PACKAGE_NAME.let { it == initiatingPackageName && it == installingPackageName }}
 		} else context.packageManager.getInstallerPackageName(pkg) == GooglePlayStore.PACKAGE_NAME
+
+	companion object {
+		private const val CLONE_RESULT_ALREADY_CLONED = 0
+		private const val CLONE_RESULT_OK_INSTALL = 1
+		private const val CLONE_RESULT_OK_INSTALL_EXISTING = 2
+		private const val CLONE_RESULT_OK_GOOGLE_PLAY = 10
+		private const val CLONE_RESULT_UNKNOWN_SYS_MARKET = 11
+		private const val CLONE_RESULT_NO_SYS_MARKET = -1
+
+		@IntDef(MODE_INSTALLER, MODE_PLAY_STORE, MODE_SHIZUKU) @Target(TYPE) @Retention(SOURCE)
+		annotation class AppCloneMode
+		const val MODE_INSTALLER = 0
+		const val MODE_PLAY_STORE = 1
+		const val MODE_SHIZUKU = 2
+
+		@ProfileUser private fun performAppCloningInProfile(context: Context, app: ApplicationInfo, installedByPlayStore: Boolean): Int {
+			val policies = DevicePolicies(context)
+			policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
+
+			val pkg = app.packageName
+			if (SDK_INT >= P && policies.manager.isAffiliatedUser) try {
+				if (policies.invoke(DevicePolicyManager::installExistingPackage, pkg))
+					return CLONE_RESULT_OK_INSTALL_EXISTING
+				Log.e(TAG, "Error cloning existent user app: $pkg")     // Fall-through
+			} catch (e: RuntimeException) { analytics().logAndReport(TAG, "Error cloning existent user app: $pkg", e) } // Fall-through
+
+			if (! IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies)) {    // Fallback to install via app store
+				val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).addFlags(FLAG_ACTIVITY_NEW_TASK)
+				policies.enableSystemAppByIntent(marketIntent)
+				val marketApp = context.packageManager.resolveActivity(marketIntent, MATCH_SYSTEM_ONLY)?.activityInfo?.applicationInfo
+				return when {
+					marketApp == null || ! marketApp.isSystem -> CLONE_RESULT_NO_SYS_MARKET
+					marketApp.packageName != WellKnownPackages.PACKAGE_GOOGLE_PLAY_STORE -> CLONE_RESULT_UNKNOWN_SYS_MARKET.also {
+						context.startActivity(marketIntent) }
+					else -> CLONE_RESULT_OK_GOOGLE_PLAY.also {
+						policies.enableSystemApp(WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES)     // Special dependency
+						context.startActivity(marketIntent) }}}
+
+			if (installedByPlayStore && Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME)) try {
+				context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
+					.setPackage(GooglePlayStore.PACKAGE_NAME).addFlags(FLAG_ACTIVITY_NEW_TASK))
+				return CLONE_RESULT_OK_GOOGLE_PLAY
+			} catch (e: ActivityNotFoundException) { Log.e(TAG, "Error launching Google Play Store to clone $pkg", e) }
+
+			@Suppress("DEPRECATION") val intent = Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
+					.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, context.packageName).addFlags(FLAG_ACTIVITY_NEW_TASK)
+					.putExtra(InstallerExtras.EXTRA_APP_INFO, app).addCategory(context.packageName) // Launch App Installer
+			policies.enableSystemAppByIntent(intent)
+			context.startActivity(intent)
+			return CLONE_RESULT_OK_INSTALL
+		}
+	}
 
 	private val pkg = app.packageName
 	private val context = app.context()
