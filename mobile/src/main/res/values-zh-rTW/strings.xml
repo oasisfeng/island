@@ -35,8 +35,6 @@
     <string name="featured_managed_mainland_description">不僅可以凍結界外的應用程式，還能獲得一些此模式下獨有的功能。（詳細介紹參考線上說明文件）</string>
     <string name="featured_greenify_title">綠色守護</string>
     <string name="featured_greenify_description">在螢幕關閉後，自動凍結選擇的應用程式，除非它們仍然在工作中。</string>
-    <string name="featured_saf_enhancer_title">SAF 增強器 Lite</string>
-    <string name="featured_saf_enhancer_description">為不支援儲存瀏覽框架，但支援透過外部相機應用程式拍照的應用程式（如「微信」）提供跨界的圖片瀏覽能力。</string>
     <string name="featured_icebox_title">冰箱</string>
     <string name="featured_icebox_description">輕鬆愉悅的應用凍結和啟動體驗。請確保在冰箱的工作模式設定中選擇“煉妖壺”。將其複製至壺中界即可管理和啟動壺中界的應用。</string>
     <string name="featured_appops_title">App Ops</string>

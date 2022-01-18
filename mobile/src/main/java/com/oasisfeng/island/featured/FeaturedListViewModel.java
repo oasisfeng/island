@@ -121,8 +121,6 @@ public class FeaturedListViewModel extends BaseAndroidViewModel {
 					R.string.featured_button_setup, c -> SettingsActivity.startWithPreference(activity, IslandSettingsFragment.class));
 
 		addFeaturedApp(R.string.featured_greenify_title, R.string.featured_greenify_description, R.drawable.ic_launcher_greenify, "com.oasisfeng.greenify");
-		addFeaturedApp(R.string.featured_saf_enhancer_title, R.string.featured_saf_enhancer_description, R.drawable.ic_launcher_saf_enhancer,
-				"app.gwo.safenhancer.lite", "app.gwo.safenhancer");
 
 		if (! addFeaturedApp(R.string.featured_icebox_title, R.string.featured_icebox_description, R.drawable.ic_launcher_icebox, PACKAGE_ICEBOX)
 				&& Users.hasProfile() && IslandAppListProvider.getInstance(activity).get(PACKAGE_ICEBOX, Users.profile) == null) {

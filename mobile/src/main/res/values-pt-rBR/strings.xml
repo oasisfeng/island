@@ -36,8 +36,6 @@
     <string name="featured_managed_mainland_description">Assuma o controle de TODOS os apps (no Island e no Mainland) e se beneficie de recursos exclusivos. (mais detalhes em guia online)</string>
     <string name="featured_greenify_title">Greenify</string>
     <string name="featured_greenify_description">Depois que a tela for desligada, suspender automaticamente os apps selecionados se não estiverem em uso ativo.</string>
-    <string name="featured_saf_enhancer_title">SAF Enhancer Lite</string>
-    <string name="featured_saf_enhancer_description">Permitir o acesso intercambiável as imagens ao app que não suporta o \"Framework de Acesso ao Armazenamento\", desde que suporte a captura de fotos com apps externos de câmeras.</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops é uma ferramenta poderosa para bloquear seletivamente algumas intenções de acesso aos dados de apps de forma inteligente, mesmo que a permissão relacionada seja concedida pelo usuário.</string>
     <string name="featured_setup_island_title">Configurar um Island separado</string>
