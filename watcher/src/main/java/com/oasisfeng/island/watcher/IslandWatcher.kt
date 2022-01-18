@@ -7,10 +7,8 @@ import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_PER_USER
 import android.content.*
-import android.content.Intent.CATEGORY_HOME
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager.*
-import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Icon
@@ -25,14 +23,12 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import com.oasisfeng.android.content.pm.getSystemService
 import com.oasisfeng.android.widget.Toasts
-import com.oasisfeng.hack.Hack
+import com.oasisfeng.island.home.HomeRole
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.notification.post
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
-import com.oasisfeng.island.util.DevicePolicies.PreferredActivityIntentFilter
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -121,7 +117,7 @@ import kotlinx.coroutines.launch
 
 			Log.i(TAG, "Preparing to deactivating Island (${profile.toId()})...")
 
-			if (tryAcquiringDefaultHome(context) {
+			val successful = HomeRole.runWithHomeRole(context) {
 				registerReceiver(object : BroadcastReceiver() { override fun onReceive(_c: Context, intent: Intent) {
 					val user = intent.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)
 					if (user != profile) return
@@ -131,32 +127,10 @@ import kotlinx.coroutines.launch
 				}}, IntentFilter(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE))
 
 				Log.i(TAG, "Deactivating Island ${profile.toId()}...")
-				requestQuietMode(profile)
-			}) Toasts.showShort(context, R.string.prompt_island_deactivated)
-			else Toasts.showShort(context, R.string.prompt_failed_deactivating_island)
+				requestQuietMode(profile) }
+
+			Toasts.showShort(context, if (successful) R.string.prompt_island_deactivated else R.string.prompt_failed_deactivating_island)
 		}
-
-		private suspend fun tryAcquiringDefaultHome(context: Context, block: () -> Unit): Boolean {
-			val pm = context.packageManager; val policies = DevicePolicies(this)
-			val dummyHome = ComponentName(context, DummyHomeActivity::class.java)
-			pm.setComponentEnabledSetting(dummyHome, COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP)
-			policies.clearPersistentPreferredActivity(PreferredActivityIntentFilter.Home)	// Force clear then re-add, to trigger default Home update in PMS. (in case it was not cleared)
-			for (index in 0 until 10) {
-				Log.i(TAG, "Acquiring default home role...")
-				policies.setPersistentPreferredActivityIfNotPreferred(PreferredActivityIntentFilter.Home)
-				if (getDefaultHome() != dummyHome) {     // It may not work for the first few times,
-					delay(500); continue }              //   just try again in a short delay.
-
-				block()
-
-				policies.clearPersistentPreferredActivity(PreferredActivityIntentFilter.Home)	// Restore previous Home
-				pm.setComponentEnabledSetting(dummyHome, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
-				return true }
-			return false
-		}
-
-		private fun getDefaultHome()
-				= Hack.into(packageManager).with(Hacks.PackageManagerHack::class.java).getHomeActivities(ArrayList<ResolveInfo>())
 
 		private fun requestQuietMode(profile: UserHandle) {
 			// requestQuietModeEnabled() requires us running as foreground (service).
@@ -178,16 +152,6 @@ import kotlinx.coroutines.launch
 		}
 
 		override fun onBind(intent: Intent): IBinder? = null
-	}
-
-	class DummyHomeActivity : Activity() {
-		override fun onCreate(savedInstanceState: Bundle?) {
-			super.onCreate(savedInstanceState)
-			if (Users.isParentProfile()) packageManager.setComponentEnabledSetting( // In case of unexpected interruption
-					ComponentName(this, javaClass), COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
-			startActivity(Intent(Intent.ACTION_MAIN).addCategory(CATEGORY_HOME))
-			finish()
-		}
 	}
 }
 

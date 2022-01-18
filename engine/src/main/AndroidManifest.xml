@@ -58,6 +58,18 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.oasisfeng.island.home.DummyHomeActivity"
+                  android:theme="@android:style/Theme.NoDisplay"
+                  android:hardwareAccelerated="false"
+                  android:enabled="false"
+                  android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <receiver android:name="com.oasisfeng.island.api.ApiReceiver">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />

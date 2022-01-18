@@ -141,8 +141,8 @@ class DevicePolicies {
     val manager: DevicePolicyManager
     private val mAppContext: Context
 
-    enum class PreferredActivityIntentFilter(private val action: String, decorator: IntentFilter.() -> Unit) {
-        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME) });
+    enum class PreferredActivity(private val action: String, decorator: IntentFilter.() -> Unit) {
+        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME); addCategory(Intent.CATEGORY_DEFAULT) });
 
         fun getMatchingIntent() = Intent(action).apply {
             filter.categoriesIterator().forEach(this::addCategory)
@@ -154,33 +154,27 @@ class DevicePolicies {
         val filter: IntentFilter = IntentFilter(action).apply { addCategory(Intent.CATEGORY_DEFAULT) }.apply(decorator)
     }
 
-    fun setPersistentPreferredActivityIfNotPreferred(filter: PreferredActivityIntentFilter) {
-        val activity = getActivityIfPreferred(filter) ?: return
-        manager.addPersistentPreferredActivity(sAdmin, filter.filter, activity)
-        Log.d(TAG, "Set PPA [${filter.name}] to ${activity.flattenToShortString()}")
+    fun setPersistentPreferredActivity(filter: PreferredActivity) {
+        setPersistentPreferredActivity(filter, findUniqueMatchingActivity(filter))
     }
 
-    fun clearPersistentPreferredActivity(filter: PreferredActivityIntentFilter) {
-        Log.d(TAG, "clearPersistentPreferredActivity(${filter.name})")
-        val activity = getActivityIfPreferred(filter) ?: return
-
-        val allOtherEnabled = PreferredActivityIntentFilter.values().filter {
-            it != filter && isPreferredActivity(it) }
-        manager.clearPackagePersistentPreferredActivities(sAdmin, activity.packageName)
-        allOtherEnabled.forEach { setPersistentPreferredActivityIfNotPreferred(it) }
+    fun setPersistentPreferredActivity(filter: PreferredActivity, component: ComponentName) {
+        Log.d(TAG, "Set PPA [${filter.name}] to ${component.flattenToShortString()}")
+        manager.addPersistentPreferredActivity(sAdmin, filter.filter, component)
     }
 
-    fun isPreferredActivity(filter: PreferredActivityIntentFilter) = getActivityIfPreferred(filter) != null
-
-    private fun getActivityIfPreferred(filter: PreferredActivityIntentFilter): ComponentName? {
-        val intent = filter.getMatchingIntent()
-        val resolve = mAppContext.packageManager.resolveActivity(intent, 0)
-        return resolve?.activityInfo?.run {
-            val activity = findUniqueMatchingActivity(filter)
-            if (packageName == activity.packageName && name == activity.className) activity else null }
+    fun clearPersistentPreferredActivity(filter: PreferredActivity) {
+        val pkg = findUniqueMatchingActivity(filter).packageName
+        Log.d(TAG, "Clear PPA for $pkg")
+        manager.clearPackagePersistentPreferredActivities(sAdmin, pkg)
     }
 
-    private fun findUniqueMatchingActivity(filter: PreferredActivityIntentFilter): ComponentName {
+    fun clearPersistentPreferredActivity(pkg: String) {
+        Log.d(TAG, "Clear PPA for $pkg")
+        manager.clearPackagePersistentPreferredActivities(sAdmin, pkg)
+    }
+
+    internal fun findUniqueMatchingActivity(filter: PreferredActivity): ComponentName {
         val uid = Process.myUid()
         val resolves = mAppContext.packageManager.queryIntentActivities(filter.getMatchingIntent(), MATCH_DISABLED_COMPONENTS)
             .filter { it.activityInfo.applicationInfo.uid == uid }
