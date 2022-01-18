@@ -2,9 +2,10 @@ package com.oasisfeng.island.util
 
 import android.annotation.SuppressLint
 import android.app.admin.DevicePolicyManager
-import android.content.*
-import android.content.ContentResolver.SCHEME_CONTENT
-import android.content.Intent.ACTION_VIEW
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS
 import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
@@ -141,9 +142,7 @@ class DevicePolicies {
     private val mAppContext: Context
 
     enum class PreferredActivityIntentFilter(private val action: String, decorator: IntentFilter.() -> Unit) {
-        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME) }),
-        AppInstaller(@Suppress("DEPRECATION") Intent.ACTION_INSTALL_PACKAGE,
-            { addAction(ACTION_VIEW); addDataScheme(SCHEME_CONTENT); addDataType("application/vnd.android.package-archive") });
+        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME) });
 
         fun getMatchingIntent() = Intent(action).apply {
             filter.categoriesIterator().forEach(this::addCategory)

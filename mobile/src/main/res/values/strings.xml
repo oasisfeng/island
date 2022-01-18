@@ -173,8 +173,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_privacy_storage_summary">CAUTION: Revoking may cause app to crash</string>
     <string name="pref_manage_cross_profile_title">Manage cross-land privilege</string>
     <string name="pref_manage_cross_profile_summary">Manage the apps with cross-land privilege.</string>
-    <string name="pref_always_use_app_installer_title">Always use Island App Installer</string>
-    <string name="pref_prefer_app_installer_summary">Make Island the default app installer. (only in apps supporting 3rd-party app installer)</string>
     <string name="label_prefix_for_system_app">[Builtin]</string>
     <string name="label_suffix_permission_granted">(user granted)</string>
     <string name="action_revoke_all">Batch revoke…</string>

@@ -171,8 +171,6 @@
     <string name="pref_privacy_storage_summary">注意：撤销此权限可能导致应用异常</string>
     <string name="pref_manage_cross_profile_title">管理跨境权限</string>
     <string name="pref_manage_cross_profile_summary">管理请求跨境数据互通权限的应用</string>
-    <string name="pref_always_use_app_installer_title">始终使用炼妖壶安装应用</string>
-    <string name="pref_prefer_app_installer_summary">将炼妖壶设为默认的应用安装器（仅在支持三方应用安装器的应用中有效）</string>
     <string name="label_prefix_for_system_app">[内置]</string>
     <string name="label_suffix_permission_granted">(用户已授权)</string>
     <string name="action_revoke_all">批量撤销…</string>
