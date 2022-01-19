@@ -7,8 +7,7 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
-import android.content.pm.PackageManager.MATCH_SYSTEM_ONLY
-import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.content.pm.PackageManager.*
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.Drawable
@@ -27,6 +26,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
 import com.oasisfeng.android.app.Activities
+import com.oasisfeng.android.content.pm.LauncherAppsCompat
 import com.oasisfeng.android.google.GooglePlayStore
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
@@ -40,8 +40,10 @@ import com.oasisfeng.island.controller.IslandAppControl.launchSystemAppSettings
 import com.oasisfeng.island.controller.IslandAppControl.unfreezeInitiallyFrozenSystemApp
 import com.oasisfeng.island.data.IslandAppInfo
 import com.oasisfeng.island.data.IslandAppListProvider
+import com.oasisfeng.island.data.helper.hidden
 import com.oasisfeng.island.data.helper.installed
 import com.oasisfeng.island.data.helper.isSystem
+import com.oasisfeng.island.data.helper.suspended
 import com.oasisfeng.island.engine.IslandManager
 import com.oasisfeng.island.engine.common.WellKnownPackages
 import com.oasisfeng.island.installer.InstallerExtras
@@ -91,6 +93,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 		val isShizukuAvailable = try { Shizuku.getVersion() >= 11 } catch (e: RuntimeException) { false }
 		val isShizukuReady = isShizukuAvailable && Shizuku.checkSelfPermission() == PERMISSION_GRANTED
 		val isPlayStoreAvailable = Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME) && isInstalledByPlayStore(context, pkg)
+		val isPlayStoreReady = targets.size <= 2 && isPlayStoreAvailableInProfiles(targets.keys)
 
 		val fragment = ModelBottomSheetFragment()
 		val alp = IslandAppListProvider.getInstance(context)
@@ -99,7 +102,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			fragment.dismiss() }
 
 		fragment.show(activity) {
-			val mode = mutableStateOf(if (isShizukuReady) MODE_SHIZUKU else if (isPlayStoreAvailable) MODE_PLAY_STORE else null)
+			val mode = mutableStateOf(if (isShizukuReady) MODE_SHIZUKU else if (isPlayStoreReady) MODE_PLAY_STORE else null)
 			dialog.compose(showShizuku = isShizukuAvailable, showPlayStore = isPlayStoreAvailable, mode)
 
 			snapshotFlow { mode.value }.onEach {
@@ -213,6 +216,8 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 		return false
 	}
 
+	private fun isPlayStoreAvailableInProfiles(targets: Collection<UserHandle>) =
+		targets.all { LauncherAppsCompat(context).getApplicationInfoNoThrows(GooglePlayStore.PACKAGE_NAME, 0, it) != null }
 
 	private fun isInstalledByPlayStore(context: Context, pkg: String) =
 		if (SDK_INT >= VERSION_CODES.R) {
@@ -234,7 +239,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 		const val MODE_PLAY_STORE = 1
 		const val MODE_SHIZUKU = 2
 
-		@ProfileUser private fun performAppCloningInProfile(context: Context, app: ApplicationInfo, installedByPlayStore: Boolean): Int {
+		@ProfileUser private fun performAppCloningInProfile(context: Context, app: ApplicationInfo, viaPlayStore: Boolean): Int {
 			val policies = DevicePolicies(context)
 			policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
 
@@ -257,7 +262,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 						policies.enableSystemApp(WellKnownPackages.PACKAGE_GOOGLE_PLAY_SERVICES)     // Special dependency
 						context.startActivity(marketIntent) }}}
 
-			if (installedByPlayStore && Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME)) try {
+			if (viaPlayStore && ensurePlayStoreReady(context, policies)) try {
 				context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
 					.setPackage(GooglePlayStore.PACKAGE_NAME).addFlags(FLAG_ACTIVITY_NEW_TASK))
 				return CLONE_RESULT_OK_GOOGLE_PLAY
@@ -269,6 +274,17 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			policies.enableSystemAppByIntent(intent)
 			context.startActivity(intent)
 			return CLONE_RESULT_OK_INSTALL
+		}
+
+		private fun ensurePlayStoreReady(context: Context, policies: DevicePolicies): Boolean {
+			val pkg = GooglePlayStore.PACKAGE_NAME
+			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES or MATCH_DISABLED_COMPONENTS) }
+				catch (e: NameNotFoundException) { return false }
+			if (! info.enabled) return false    // We cannot enable a disabled system app
+			if (! info.installed) return policies.enableSystemApp(pkg)
+			if (info.hidden) policies.setApplicationHidden(pkg, false)
+			if (info.suspended) policies.invoke(DPM::setPackagesSuspended, arrayOf(pkg), false).isEmpty()
+			return true
 		}
 	}
 
