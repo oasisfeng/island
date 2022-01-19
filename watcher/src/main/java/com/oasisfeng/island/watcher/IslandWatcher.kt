@@ -21,7 +21,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
-import com.oasisfeng.android.content.pm.getSystemService
+import androidx.core.content.getSystemService
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.island.home.HomeRole
 import com.oasisfeng.island.notification.NotificationIds

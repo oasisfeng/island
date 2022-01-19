@@ -40,9 +40,9 @@ class AppClonesBottomSheet(
             if (showShizuku || showPlayStore) {
                 MutexChipGroup(ArrayList<Pair<String, Int>>(2).apply {
                     if (showShizuku) {
-                        add("via Shizuku" to IslandAppClones.MODE_SHIZUKU) }
+                        add(stringResource(R.string.option_clone_via_shizuku) to IslandAppClones.MODE_SHIZUKU) }
                     if (showPlayStore) {
-                        add("via Google Play Store" to IslandAppClones.MODE_PLAY_STORE) }
+                        add(stringResource(R.string.option_clone_via_play_store) to IslandAppClones.MODE_PLAY_STORE) }
                 }, selectedMode, arrangement = Arrangement.Center) }
 
             ListItem(text = { Text(stringResource(R.string.prompt_clone_app_to), color = MaterialTheme.colors.onBackground) })

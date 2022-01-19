@@ -56,7 +56,7 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 			@SuppressWarnings("unchecked") final T casted = (T) provider;
 			return casted;
 		} finally {
-			client.release();
+			client.close();
 		}
 	}
 

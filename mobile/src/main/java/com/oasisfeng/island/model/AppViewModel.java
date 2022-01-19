@@ -61,10 +61,6 @@ public class AppViewModel extends BaseAppViewModel implements ObservableSortedLi
 
 	public IslandAppInfo info() { return (IslandAppInfo) info; }
 
-	public String getDebugInfo() {
-		return "NULL";
-	}
-
 	public final State state;
 
 	AppViewModel(final IslandAppInfo info) {

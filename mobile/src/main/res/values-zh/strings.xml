@@ -108,6 +108,8 @@
 
     <string name="prompt_disable_sys_app_as_removal">系统应用（或组件）只能被停用，与卸载安装的应用效果相似。\n\n由于没有权限直接停用应用，接下来即将打开系统的应用设置界面，届时请点击“停用”按钮。</string>
     <string name="prompt_clone_app_to">将应用克隆至…</string>
+    <string name="option_clone_via_shizuku">借助 Shizuku</string>
+    <string name="option_clone_via_play_store">借助 Play 市场</string>
     <string name="toast_enable_disabled_system_app">请重新启用此分身</string>
 
     <string name="toast_setup_in_progress">正在创建壶中界，请稍候…</string>

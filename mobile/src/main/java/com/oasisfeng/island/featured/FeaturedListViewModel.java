@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.provider.Settings;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
@@ -179,7 +180,7 @@ public class FeaturedListViewModel extends BaseAndroidViewModel {
 
 	public FeaturedListViewModel(final Application app) { super(app); mApps = Apps.of(app); }
 
-	@Override public String getTag() { return TAG; }
+	@Override public @NonNull String getTag() { return TAG; }
 
 	private final Apps mApps;
 

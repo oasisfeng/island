@@ -6,7 +6,6 @@ import android.content.Intent.EXTRA_INSTALLER_PACKAGE_NAME
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
-import android.content.pm.PackageManager
 import android.content.pm.PackageManager.*
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -23,6 +22,7 @@ import androidx.annotation.IntDef
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
+import androidx.core.content.getSystemService
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
 import com.oasisfeng.android.app.Activities
@@ -200,19 +200,17 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 
 	@OwnerUser @RequiresApi(O) private suspend fun cloneAppViaRoot(context: Context, source: IslandAppInfo, profile: UserHandle): Boolean {
 		val pkg = source.packageName
-		val cmd = "cmd package install-existing --user " + Users.toId(profile) + " " + pkg // Try root approach first
+		val cmd = "cmd package install-existing --user ${profile.toId()} $pkg"  // Try root approach first
 		val result = withContext(Dispatchers.Default) { Shell.SU.run(cmd) }
 		try {
-			val app = context.getSystemService(LauncherApps::class.java)!!.getApplicationInfo(pkg, 0, profile)
+			val app = context.getSystemService<LauncherApps>()!!.getApplicationInfo(pkg, 0, profile)
 			if (app != null && app.installed) {
 				Toast.makeText(context, context.getString(R.string.toast_successfully_cloned, source.label), Toast.LENGTH_SHORT).show()
-				return true
-			}
-		} catch (e: PackageManager.NameNotFoundException) {
+				return true }}
+		catch (e: NameNotFoundException) {
 			Log.i(TAG, "Cannot clone app via root: $pkg")
 			if (result != null && result.isNotEmpty()) analytics().logAndReport(TAG, "Error executing: $cmd",
-					ExecutionException("ROOT: " + cmd + ", result: " + java.lang.String.join(" \\n ", result), null))
-		}
+					ExecutionException("ROOT: " + cmd + ", result: " + java.lang.String.join(" \\n ", result), null)) }
 		return false
 	}
 

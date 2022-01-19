@@ -182,17 +182,6 @@
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="@{@string/field_app_id(apps.mSelection.info.packageName)}" tools:text="APP ID: com.oasisfeng.island"/>
 
-            <TextView
-                android:id="@+id/debug_info"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="@dimen/margin_medium"
-                android:paddingEnd="@dimen/margin_medium"
-                android:paddingTop="@dimen/margin_small"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="@{apps.mSelection.debugInfo}" tools:text="DEBUG INFORMATION"
-                bind:shown="@{BuildConfig.DEBUG}" />
-
         </LinearLayout>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

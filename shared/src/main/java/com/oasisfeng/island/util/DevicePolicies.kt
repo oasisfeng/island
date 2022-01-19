@@ -85,6 +85,7 @@ class DevicePolicies {
     fun addCrossProfileIntentFilter(filter: IntentFilter, flags: Int) = // Helper for IntentFilters, which may throw.
         manager.addCrossProfileIntentFilter(sAdmin, filter, flags)
 
+    /** @return Whether the hidden setting of the package was successfully updated. */
     fun setApplicationHidden(pkg: String, hidden: Boolean): Boolean {
         if (SDK_INT >= P && hidden && Permissions.has(mAppContext, AppOpsCompat.GET_APP_OPS_STATS))
             try { AppOpsHelper(mAppContext).saveAppOps(pkg) } // Without GET_APP_OPS_STATS, app-op is saved upon change.
@@ -100,6 +101,7 @@ class DevicePolicies {
                     analytics().logAndReport(TAG, "Error restoring app ops settings for $pkg", e) }}
     }
 
+    /** @return Whether the hidden setting of the package was successfully updated. */
     fun setApplicationHiddenWithoutAppOpsSaver(pkg: String?, hidden: Boolean): Boolean =
         manager.setApplicationHidden(sAdmin, pkg, hidden).also { changed ->
             if (changed && ! hidden)

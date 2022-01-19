@@ -110,6 +110,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
 
     <string name="prompt_disable_sys_app_as_removal">System app can only be disabled. It\'s similar to the removal of an installed app.\n\nIsland has no privilege to do that, instead you will be redirected to the system settings app, there you can click the \"DISABLE\" button to proceed.</string>
     <string name="prompt_clone_app_to">Clone app to…</string>
+    <string name="option_clone_via_shizuku">via Shizuku</string>
+    <string name="option_clone_via_play_store">via Play Store</string>
     <string name="toast_enable_disabled_system_app">Please re-enable this clone.</string>
 
     <string name="toast_setup_in_progress">Island setup in progress, please wait…</string>
