@@ -28,6 +28,7 @@ import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.notification.post
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.toId
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -78,7 +79,7 @@ import kotlinx.coroutines.launch
 	}
 
 	private fun isParentProfileOwner(context: Context) =
-		try { Shuttle(context, to = Users.getParentProfile()).invoke { DevicePolicies(this).isProfileOwner }}
+		try { Shuttle(context, to = Users.parentProfile).invoke { DevicePolicies(this).isProfileOwner }}
 		catch (e: IllegalStateException) { false }
 
 	private fun getAppIcon(context: Context): Bitmap {
@@ -105,7 +106,7 @@ import kotlinx.coroutines.launch
 					intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)?.also { profile ->
 						GlobalScope.launch { requestQuietModeApi29(this@IslandDeactivationService, profile) }
 						return START_STICKY }}   // Still ongoing
-				else Shuttle(this, to = Users.getParentProfile()).launch(with = Users.current()) {
+				else Shuttle(this, to = Users.parentProfile).launch(with = Users.current()) {
 					startService(Intent(this, IslandDeactivationService::class.java).putExtra(Intent.EXTRA_USER, it)) }}
 			else requestQuietMode(Users.current())
 			stopSelf()
@@ -113,7 +114,7 @@ import kotlinx.coroutines.launch
 		}
 
 		@OwnerUser @RequiresApi(Q) private suspend fun requestQuietModeApi29(context: Context, profile: UserHandle) {
-			if (! Users.isProfileManagedByIsland()) return startSystemSyncSettings()
+			if (! Users.isProfileManagedByIsland) return startSystemSyncSettings()
 
 			Log.i(TAG, "Preparing to deactivating Island (${profile.toId()})...")
 

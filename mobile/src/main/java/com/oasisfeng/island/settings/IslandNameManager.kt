@@ -8,6 +8,7 @@ import android.os.UserHandle
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.toId
 
 object IslandNameManager {
 
@@ -37,7 +38,7 @@ object IslandNameManager {
 	}
 
 	@ProfileUser fun syncNameToOwnerUser(context: Context, name: String)    // TODO: syncNameToParentProfile() with proper "parent".
-			= Shuttle(context, to = Users.getParentProfile()).launch(with = Users.current()) { saveProfileName(this, it, name) }
+			= Shuttle(context, to = Users.parentProfile).launch(with = Users.current()) { saveProfileName(this, it, name) }
 
 	@OwnerUser private fun saveProfileName(context: Context, profile: UserHandle, name: String)
 			= getStore(context).edit().putString(buildIslandNameKey(context, profile.toId()), name).apply()

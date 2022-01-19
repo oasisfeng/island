@@ -44,7 +44,7 @@ import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.OwnerUser
 import com.oasisfeng.island.util.ProfileUser
 import com.oasisfeng.island.util.Users
-import com.oasisfeng.island.util.toId
+import com.oasisfeng.island.util.Users.Companion.toId
 import java.net.URISyntaxException
 
 object IslandAppShortcut {
@@ -174,7 +174,7 @@ object IslandAppShortcut {
 			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
 			catch (e: NameNotFoundException) { return }     // Actual package uninstall
 
-			Shuttle(context, to = Users.getParentProfile()).launchNoThrows { updateIfNeeded(context, info) }}
+			Shuttle(context, to = Users.parentProfile).launchNoThrows { updateIfNeeded(context, info) }}
 		}
 
 		override fun onCreate() {

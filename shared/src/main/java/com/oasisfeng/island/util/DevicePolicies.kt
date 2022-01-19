@@ -24,6 +24,7 @@ import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.appops.AppOpsCompat
 import com.oasisfeng.island.appops.AppOpsHelper
 import com.oasisfeng.island.shared.R
+import com.oasisfeng.island.util.Users.Companion.toId
 import java.util.*
 import java.util.function.BiConsumer
 
@@ -67,13 +68,13 @@ class DevicePolicies {
     fun enableSystemAppByIntent(intent: Intent): Boolean = manager.enableSystemApp(sAdmin, intent) > 0
 
     fun addUserRestrictionIfNeeded(key: String) {
-        if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
+        if (Users.isProfileManagedByIsland && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
         if (! manager.getUserRestrictions(sAdmin).containsKey(key))
             manager.addUserRestriction(sAdmin, key)
     }
 
     fun clearUserRestrictionsIfNeeded(key: String) {
-        if (Users.isProfileManagedByIsland() && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
+        if (Users.isProfileManagedByIsland && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
         if (manager.getUserRestrictions(sAdmin).containsKey(key))
             manager.clearUserRestriction(sAdmin, key)
     }

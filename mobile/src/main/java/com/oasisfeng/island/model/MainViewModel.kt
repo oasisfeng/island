@@ -15,7 +15,7 @@ import com.oasisfeng.island.data.LiveProfileStates.ProfileState
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.settings.IslandNameManager
 import com.oasisfeng.island.util.Users
-import com.oasisfeng.island.util.toId
+import com.oasisfeng.island.util.Users.Companion.toId
 
 class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel(app, state) {
 

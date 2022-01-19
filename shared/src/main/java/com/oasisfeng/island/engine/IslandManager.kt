@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.util.Apps
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.toId
 
 /**
  * Utilities of shared basic functionality for modules
@@ -63,7 +64,7 @@ object IslandManager {
 
     @JvmStatic fun getProfileIdsIncludingDisabled(context: Context): IntArray =
         context.getSystemService<UserManager>()!!.getProfileIds(Users.currentId(), false)
-            ?: context.getSystemService<UserManager>()!!.userProfiles.map(UserHandle::toId).toIntArray() // Fallback to profiles without disabled.
+            ?: context.getSystemService<UserManager>()!!.userProfiles.map { it.toId() }.toIntArray() // Fallback to profiles without disabled.
 }
 
 private const val TAG = "Island.Manager"

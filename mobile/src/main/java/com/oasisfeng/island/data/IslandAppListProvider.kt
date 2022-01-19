@@ -25,7 +25,7 @@ import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.DPM
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Users
-import com.oasisfeng.island.util.toId
+import com.oasisfeng.island.util.Users.Companion.toId
 import java.util.function.Predicate
 import java.util.stream.Stream
 import kotlin.streams.asSequence
@@ -64,7 +64,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 
 	fun isExclusive(app: IslandAppInfo): Boolean {
 		if (Users.isParentProfile(app.user) && ! Users.hasProfile()) return true
-		return Users.getProfilesManagedByIsland().asSequence().plus(Users.getParentProfile()).minus(app.user).all { profile ->
+		return Users.getProfilesManagedByIsland().asSequence().plus(Users.parentProfile).minus(app.user).all { profile ->
 			! isInstalled(app.packageName, profile) }
 	}
 

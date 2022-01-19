@@ -14,6 +14,7 @@ import android.util.SparseArray
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.toId
 import java.io.Serializable
 import java.util.*
 
@@ -49,7 +50,7 @@ class ShuttleProvider: ContentProvider() {
 					else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
 			if (! DevicePolicies(context).isProfileOwner) return
 
-			if (isReady(context, Users.getParentProfile())) Log.d(TAG, "Shuttle to parent profile: ready")
+			if (isReady(context, Users.parentProfile)) Log.d(TAG, "Shuttle to parent profile: ready")
 			else Log.i(TAG, "Shuttle to parent profile: not ready")
 
 			initializeInIsland(context)

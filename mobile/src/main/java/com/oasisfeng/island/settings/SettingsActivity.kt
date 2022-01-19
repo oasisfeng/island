@@ -57,7 +57,7 @@ import com.oasisfeng.island.util.Users
 			return super.onHeaderClick(header, position)
 
 		val users = ArrayList<UserHandle>() // Support multiple managed-profiles
-		users.add(Users.getParentProfile())
+		users.add(Users.parentProfile)
 		users.addAll(Users.getProfilesManagedByIsland())
 		if (users.size <= 1)        // Managed mainland without Island
 			return super.onHeaderClick(header, position)

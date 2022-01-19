@@ -53,6 +53,7 @@ import com.oasisfeng.island.settings.IslandNameManager.getAllNames
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.ui.ModelBottomSheetFragment
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.toId
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
@@ -78,7 +79,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 		val names = getAllNames(context)
 		check(names.isNotEmpty()) { "No Island" }
 		val targets: MutableMap<UserHandle, String> = LinkedHashMap(names.size + 1)
-		targets[Users.getParentProfile()] = context.getString(R.string.tab_mainland)
+		targets[Users.parentProfile] = context.getString(R.string.tab_mainland)
 		targets.putAll(names)
 
 		val shouldShowBadge: Boolean = targets.size > 2

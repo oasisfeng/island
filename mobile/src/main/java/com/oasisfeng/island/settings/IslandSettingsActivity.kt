@@ -54,7 +54,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onResume() {
         super.onResume()
         val activity = activity
-        mMultipleIslands = try { Shuttle(activity, to = Users.getParentProfile()).invoke {
+        mMultipleIslands = try { Shuttle(activity, to = Users.parentProfile).invoke {
             Users.getProfilesManagedByIsland().size > 1 }} catch (e: RuntimeException) { false }
         activity.title = if (! mMultipleIslands) IslandNameManager.getSoleIslandDefaultName(activity)
             else preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
