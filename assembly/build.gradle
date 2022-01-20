@@ -40,11 +40,6 @@ android {
             dimension "packaging"
             matchingFallbacks = ['full']
         }
-        fileprovider {
-            applicationIdSuffix ".fileprovider"
-            dimension "packaging"
-            matchingFallbacks = ['full']
-        }
     }
 
     compileOptions {
@@ -70,7 +65,6 @@ dependencies {
     // Complete
     completeImplementation project(':engine')
     completeImplementation project(':mobile')
-    completeImplementation project(':fileprovider')
     completeImplementation project(':installer')
     completeImplementation project(':watcher')
     completeImplementation project(':open')
@@ -78,6 +72,4 @@ dependencies {
     engineImplementation project(':engine')
     // Mobile only
     mobileImplementation project(':mobile')
-    // File Provider only
-    fileproviderImplementation project(':fileprovider')
 }

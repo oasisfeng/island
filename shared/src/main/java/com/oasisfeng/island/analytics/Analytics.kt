@@ -43,7 +43,6 @@ interface Analytics {
 		DeviceOwner("device_owner"),
 		IslandSetup("island_setup"),
 		RemoteConfigAvailable("remote_config_avail"),
-		FileShuttleEnabled("file_shuttle_enabled"),
 	}
 
 	fun setProperty(property: Property, @Size(max = 36) value: String)

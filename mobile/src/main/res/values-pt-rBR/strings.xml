@@ -24,10 +24,6 @@
     <string name="status_appendix_exclusive">apenas no Island</string>
 
     <string name="featured_button_setup">Configurar</string>
-    <string name="featured_file_shuttle_title">Cruzamento de arquivos</string>
-    <string name="featured_file_shuttle_description">Cruzamento de arquivos oferece acesso intercambiável de arquivos que facilita o gerenciamento deles dentro do Island. Para ativar a funcionalidade é necessário conceder manualmente uma permissão via comando de ADB no seu PC anteriormente conectado ao celular via USB.</string>
-    <string name="featured_fx_title">FX File Explorer</string>
-    <string name="featured_fx_description">Cruzamento de arquivos no Island oferece acesso intercambiável via Android \"Framework de Acesso ao Armazenamento\". Mas nem todos os apps (mesmo alguns apps populares de gerenciamento de arquivos) suportam SAF.\n\nFX File Explorer tem suporte total ao SAF, basta clonar e lançá-lo dentro do Island, selecionar \"Conectar ao Armazenamento\" no menu. Cruzamento de arquivos no Island está no menu lateral.</string>
     <string name="featured_adb_secure_title">ADB Seguro</string>
     <string name="featured_adb_secure_island_title">ADB Seguro (Apenas para o espaço do Island)</string>
     <string name="featured_adb_secure_description">Restringir o Shell de ADB (Android Debugging Bridge) de executar comandos perigosos (instalar APKs, alterar configurações, etc.).\n\nSe o Mainland é gerenciada pelo Island, isto poderia proteger todo o dispositivo (incluindo captura de dados ou a instalação não solicitada de apps via cabo USB de dispositivo externo fisicamente conectado).</string>
@@ -120,7 +116,6 @@ o ambiente de Sandbox. O Island nunca coleta dados relacionados à sua privacida
     <string name="toast_error_freeze_failure">Falha na suspensão</string>
     <string name="toast_error_unfreeze_failure">Falha ao re-ativar</string>
     <string name="toast_error_freezing_active_admin">Não é possível suspender o admin atual do dispositivo</string>
-    <string name="toast_external_storage_permission_required">A permissão de armazenamento é necessária para acessar o armazenamento compartilhado dentro do Island.</string>
     <string name="toast_app_launch_error">Desculpe, ocorreu um erro ao iniciar este app.</string>
     <string name="toast_app_launch_failure">Não foi possível iniciar \"%s\"</string>
     <string name="prompt_invalid_shortcut">Atalho inválido, por favor recriar.</string>

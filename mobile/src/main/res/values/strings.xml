@@ -24,10 +24,6 @@
     <string name="status_appendix_exclusive">only in Island</string>
 
     <string name="featured_button_setup">Setup</string>
-    <string name="featured_file_shuttle_title">File Shuttle</string>
-    <string name="featured_file_shuttle_description">File Shuttle provides cross-border file access and makes managing files inside Island much easier. It requires manual permission granting with ADB via USB-connected PC to activate.</string>
-    <string name="featured_fx_title">FX File Explorer</string>
-    <string name="featured_fx_description">File Shuttle of Island provides cross-border file access via Android \"Storage Access Framework\". But not all apps in the wild (even some popular file manage apps) support SAF.\n\nFX File Explorer has full support for SAF, just clone and launch it inside Island, select \"Connect to Storage\" in drop-down menu. The File Shuttle of Island is in the side menu.</string>
     <string name="featured_adb_secure_title">ADB Secure</string>
     <string name="featured_adb_secure_island_title">ADB Secure (for Island space only)</string>
     <string name="featured_adb_secure_description">Restrict ADB (Android Debugging Bridge) shell from executing dangerous commands (install APK, change settings and etc.).\n\nIf Mainland is also managed by Island, this could protect the whole device (including data sniffing or sneaky app installation via USB cable from physically connected external device).</string>
@@ -124,7 +120,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_error_freeze_failure">Failed to freeze</string>
     <string name="toast_error_unfreeze_failure">Failed to unfreeze</string>
     <string name="toast_error_freezing_active_admin">Cannot freeze active device-admin</string>
-    <string name="toast_external_storage_permission_required">Storage permission is required to access the shared storage from within Island.</string>
     <string name="toast_app_launch_error">Sorry, there\'s an error launching this app.</string>
     <string name="toast_app_launch_failure">Failed to launch %s</string>
     <string name="prompt_invalid_shortcut">Invalid shortcut, please recreate.</string>

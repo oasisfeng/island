@@ -24,10 +24,6 @@
     <string name="status_appendix_exclusive">仅存于此界</string>
 
     <string name="featured_button_setup">激活</string>
-    <string name="featured_file_shuttle_title">文件传送门</string>
-    <string name="featured_file_shuttle_description">借助“虚空之阵”实现穿越结界的文件访问能力，让文件可以更轻松的往返壶中界。布此阵需要通过 USB 连接的电脑使用 ADB 指令。</string>
-    <string name="featured_fx_title">FX File Explorer</string>
-    <string name="featured_fx_description">“文件传送门”提供的穿越结界的文件访问能力基于 Android 的“存储访问框架”。但并非所有的应用都支持“存储访问框架”，甚至包括一些主流文件管理工具。\n\nFX File Explorer 完全支持“存储访问框架”，只需在壶中界启动它，选择下拉菜单中的“Connect to Storage”，然后从侧栏选择相应传送门即可访问外部文件。</string>
     <string name="featured_adb_secure_title">ADB 安全封印</string>
     <string name="featured_adb_secure_island_title">ADB 安全封印（仅限壶中界）</string>
     <string name="featured_adb_secure_description">限制 ADB (Android Debugging Bridge) 终端执行危险指令（如安装 APK、修改关键系统设置）的权限。\n\n如果授予炼妖壶对“界外”的管理权，还可以在整个设备层面限制 ADB 终端权限（包括阻止物理连接的外部设备通过 USB 读取数据或不经用户授权直接安装应用）。</string>
@@ -122,7 +118,6 @@
     <string name="toast_error_freeze_failure">冻结失败</string>
     <string name="toast_error_unfreeze_failure">解冻失败</string>
     <string name="toast_error_freezing_active_admin">无法冻结已激活设备管理器的应用</string>
-    <string name="toast_external_storage_permission_required">文件传送门需要“存储”权限以打通文件访问。</string>
     <string name="toast_app_launch_error">抱歉，启动应用时出现了异常。</string>
     <string name="toast_app_launch_failure">未能启动 %s</string>
     <string name="prompt_invalid_shortcut">快捷方式已失效，请重新创建</string>

@@ -20,7 +20,6 @@ public enum Config {
 	URL_SETUP("url_setup"),
 	URL_SETUP_GOD_MODE("url_setup_god_mode"),
 	URL_SETUP_TROUBLESHOOTING("url_setup_trouble"),
-	URL_FILE_SHUTTLE("url_file_shuttle"),
 	PERMISSION_REQUEST_ALLOWED_APPS("permission_allowed_apps");
 
 	public String get() {
