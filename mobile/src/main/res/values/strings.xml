@@ -122,6 +122,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="toast_error_freezing_active_admin">Cannot freeze active device-admin</string>
     <string name="toast_app_launch_error">Sorry, there\'s an error launching this app.</string>
     <string name="toast_app_launch_failure">Failed to launch %s</string>
+    <string name="prompt_activating_island">Activating Island…</string>
+    <string name="prompt_activate_island_first">Please activate Island first.</string>
     <string name="prompt_invalid_shortcut">Invalid shortcut, please recreate.</string>
     <string name="prompt_operation_failure_due_to_incompatibility">Operation failed.\n(probably due to ROM compatibility)</string>
 

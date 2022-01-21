@@ -9,17 +9,22 @@ import android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE
 import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.N_MR1
-import android.os.Build.VERSION_CODES.Q
+import android.os.Build.VERSION_CODES.*
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.content.IntentFilters
+import com.oasisfeng.android.content.waitForBroadcast
 import com.oasisfeng.island.analytics.analytics
+import com.oasisfeng.island.home.HomeRole
 import com.oasisfeng.pattern.PseudoContentProvider
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
+import kotlin.coroutines.resume
 
 /**
  * Utility class for user-related helpers. Only works within the process where this provider is declared to be running.
@@ -123,6 +128,24 @@ class Users : PseudoContentProvider() {
 			try { context.packageManager.getUserBadgedIcon(icon, user) }
 			catch (e: SecurityException) {    // (Mostly "Vivo" devices before Android Q) "SecurityException: You need MANAGE_USERS permission to: check if specified user a managed profile outside your profile group"
 				icon.also { if (SDK_INT >= Q) analytics().logAndReport(TAG, "Error getting user badged icon", e) }}
+
+		/** @return Whether the request is successful, false may indicate failure or timeout. */
+		@RequiresApi(P) suspend fun requestQuietModeDisabled(context: Context, profile: UserHandle,
+		                                                     timeout: Long = ACTIVATION_TIMEOUT) = coroutineScope {
+			val intent = waitForBroadcast(context, Intent.ACTION_MANAGED_PROFILE_AVAILABLE, timeout) {
+				launch {
+					Log.i(TAG, "Activating Island ${profile.toId()}...")
+					val activating = HomeRole.runWithHomeRole(context) {
+						val um = context.getSystemService<UserManager>()!!
+						um.requestQuietModeEnabled(false, profile) }
+					if (! activating) it.resume(null)
+					Log.i(TAG, "Waiting for Island ${profile.toId()} to be ready...") }}
+			val user = intent?.getParcelableExtra<UserHandle>(Intent.EXTRA_USER)
+			Log.i(TAG, "Island ${user?.toId()} is ready")
+			return@coroutineScope user != null
+		}
+
+		private const val ACTIVATION_TIMEOUT: Long = 15_000		// May need to wait for user credential
 
 		private var mDebugBuild = false
 		private lateinit var sProfilesManagedByIsland: List<UserHandle> // Intentionally left null to fail early if this class is accidentally used in non-default process.
