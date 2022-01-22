@@ -2,6 +2,7 @@ package com.oasisfeng.island.model
 
 import android.app.Application
 import android.content.Context
+import android.content.IntentFilter
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.Q
 import android.os.UserHandle
@@ -9,12 +10,14 @@ import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.SavedStateHandle
 import com.google.android.material.tabs.TabLayout
+import com.oasisfeng.android.content.receiver
+import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.data.LiveProfileStates
 import com.oasisfeng.island.data.LiveProfileStates.ProfileState
 import com.oasisfeng.island.mobile.R
-import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.Users.Companion.ACTION_USER_INFO_CHANGED
 import com.oasisfeng.island.util.Users.Companion.toId
 
 class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel(app, state) {
@@ -22,6 +25,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 	private val mProfileStates = LiveProfileStates(app)
 
 	fun initializeTabs(activity: FragmentActivity, tabs: TabLayout) {
+		mTabs = tabs
 		tabs.tabIconTint = null
 		tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
 			override fun onTabSelected(tab: TabLayout.Tab) = onTabSwitched(activity, tabs, tab)
@@ -48,6 +52,24 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 		// (Mostly "vivo" devices before Android Q) "SecurityException: You need MANAGE_USERS permission to: check if specified user a managed profile outside your profile group"
 		catch (e: SecurityException) { if (SDK_INT >= Q) analytics().logAndReport(TAG, "Error getting user badged icon", e) }
 	}
+
+	override fun onCleared() {
+		super.onCleared()
+		getApplication<Application>().unregisterReceiver(mIslandNameChangeObserver)
+	}
+
+	private val mIslandNameChangeObserver = receiver { intent ->
+		val userId = intent.getIntExtra(Users.EXTRA_USER_HANDLE, Users.NULL_ID)
+		val tab = mTabs?.run { (0 until tabCount).mapNotNull(::getTabAt).firstOrNull {
+			(it.tag as? UserHandle)?.toId() == userId }}
+		tab?.run { text = IslandNameManager.getAllNames(this@receiver)[tag] ?: return@run }
+	}
+
+	init {
+		getApplication<Application>().registerReceiver(mIslandNameChangeObserver, IntentFilter(ACTION_USER_INFO_CHANGED))
+	}
+
+	private var mTabs: TabLayout? = null
 }
 
 private const val TAG = "Island.MVM"
