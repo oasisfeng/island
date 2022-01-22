@@ -35,6 +35,7 @@ import com.oasisfeng.android.content.pm.enableComponent
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
 import com.oasisfeng.island.Config
+import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.TempDebug
 import com.oasisfeng.island.appops.AppOpsCompat
 import com.oasisfeng.island.mobile.BuildConfig

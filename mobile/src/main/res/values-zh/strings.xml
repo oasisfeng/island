@@ -3,15 +3,8 @@
     <string name="label_searchable">炼妖壶中的应用</string>
     <string name="label_activity_island_settings">炼妖壶设置</string>
 
-    <string name="tab_mainland">界外</string>
     <string name="tab_island">壶中界</string>
     <string name="tab_discovery">天书</string>
-    <string name="default_island_name">壶中界</string>
-    <string name="default_islandN_name">界 %d</string>
-    <string name="default_island0_name">昆仑界</string>
-    <string name="default_island1_name">山海界</string>
-    <string name="default_island2_name">云中界</string>
-    <string name="default_island3_name">昊天界</string>
 
     <string name="status_alive">正常</string>
     <string name="status_frozen">冻结</string>

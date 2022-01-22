@@ -17,10 +17,10 @@ import androidx.core.app.NavUtils
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.app.Activities
 import com.oasisfeng.android.ui.Dialogs
+import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.MainActivity
 import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
-import com.oasisfeng.island.settings.IslandNameManager.getAllNames
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Users
@@ -62,8 +62,8 @@ import com.oasisfeng.island.util.Users
 		if (users.size <= 1)        // Managed mainland without Island
 			return super.onHeaderClick(header, position)
 
-		val names = getAllNames(this)
-		val labels = users.map { user -> if (Users.isParentProfile(user)) getText(R.string.tab_mainland) else names[user] }.toTypedArray()
+		val names = IslandNameManager.getAllNames(this)
+		val labels = users.map { user -> if (Users.isParentProfile(user)) getText(R.string.mainland_name) else names[user] }.toTypedArray()
 		Dialogs.buildList(this, null, labels) { _, which ->
 			if (which == 0) super.onHeaderClick(header, position)
 			else launchSettingsActivityAsUser(users[which])

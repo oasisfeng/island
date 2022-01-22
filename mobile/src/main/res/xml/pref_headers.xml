@@ -10,7 +10,7 @@
         android:fragment="com.oasisfeng.island.settings.IslandSettingsFragment"
         android:icon="@drawable/ic_landscape_black_24dp"
         android:title="@string/pref_scoped_settings_header"
-        android:breadCrumbTitle="@string/tab_mainland" /> <!-- "breadCrumbTitle" is only used for mainland -->
+        android:breadCrumbTitle="@string/mainland_name" /> <!-- "breadCrumbTitle" is only used for mainland -->
 
     <header
         android:fragment="com.oasisfeng.island.settings.SettingsActivity$AboutFragment"

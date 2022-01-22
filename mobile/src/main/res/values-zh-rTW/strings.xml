@@ -3,15 +3,8 @@
     <string name="label_searchable">煉妖壺中的應用程式</string>
     <string name="label_activity_island_settings">煉妖壺設定</string>
 
-    <string name="tab_mainland">界外</string>
     <string name="tab_island">壺中界</string>
     <string name="tab_discovery">天書</string>
-    <string name="default_island_name">壺中界</string>
-    <string name="default_islandN_name">界 %d</string>
-    <string name="default_island0_name">昆侖界</string>
-    <string name="default_island1_name">山海界</string>
-    <string name="default_island2_name">雲中界</string>
-    <string name="default_island3_name">昊天界</string>
 
     <string name="status_alive">正常</string>
     <string name="status_frozen">凍結</string>

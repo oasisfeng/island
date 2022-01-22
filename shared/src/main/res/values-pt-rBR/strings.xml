@@ -13,4 +13,12 @@
     <string name="prompt_failed_preserving_app_ops">App Ops não foram preservados devido a um erro interno.</string>
     <string name="notification_profile_shuttle_pending_title">A funcionalidade de configurações intercambiáveis é limitada</string>
     <string name="notification_profile_shuttle_pending_text">Toque para restaurar</string>
+
+    <string name="mainland_name">Mainland</string>
+    <string name="default_island_name">Island</string>
+    <string name="default_island0_name">Avalon</string>
+    <string name="default_island1_name">Neverland</string>
+    <string name="default_island2_name">Atlantis</string>
+    <string name="default_island3_name">Penglai</string>
+    <string name="default_islandN_name">Island %d</string>
 </resources>

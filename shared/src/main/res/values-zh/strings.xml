@@ -14,4 +14,12 @@
 
     <string name="notification_profile_shuttle_pending_title">跨界功能受限</string>
     <string name="notification_profile_shuttle_pending_text">点此恢复</string>
+
+    <string name="mainland_name">界外</string>
+    <string name="default_island_name">壶中界</string>
+    <string name="default_island0_name">昆仑界</string>
+    <string name="default_island1_name">山海界</string>
+    <string name="default_island2_name">云中界</string>
+    <string name="default_island3_name">昊天界</string>
+    <string name="default_islandN_name">界%d</string>
 </resources>

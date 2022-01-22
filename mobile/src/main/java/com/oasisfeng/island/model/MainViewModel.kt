@@ -13,7 +13,7 @@ import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.data.LiveProfileStates
 import com.oasisfeng.island.data.LiveProfileStates.ProfileState
 import com.oasisfeng.island.mobile.R
-import com.oasisfeng.island.settings.IslandNameManager
+import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.Users.Companion.toId
 
@@ -31,7 +31,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 		// Tab "Discovery" and "Mainland" are always present
 		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery),/* selected = */false)
 		val currentProfile = currentProfile
-		tabs.addTab(tabs.newTab().setText(R.string.tab_mainland),/* selected = */Users.isParentProfile(currentProfile))
+		tabs.addTab(tabs.newTab().setText(R.string.mainland_name),/* selected = */Users.isParentProfile(currentProfile))
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)

@@ -3,15 +3,8 @@
     <string name="label_searchable">Apps no Island</string>
     <string name="label_activity_island_settings">Configurações do Island</string>
 
-    <string name="tab_mainland">Mainland</string>
     <string name="tab_island">Island</string>
     <string name="tab_discovery">Discovery</string>
-    <string name="default_island_name">Island</string>
-    <string name="default_islandN_name">Island %d</string>
-    <string name="default_island0_name">Avalon</string>
-    <string name="default_island1_name">Neverland</string>
-    <string name="default_island2_name">Atlantis</string>
-    <string name="default_island3_name">Penglai</string>
 
     <string name="status_alive">Ativo</string>
     <string name="status_frozen">Suspenso</string>

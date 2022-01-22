@@ -33,6 +33,7 @@ import com.oasisfeng.android.ui.WebContent
 import com.oasisfeng.android.util.Apps
 import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.Config
+import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.analytics.Analytics
 import com.oasisfeng.island.analytics.analytics
 import com.oasisfeng.island.clone.AppClonesBottomSheet
@@ -49,7 +50,6 @@ import com.oasisfeng.island.engine.common.WellKnownPackages
 import com.oasisfeng.island.installer.InstallerExtras
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.model.interactive
-import com.oasisfeng.island.settings.IslandNameManager.getAllNames
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.ui.ModelBottomSheetFragment
 import com.oasisfeng.island.util.*
@@ -76,10 +76,10 @@ import kotlin.annotation.AnnotationTarget.TYPE
 class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewModel, val app: IslandAppInfo) {
 
 	fun request() {
-		val names = getAllNames(context)
+		val names = IslandNameManager.getAllNames(context)
 		check(names.isNotEmpty()) { "No Island" }
 		val targets: MutableMap<UserHandle, String> = LinkedHashMap(names.size + 1)
-		targets[Users.parentProfile] = context.getString(R.string.tab_mainland)
+		targets[Users.parentProfile] = context.getString(R.string.mainland_name)
 		targets.putAll(names)
 
 		val shouldShowBadge: Boolean = targets.size > 2
