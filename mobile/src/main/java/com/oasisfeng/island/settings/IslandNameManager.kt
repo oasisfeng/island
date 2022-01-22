@@ -12,21 +12,20 @@ import com.oasisfeng.island.util.Users.Companion.toId
 
 object IslandNameManager {
 
-	@JvmStatic fun getAllNames(context: Context): Map<UserHandle, String> {
+	@OwnerUser @JvmStatic fun getAllNames(context: Context): Map<UserHandle, String> {
 		val profiles = Users.getProfilesManagedByIsland()
-		return when(profiles.size) {
+		return when (profiles.size) {
 			0 -> emptyMap()
 			1 -> mapOf(Pair(profiles[0], context.getString(R.string.default_island_name)))
 			else -> getStore(context).let { store -> profiles.associateWith { profile ->
-				store.getString(buildIslandNameKey(context, profile.toId()), null) ?: getDefaultSpecificName(context, profile) }}}
+					store.getString(buildIslandNameKey(context, profile), null) ?: getDefaultSpecificName(context, profile) }}}
 	}
 
-	fun getDefaultName(context: Context, profile: UserHandle = Users.current()) = when {
-		Users.getProfilesManagedByIsland().size > 1 -> getDefaultSpecificName(context, profile)
-		Users.isParentProfile(profile) -> context.getString(R.string.tab_mainland)
-		else -> getSoleIslandDefaultName(context) }
-
-	fun getSoleIslandDefaultName(context: Context) = context.getString(R.string.default_island_name)
+	private fun getDefaultName(context: Context, profile: UserHandle = Users.current()): String {
+		if (Users.isParentProfile(profile)) return context.getString(R.string.tab_mainland)
+		val islandCount = Users.run { if (isParentProfile()) getProfilesManagedByIsland().size else getProfileCount() - 1 }
+		return if (islandCount > 1) getDefaultSpecificName(context, profile) else context.getString(R.string.default_island_name)
+	}
 
 	fun getDefaultSpecificName(context: Context, profile: UserHandle = Users.current()) = when (val profileId = profile.toId()) {
 		0    -> context.getString(R.string.tab_mainland)
@@ -40,16 +39,25 @@ object IslandNameManager {
 	@ProfileUser fun syncNameToOwnerUser(context: Context, name: String)    // TODO: syncNameToParentProfile() with proper "parent".
 			= Shuttle(context, to = Users.parentProfile).launch(with = Users.current()) { saveProfileName(this, it, name) }
 
-	@OwnerUser private fun saveProfileName(context: Context, profile: UserHandle, name: String)
-			= getStore(context).edit().putString(buildIslandNameKey(context, profile.toId()), name).apply()
+	@OwnerUser @ProfileUser private fun saveProfileName(context: Context, profile: UserHandle?, name: String)
+			= getStore(context).edit().putString(buildIslandNameKey(context, profile), name).apply()
+
+	@ProfileUser fun getName(context: Context) =
+		getStore(context).getString(buildIslandNameKey(context), null) ?: getDefaultName(context)
 
 	@Suppress("DEPRECATION") private fun getStore(context: Context)
 			= android.preference.PreferenceManager.getDefaultSharedPreferences(context.createDeviceProtectedStorageContext())
 
-	@OwnerUser private fun buildIslandNameKey(context: Context, user: Int) = context.getString(R.string.key_island_name) + "." + user
+	private fun buildIslandNameKey(context: Context, user: UserHandle? = null): String {
+		val key = context.getString(R.string.key_island_name)
+		return if (user != null) "$key.${user.toId()}" else key
+	}
 
-	internal fun setName(context: Context, name: String)    // Extra spaces for better readability in system UI (e.g. app Uninstall confirmation dialog)
-			= DevicePolicies(context).invoke(DevicePolicyManager::setProfileName, " $name ")
+	@ProfileUser fun setName(context: Context, name: String) {  // Extra spaces for better readability in system UI (e.g. app Uninstall confirmation dialog)
+		DevicePolicies(context).invoke(DevicePolicyManager::setProfileName, " $name ")
+		saveProfileName(context, null, name)
+		syncNameToOwnerUser(context, name)
+	}
 
 	class NameInitializer: BroadcastReceiver() {
 

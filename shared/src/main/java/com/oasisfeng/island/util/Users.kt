@@ -67,6 +67,7 @@ class Users : PseudoContentProvider() {
 			mDebugBuild = context.applicationInfo.flags and FLAG_DEBUGGABLE != 0
 			val um = context.getSystemService<UserManager>()!!
 			val profiles = um.userProfiles
+			sProfiles = profiles
 			val profilesByIsland = ArrayList<UserHandle>(profiles.size - 1)
 			parentProfile = profiles[0]
 			if (parentProfile == CURRENT) {      // Running in parent profile
@@ -119,6 +120,8 @@ class Users : PseudoContentProvider() {
 
 		/** Excluding parent profile  */
 		@OwnerUser @JvmStatic fun getProfilesManagedByIsland() = sProfilesManagedByIsland.also { ensureParentProfile() }
+		/** Including parent profile and profiles not managed by Island */
+		fun getProfileCount() = sProfiles.size
 		@JvmStatic fun UserHandle.toId() = hashCode()
 		@JvmStatic fun isSameApp(uid1: Int, uid2: Int) = getAppId(uid1) == getAppId(uid2)
 		private fun getAppId(uid: Int) = uid % PER_USER_RANGE
@@ -148,7 +151,8 @@ class Users : PseudoContentProvider() {
 		private const val ACTIVATION_TIMEOUT: Long = 15_000		// May need to wait for user credential
 
 		private var mDebugBuild = false
-		private lateinit var sProfilesManagedByIsland: List<UserHandle> // Intentionally left null to fail early if this class is accidentally used in non-default process.
+		private lateinit var sProfiles: List<UserHandle>                // Intentionally left null to fail early if this
+		private lateinit var sProfilesManagedByIsland: List<UserHandle> //  class is accidentally used in other process.
 		private const val PER_USER_RANGE = 100000
 		private const val TAG = "Island.Users"
 	}

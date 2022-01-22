@@ -41,7 +41,6 @@ import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
-import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
 
 /**
@@ -54,11 +53,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
     override fun onResume() {
         super.onResume()
         val activity = activity
-        mMultipleIslands = try { Shuttle(activity, to = Users.parentProfile).invoke {
-            Users.getProfilesManagedByIsland().size > 1 }} catch (e: RuntimeException) { false }
-        activity.title = if (! mMultipleIslands) IslandNameManager.getSoleIslandDefaultName(activity)
-            else preferenceManager.sharedPreferences.getString(getString(R.string.key_island_name), null)
-                ?: IslandNameManager.getDefaultSpecificName(activity)
+        activity.title = IslandNameManager.getName(activity)
 
         val policies = DevicePolicies(activity.applicationContext)
         val isProfileOrDeviceOwner = policies.isProfileOrDeviceOwnerOnCallingUser
@@ -153,16 +148,14 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         val activity = activity
         IslandNameManager.setName(activity, name)
         activity.title = name
-        IslandNameManager.syncNameToOwnerUser(activity, name)
     }
 
     private fun requestRenaming() {
         val activity = activity
         object: EditTextPreference(activity) {
             init {
-                key = getString(R.string.key_island_name)
                 onAttachedToHierarchy(this@IslandSettingsFragment.preferenceManager)
-                if (text.isNullOrEmpty()) text = IslandNameManager.getDefaultName(activity)
+                if (text.isNullOrEmpty()) text = IslandNameManager.getName(activity)
                 editText.also { editText ->
                     editText.addTextChangedListener(object: TextWatcher {
                         override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -202,7 +195,7 @@ class IslandSettingsFragment: android.preference.PreferenceFragment() {
         }
     }
 
-    private var mMultipleIslands: Boolean = false
+    private val mMultipleIslands: Boolean = Users.getProfileCount() > 2
 }
 
 /** Only enabled in profile managed by Island, as a sole indicator for owner user to identify. */
