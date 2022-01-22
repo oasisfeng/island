@@ -54,7 +54,9 @@ object IslandManager {
         val launcherApps = context.getSystemService<LauncherApps>()!!
         try {
             val activities = launcherApps.getActivityList(pkg, profile)
-            if (activities.isNullOrEmpty()) return false
+            if (activities.isNullOrEmpty())
+                return false.also { Log.w(TAG, "Unable to launch $pkg in profile ${profile.toId()}") }
+            Log.i(TAG, "Launching $pkg in profile ${profile.toId()}...")
             launcherApps.startMainActivity(activities[0].componentName, profile, null, null)
             return true }
         catch (e: SecurityException) {    // SecurityException: Cannot retrieve activities for unrelated profile 10

@@ -48,7 +48,7 @@ import com.oasisfeng.island.util.*
  *
  * Created by Oasis on 2019-10-12.
  */
-class IslandSettingsFragment: android.preference.PreferenceFragment() {
+@ProfileUser class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
     override fun onResume() {
         super.onResume()

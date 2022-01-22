@@ -139,7 +139,7 @@ import kotlinx.coroutines.launch
 					.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(getColor(R.color.primary)).setCategory(Notification.CATEGORY_PROGRESS)
 					.setProgress(0, 0, true).setContentTitle("Deactivating Island space..."))
 
-			try { getSystemService(UserManager::class.java)!!.requestQuietModeEnabled(true, profile) }
+			try { getSystemService<UserManager>()!!.requestQuietModeEnabled(true, profile) }
 			catch (e: SecurityException) {   // Fall-back to manual control
 				startSystemSyncSettings().also { Log.d(TAG, "Error deactivating Island ${profile.toId()}", e) }}
 			finally { stopForeground(true) }

@@ -118,7 +118,7 @@ class Users : PseudoContentProvider() {
 			return sProfilesManagedByIsland.contains(user)
 		}
 
-		/** Excluding parent profile  */
+		/** Excluding parent profile */
 		@OwnerUser @JvmStatic fun getProfilesManagedByIsland() = sProfilesManagedByIsland.also { ensureParentProfile() }
 		/** Including parent profile and profiles not managed by Island */
 		fun getProfileCount() = sProfiles.size
