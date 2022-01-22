@@ -183,7 +183,6 @@ import com.oasisfeng.island.util.*
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         if (! Users.isParentProfile()) {
             inflater.inflate(R.menu.pref_island_actions, menu)
-            menu.findItem(R.id.menu_rename)?.isVisible = mMultipleIslands
             if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).isVisible = true }
     }
 
@@ -195,8 +194,6 @@ import com.oasisfeng.island.util.*
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-    private val mMultipleIslands: Boolean = Users.getProfileCount() > 2
 }
 
 /** Only enabled in profile managed by Island, as a sole indicator for owner user to identify. */
