@@ -77,7 +77,7 @@ object IslandAppShortcut {
 		if (! IslandSettings(context).DynamicShortcutLabel().enabled) return
 
 		val sm: ShortcutManager = context.getSystemService() ?: return
-		val userId = app.userId; val id = getShortcutId(app.packageName, userId, isCrossProfile(userId))
+		val userId = app.userId; val id = getShortcutId(app.packageName, userId)
 		sm.pinnedShortcuts.firstOrNull { it.id == id } ?: return        // Ensure existence
 		update(context, sm, app, userId)
 	}
@@ -91,7 +91,8 @@ object IslandAppShortcut {
 			val pkg = parsed[0]
 			val profileId = try { parsed.getOrNull(1)?.toInt() } catch (e: NumberFormatException) { return@forEach }
 			val profile = profileId?.let { UserHandles.of(it) } ?: Users.current()
-			val app = try { la.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES, profile) } catch (e: NameNotFoundException) { return@forEach }
+			val app = try { la.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES, profile) } catch (e: NameNotFoundException) { null }
+				?: return@forEach sm.removeDynamicShortcuts(listOf(getShortcutId(pkg, profile.toId())))
 			update(context, sm, app, profile.toId()) }
 	}
 
@@ -132,7 +133,7 @@ object IslandAppShortcut {
 			.addCategory(CATEGORY_LAUNCHER).setPackage(context.packageName)
 
 	private const val SHORTCUT_ID_PREFIX = "launch:"
-	private fun getShortcutId(pkg: String, userId: Int, isCrossProfile: Boolean)
+	private fun getShortcutId(pkg: String, userId: Int, isCrossProfile: Boolean = isCrossProfile(userId))
 			= "$SHORTCUT_ID_PREFIX$pkg".let { if (isCrossProfile) it.plus("@$userId") else it }
 	private fun parseShortcutId(id: String)
 			= id.takeIf { it.startsWith(SHORTCUT_ID_PREFIX) }?.substring(SHORTCUT_ID_PREFIX.length)?.split('@')

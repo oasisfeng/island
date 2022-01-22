@@ -73,6 +73,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MANAGED_PROFILE_REMOVED" /> <!-- Registered receiver only, delegate by DeviceAdminReceiver -->
             </intent-filter>
         </receiver>
 
@@ -107,7 +108,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.oasisfeng.island.settings.IslandNameManager$NameInitializer"
+        <receiver android:name="com.oasisfeng.island.IslandNameManager$NameInitializer"
                   android:exported="false" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.USER_INITIALIZE" />
