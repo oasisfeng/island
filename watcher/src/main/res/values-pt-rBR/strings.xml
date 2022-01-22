@@ -1,6 +1,5 @@
 <resources>
-    <string name="notification_island_watcher_title">O serviço do Island está ativo</string>
-    <string name="notification_island_watcher_text">Desativar a fim de parar todas as atividades internas em segundo plano.</string>
+    <string name="notification_island_watcher_title">%s está ativo</string>
     <string name="notification_app_watcher_title">%s está ativo</string>
     <string name="notification_app_watcher_text">Clique para suspender de novo</string>
     <string name="action_deactivate_island">Desativar</string>

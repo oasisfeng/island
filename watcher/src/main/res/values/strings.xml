@@ -1,8 +1,8 @@
 <resources>
-    <string name="notification_island_watcher_title">Island space is active</string>
+    <string name="notification_island_watcher_title">%s is active</string>
     <string name="notification_island_watcher_text_for_deactivate">"Deactivate" to cease all the background activities inside.</string>
     <string name="notification_island_watcher_text_for_restart">"Restart" to reclaim all the resources used inside.</string>
-    <string name="notification_app_watcher_title">%s is active</string>
+    <string name="notification_app_watcher_title">%s is unfrozen</string>
     <string name="notification_app_watcher_text">Click to re-freeze</string>
     <string name="action_deactivate_island">Deactivate</string>
     <string name="action_deactivate_island_manually">Deactivate manually</string>

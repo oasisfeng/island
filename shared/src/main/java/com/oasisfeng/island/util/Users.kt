@@ -53,6 +53,9 @@ class Users : PseudoContentProvider() {
 	}}
 
 	companion object {
+		const val ACTION_USER_INFO_CHANGED = "android.intent.action.USER_INFO_CHANGED"  // Hidden in Intent
+		const val EXTRA_USER_HANDLE = "android.intent.extra.user_handle"                // Hidden in Intent
+
 		@JvmField var profile: UserHandle? = null // The first profile managed by Island (semi-immutable, until profile is created or destroyed)
 		@JvmStatic lateinit var parentProfile: UserHandle; private set
 		@JvmStatic fun hasProfile() = profile != null
@@ -61,6 +64,7 @@ class Users : PseudoContentProvider() {
 		private val CURRENT_ID = CURRENT.toId()
 		@JvmStatic fun current() = CURRENT
 		@JvmStatic fun currentId() = CURRENT_ID
+		const val NULL_ID = -10000
 
 		/** This method should not be called under normal circumstance.  */
 		@JvmStatic fun refreshUsers(context: Context) {

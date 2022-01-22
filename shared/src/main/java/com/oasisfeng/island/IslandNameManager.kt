@@ -5,12 +5,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.UserHandle
+import com.oasisfeng.android.content.sendProtectedBroadcastInternally
 import com.oasisfeng.island.shared.R
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.OwnerUser
 import com.oasisfeng.island.util.ProfileUser
 import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.Users.Companion.ACTION_USER_INFO_CHANGED
+import com.oasisfeng.island.util.Users.Companion.EXTRA_USER_HANDLE
 import com.oasisfeng.island.util.Users.Companion.toId
 
 object IslandNameManager {
@@ -56,6 +59,7 @@ object IslandNameManager {
 	@ProfileUser fun setName(context: Context, name: String) {  // Extra spaces for better readability in system UI (e.g. app Uninstall confirmation dialog)
 		DevicePolicies(context).invoke(DevicePolicyManager::setProfileName, " $name ")
 		saveProfileName(context, null, name)
+		sendProtectedBroadcastInternally(context, Intent(ACTION_USER_INFO_CHANGED).putExtra(EXTRA_USER_HANDLE, Users.currentId()))
 		syncNameToParentProfile(context, name)
 	}
 

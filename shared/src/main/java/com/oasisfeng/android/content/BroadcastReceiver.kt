@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Process
+import android.util.Log
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -28,5 +30,17 @@ suspend fun waitForBroadcast(context: Context, filter: IntentFilter, timeout: Lo
 		finally {
 			context.unregisterReceiver(watcher) }}
 
+fun sendProtectedBroadcastInternally(context: Context, intent: Intent) {
+	val myUid = Process.myUid()
+	context.packageManager.queryBroadcastReceivers(intent, 0).filter { it.activityInfo.applicationInfo.uid == myUid }.forEach {
+		try {
+			val clazz = Class.forName(it.activityInfo.name)
+			if (BroadcastReceiver::class.java.isAssignableFrom(clazz))
+				(clazz.newInstance() as BroadcastReceiver).onReceive(context, intent)
+		} catch (e: ClassNotFoundException) { Log.e(TAG, "Error sending internal broadcast", e) }}
+}
+
 private suspend inline fun <T> suspendCoroutineWithTimeout(timeout: Long, crossinline block: (Continuation<T>) -> Unit) =
 	withTimeout(timeout) { suspendCancellableCoroutine(block = block) }
+
+private const val TAG = "Island.Broadcast"

@@ -23,11 +23,14 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.widget.Toasts
+import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.home.HomeRole
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.notification.post
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.ACTION_USER_INFO_CHANGED
+import com.oasisfeng.island.util.Users.Companion.EXTRA_USER_HANDLE
 import com.oasisfeng.island.util.Users.Companion.toId
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -43,12 +46,14 @@ import kotlinx.coroutines.launch
 		Log.d(TAG, "onReceive: $intent")
 		if (SDK_INT < P || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_BOOT_COMPLETED,
 				Intent.ACTION_MY_PACKAGE_REPLACED, NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED,
-				NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)) return
+				NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED, ACTION_USER_INFO_CHANGED)) return
 		if (Users.isParentProfile()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
 				COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP)
 		if (SDK_INT < O) return
 		val policies = DevicePolicies(context)
 		if (! policies.isProfileOwner) return
+		if (intent.action == ACTION_USER_INFO_CHANGED
+			&& intent.getIntExtra(EXTRA_USER_HANDLE, Users.NULL_ID) != Users.currentId()) return
 		if (NotificationIds.IslandWatcher.isBlocked(context)) return
 
 		val locked = context.getSystemService<UserManager>()?.isUserUnlocked == false
@@ -63,7 +68,7 @@ import kotlinx.coroutines.launch
 			setOngoing(true).setGroup(GROUP).setGroupSummary(true)
 			setSmallIcon(R.drawable.ic_landscape_black_24dp).setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
 			setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
-			setContentTitle(context.getText(R.string.notification_island_watcher_title))
+			setContentTitle(context.getString(R.string.notification_island_watcher_title, IslandNameManager.getName(context)))
 			setContentText(context.getText(if (canDeactivate || ! canRestart) R.string.notification_island_watcher_text_for_deactivate
 					else R.string.notification_island_watcher_text_for_restart))
 			if (canDeactivate) addServiceAction(context, R.string.action_deactivate_island)
