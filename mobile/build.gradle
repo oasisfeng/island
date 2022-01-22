@@ -57,7 +57,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0'
 
     implementation 'com.google.firebase:firebase-appindexing:19.1.0'        // FeatureActionActivity
-    implementation 'eu.chainfire:libsuperuser:1.0.0.201510071325'
+    implementation 'eu.chainfire:libsuperuser:1.0.0.201704021214'
     implementation 'uk.co.samuelwall:material-tap-target-prompt:2.0.1'
 
     implementation 'dev.rikka.shizuku:api:12.1.0'
