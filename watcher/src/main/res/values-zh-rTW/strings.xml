@@ -5,11 +5,14 @@
     <string name="notification_app_watcher_title">%s 已解凍</string>
     <string name="notification_app_watcher_text">點擊將其凍結</string>
     <string name="action_deactivate_island">封印</string>
+    <string name="action_deactivate_island_manually">手動封印</string>
     <string name="action_restart_island">重新啟動</string>
     <string name="action_settings">設定</string>
     <string name="action_dismiss">忽略</string>
 
     <string name="toast_manual_quiet_mode">請在「工作資料夾」設定中手動關閉。</string>
+    <string name="prompt_island_deactivated">煉妖壺已封印</string>
+    <string name="prompt_failed_deactivating_island">煉妖壺封印失敗</string>
 
     <string name="notification_permission_was_granted_title">已授權權限「%s」</string>
     <string name="notification_permission_was_granted_text">是否撤銷此權限？</string>
