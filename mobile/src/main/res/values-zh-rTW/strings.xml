@@ -25,7 +25,7 @@
     <string name="featured_greenify_title">綠色守護</string>
     <string name="featured_greenify_description">在螢幕關閉後，自動凍結選擇的應用程式，除非它們仍然在工作中。</string>
     <string name="featured_icebox_title">冰箱</string>
-    <string name="featured_icebox_description">輕鬆愉悅的應用凍結和啟動體驗。請確保在冰箱的工作模式設定中選擇“煉妖壺”。將其複製至壺中界即可管理和啟動壺中界的應用。</string>
+    <string name="featured_icebox_description">輕鬆愉悅的應用凍結和啟動體驗。請確保在冰箱的工作模式設定中選擇「煉妖壺」。將其複製至壺中界即可管理和啟動壺中界的應用程式。</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops 可選擇性剝奪指定應用程式的部分能力，即使授權了相關權限。</string>
 
@@ -97,6 +97,8 @@
 
     <string name="prompt_disable_sys_app_as_removal">系統應用程式（或服務）只能被停用，與解除安裝應用程式的效果相似。\n\n由於沒有權限直接停用應用程式，接下來即將打開系統的應用程式設定介面，屆時請點擊「停用」按鈕。</string>
     <string name="prompt_clone_app_to">將應用程式複製至…</string>
+    <string name="option_clone_via_shizuku">藉由 Shizuku</string>
+    <string name="option_clone_via_play_store">藉由 Play 商店</string>
     <string name="toast_enable_disabled_system_app">請重新啟用此分身</string>
 
     <string name="toast_setup_in_progress">正在建立壺中界，請稍後…</string>
@@ -111,6 +113,8 @@
     <string name="toast_error_freezing_active_admin">無法凍結已啟用裝置管理器的應用程式</string>
     <string name="toast_app_launch_error">抱歉，啟動應用程式時出現了異常。</string>
     <string name="toast_app_launch_failure">未能啟動 %s</string>
+    <string name="prompt_activating_island">正在啟用彼界…</string>
+    <string name="prompt_activate_island_first">請先啟用彼界…</string>
     <string name="prompt_invalid_shortcut">快速啟動方式已失效，請重新建立</string>
     <string name="prompt_operation_failure_due_to_incompatibility">操作失敗\n(可能由於 ROM 相容性)</string>
 
@@ -131,9 +135,9 @@
     <string name="prompt_updating_shortcuts">正在更新現有快速啟動方式…</string>
     <string name="pref_cat_app_settings_helper">應用程式設定助手</string>
     <string name="pref_app_settings_title">彈出式通知</string>
-    <string name="pref_app_settings_summary">在系统的應用程式設定界面中“強制停止”一個應用程式後，短暫顯示一個彈出式通知，方便快捷打開應用程式管理類工具中針對該應用程式的設定。</string>
-    <string name="pref_app_settings_extended_title">包括通過“煉妖壺”安裝的應用程式</string>
-    <string name="pref_app_settings_extended_summary">即使對“煉妖壺”安裝的應用程式，也顯示“應用程式設定助手”。（方便應用程式設定界面中沒有“應用程式詳情”項的手機系統）</string>
+    <string name="pref_app_settings_summary">在系統的應用程式設定介面中「強制停止」一個應用程式後，短暫顯示一個彈出式通知，方便快捷打開應用程式管理類工具中針對該應用程式的設定。</string>
+    <string name="pref_app_settings_extended_title">包括透過「煉妖壺」安裝的應用程式</string>
+    <string name="pref_app_settings_extended_summary">即使對「煉妖壺」安裝的應用程式，也顯示「應用程式設定助手」。（方便應用程式設定介面中沒有「應用程式詳情」項的手機系統）</string>
 
     <string name="pref_show_admin_message_title">在操作限制介面中顯示提示訊息</string>
     <string name="pref_show_admin_message_summary">在系統彈出的「不允許執行此操作」對話框中顯示針對性的提示訊息。</string>
@@ -157,6 +161,8 @@
     <string name="pref_privacy_location_summary">將影響應用程式掃描附近裝置的能力</string>
     <string name="pref_privacy_storage_title">瀏覽個人儲存空間 (實驗性)</string>
     <string name="pref_privacy_storage_summary">注意：撤銷此權限可能導致應用程式異常</string>
+    <string name="pref_manage_cross_profile_title">管理跨境權限</string>
+    <string name="pref_manage_cross_profile_summary">管理請求跨境資料互通權限的程式</string>
     <string name="label_prefix_for_system_app">[內建]</string>
     <string name="label_suffix_permission_granted">(用戶已授權)</string>
     <string name="action_revoke_all">批次撤銷…</string>
@@ -168,6 +174,7 @@
     <string name="prompt_manage_cross_profile_apps_footer">部分系統應用程式可能無視此設定享有特權</string>
     <string name="pref_quick_controls_header">通知區快速設定控制</string>
     <string name="pref_island_watcher_summary">可封印諸界，中止其中所有應用程式的背景活動。再次啟動其中的任何應用程式將會重新啟用。</string>
+    <string name="pref_island_watcher_summary_appendix_api29">若「界外」未被接管，則封印過程需手動在系統設定中簡單操作幾步。</string>
     <string name="pref_app_watcher_summary">可重新凍結最近解凍的應用程式，復原臨時授予的權限。</string>
     <string name="pref_reprovision_title">修繕壺中界</string>
     <string name="pref_reprovision_summary">有助於解決出現的問題。所有的應用程式和資料都將保留。</string>
