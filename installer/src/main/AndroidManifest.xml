@@ -5,7 +5,6 @@
 
     <uses-permission android:name="com.oasisfeng.island.permission.INSTALLER" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon" android:taskAffinity="">
 

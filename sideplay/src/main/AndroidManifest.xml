@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+    package="com.oasisfeng.island.sideplay" android:sharedUserId="com.oasisfeng.island" android:versionName="1.0" android:versionCode="1">
+
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
+    <application android:label="Island [Extension Pack]" android:hasCode="false" android:allowBackup="false" tools:ignore="MissingApplicationIcon" />
+
+</manifest>
