@@ -1,5 +1,30 @@
 package com.oasisfeng.island.provisioning;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.Notification.PRIORITY_HIGH;
+import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
+import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
+import static android.content.Intent.ACTION_INSTALL_PACKAGE;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.ACTION_OPEN_DOCUMENT_TREE;
+import static android.content.Intent.ACTION_SEND;
+import static android.content.Intent.ACTION_SEND_MULTIPLE;
+import static android.content.Intent.ACTION_VIEW;
+import static android.content.Intent.CATEGORY_BROWSABLE;
+import static android.content.Intent.CATEGORY_LAUNCHER;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.N_MR1;
+import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.Q;
+import static androidx.core.app.NotificationCompat.BADGE_ICON_SMALL;
+import static androidx.core.app.NotificationCompat.CATEGORY_STATUS;
+
 import android.app.Activity;
 import android.app.IntentService;
 import android.app.Notification;
@@ -52,31 +77,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import static android.app.AppOpsManager.MODE_ALLOWED;
-import static android.app.Notification.PRIORITY_HIGH;
-import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
-import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
-import static android.content.Intent.ACTION_INSTALL_PACKAGE;
-import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.ACTION_OPEN_DOCUMENT_TREE;
-import static android.content.Intent.ACTION_SEND;
-import static android.content.Intent.ACTION_SEND_MULTIPLE;
-import static android.content.Intent.ACTION_VIEW;
-import static android.content.Intent.CATEGORY_BROWSABLE;
-import static android.content.Intent.CATEGORY_LAUNCHER;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.N_MR1;
-import static android.os.Build.VERSION_CODES.O;
-import static android.os.Build.VERSION_CODES.P;
-import static android.os.Build.VERSION_CODES.Q;
-import static androidx.core.app.NotificationCompat.BADGE_ICON_SMALL;
-import static androidx.core.app.NotificationCompat.CATEGORY_STATUS;
 
 /**
  * The one-time provisioning for newly created managed profile of Island
@@ -318,15 +318,15 @@ public class IslandProvisioning extends IntentService {
 	@WorkerThread private static void startProfileOwnerPostProvisioning(final Context context, final DevicePolicies policies) {
 		final boolean owner = Users.isParentProfile();
 
+		// Acquire SYSTEM_ALERT_WINDOW permission to overcome "background activity start" blocking on Android Q+, required by ShuttleProvider.
+		if (SDK_INT > P && ! Settings.canDrawOverlays(context))
+			new AppOpsCompat(context).setMode(AppOpsCompat.OP_SYSTEM_ALERT_WINDOW, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
+
 		if (! owner) ShuttleProvider.Companion.initialize(context);  // Initialization of shuttle requires foreground activity to avoid its activity start being blocked.
 
 		startDeviceAndProfileOwnerSharedPostProvisioning(context, policies);
 
 		IslandManager.ensureLegacyInstallNonMarketAppAllowed(context, policies);
-
-		// Acquire SYSTEM_ALERT_WINDOW permission to overcome "background activity start" blocking on Android Q+.
-		if (SDK_INT > P && ! Settings.canDrawOverlays(context))
-			new AppOpsCompat(context).setMode(AppOpsCompat.OP_SYSTEM_ALERT_WINDOW, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
 
 		if (SDK_INT >= Q) policies.execute(DevicePolicyManager::setCrossProfileCalendarPackages, null);
 
