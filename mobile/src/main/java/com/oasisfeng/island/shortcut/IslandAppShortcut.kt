@@ -291,9 +291,8 @@ object IslandAppShortcut {
 
 class ShortcutsUpdater: BroadcastReceiver() {
 
-	override fun onReceive(context: Context, intent: Intent?) {
-		if (SDK_INT < O || intent?.action != ACTION_MY_PACKAGE_REPLACED && intent?.action != ACTION_BOOT_COMPLETED) return
-		try {
+	override fun onReceive(context: Context, intent: Intent) {
+		if (SDK_INT >= O) try { // It's safe to not check the action, as the update is idempotent and does not depends on intent.
 			IslandAppShortcut.updateAllPinned(context)
 		} catch (e: IllegalStateException) { return }   // User is locked
 	}
