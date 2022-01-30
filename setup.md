@@ -1,15 +1,15 @@
 Setup Guide
 =============
 
-On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may got “incompatible with your device” message on Google Play Store, or be notified during the setup with error message “Sorry, your device (or ROM) is incompatible with Island”, or other failures. In these cases, Island could probably still work on your device if setup manually.
+On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may get “incompatible with your device” messages on Google Play Store, or be notified during the setup with the error message “Sorry, your device (or ROM) is incompatible with Island”, or other failures. In these cases, Island could probably still work on your device if setup manually.
 
-If you are prompted to encrypt your device during the setup, it means your device was not pre-encrypted out of box. If you don't want device decription (which may significantly degrade overall I/O performance on some low-end devices), it can be avoided with manual setup.
+If you are prompted to encrypt your device during the setup, it means your device was not pre-encrypted out of box. If you don't want device encryption (which may significantly degrade overall I/O performance on some low-end devices), it can be avoided with manual setup.
 
 
 Preparation
 -------------
 
-First of all, you need to connect your Android device to a computer with USB cable, and the official [ADB tool](https://developer.android.com/studio/releases/platform-tools.html) provided by Google.
+First of all, you need to connect your Android device to a computer with USB cable, and use the official [ADB tool](https://developer.android.com/studio/releases/platform-tools.html) provided by Google.
 
 To check whether the USB-connected Android device is properly recognized by your computer, type the following command in the shell (or Command Prompt on Windows):
 
@@ -31,9 +31,9 @@ Type `adb -d shell` to open ADB shell, and execute the following commands one by
 
 1. `pm create-user --profileOf 0 --managed Island`
 
-   If succeed, you will be prompted with the ID of newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID.
+   If it succeeds, you will be prompted with the ID of the newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID.
 
-   If you got "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
+   If you got a message saying "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
 
 2. `pm path com.oasisfeng.island`
 
@@ -46,7 +46,7 @@ Type `adb -d shell` to open ADB shell, and execute the following commands one by
 4. Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`</br>
    Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
 
-   If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
+   If you get the error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
 
 5. `am start-user <user id>`
 
@@ -60,7 +60,7 @@ Manual setup for Island in "God mode" / "Demigod mode"
 
 IMPORTANT: Please read the [**LIMITATIONS OF GOD / DEMIGOD MODE**](README.md/#god--demigod-mode) before proceeding to the following steps.
 
-WARNING: Some **Samsung** users encountered [**boot failure**](https://github.com/oasisfeng/island/issues/75) after activating God mode. It's advised NOT to use god mod on Samsung devices.
+WARNING: Some **Samsung** users encountered [**boot failure**](https://github.com/oasisfeng/island/issues/75) after activating God mode. It's advised NOT to use God mode on Samsung devices.
 
 1. Backup all data of your non-primary users and all data of your logged-in accounts.
 
@@ -93,12 +93,12 @@ WARNING: Some **Samsung** users encountered [**boot failure**](https://github.co
 
 5. Start Island app now and it will work in God/Demigod mode.
 
-God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Starting from Android 8, you can setup Island in God mode directly from Island settings - Setup, click the wrench icon on the side of Island. Prior to Android 8, you can also follow the manual steps to setup normal mode, as mentioned above.
+The God mode could even work together with the normal mode in Island, giving you full control on apps both inside and outside of Island. Starting from Android 8, you can setup Island in God mode directly from Island settings - Setup, click the wrench icon on the side of Island. Prior to Android 8, you can also follow the manual steps to setup normal mode, as mentioned above.
 
 Deactivate God / Demigod mode
 -----------------------------
 
-Before Island can be uninstalled, God / Demigod mode must be deactivated.
+Before Island can be uninstalled, the God / Demigod mode must be deactivated.
 
 Open Island, Settings - Scoped Settings - Mainland, scroll to the bottom, click "Deactivate".
 Beware, if you want to activate God mode again, all Island spaces must be destroyed first. Demigod can be reactivated without losing Island spaces.
