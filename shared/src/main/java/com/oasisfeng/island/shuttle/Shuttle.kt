@@ -13,11 +13,14 @@ class Shuttle(val context: Context, val to: UserHandle) {
 			if (to == Users.current()) { function(context); true } else shuttleNoThrows(function)
 	fun <R> invoke(function: Context.() -> R) =
 			if (to == Users.current()) context.function() else shuttle(function)
+	/** If profile is not ready, just show a toast and do nothing else */
+	fun <R> invokeNoThrows(function: Context.() -> R) =
+			if (to == Users.current()) context.function() else shuttleNoThrows(function)
 
 	/* Helpers to avoid redundant local variables. ("inline" is used to ensure only "Context.() -> R" function is shuttled) */
 	inline fun <A> launch(with: A, crossinline function: Context.(A) -> Unit) { launch { function(with) }}
-	inline fun <A, R> invoke(with: A, crossinline function: Context.(A) -> R)
-			= invoke { this.function(with) }
+	inline fun <A, R> invoke(with: A, crossinline function: Context.(A) -> R) = invoke { this.function(with) }
+	inline fun <A, R> invokeNoThrows(with: A, crossinline function: Context.(A) -> R) = invokeNoThrows { this.function(with) }
 
 	private fun <R> shuttle(function: Context.() -> R): R {
 		val result = ShuttleProvider.call(context, to, function)
@@ -28,5 +31,11 @@ class Shuttle(val context: Context, val to: UserHandle) {
 	private fun shuttleNoThrows(function: Context.() -> Unit): Boolean {
 		val result = ShuttleProvider.call(context, to, function)
 		return ! result.isNotReady()
+	}
+
+	private fun <R> shuttleNoThrows(function: Context.() -> R): R? {
+		val result = ShuttleProvider.call(context, to, function)
+		if (result.isNotReady()) return null
+		return result.get()
 	}
 }

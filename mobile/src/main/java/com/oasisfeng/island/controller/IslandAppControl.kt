@@ -61,9 +61,10 @@ object IslandAppControl {
 
 	private fun unfreezeAndLaunch(context: Context, app: IslandAppInfo) {
 		val pkg = app.packageName
-		val failure = Shuttle(context, to = app.user).invoke { IslandManager.ensureAppFreeToLaunch(this, pkg) }
+		val failure = Shuttle(context, to = app.user).invokeNoThrows(with = pkg) { IslandManager.ensureAppFreeToLaunch(this, it) }
 
-		if (failure.isNotEmpty()) {
+		if (failure == null) return Toast.makeText(context, R.string.prompt_island_not_ready, Toast.LENGTH_LONG).show()
+		else if (failure.isNotEmpty()) {
 			Toast.makeText(context, R.string.toast_app_launch_error, Toast.LENGTH_LONG).show()
 			return analytics().event("app_launch_error").with(ITEM_ID, pkg).with(ITEM_CATEGORY, failure).send() }
 
@@ -89,6 +90,7 @@ object IslandAppControl {
 
 	private fun unfreezeIfNeeded(app: IslandAppInfo): Boolean {
 		return if (! app.isHidden) true else unfreeze(app)
+			?: false.also { Toasts.showLong(app.context(), R.string.prompt_island_not_ready) }
 	}
 
 	@JvmStatic fun freeze(app: IslandAppInfo): Boolean {
@@ -100,7 +102,7 @@ object IslandAppControl {
 
 	@JvmStatic fun unfreeze(app: IslandAppInfo) = unfreeze(app.context(), app.user, app.packageName)
 	private fun unfreeze(context: Context, profile: UserHandle, pkg: String)
-			= Shuttle(context, to = profile).invoke { ensureAppHiddenState(this, pkg, false) }
+			= Shuttle(context, to = profile).invokeNoThrows { ensureAppHiddenState(this, pkg, false) }
 
 	@OwnerUser @ProfileUser private fun ensureAppHiddenState(context: Context, pkg: String, hidden: Boolean): Boolean {
 		val policies = DevicePolicies(context)

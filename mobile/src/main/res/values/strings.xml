@@ -123,6 +123,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <!-- General words -->
     <string name="open_settings">Open Settings</string>
     <string name="prompt_invalid_input">Invalid input</string>
+    <string name="prompt_island_not_ready">Island is not ready (probably deactivated)</string>
 
     <!-- Settings -->
 

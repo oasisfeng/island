@@ -121,6 +121,7 @@
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>
     <string name="prompt_invalid_input">输入无效</string>
+    <string name="prompt_island_not_ready">壶中界尚未就绪（已封印？）</string>
 
     <!-- Settings -->
 

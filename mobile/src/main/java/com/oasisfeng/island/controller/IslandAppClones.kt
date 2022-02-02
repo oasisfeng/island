@@ -173,7 +173,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 
 		val viaPlayStore = mode == MODE_PLAY_STORE && isInstalledByPlayStore(context, pkg)
 
-		val result = Shuttle(context, to = target).invoke(with = source as ApplicationInfo) {
+		val result = Shuttle(context, to = target).invokeNoThrows(with = source as ApplicationInfo) {
 			performAppCloningInProfile(this, it, viaPlayStore) }     // Cast to reduce the overhead
 		Log.i(TAG, "Result of cloning $pkg to $target: $result")
 
@@ -196,7 +196,8 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			CLONE_RESULT_UNKNOWN_SYS_MARKET -> {
 				val info = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).resolveActivityInfo(context.packageManager, 0)
 				if (info != null && info.applicationInfo.isSystem)
-					analytics().event("clone_via_market").with(Analytics.Param.ITEM_ID, pkg).with(Analytics.Param.ITEM_CATEGORY, info.packageName).send() }}
+					analytics().event("clone_via_market").with(Analytics.Param.ITEM_ID, pkg).with(Analytics.Param.ITEM_CATEGORY, info.packageName).send() }
+			null -> Toast.makeText(context, R.string.prompt_island_not_ready, Toast.LENGTH_LONG).show() }
 	}
 
 	@OwnerUser @RequiresApi(O) private suspend fun cloneAppViaRoot(context: Context, source: IslandAppInfo, profile: UserHandle): Boolean {

@@ -278,7 +278,10 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			} else freezeApp(context, selection);
 		} else if (id == R.id.menu_unfreeze) {
 			Analytics.$().event("action_unfreeze").with(ITEM_ID, pkg).send();
-			if (IslandAppControl.unfreeze(app)) {
+			final Boolean unfrozen = IslandAppControl.unfreeze(app);
+			if (unfrozen == null) {
+				Toast.makeText(context, R.string.prompt_island_not_ready, Toast.LENGTH_LONG).show();
+			} else if (unfrozen == Boolean.TRUE) {
 				refreshAppStateAsSysBugWorkaround(context, app);
 				clearSelection();
 			}
