@@ -24,37 +24,6 @@ For Windows PC, [this official guide and driver list for common OEM](https://dev
 - In system "Settings - Additional settings - Developer options", enable "USB debugging (Security settings)".
 - In system "Settings - Permissions - Autostart", enable "Island". (grant auto-start permission)
 
-Manual setup for Island
--------------------------
-
-Type `adb -d shell` to open ADB shell, and execute the following commands one by one in sequence:
-
-1. `pm create-user --profileOf 0 --managed Island`
-
-   If succeed, you will be prompted with the ID of newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID.
-
-   If you got "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
-
-2. `pm path com.oasisfeng.island`
-
-   It prints the path of the APK file of Island on your device. Copy the full path (after "`package:`"), and paste it to replace the `<path>` potion of the following command:
-
-3. `pm install -r --user <user id> <path>`
-
-   After the installation, proceed to the activation step: (slightly different by Android version)
-
-4. Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`</br>
-   Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
-
-   If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
-
-5. `am start-user <user id>`
-
-6. Android 5.0.x only (not required on Android 5.1+): `settings --user 10 put secure install_non_market_apps 1`
-
-If all goes well, Island will show the app list.
-
-
 Manual setup for Island in "God mode" / "Demigod mode"
 -------------------------------------------------------
 
@@ -102,3 +71,34 @@ Before Island can be uninstalled, God / Demigod mode must be deactivated.
 
 Open Island, Settings - Scoped Settings - Mainland, scroll to the bottom, click "Deactivate".
 Beware, if you want to activate God mode again, all Island spaces must be destroyed first. Demigod can be reactivated without losing Island spaces.
+
+
+Manual setup for Island (only if the in-app Island creation is not viable)
+---------------------------------------------------------------------------
+
+Type `adb -d shell` to open ADB shell, and execute the following commands one by one in sequence:
+
+1. `pm create-user --profileOf 0 --managed Island`
+
+   If succeed, you will be prompted with the ID of newly created user (usually 10 or above). Remember it and replace the `<user id>` in following commands with this ID.
+
+   If you got "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
+
+2. `pm path com.oasisfeng.island`
+
+   It prints the path of the APK file of Island on your device. Copy the full path (after "`package:`"), and paste it to replace the `<path>` potion of the following command:
+
+3. `pm install -r --user <user id> <path>`
+
+   After the installation, proceed to the activation step: (slightly different by Android version)
+
+4. Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`</br>
+   Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
+
+   If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
+
+5. `am start-user <user id>`
+
+6. Android 5.0.x only (not required on Android 5.1+): `settings --user 10 put secure install_non_market_apps 1`
+
+If all goes well, Island will show the app list.
