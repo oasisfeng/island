@@ -24,14 +24,15 @@ For Windows PC, [this official guide and driver list for common OEM](https://dev
 - In system "Settings - Additional settings - Developer options", enable "USB debugging (Security settings)".
 - In system "Settings - Permissions - Autostart", enable "Island". (grant auto-start permission)
 
-Manual setup for Managed Mainland
-----------------------------------
+
+Activate Managed Mainland
+--------------------------
 
 IMPORTANT: Please read the [**LIMITATIONS OF MANAGED MAINLAND**](README.md/#managed-mainland) before proceeding to the following steps.
 
-1. Backup all data of your non-primary users and all data of your logged-in accounts.
+1. Backup all data of your logged-in accounts.
 
-2. Remove all accounts in system "Settings" - "Accounts". (may vary on devices)
+2. Remove all accounts in system "Settings" - "Accounts" (may vary on devices).
 
 3. Execute the following command in ADB shell.
 
@@ -41,7 +42,7 @@ IMPORTANT: Please read the [**LIMITATIONS OF MANAGED MAINLAND**](README.md/#mana
 
    Some ROM variants (e.g. MIUI) enforce extra security policy which may block the above command, if you got permission-related error message, please check the development (or security) settings to enable USB-debugging related security options, then retry the "`dpm ...`" command again.
 
-4. Start Island app now and your Mainland is managed.
+4. Start Island app and your Mainland is now managed.
 
 
 Deactivate Managed Mainland
