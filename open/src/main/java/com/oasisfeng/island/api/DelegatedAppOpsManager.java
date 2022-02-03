@@ -1,5 +1,10 @@
 package com.oasisfeng.island.api;
 
+import static android.content.Context.APP_OPS_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.P;
+import static com.oasisfeng.island.ApiConstants.DELEGATION_APP_OPS;
+
 import android.annotation.SuppressLint;
 import android.app.AppOpsManager;
 import android.app.DerivedAppOpsManager;
@@ -25,11 +30,6 @@ import com.oasisfeng.island.util.Hacks;
 import com.oasisfeng.island.util.Users;
 
 import kotlin.Unit;
-
-import static android.content.Context.APP_OPS_SERVICE;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.P;
-import static com.oasisfeng.island.ApiConstants.DELEGATION_APP_OPS;
 
 /**
  * Delegated {@link AppOpsManager}
@@ -90,7 +90,7 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 				return true;
 			}
 			final UserHandle user = UserHandles.of(user_id);
-			if (! Users.isProfileManagedByIsland(user))
+			if (! Users.isProfileManagedByIsland(mContext, user))
 				throw new IllegalArgumentException("User " + user_id + " is not managed by Island");
 
 			new Shuttle(mContext, user).launch(context -> {

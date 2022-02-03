@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.IBinder;
+import android.os.Process;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
 
 /**
@@ -39,12 +39,25 @@ public abstract class CallerAwareActivity extends Activity {
 			final Object am = Hacks.ActivityManagerNative_getDefault.invoke().statically();
 			if (am != null) {
 				final IBinder token = Hacks.Activity_getActivityToken.invoke().on(activity);
-				return token != null ? Hacks.IActivityManager_getLaunchedFromPackage.invoke(token).on(am) : null;
+				if (token != null) return Hacks.IActivityManager_getLaunchedFromPackage.invoke(token).on(am);
 			}
 		} catch (final Exception e) {
 			Log.e(TAG, "Error detecting caller", e);
 		}
 		return null;
+	}
+
+	public static int getCallingUid(final Activity activity) {
+		if (Hacks.IActivityManager_getLaunchedFromUid != null) try {
+			final Object am = Hacks.ActivityManagerNative_getDefault.invoke().statically();
+			if (am != null) {
+				final IBinder token = Hacks.Activity_getActivityToken.invoke().on(activity);
+				if (token != null) return Hacks.IActivityManager_getLaunchedFromUid.invoke(token).on(am);
+			}
+		} catch (final Exception e) {
+			Log.e(TAG, "Error detecting caller", e);
+		}
+		return Process.INVALID_UID;
 	}
 
 	private static final String TAG = "Island.CAA";

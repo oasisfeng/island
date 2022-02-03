@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -56,8 +55,8 @@ public class AppListFragment extends Fragment {
 			invalidateOptionsMenu();
 			mViewModel.updateActions(mBinding.toolbar.getMenu(), mUserGuide == null || mUserGuide.isCloneTipHidden());
 		});
-		vm.getFilterIncludeHiddenSystemApps().observe(this, filter -> mViewModel.updateAppList());
-		vm.getFilterText().observe(this, text -> mViewModel.updateAppList());
+		vm.getFilterIncludeHiddenSystemApps().observe(this, filter -> mViewModel.updateAppList("filter_hidden_changed"));
+		vm.getFilterText().observe(this, text -> mViewModel.updateAppList("search_changed"));
 	}
 
 	@Override public void onResume() {

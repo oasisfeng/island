@@ -33,7 +33,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> <!-- Required to start ACTION_INSTALL_PACKAGE since Android O -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- MethodShuttle -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- ShuttleProvider -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" /> <!-- TBD -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />

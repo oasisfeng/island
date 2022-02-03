@@ -88,6 +88,7 @@ object IslandAppControl {
 		vm.interactive(context) { if (unfreezeIfNeeded(app)) Activities.startActivity(context, intent) }
 	}
 
+	/** @return true if not hidden or successfully unfrozen, false otherwise. */
 	private fun unfreezeIfNeeded(app: IslandAppInfo): Boolean {
 		return if (! app.isHidden) true else unfreeze(app)
 			?: false.also { Toasts.showLong(app.context(), R.string.prompt_island_not_ready) }

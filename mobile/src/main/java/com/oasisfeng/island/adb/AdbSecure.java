@@ -46,7 +46,7 @@ public class AdbSecure {
 			} else policies.execute(DevicePolicyManager::addUserRestriction, DISALLOW_DEBUGGING_FEATURES);
 		}
 
-		if (Users.hasProfile() && ! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {
+		if (Users.hasProfile() && ! requireNonNull(activity.getSystemService(UserManager.class)).isQuietModeEnabled(Users.profile)) {   // TODO: Support multiple Islands
 			final Context app_context = activity.getApplicationContext();
 			final boolean enabled;
 			try {

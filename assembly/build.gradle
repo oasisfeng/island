@@ -8,8 +8,8 @@ android {
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion this.minSdkVersion
-        targetSdkVersion 30     // Private APIs are accessed by module "open"
-        resConfigs "en", "zh", "zh-rTW"
+        targetSdkVersion 30
+        resConfigs 'en', 'zh', 'zh-rTW'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
@@ -47,13 +47,13 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
-        check 'NewApi'
+    lint {
+        checkOnly 'NewApi'
         abortOnError true
         htmlReport false
         xmlReport false
         textReport true
-        textOutput "stdout"
+        textOutput file('stdout')
     }
 
     repositories.flatDir {

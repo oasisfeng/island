@@ -125,11 +125,11 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		onQueryTextSubmit("");
 	}
 
-	public void updateAppList() {
+	public void updateAppList(final String reason) {
 		if (mFilterShared == null) return;		// When called by constructor   TODO: Obsolete?
 		final UserHandle profile = getCurrentProfile();
 		if (profile == null) return;
-		Log.d(TAG, "Profile: " + UserHandles.getIdentifier(profile));
+		Log.d(TAG, "Update app list in profile " + Users.toId(profile) + " for reason: " + reason);
 
 		final Filter profile_filter = Users.isParentProfile(profile) ? Filter.Mainland : Filter.Island;
 		Predicate<IslandAppInfo> filters = mFilterShared.and(profile_filter);
@@ -170,7 +170,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		mFilterShared = IslandAppListProvider.excludeSelf(app);
 
 		final UserHandle user = savedState.get(Intent.EXTRA_USER);
-		setCurrentProfile(user != null && (Users.isParentProfile(user) || Users.isProfileManagedByIsland(user)) ? user
+		setCurrentProfile(user != null && (Users.isParentProfile(user) || Users.isProfileManagedByIsland(app, user)) ? user
 				: Users.hasProfile() ? Users.profile : Users.getParentProfile());
 
 		final String filter_text = getQueryText().getValue();
@@ -193,9 +193,9 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			final Object tag = tab.getTag();
 			if (tag instanceof UserHandle) {
 				final UserHandle profile = (UserHandle) tag;
-				if (Users.isProfileManagedByIsland(profile)) {
+				if (Users.isProfileManagedByIsland(activity, profile)) {
 					setCurrentProfile(profile);
-					updateAppList();
+					updateAppList("tab-island-" + Users.toId(profile));
 					Analytics.log(TAG, "tab-island-" + UserHandles.getIdentifier(profile));
 					return;
 				} else tabs.removeTab(tab);     // In case it is removed elsewhere (e.g. by ADB shell)
@@ -203,7 +203,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 		tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
 		setCurrentProfile(Users.getParentProfile());
-		updateAppList();
+		updateAppList("tab-mainland");
 		Analytics.log(TAG, "tab-mainland");
 	}
 
@@ -216,7 +216,8 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 				.trace("system", app.isSystem()).trace("critical", app.isCritical());
 		final boolean exclusive = mAppListProvider.isExclusive(app);
 		final boolean system = app.isSystem(), installed = app.isInstalled(), placeholder = app.isPlaceHolder(),
-				in_owner = Users.isParentProfile(app.user), is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(app.user);
+				in_owner = Users.isParentProfile(app.user),
+				is_managed = in_owner ? mOwnerUserManaged : Users.isProfileManagedByIsland(getApplication(), app.user);
 		final MenuItem clone = menu.findItem(R.id.menu_clone).setVisible(! placeholder && Users.hasProfile());
 		if (! cloneTipHidden) {     // Move "Clone" before "App Settings" if the clone tip is not hidden yet.
 			menu.removeItem(clone.getItemId());

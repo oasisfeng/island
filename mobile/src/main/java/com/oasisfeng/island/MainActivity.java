@@ -1,5 +1,8 @@
 package com.oasisfeng.island;
 
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
+
 import android.app.SearchManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -33,15 +36,12 @@ import com.oasisfeng.island.util.Users;
 import java.util.List;
 import java.util.Optional;
 
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
-
 public class MainActivity extends FragmentActivity {
 
 	@Override protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if (! Users.isParentProfile()) {
-			if (Users.isProfileManagedByIsland()) {    // Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
+			if (new DevicePolicies(this).isProfileOwner()) {    // Should generally not run in profile, unless the managed profile provision is interrupted or manually provision is not complete.
 				onCreateInProfile();
 				finish();
 			} else startSetupWizard();		// Running in non-primary user or profile not managed by Island. TODO: Proper handling?
@@ -50,7 +50,8 @@ public class MainActivity extends FragmentActivity {
 		final String caller = CallerAwareActivity.getCallingPackage(this);
 		if (Modules.MODULE_ENGINE.equals(caller)) Users.refreshUsers(this);     // Possibly started by IslandProvisioning, refresh user state as profile or its owner may be changed.
 
-		if (mIsDeviceOwner = new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser()) {
+		mIsDeviceOwner = new DevicePolicies(this).isProfileOrDeviceOwnerOnCallingUser();
+		if (mIsDeviceOwner) {
 			startMainUi(savedInstanceState);	// As device owner, always show main UI.
 			return;
 		}

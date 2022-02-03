@@ -4,9 +4,12 @@ import android.app.ActivityManager
 import android.app.Service
 import android.content.*
 import android.content.Intent.*
-import android.content.pm.*
+import android.content.pm.ApplicationInfo
+import android.content.pm.LauncherApps
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.NameNotFoundException
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Bitmap.Config.ARGB_8888
@@ -45,11 +48,12 @@ import com.oasisfeng.island.engine.IslandManager
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.settings.IslandSettings
 import com.oasisfeng.island.shuttle.Shuttle
+import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.OwnerUser
 import com.oasisfeng.island.util.ProfileUser
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.Users.Companion.toId
-import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
 import java.net.URISyntaxException
 
 object IslandAppShortcut {
@@ -218,7 +222,7 @@ object IslandAppShortcut {
 					return true }
 
 				// Island is currently locked (deactivated), unlock it before launching shortcut
-				if (! Users.isProfileManagedByIsland)   // Activating Island (to unfreeze app) requires managed Mainland.
+				if (! DevicePolicies(context).isProfileOwner)   // Activating Island (to unfreeze app) requires managed Mainland.
 					return true.also { Toasts.showLong(context, R.string.prompt_activate_island_first) }
 				val toast = Toast.makeText(context, R.string.prompt_activating_island, LENGTH_LONG).apply { show() }
 				return false.also { activity.lifecycleScope.launch {    // Do not finish the activity to keep coroutine running.

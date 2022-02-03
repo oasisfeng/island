@@ -190,7 +190,7 @@ public class IslandSetup {
 	}
 
 	private static void requestProfileRemovalConfirmed(final Activity activity) {
-		if (new Shuttle(activity, Users.getParentProfile()).invokeNoThrows(c -> Users.isProfileManagedByIsland()) == FALSE)
+		if (new Shuttle(activity, Users.getParentProfile()).invokeNoThrows(c -> new DevicePolicies(c).isProfileOwner()) == FALSE)
 			destroyProfile(activity);
 		else new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 				.setMessage(R.string.dialog_destroy_message_for_managed_user)

@@ -89,7 +89,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	}
 
 	private fun loadAppsInProfileIfNotYet(profile: UserHandle): Map<String, IslandAppInfo>
-	= if (! Users.isProfileManagedByIsland(profile)) emptyMap() else mIslandAppMap.getOrPut(profile) { refresh(profile) }
+	= if (! Users.isProfileManagedByIsland(context(), profile)) emptyMap() else mIslandAppMap.getOrPut(profile) { refresh(profile) }
 
 	private fun initializeMonitor() {
 		Log.d(TAG, "Initializing monitor...")

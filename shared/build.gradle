@@ -21,12 +21,12 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
-        check 'NewApi'
+    lint {
+        checkOnly 'NewApi'
         abortOnError true
         xmlReport false
         textReport true
-        textOutput "stdout"
+        textOutput file('stdout')
     }
 
     // Enable lint checking in all build variants.

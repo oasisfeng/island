@@ -95,7 +95,7 @@ import kotlinx.coroutines.launch
 				draw(Canvas(bitmap)) }}
 	}
 
-	@RequiresApi(P) class IslandDeactivationService : Service() {
+	class IslandDeactivationService: Service() {
 
 		override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 			val action = intent?.action
@@ -119,7 +119,7 @@ import kotlinx.coroutines.launch
 		}
 
 		@OwnerUser @RequiresApi(Q) private suspend fun requestQuietModeApi29(context: Context, profile: UserHandle) {
-			if (! Users.isProfileManagedByIsland) return startSystemSyncSettings()
+			if (! DevicePolicies(context).isProfileOwner) return startSystemSyncSettings()
 
 			Log.i(TAG, "Preparing to deactivating Island (${profile.toId()})...")
 

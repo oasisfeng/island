@@ -2,6 +2,7 @@ package com.oasisfeng.island.provisioning;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.Notification.PRIORITY_HIGH;
+import static android.app.admin.DeviceAdminReceiver.ACTION_PROFILE_PROVISIONING_COMPLETE;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.Intent.ACTION_INSTALL_PACKAGE;
@@ -28,7 +29,6 @@ import static androidx.core.app.NotificationCompat.CATEGORY_STATUS;
 import android.app.Activity;
 import android.app.IntentService;
 import android.app.Notification;
-import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -398,8 +398,12 @@ public class IslandProvisioning extends IntentService {
 				finish();
 				return;
 			}
-			Dialogs.buildProgress(this, R.string.notification_provisioning_island_title).indeterminate().nonCancelable().show();
-			SafeAsyncTask.execute(this, a -> proceed(a, new Intent(DeviceAdminReceiver.ACTION_PROFILE_PROVISIONING_COMPLETE)), Activity::finish);
+			final Dialogs.FluentProgressDialog progress = Dialogs.buildProgress(this,
+					R.string.notification_provisioning_island_title).indeterminate().nonCancelable();
+			progress.show();
+
+			SafeAsyncTask.execute(this, a -> proceed(a, new Intent(ACTION_PROFILE_PROVISIONING_COMPLETE)),
+					activity -> { progress.dismiss(); activity.finish(); });
 		}
 	}
 

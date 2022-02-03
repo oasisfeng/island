@@ -94,9 +94,6 @@ class Users : PseudoContentProvider() {
 
 			profilesByIsland.sortWith(Comparator.comparing { um.getSerialNumberForUser(it) })
 			sProfilesManagedByIsland = profilesByIsland
-
-			try { isProfileManagedByIsland = DevicePolicies(context).isProfileOwner }
-			catch (e: RuntimeException) { Log.e(TAG, "Error checking current profile", e) }
 		}
 
 		fun isProfileRunning(context: Context, user: UserHandle): Boolean {
@@ -112,12 +109,11 @@ class Users : PseudoContentProvider() {
 		@JvmStatic fun isParentProfile() = CURRENT_ID == parentProfile.toId()
 		@JvmStatic fun isParentProfile(user: UserHandle) = user == parentProfile
 		@JvmStatic fun isParentProfile(user_id: Int) = user_id == parentProfile.toId()
-		@JvmStatic var isProfileManagedByIsland = false; private set
 
-		@OwnerUser @JvmStatic fun isProfileManagedByIsland(user: UserHandle): Boolean {
+		@OwnerUser @JvmStatic fun isProfileManagedByIsland(context: Context, user: UserHandle): Boolean {
 			ensureParentProfile()
 			if (isParentProfile(user)) {
-				if (isParentProfile()) return isProfileManagedByIsland
+				if (isParentProfile()) return DevicePolicies(context).isProfileOwner
 				throw IllegalArgumentException("Not working for profile parent user") }
 			return sProfilesManagedByIsland.contains(user)
 		}

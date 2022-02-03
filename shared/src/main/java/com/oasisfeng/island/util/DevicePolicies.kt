@@ -68,13 +68,13 @@ class DevicePolicies {
     fun enableSystemAppByIntent(intent: Intent): Boolean = manager.enableSystemApp(sAdmin, intent) > 0
 
     fun addUserRestrictionIfNeeded(key: String) {
-        if (Users.isProfileManagedByIsland && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
+        if (isProfileOwner && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
         if (! manager.getUserRestrictions(sAdmin).containsKey(key))
             manager.addUserRestriction(sAdmin, key)
     }
 
     fun clearUserRestrictionsIfNeeded(key: String) {
-        if (Users.isProfileManagedByIsland && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
+        if (isProfileOwner && UserManager.DISALLOW_SET_WALLPAPER == key) return // Immutable
         if (manager.getUserRestrictions(sAdmin).containsKey(key))
             manager.clearUserRestriction(sAdmin, key)
     }
