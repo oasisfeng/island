@@ -5,7 +5,7 @@
     <string translatable="false" name="key_show_admin_message">show_admin_message</string>
     <string translatable="false" name="key_preserve_app_ops">preserve_app_ops</string>
     <!-- Island (per-profile) -->
-    <string translatable="false" name="key_device_owner_setup">device_owner_setup</string>
+    <string translatable="false" name="key_managed_mainland_setup">device_owner_setup</string>
     <string translatable="false" name="key_privacy">privacy</string>
     <string translatable="false" name="key_privacy_appops">appops</string>
     <string translatable="false" name="key_manage_read_phone_state">manage_read_phone_state</string>

@@ -184,8 +184,8 @@
     <string name="pref_rescind_title">撤除管理权</string>
     <string name="pref_rescind_summary">撤销炼妖壶对设备的全局管理权。所有的应用和数据都将保留（解冻），但你将无法再：\n\n</string>
     <string name="pref_device_owner_title">让掌控力延伸至界外</string>
-    <string name="pref_device_owner_summary">授予炼妖壶管理界外的权限，你将可以：\n\n</string>
-    <string name="pref_device_owner_features">· 冻结和管理界外的应用\n· 使用某些需要设备全局管理权的特性（如完整的 ADB 安全封印）</string>
+    <string name="pref_managed_mainland_summary">授予炼妖壶管理界外的权限，你将可以：\n\n</string>
+    <string name="pref_managed_mainland_features">· 冻结界外的应用\n· 额外的特性（如全局 ADB 安全封印、一键封印壶中界）</string>
 
     <string name="pref_setup_header">管理</string>
 

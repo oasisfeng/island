@@ -171,7 +171,7 @@ o ambiente de Sandbox. O Island nunca coleta dados relacionados à sua privacida
     <string name="pref_rescind_title">Revogar</string>
     <string name="pref_rescind_summary">Revogar a permissão no Mainland. Todos os seus apps e dados estarão intactos (ativos), mas você não poderá mais:\n\n</string>
     <string name="pref_device_owner_title">Estender o poder ao Mainland</string>
-    <string name="pref_device_owner_summary">Se ativado, você pode:\n\n</string>
+    <string name="pref_managed_mainland_summary">Se ativado, você pode:\n\n</string>
     <string name="pref_device_owner_featurs">· Suspender os apps no Mainland\n· Usar alguns recursos globais do dispositivo (p.ex. ADB Seguro).</string>
 
     <string name="pref_setup_header">Configurar</string>

@@ -186,8 +186,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_rescind_title">Rescind</string>
     <string name="pref_rescind_summary">Rescind the privilege on Mainland. All your apps and data will be intact (unfrozen), but you could no longer:\n\n</string>
     <string name="pref_device_owner_title">Extend the power to Mainland</string>
-    <string name="pref_device_owner_summary">If activated, you can:\n\n</string>
-    <string name="pref_device_owner_features">· Freeze apps in Mainland\n· Use some device global features (e.g. full ADB Secure).</string>
+    <string name="pref_managed_mainland_summary">If activated, you can:\n\n</string>
+    <string name="pref_managed_mainland_features">· Freeze apps in Mainland\n· Extra features. (e.g. full ADB Secure, one-click Island deactivation)</string>
 
     <string name="pref_setup_header">Setup</string>
 

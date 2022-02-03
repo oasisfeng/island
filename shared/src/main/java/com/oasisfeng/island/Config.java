@@ -18,7 +18,7 @@ public enum Config {
 	IS_REMOTE("is_remote"),
 	URL_FAQ("url_faq"),
 	URL_SETUP("url_setup"),
-	URL_SETUP_GOD_MODE("url_setup_god_mode"),
+	URL_SETUP_MANAGED_MAINLAND("url_setup_god_mode"),
 	URL_SETUP_TROUBLESHOOTING("url_setup_trouble"),
 	PERMISSION_REQUEST_ALLOWED_APPS("permission_allowed_apps");
 

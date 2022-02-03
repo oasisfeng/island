@@ -2,9 +2,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
-        android:key="@string/key_device_owner_setup"
+        android:key="@string/key_managed_mainland_setup"
         android:title="@string/pref_device_owner_title"
-        android:summary="@string/pref_device_owner_summary" />
+        android:summary="@string/pref_managed_mainland_summary" />
 
     <PreferenceCategory android:key="@string/key_privacy" android:title="@string/pref_privacy_header">
 

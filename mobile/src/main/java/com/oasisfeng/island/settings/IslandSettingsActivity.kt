@@ -8,10 +8,13 @@ import android.app.ActionBar
 import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import android.content.Intent.ACTION_BOOT_COMPLETED
 import android.content.Intent.ACTION_MY_PACKAGE_REPLACED
-import android.content.pm.PackageManager.*
+import android.content.pm.PackageManager.GET_PERMISSIONS
+import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
@@ -63,13 +66,13 @@ import com.oasisfeng.island.util.*
 
         if (Users.isParentProfile() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_cross_profile) { remove(this) }
-            setup<Preference>(R.string.key_device_owner_setup) {
-                summary = getString(R.string.pref_device_owner_summary) + getString(R.string.pref_device_owner_features)
-                setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_GOD_MODE.get())) }}}
+            setup<Preference>(R.string.key_managed_mainland_setup) {
+                summary = getString(R.string.pref_managed_mainland_summary) + getString(R.string.pref_managed_mainland_features)
+                setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_MANAGED_MAINLAND.get())) }}}
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
             setup<Preference>(R.string.key_island_watcher) { remove(this) }
             setup<Preference>(R.string.key_setup) { remove(this) } }
-        else setup<Preference>(R.string.key_device_owner_setup) { remove(this) }
+        else setup<Preference>(R.string.key_managed_mainland_setup) { remove(this) }
 
         if (SDK_INT in P..Q && isProfileOrDeviceOwner) { // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
             setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
@@ -113,7 +116,7 @@ import com.oasisfeng.island.util.*
             if (Users.isParentProfile()) {
                 if (! isProfileOrDeviceOwner) return@setup remove(this)
                 setTitle(R.string.pref_rescind_title)
-                summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_device_owner_features) + "\n" }
+                summary = getString(R.string.pref_rescind_summary) + getString(R.string.pref_managed_mainland_features) + "\n" }
             setOnPreferenceClickListener { true.also {
                 if (Users.isParentProfile()) IslandSetup.requestDeviceOrProfileOwnerDeactivation(activity)
                 else IslandSetup.requestProfileRemoval(activity) }}}

@@ -176,8 +176,8 @@
     <string name="pref_rescind_title">撤除管理權</string>
     <string name="pref_rescind_summary">復原煉妖壺對裝置的全域管理權。所有的應用程式和資料都將保留（解凍），但你將無法再：\n\n</string>
     <string name="pref_device_owner_title">讓掌控力延伸至界外</string>
-    <string name="pref_device_owner_summary">授權煉妖壺管理界外的權限，你將可以：\n\n</string>
-    <string name="pref_device_owner_features">· 凍結和管理界外的應用程式\n· 使用某些需要裝置全域管理權的特性（如完整的 ADB 安全封印）</string>
+    <string name="pref_managed_mainland_summary">授權煉妖壺管理界外的權限，你將可以：\n\n</string>
+    <string name="pref_managed_mainland_features">· 凍結界外的應用程式\n· 額外的特性（如 全局 ADB 安全封印、一鍵封印壺中界）</string>
 
     <string name="pref_setup_header">管理</string>
 
