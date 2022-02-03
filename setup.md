@@ -24,53 +24,32 @@ For Windows PC, [this official guide and driver list for common OEM](https://dev
 - In system "Settings - Additional settings - Developer options", enable "USB debugging (Security settings)".
 - In system "Settings - Permissions - Autostart", enable "Island". (grant auto-start permission)
 
-Manual setup for Island in "God mode" / "Demigod mode"
--------------------------------------------------------
+Manual setup for Managed Mainland
+----------------------------------
 
-IMPORTANT: Please read the [**LIMITATIONS OF GOD / DEMIGOD MODE**](README.md/#god--demigod-mode) before proceeding to the following steps.
-
-WARNING: Some **Samsung** users encountered [**boot failure**](https://github.com/oasisfeng/island/issues/75) after activating God mode. It's advised NOT to use god mod on Samsung devices.
+IMPORTANT: Please read the [**LIMITATIONS OF MANAGED MAINLAND**](README.md/#managed-mainland) before proceeding to the following steps.
 
 1. Backup all data of your non-primary users and all data of your logged-in accounts.
 
-2. Remove all accounts in system "Settings" - "Accounts". (may vary on different devices)
+2. Remove all accounts in system "Settings" - "Accounts". (may vary on devices)
 
-3. (God mode only) Destroy Island space. (It can be recreated after God mode is activated)
+3. Execute the following command in ADB shell.
 
-4. Remove all non-primary users in system "Settings" - ("System") - "Users". (may vary on different devices)
-
-5. Execute the following command in ADB shell. (pick the right one for God / Demigod mode)
-
-   Demigod mode:
-   `dpm set-profile-owner --user 0 --name Mainland com.oasisfeng.island/.IslandDeviceAdminReceiver`\
-   (For Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver 0`)
-
-   or God mode:
-   `dpm set-device-owner com.oasisfeng.island/.IslandDeviceAdminReceiver`
-
-   If you get error message "... Not allowed to set the device owner because there are already several **users** on the device". make sure all non-primary users are removed. You may use ADB command `pm list users` to reveal all users (including the hidden ones on some devices) and then `pm remove-user <id>` to remove them forcibly.
+   `dpm set-profile-owner --user 0 --name Mainland com.oasisfeng.island/.IslandDeviceAdminReceiver`
 
    If you get error message "... Not allowed to set the profile/device owner because there are already some **accounts** on the device". make sure all accounts are removed. You may use ADB command `dumpsys account|grep -A 3 Accounts:` to reveal remaining accounts (including the hidden ones on some devices). Forcible removal of all accounts will be implemented in coming version of Island, please stay tuned.
 
-   If you get other error message, please try executing the following command:
-   - `settings put global device_provisioned 0`
-   - Then the `dpm ...` command above, followed by the following command:
-   - `settings put global device_provisioned 1`  
-   *(The last command is very important, otherwise you may face status bar locked and being unable to call or SMS.)*
-
    Some ROM variants (e.g. MIUI) enforce extra security policy which may block the above command, if you got permission-related error message, please check the development (or security) settings to enable USB-debugging related security options, then retry the "`dpm ...`" command again.
 
-5. Start Island app now and it will work in God/Demigod mode.
+4. Start Island app now and your Mainland is managed.
 
-God mode could even work together with normal mode in Island, giving you full control on apps both inside and outside of Island. Starting from Android 8, you can setup Island in God mode directly from Island settings - Setup, click the wrench icon on the side of Island. Prior to Android 8, you can also follow the manual steps to setup normal mode, as mentioned above.
 
-Deactivate God / Demigod mode
------------------------------
+Deactivate Managed Mainland
+----------------------------
 
-Before Island can be uninstalled, God / Demigod mode must be deactivated.
+Before Island can be uninstalled, Managed Mainland must be deactivated.
 
 Open Island, Settings - Scoped Settings - Mainland, scroll to the bottom, click "Deactivate".
-Beware, if you want to activate God mode again, all Island spaces must be destroyed first. Demigod can be reactivated without losing Island spaces.
 
 
 Manual setup for Island (only if the in-app Island creation is not viable)
