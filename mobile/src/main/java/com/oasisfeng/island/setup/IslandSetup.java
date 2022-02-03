@@ -1,5 +1,11 @@
 package com.oasisfeng.island.setup;
 
+import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
+import static java.lang.Boolean.FALSE;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -26,6 +32,7 @@ import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.mobile.BuildConfig;
 import com.oasisfeng.island.mobile.R;
+import com.oasisfeng.island.shuttle.Shuttle;
 import com.oasisfeng.island.util.DeviceAdmins;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Hacks;
@@ -42,11 +49,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import eu.chainfire.libsuperuser.Shell;
-
-import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Implementation of Island / Mainland setup & shutdown.
@@ -184,11 +186,16 @@ public class IslandSetup {
 		new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
 				.setMessage(R.string.dialog_destroy_message)
 				.setPositiveButton(android.R.string.no, null)
-				.setNeutralButton(R.string.action_destroy, (dd, ww) ->
-						new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
-								.setMessage(R.string.dialog_destroy_message_for_managed_user)
-								.setPositiveButton(android.R.string.no, null)
-								.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity)).show()).show();
+				.setNeutralButton(R.string.action_destroy, (dd, ww) -> requestProfileRemovalConfirmed(activity)).show();
+	}
+
+	private static void requestProfileRemovalConfirmed(final Activity activity) {
+		if (new Shuttle(activity, Users.getParentProfile()).invokeNoThrows(c -> Users.isProfileManagedByIsland()) == FALSE)
+			destroyProfile(activity);
+		else new AlertDialog.Builder(activity).setTitle(R.string.dialog_title_warning)
+				.setMessage(R.string.dialog_destroy_message_for_managed_user)
+				.setPositiveButton(android.R.string.no, null)
+				.setNeutralButton(R.string.action_destroy, (d, w) -> destroyProfile(activity)).show();
 	}
 
 	private static void showPromptForProfileManualRemoval(final Activity activity) {
