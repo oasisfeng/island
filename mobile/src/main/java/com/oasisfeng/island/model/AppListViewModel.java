@@ -175,6 +175,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 
 		final String filter_text = getQueryText().getValue();
 		if (! TextUtils.isEmpty(filter_text)) onQueryTextSubmit(filter_text);
+		updateChipsVisibility();
 	}
 
 	public void onTabSwitched(final FragmentActivity activity, final TabLayout tabs, final TabLayout.Tab tab) {
@@ -184,7 +185,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 			mSelection.setValue(null);
 			mFeatured.visible.setValue(Boolean.TRUE);
 			mFeatured.update(activity);
-			mChipsVisible.setValue(false);
 			Analytics.log(TAG, "tab-discover");
 			return;
 		} else mFeatured.visible.setValue(Boolean.FALSE);
@@ -203,8 +203,14 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		}
 		tabs.selectTab(tabs.getTabAt(1));   // Switch back to Mainland
 		setCurrentProfile(Users.getParentProfile());
+		updateChipsVisibility();
 		updateAppList("tab-mainland");
 		Analytics.log(TAG, "tab-mainland");
+	}
+
+	private void updateChipsVisibility() {
+		mChipsVisible.setValue(getCurrentProfile() != null
+				&& (getFilterIncludeHiddenSystemApps().getValue() == Boolean.TRUE || ! TextUtils.isEmpty(getQueryText().getValue())));
 	}
 
 	public void updateActions(final Menu menu, final boolean cloneTipHidden) {
