@@ -68,8 +68,6 @@ Type `adb -d shell` to open ADB shell, and execute the following commands one by
 
 2. `pm install-existing --user <user id> com.oasisfeng.island`
 
-   After the installation, proceed to the activation step: (slightly different by Android version)
-
 3. `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`
 
    If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
