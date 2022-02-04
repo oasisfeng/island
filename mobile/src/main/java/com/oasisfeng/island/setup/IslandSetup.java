@@ -147,7 +147,7 @@ public class IslandSetup {
 						final AppListProvider<AppInfo> provider = AppListProvider.getInstance(activity);
 						final Stream<AppInfo> apps = provider.installedAppsInOwnerUser();
 
-						final List<String> frozen_pkgs = apps.filter(AppInfo::isHidden).map(app -> app.packageName).collect(toList());
+						final List<String> frozen_pkgs = apps.filter(app -> app.isHidden()).map(app -> app.packageName).collect(toList());
 						for (final String pkg : frozen_pkgs)
 							policies.setApplicationHidden(pkg, false);
 

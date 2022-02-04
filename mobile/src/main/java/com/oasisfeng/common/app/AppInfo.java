@@ -1,5 +1,9 @@
 package com.oasisfeng.common.app;
 
+import static android.content.Context.LAUNCHER_APPS_SERVICE;
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -26,10 +30,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.function.Supplier;
-
-import static android.content.Context.LAUNCHER_APPS_SERVICE;
-import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Information about an installed app, more than {@link ApplicationInfo}.
@@ -70,7 +70,7 @@ public abstract class AppInfo extends ApplicationInfo {
 	}
 
 	/** @return hidden state, or null if failed to */
-	private static @Nullable Boolean isHidden(final ApplicationInfo info) {
+	public static @Nullable Boolean isHidden(final ApplicationInfo info) {
 		final Integer private_flags = Hacks.ApplicationInfo_privateFlags.get(info);
 		return private_flags != null ? (private_flags & PRIVATE_FLAG_HIDDEN) != 0 : null;
 	}

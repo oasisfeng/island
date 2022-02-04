@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.CallbackRegistry;
 
+import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.util.Suppliers;
 
 import java.util.ArrayList;
@@ -90,8 +91,25 @@ public abstract class AppListProvider<T extends AppInfo> extends ContentProvider
 		context().registerReceiver(mPackagesEventsObserver, pkgs_filter);
 
 		//noinspection WrongConstant
-		for (final ApplicationInfo app : context().getPackageManager().getInstalledApplications(PM_FLAGS_APP_INFO))
-			apps.put(app.packageName, createEntry(app, null));
+		PackageManager pm = context().getPackageManager();
+		for (final ApplicationInfo app : pm.getInstalledApplications(PM_FLAGS_APP_INFO))
+			if (! isInvalidPackage(pm, app)) apps.put(app.packageName, createEntry(app, null));
+	}
+
+	/** Currently this only detects static library package (e.g. "com.google.android.trichromelibrary") */
+	private boolean isInvalidPackage(final PackageManager pm, final ApplicationInfo app) {
+		final Integer privateFlags = Apps.getPrivateFlags(app);
+		if ((privateFlags == null || privateFlags == 0) && app.sourceDir == null && app.targetSdkVersion == 0
+				&& app.labelRes == 0 && app.nonLocalizedLabel == null && app.name == null
+				&& AppInfo.isHidden(app) == Boolean.FALSE && app.enabled)
+			try {
+				pm.getApplicationInfo(app.packageName, 0);  // Invalid app is invisible without MATCH_UNINSTALLED_PACKAGES.
+				Log.w(TAG, "Valid app: " + app.packageName);
+			} catch (PackageManager.NameNotFoundException e) {
+				Log.i(TAG, "Skip invalid app: " + app.packageName);
+				return true;
+			}
+		return false;
 	}
 
 	private void onPackageEvent(final String pkg) {
