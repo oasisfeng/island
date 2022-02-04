@@ -66,21 +66,14 @@ Type `adb -d shell` to open ADB shell, and execute the following commands one by
 
    If you got "Error: couldn't create User", execute `setprop fw.max_users 10` first, then retry the command above.
 
-2. `pm path com.oasisfeng.island`
-
-   It prints the path of the APK file of Island on your device. Copy the full path (after "`package:`"), and paste it to replace the `<path>` potion of the following command:
-
-3. `pm install -r --user <user id> <path>`
+2. `pm install-existing --user <user id> com.oasisfeng.island`
 
    After the installation, proceed to the activation step: (slightly different by Android version)
 
-4. Android 6+: `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`</br>
-   Android 5.x: `dpm set-profile-owner com.oasisfeng.island/.IslandDeviceAdminReceiver <user id>`
+3. `dpm set-profile-owner --user <user id> com.oasisfeng.island/.IslandDeviceAdminReceiver`
 
    If you get error message `java.lang.SecurityException: Neither user 2000 nor current process has android.permission.MANAGE_DEVICE_ADMIN`, please review the MIUI-specific steps above in "Preparation".
 
-5. `am start-user <user id>`
-
-6. Android 5.0.x only (not required on Android 5.1+): `settings --user 10 put secure install_non_market_apps 1`
+4. `am start-user <user id>`
 
 If all goes well, Island will show the app list.
