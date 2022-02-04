@@ -1,5 +1,5 @@
 Setup Guide
-=============
+============
 
 On most middle to high end Android devices released after 2016, Island can be setup straightforward without hassle. But still on some devices, you may got “incompatible with your device” message on Google Play Store, or be notified during the setup with error message “Sorry, your device (or ROM) is incompatible with Island”, or other failures. In these cases, Island could probably still work on your device if setup manually.
 
@@ -7,7 +7,7 @@ If you are prompted to encrypt your device during the setup, it means your devic
 
 
 Preparation
--------------
+------------
 
 First of all, you need to connect your Android device to a computer with USB cable, and the official [ADB tool](https://developer.android.com/studio/releases/platform-tools.html) provided by Google.
 
@@ -53,8 +53,10 @@ Before Island can be uninstalled, Managed Mainland must be deactivated.
 Open Island, Settings - Scoped Settings - Mainland, scroll to the bottom, click "Deactivate".
 
 
-Manual setup for Island (only if the in-app Island creation is not viable)
----------------------------------------------------------------------------
+Manual setup for Island
+------------------------
+
+**USE THIS GUIDE ONLY IF THE IN-APP ISLAND SETUP IS NOT VIABLE OR UNSUCCESSFUL.**
 
 Type `adb -d shell` to open ADB shell, and execute the following commands one by one in sequence:
 
