@@ -82,8 +82,19 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	}
 
 	public interface Filter extends Predicate<IslandAppInfo> {
-		Filter Island = app -> app.shouldShowAsEnabled() && (app.isInstalled() || app.isPlaceHolder());
+
 		Filter Mainland = app -> Users.isParentProfile(app.user) && (app.isSystem() || app.isInstalled());	// Including uninstalled system app
+
+		class IslandFilter implements Filter {
+
+			@Override public boolean test(final IslandAppInfo app) {
+				return mProfile.equals(app.user) && app.shouldShowAsEnabled() && (app.isInstalled() || app.isPlaceHolder());
+			}
+
+			IslandFilter(UserHandle profile) { mProfile = profile; }
+
+			private final UserHandle mProfile;
+		}
 	}
 
 	private Predicate<IslandAppInfo> activeFilters() {
@@ -131,7 +142,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		if (profile == null) return;
 		Log.d(TAG, "Update app list in profile " + Users.toId(profile) + " for reason: " + reason);
 
-		final Filter profile_filter = Users.isParentProfile(profile) ? Filter.Mainland : Filter.Island;
+		final Filter profile_filter = Users.isParentProfile(profile) ? Filter.Mainland : new Filter.IslandFilter(profile);
 		Predicate<IslandAppInfo> filters = mFilterShared.and(profile_filter);
 		if (getFilterIncludeHiddenSystemApps().getValue() != Boolean.TRUE)
 			filters = filters.and(app -> ! app.isSystem() || app.isInstalled() && app.isLaunchable());  // Exclude system apps without launcher activity
