@@ -1,17 +1,10 @@
 File Shuttle - Bridge for cross-border file access
-====================================================
+===================================================
 
-Island provides a special documents provider of Android Storage Access Framework for cross-border file access.
-Currently it enables apps (supporting Android SAF) in Island to access files in mainland.
-The reverse direction file access will be implemented in future version.
+(This document only applies to the new implementation of File Shuttle introduced in Island v6.0+)
 
-Setup
---------
+Any app supporting [Android Storage Access Framework (SAF)](https://developer.android.com/guide/topics/providers/document-provider) can access files across the border of Island space.
 
-Before the File Shuttle could be activated, a special permission must be granted with ADB via USB-connected PC.
+When app (either inside or outside Island) requests access to an file or path, in the system dialog of SAF, you can switch the tab to Personal (Mainland) or Work (Island).
 
-Run this command in ADB shell:
-
-`pm grant com.oasisfeng.island android.permission.INTERACT_ACROSS_USERS`
-
-Then open Island app and switch to the "Discover" tab, you can activate the File Shuttle there.
+![System dialog of Storage Access Framework](https://user-images.githubusercontent.com/181213/152467425-1b1d3603-defa-409a-8021-92436570f10c.png)
