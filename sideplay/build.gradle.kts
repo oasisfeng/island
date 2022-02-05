@@ -1,6 +1,8 @@
 plugins { id("com.android.application") }
 
 android {
+    namespace = "com.oasisfeng.island.sideplay"
+
     compileSdk = 31
 
     defaultConfig {

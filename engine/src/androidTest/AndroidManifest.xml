@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.oasisfeng.island.engine.test">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="com.oasisfeng.island.permission.FREEZE_PACKAGE" />
     <uses-permission android:name="com.oasisfeng.island.permission.LAUNCH_PACKAGE" />
     <application>
