@@ -3,6 +3,8 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
 
 android {
+    namespace 'com.oasisfeng.island'
+
     compileSdkVersion this.compileSdkVersion
 
     defaultConfig {

@@ -111,7 +111,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 		val visible = mLauncherApps.getActivityList(null, profile).asSequence().map { it.applicationInfo }.associateBy { it.packageName }  // Collect all unfrozen apps first in one API call.
 		Log.d(TAG, "Refresh apps in Island ${profile.toId()}")
 		return installedAppsInOwnerUser().asSequence().mapNotNull { visible[it.packageName] ?: getAppInfo(it.packageName, profile) }
-			.associateByTo(ArrayMap(), ApplicationInfo::packageName, { IslandAppInfo(this, profile, it.migrateIfNeeded(), null) })
+			.associateByTo(ArrayMap(), ApplicationInfo::packageName) { IslandAppInfo(this, profile, it.migrateIfNeeded(), null) }
 	}
 
 	/** Do app-level correction for legacy reason (inconsistency caused by old version of Island) */

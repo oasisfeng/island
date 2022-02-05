@@ -2,11 +2,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
+    namespace 'com.oasisfeng.island.engine'
+
     compileSdkVersion this.compileSdkVersion
 
     defaultConfig {
         minSdkVersion this.minSdkVersion
-
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
