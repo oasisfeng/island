@@ -11,6 +11,7 @@ import android.app.Application;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
@@ -335,7 +336,7 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 	private void onShortcutRequested(final Context context) {
 		final AppViewModel app_vm = mSelection.getValue();
 		if (app_vm == null) return;
-		final IslandAppInfo app= app_vm.info();
+		final ApplicationInfo app= app_vm.info();
 		final String pkg = app.packageName;
 		Analytics.$().event("action_create_shortcut").with(ITEM_ID, pkg).send();
 		IslandAppShortcut.requestPin(context, app);

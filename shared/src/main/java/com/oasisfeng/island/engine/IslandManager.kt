@@ -67,6 +67,8 @@ object IslandManager {
     @JvmStatic fun getProfileIdsIncludingDisabled(context: Context): IntArray =
         context.getSystemService<UserManager>()!!.getProfileIds(Users.currentId(), false)
             ?: context.getSystemService<UserManager>()!!.userProfiles.map { it.toId() }.toIntArray() // Fallback to profiles without disabled.
+
+    fun isReady(context: Context, profile: UserHandle) = context.getSystemService<UserManager>()!!.isUserRunning(profile)
 }
 
 private const val TAG = "Island.Manager"
