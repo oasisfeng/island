@@ -33,7 +33,7 @@ On most middle to high end Android devices released after 2016, Island can be se
 
 If you are prompted to encrypt your device first during the setup and you don't want device decription (which may significantly degrade overall I/O performance on low-end devices), this prerequisite could also be skipped if setup manually.
 
-Please refer to [Manual setup](/setup.md) for prerequisites and detailed steps.
+Please refer to [Manual setup](/setup.md#manual-setup-for-island) for prerequisites and detailed steps.
 
 
 Managed Mainland
