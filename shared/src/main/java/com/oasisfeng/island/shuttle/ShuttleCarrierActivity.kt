@@ -64,12 +64,14 @@ class ShuttleCarrierActivity: Activity() {
 			setResult(RESULT_OK, Intent(null, Uri.parse(ShuttleProvider.CONTENT_URI))   // Send reverse shuttle back
 					.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION))
 			finish()
-		} else try {
+		} else {
 			Log.d(TAG, "Starting carrier in Mainland...")
 			DevicePolicies(this).addCrossProfileIntentFilter(IntentFilter(ACTION), FLAG_PARENT_CAN_ACCESS_MANAGED)
-			startActivityForResult(intent.setAction(ACTION).setComponent(null).removeFlag(FLAG_ACTIVITY_NEW_TASK).also {
-				CrossProfile.decorateIntentForActivityInParentProfile(this, it) }, 1) }
-		catch (e: RuntimeException) { finish(); Log.e(TAG, "Error establishing shuttle to parent profile.", e) }
+			val intent = intent.setAction(ACTION).setComponent(null).removeFlag(FLAG_ACTIVITY_NEW_TASK)
+			try {
+				CrossProfile.decorateIntentForActivityInParentProfile(this, intent)
+				startActivityForResult(intent, 1)
+			} catch (e: RuntimeException) { finish(); Log.e(TAG, "Error establishing shuttle to parent profile.", e) }}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
