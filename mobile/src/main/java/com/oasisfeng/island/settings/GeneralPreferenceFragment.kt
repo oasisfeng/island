@@ -43,7 +43,7 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
 
         setupSetting(settings.DynamicShortcutLabel(), visible = SDK_INT >= O, onChange = @RequiresApi(O) { true.also {
             Toast.makeText(context, R.string.prompt_updating_shortcuts, Toast.LENGTH_LONG).show()
-            Handler().post { IslandAppShortcut.updateAllPinned(context) }}})
+            Handler().post { IslandAppShortcut.updateAllInActiveProfiles(context) }}})
 
         setup<TwoStatePreference>(R.string.key_show_admin_message) {
             val policies by lazy { DevicePolicies(context) }

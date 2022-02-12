@@ -19,11 +19,14 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.net.Uri
-import android.os.*
+import android.os.Binder
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
 import android.os.Build.VERSION_CODES.Q
+import android.os.Bundle
+import android.os.UserHandle
+import android.os.UserManager
 import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
@@ -62,10 +65,9 @@ object IslandAppShortcut {
 	private const val SCHEME_PACKAGE = "package"            // Introduced in Island 2.8 (deprecated)
 	private const val SCHEME_ANDROID_APP = "android-app"    // Introduced in Island 5.0 (deprecated)
 	private const val SCHEME_APP = "app"                    // Introduced in Island 5.3 (replacing "android-app" used before to avoid shortcut intent corruption after reboot)
-	private const val EXTRA_DYNAMIC = "dynamic"             // Shortcut extra to indicate whether the label is dynamic
 
 	@OwnerUser @JvmStatic fun requestPin(context: Context, app: ApplicationInfo) {
-		val dynamic = IslandSettings(context).DynamicShortcutLabel().enabled
+		val dynamic = isDynamicLabelEnabled(context)
 		val profile = app.user
 		if (IslandManager.isReady(context, profile))
 			Shuttle(context, profile).launchNoThrows { requestPinAsUser(this, app, dynamic) }
@@ -85,18 +87,33 @@ object IslandAppShortcut {
 		catch (e: RuntimeException) { showToastForShortcutFailure(context); analytics().report(e) }
 	}
 
-	@OwnerUser @ProfileUser @RequiresApi(O) fun updateIfNeeded(context: Context, app: ApplicationInfo) {
-		val sm: ShortcutManager = context.getSystemService() ?: return
-		val id = getShortcutId(app.packageName, app.userId)
-		val existing = sm.pinnedShortcuts.firstOrNull { it.id == id } ?: return        // Ensure existence
-		update(context, app, existing.isLabelDynamic())
+	@OwnerUser @ProfileUser private fun remove(context: Context, pkg: String) {
+		val id = getShortcutId(pkg, Users.current().toId())
+		ShortcutManagerCompat.removeLongLivedShortcuts(context, listOf(id))
+
+		if (! Users.isParentProfile()) Shuttle(context, to = Users.parentProfile).launchNoThrows(with = Users.currentId()) {
+			ShortcutManagerCompat.removeLongLivedShortcuts(context, listOf(getShortcutId(pkg, it, isCrossProfile = true))) }
 	}
 
-	@RequiresApi(O) fun updateAllPinned(context: Context) {
+	@OwnerUser @ProfileUser @RequiresApi(O) fun updateIfNeeded(context: Context, app: ApplicationInfo, isCrossProfile: Boolean) {
+		val sm: ShortcutManager = context.getSystemService() ?: return
+		val id = getShortcutId(app.packageName, app.userId, isCrossProfile)
+		sm.pinnedShortcuts.firstOrNull { it.id == id } ?: sm.dynamicShortcuts.firstOrNull { it.id == id } ?: return // Ensure existence
+		update(context, app, dynamic = true)
+	}
+
+	@OwnerUser @RequiresApi(O) fun updateAllInActiveProfiles(context: Context) {
+		val dynamic = isDynamicLabelEnabled(context)
+		updateAll(context, dynamic)
+		Users.getProfilesManagedByIsland().forEach {
+			Shuttle(context, to = it).launchNoThrows { updateAll(context, dynamic) }}
+	}
+
+	@RequiresApi(O) fun updateAll(context: Context, dynamic: Boolean) {
 		Log.i(TAG, "Updating all pinned shortcuts...")
 		val sm: ShortcutManager = context.getSystemService() ?: return
 		val la: LauncherApps = context.getSystemService() ?: return
-		sm.pinnedShortcuts.forEach { shortcut ->
+		sm.pinnedShortcuts.plus(sm.dynamicShortcuts).distinctBy { it.id }.forEach { shortcut ->
 			val parsed = parseShortcutId(shortcut.id)?.takeIf { it.size <= 2 } ?: return@forEach
 			val pkg = parsed[0]
 			val profileId = try { parsed.getOrNull(1)?.toInt() } catch (e: NumberFormatException) { return@forEach }
@@ -104,10 +121,8 @@ object IslandAppShortcut {
 			val app = try { la.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES, profile).takeIf { it.installed } }
 				catch (e: NameNotFoundException) { null }
 				?: return@forEach sm.removeDynamicShortcuts(listOf(getShortcutId(pkg, profile.toId())))
-			update(context, app, shortcut.isLabelDynamic()) }
+			update(context, app, dynamic) }
 	}
-
-	@RequiresApi(O) private fun ShortcutInfo.isLabelDynamic() = extras?.getBoolean(EXTRA_DYNAMIC, false) ?: false
 
 	@OwnerUser @RequiresApi(O) private fun update(context: Context, app: ApplicationInfo, dynamic: Boolean) {
 		Log.i(TAG, "Updating shortcut for ${app.packageName} in profile ${app.userId}")
@@ -137,14 +152,14 @@ object IslandAppShortcut {
 		return ShortcutInfo.Builder(context, shortcutId).setIntent(intent).setShortLabel(label).apply {
 			setIcon(Icon.createWithAdaptiveBitmap(drawable.toBitmap(sm.iconMaxWidth, sm.iconMaxHeight)))
 			if (SDK_INT >= Q) setLocusId(LocusId(shortcutId))
-		}.setExtras(PersistableBundle().apply { putBoolean(EXTRA_DYNAMIC, dynamic) } ).build()
+		}.build()
 	}
 
 	private fun buildShortcutIntent(context: Context, pkg: String, userId: Int) = Intent(ACTION_LAUNCH_APP, Uri.Builder()
 			.scheme(SCHEME_APP).encodedAuthority(if (Users.isParentProfile(userId)) pkg else "$userId@$pkg").build())
 			.addCategory(CATEGORY_LAUNCHER).setPackage(context.packageName)
 
-	private const val SHORTCUT_ID_PREFIX = "launch:"
+	private const val SHORTCUT_ID_PREFIX = "launch:"    // launch:<pkg>[@<user ID>]
 	private fun getShortcutId(pkg: String, userId: Int, isCrossProfile: Boolean = isCrossProfile(userId))
 			= "$SHORTCUT_ID_PREFIX$pkg".let { if (isCrossProfile) it.plus("@$userId") else it }
 	private fun parseShortcutId(id: String)
@@ -186,15 +201,17 @@ object IslandAppShortcut {
 
 		private val mPackageObserver = object: BroadcastReceiver() { override fun onReceive(context: Context, intent: Intent) {
 			val pkg = intent.data?.schemeSpecificPart ?: return
-			if (intent.getBooleanExtra(EXTRA_REPLACING, false)) return      // Ignore package removal during replacing
+			if (intent.getBooleanExtra(EXTRA_REPLACING, false)) return  // Ignore package removal during replacing
 			Log.d(TAG, "Package event: $intent")
 			if (intent.`package` == context.packageName) return         // Skip duplicate broadcast directly sent to installer (that's us).
-			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
-			catch (e: NameNotFoundException) { return }     // Actual package uninstall
 
-			updateIfNeeded(context, info)
-			Shuttle(context, to = Users.parentProfile).launchNoThrows { // For legacy shortcuts created in parent profile
-				if (IslandSettings(this).DynamicShortcutLabel().enabled) updateIfNeeded(this, info) }}
+			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
+			catch (e: NameNotFoundException) { return remove(context, pkg) }    // Actual package uninstall
+
+			updateIfNeeded(context, info, false)
+
+			if (! Users.isParentProfile()) Shuttle(context, to = Users.parentProfile).launchNoThrows {  // For cross-profile shortcut
+				if (isDynamicLabelEnabled(this)) updateIfNeeded(this, info, true) }}
 		}
 
 		override fun onCreate() {
@@ -205,6 +222,8 @@ object IslandAppShortcut {
 		override fun onDestroy() = unregisterReceiver(mPackageObserver)
 		override fun onBind(intent: Intent?) = Binder()
 	}
+
+	fun isDynamicLabelEnabled(context: Context) = IslandSettings(context).DynamicShortcutLabel().enabled
 
 	class ShortcutLauncher: LifecycleActivity() {
 
@@ -307,7 +326,9 @@ class ShortcutsUpdater: BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
 		if (SDK_INT >= O) try { // It's safe to not check the action, as the update is idempotent and does not depends on intent.
-			IslandAppShortcut.updateAllPinned(context)
+			val dynamic = Shuttle(context, to = Users.parentProfile).invokeNoThrows { IslandAppShortcut.isDynamicLabelEnabled(this) }
+				?: return Unit.also { Log.w(TAG, "Failed to query setting DynamicShortcutLabel across profile.") }
+			IslandAppShortcut.updateAll(context, dynamic)
 		} catch (e: IllegalStateException) { return }   // User is locked
 	}
 }

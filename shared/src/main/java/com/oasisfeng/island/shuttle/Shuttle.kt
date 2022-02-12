@@ -19,6 +19,7 @@ class Shuttle(val context: Context, val to: UserHandle) {
 
 	/* Helpers to avoid redundant local variables. ("inline" is used to ensure only "Context.() -> R" function is shuttled) */
 	inline fun <A> launch(with: A, crossinline function: Context.(A) -> Unit) { launch { function(with) }}
+	inline fun <A> launchNoThrows(with: A, crossinline function: Context.(A) -> Unit) = launchNoThrows { function(with) }
 	inline fun <A, R> invoke(with: A, crossinline function: Context.(A) -> R) = invoke { this.function(with) }
 	inline fun <A, R> invokeNoThrows(with: A, crossinline function: Context.(A) -> R) = invokeNoThrows { this.function(with) }
 
