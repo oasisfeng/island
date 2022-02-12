@@ -188,6 +188,7 @@ object IslandAppShortcut {
 			val pkg = intent.data?.schemeSpecificPart ?: return
 			if (intent.getBooleanExtra(EXTRA_REPLACING, false)) return      // Ignore package removal during replacing
 			Log.d(TAG, "Package event: $intent")
+			if (intent.`package` == context.packageName) return         // Skip duplicate broadcast directly sent to installer (that's us).
 			val info = try { context.packageManager.getApplicationInfo(pkg, MATCH_UNINSTALLED_PACKAGES) }
 			catch (e: NameNotFoundException) { return }     // Actual package uninstall
 
