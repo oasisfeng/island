@@ -4,20 +4,26 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.INSTALL_REASON_USER
 import android.os.Binder
+import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.Q
 import android.os.Parcel
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.shuttle.ContextShuttle
 
-@RequiresApi(Q) class PrivilegedRemoteWorker: Binder() {
+class PrivilegedRemoteWorker: Binder() {
 
     /** This method runs with privileged permission via Shizuku */
     private fun cloneAppViaShizuku(context: Context, pkg: String, userId: Int): Boolean {
-        val profileContext = ContextShuttle.createContextAsUser(context, UserHandles.of(userId)) ?: return false
-        profileContext.packageManager.packageInstaller.installExistingPackage(pkg, INSTALL_REASON_USER, null)
-        return true
+        if (SDK_INT >= Q) {
+            val profileContext = ContextShuttle.createContextAsUser(context, UserHandles.of(userId)) ?: return false
+            profileContext.packageManager.packageInstaller.installExistingPackage(pkg, INSTALL_REASON_USER, null)
+            return true
+        } else try {   // int installExistingPackageAsUser(String packageName, int userId) throws NameNotFoundException
+            val result = PackageManager::class.java.getMethod("installExistingPackageAsUser", String::class.java, Int::class.java)
+                .invoke(context.packageManager, pkg, userId)
+            return result == INSTALL_SUCCEEDED
+        } catch (e: PackageManager.NameNotFoundException) { return false }
     }
 
     override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
@@ -45,6 +51,9 @@ import com.oasisfeng.island.shuttle.ContextShuttle
     }
 
     init { Log.i(TAG, "Running in Shizuku...") }
-}
 
-private const val TAG = "Island.PRW"
+    companion object {
+        private const val INSTALL_SUCCEEDED = 1     // PackageManager.INSTALL_SUCCEEDED
+        private const val TAG = "Island.PRW"
+    }
+}
