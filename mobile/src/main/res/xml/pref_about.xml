@@ -6,6 +6,10 @@
         <intent android:action="android.intent.action.VIEW" android:data="https://github.com/oasisfeng/island" />
     </Preference>
 
+    <Preference android:key="@string/key_beta" android:title="@string/pref_about_beta" android:summary="@string/pref_about_beta_github_summary">
+        <intent android:action="android.intent.action.VIEW" android:data="https://github.com/oasisfeng/island" />
+    </Preference>
+
     <PreferenceScreen android:title="@string/pref_about_licenses_title">
         <PreferenceCategory android:title="@string/pref_about_licenses_title">
             <PreferenceScreen android:title="Android Open Source Project" android:summary="Apache License, Version 2.0">

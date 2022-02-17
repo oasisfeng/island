@@ -6,6 +6,7 @@ import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE
+import android.net.Uri
 import android.os.Bundle
 import android.os.UserHandle
 import android.os.UserManager
@@ -16,7 +17,9 @@ import androidx.annotation.XmlRes
 import androidx.core.app.NavUtils
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.app.Activities
+import com.oasisfeng.android.google.GooglePlayStore
 import com.oasisfeng.android.ui.Dialogs
+import com.oasisfeng.island.Config
 import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.MainActivity
 import com.oasisfeng.island.mobile.BuildConfig
@@ -101,14 +104,22 @@ import com.oasisfeng.island.util.Users
 
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
+			val pm = activity.packageManager
+			val pkg = activity.packageName
+			val installer = pm.getInstallerPackageName(pkg)
+			if (installer == GooglePlayStore.PACKAGE_NAME || (BuildConfig.DEBUG && installer == pkg))
+				findPreference(getString(R.string.key_beta))?.apply {
+					summary = getText(R.string.pref_about_beta_play_summary)
+					intent = Intent(Intent.ACTION_VIEW, Uri.parse(Config.URL_PLAY_ALPHA.get()))
+				}
 			try {
-				val info = activity.packageManager.getPackageInfo(activity.packageName, 0)
+				val info = pm.getPackageInfo(pkg, 0)
 				var summary: String = info.versionName
 				if (BuildConfig.DEBUG) {
 					val ago = System.currentTimeMillis() - info.lastUpdateTime
 					summary += " (${info.versionCode}, ${ago / 60_000} minutes ago)"
-					if (activity.packageName != Modules.MODULE_ENGINE) try {
-						val engine = activity.packageManager.getPackageInfo(Modules.MODULE_ENGINE, 0)
+					if (pkg != Modules.MODULE_ENGINE) try {
+						val engine = pm.getPackageInfo(Modules.MODULE_ENGINE, 0)
 						summary += ", Engine: " + engine.versionName + " (" + engine.versionCode + ")"
 					} catch (ignored: PackageManager.NameNotFoundException) {}
 				}

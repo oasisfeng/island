@@ -195,6 +195,9 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_about_version_title">Version</string>
     <string name="pref_about_open_source_title">Island is open source</string>
     <string name="pref_about_open_source_summary">Welcome to visit us on GitHub</string>
+    <string name="pref_about_beta">Get beta version</string>
+    <string name="pref_about_beta_play_summary">Join the testing channel on Play Store to receive beta version.</string>
+    <string name="pref_about_beta_github_summary">Setup custom watch for releases on GitHub to receive pre-release (beta version) notifications.</string>
     <string name="pref_about_licenses_title">Licenses</string>
 
     <!-- Security Confirmation -->

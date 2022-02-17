@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <defaultsMap>
     <entry>
+        <key>url_play_alpha</key>
+        <value>https://groups.google.com/g/islandroid</value>
+    </entry>
+    <entry>
         <key>url_faq</key>
         <value>https://island.oasisfeng.com/faq</value>
     </entry>

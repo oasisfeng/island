@@ -16,6 +16,7 @@ public enum Config {
 
 	/* All keys must be consistent with config_defaults.xml */
 	IS_REMOTE("is_remote"),
+	URL_PLAY_ALPHA("url_play_alpha"),
 	URL_FAQ("url_faq"),
 	URL_SETUP("url_setup"),
 	URL_SETUP_MANAGED_MAINLAND("url_setup_god_mode"),

@@ -193,6 +193,9 @@
     <string name="pref_about_version_title">版本</string>
     <string name="pref_about_open_source_title">这是一个开源项目</string>
     <string name="pref_about_open_source_summary">欢迎来 GitHub 访问我们</string>
+    <string name="pref_about_beta">获取 Beta 测试版本</string>
+    <string name="pref_about_beta_play_summary">加入 Play 商店 的测试渠道以获取 Beta 测试版本。</string>
+    <string name="pref_about_beta_github_summary">在 GitHub 项目页面上设置 custome watch - release 以接收预发布（Beta）版本的通知。</string>
     <string name="pref_about_licenses_title">授权</string>
 
     <!-- Security Confirmation -->

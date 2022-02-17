@@ -23,4 +23,5 @@
     <string translatable="false" name="key_privacy_notification_for_clone">privacy_notification_clone</string>
     <!-- About -->
     <string translatable="false" name="key_version">version</string>
+    <string translatable="false" name="key_beta">beta</string>
 </resources>
