@@ -13,10 +13,12 @@ import android.util.SizeF
 import android.util.SparseArray
 import com.oasisfeng.android.os.UserHandles
 import com.oasisfeng.island.analytics.analytics
-import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.DevicePolicies
+import com.oasisfeng.island.util.OwnerUser
+import com.oasisfeng.island.util.ProfileUser
+import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.Users.Companion.toId
 import java.io.Serializable
-import java.util.*
 
 class ShuttleProvider: ContentProvider() {
 
@@ -41,17 +43,17 @@ class ShuttleProvider: ContentProvider() {
 				checkUriPermission(uri, 0, uid, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PERMISSION_GRANTED
 
 		fun initialize(context: Context) {
-			Log.v(TAG, "Initializing...")
+			Log.v(TAG, "Initializing in profile ${Users.currentId()}...")
 			if (Users.isParentProfile())
 				return Users.getProfilesManagedByIsland().forEach {
 					if (isReady(context, it)) {
-						Log.d(TAG, "Shuttle to profile ${it.toId()}: ready")
+						Log.i(TAG, "Shuttle to profile ${it.toId()}: ready")
 						if (! isBackwardReady(context, it)) initializeBackwardShuttle(context, it) }
-					else Log.i(TAG, "Shuttle to profile ${it.toId()}: not ready") }
+					else Log.w(TAG, "Shuttle to profile ${it.toId()}: not ready") }
 			if (! DevicePolicies(context).isProfileOwner) return
 
-			if (isReady(context, Users.parentProfile)) Log.d(TAG, "Shuttle to parent profile: ready")
-			else Log.i(TAG, "Shuttle to parent profile: not ready")
+			if (isReady(context, Users.parentProfile)) Log.i(TAG, "Shuttle to parent profile: ready")
+			else Log.w(TAG, "Shuttle to parent profile: not ready")
 
 			initializeInIsland(context)
 		}
@@ -63,9 +65,9 @@ class ShuttleProvider: ContentProvider() {
 		private fun initializeInIsland(context: Context) {
 			val uri = Uri.parse(CONTENT_URI)
 			if (context.isPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
-				return Unit.also { Log.d(TAG, "Shuttle in ${Users.current().toId()}: ready") }
+				return Unit.also { Log.i(TAG, "Shuttle in ${Users.current().toId()}: ready") }
 
-			Log.d(TAG, "Shuttle in ${Users.current().toId()}: establishing...")
+			Log.i(TAG, "Shuttle in profile ${Users.current().toId()}: establishing...")
 			ShuttleCarrierActivity.sendToParentProfileQuietlyIfPossible(context) {
 				addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
 				clipData = ClipData(TAG, emptyArray(), ClipData.Item(uri)) }
@@ -110,8 +112,7 @@ class ShuttleProvider: ContentProvider() {
 	}
 }
 
-@Suppress("EXPERIMENTAL_FEATURE_WARNING")
-inline class ShuttleResult<R>(private val bundle: Bundle?) {
+@JvmInline value class ShuttleResult<R>(private val bundle: Bundle?) {
 
 	companion object { internal val NOT_READY = ShuttleResult<Any>(Bundle()) }
 

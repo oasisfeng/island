@@ -15,7 +15,7 @@ import com.oasisfeng.island.util.*
 import com.oasisfeng.island.util.Users.Companion.toId
 
 /**
- * Utilities of shared basic functionality for modules
+ * Utilities of "managed profile" related functionality
  *
  * Created by Oasis on 2017/2/20.
  */

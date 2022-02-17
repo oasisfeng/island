@@ -7,10 +7,9 @@
     <string name="confirm_cloning">\"%1$s\" solicita fazer um clone de %2$s.\n\nTem certeza de que quer continuar?</string>
     <string name="description_for_installing_app">\"%1$s\" (%2$s) versão %3$s (%4$d)</string>
     <string name="description_for_cloning_app">\"%1$s\" (%2$s)</string>
-    <string name="description_for_installing_split">Pacote de Apps para \"%1$s\"</string>
     <string name="label_unknown_app">um app</string>
     <string name="dialog_install_checkbox_always_allow">Sempre permitir a instalação de apps desta fonte.</string>
-    <string name="dialog_install_failure_title">Instalação falhou</string>
+    <string name="dialog_install_failure_title">Instalação falhou: %s</string>
     <string name="dialog_install_unknown_failure_message">Ocorreu um erro interno durante a instalação realizada pelo sistema do Android</string>
     <string name="progress_dialog_installing">\"%1$s\" está instalando %2$s</string>
     <string name="progress_dialog_updating">\"%1$s\" está atualizando %2$s</string>
@@ -24,7 +23,7 @@
     <string name="notification_app_with_permissions">com permissões concedidas: %s</string>
     <string name="notification_app_version">Versão: %s</string>
     <string name="notification_app_version_update">Versão: %1$s -> %2$s</string>
-    <string name="notification_app_target_android_version">Versão alvo do Android: %s: %s</string>
+    <string name="notification_app_target_android_version">Versão alvo do Android: %s</string>
     <string name="notification_app_target_android_version_update">Alvo Android: %1$s -> %2$s</string>
     <string name="notification_app_target_android_10_legacy_storage">10 (armazenamento legado)</string>
     <string name="action_show_app_settings">Configurações de app</string>

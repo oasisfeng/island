@@ -103,17 +103,17 @@ import com.oasisfeng.island.util.Users
 			super.onCreate(savedInstanceState)
 			try {
 				val info = activity.packageManager.getPackageInfo(activity.packageName, 0)
-				var summary: String
+				var summary: String = info.versionName
 				if (BuildConfig.DEBUG) {
 					val ago = System.currentTimeMillis() - info.lastUpdateTime
-					summary = "${info.versionName} (${info.versionCode}, ${ago / 60_000} minutes ago)"
+					summary += " (${info.versionCode}, ${ago / 60_000} minutes ago)"
 					if (activity.packageName != Modules.MODULE_ENGINE) try {
 						val engine = activity.packageManager.getPackageInfo(Modules.MODULE_ENGINE, 0)
-						summary += ", Engine: " + engine.versionName + " (" + engine.versionCode + ")" }
-					catch (ignored: PackageManager.NameNotFoundException) {}}
-				else summary = info.versionName
-				findPreference(getString(R.string.key_version)).summary = summary }
-			catch (ignored: PackageManager.NameNotFoundException) {} // Should never happen
+						summary += ", Engine: " + engine.versionName + " (" + engine.versionCode + ")"
+					} catch (ignored: PackageManager.NameNotFoundException) {}
+				}
+				findPreference(getString(R.string.key_version)).summary = summary
+			} catch (ignored: PackageManager.NameNotFoundException) {} // Should never happen
 		}
 	}
 

@@ -3,6 +3,8 @@ package com.oasisfeng.island.installer
 import android.app.Notification
 import android.app.Notification.BigTextStyle
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
@@ -120,7 +122,7 @@ internal object AppInstallationNotifier {
 		val forwarder = Intent(IntentCompat.ACTION_SHOW_APP_INFO).setClass(context, AppInfoForwarderActivity::class.java)
 				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, pkg).putExtra(Intent.EXTRA_USER, user)
 		AppInfoForwarderActivity.markAsLaunchedBySettings(forwarder)    // Otherwise app settings is launched instead.
-		val action = PendingIntent.getActivity(context, 0, forwarder, PendingIntent.FLAG_UPDATE_CURRENT)
+		val action = PendingIntent.getActivity(context, 0, forwarder, FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
 		@Suppress("DEPRECATION") n.setContentIntent(action).addAction(R.drawable.ic_settings_applications_white_24dp,
 				context.getString(R.string.action_show_app_settings), action)
 	}
