@@ -20,12 +20,12 @@ enum class Config(private val key: String, private val default: String) {
 	URL_SETUP_TROUBLESHOOTING("url_setup_trouble", "https://island.oasisfeng.com/faq"),
 	PERMISSION_REQUEST_ALLOWED_APPS("permission_allowed_apps", "com.oasisfeng.greenify,com.oasisfeng.nevo");
 
-	fun get(): String = FirebaseRemoteConfig.getInstance().apply { activate() }.getString(key).ifEmpty { default }
+	fun get(): String = FirebaseRemoteConfig.getInstance().getString(key).ifEmpty { default }
 
 	companion object {
 
 		@JvmStatic fun isRemote(): Boolean {
-			val value = FirebaseRemoteConfig.getInstance().apply { activate() }.getValue(IS_REMOTE.key)
+			val value = FirebaseRemoteConfig.getInstance().getValue(IS_REMOTE.key)
 			return value.source == FirebaseRemoteConfig.VALUE_SOURCE_REMOTE
 		}
 
@@ -34,7 +34,7 @@ enum class Config(private val key: String, private val default: String) {
 			val settings = FirebaseRemoteConfigSettings.Builder().setMinimumFetchIntervalInSeconds(
 				if (BuildConfig.DEBUG) 30 else ConfigFetchHandler.DEFAULT_MINIMUM_FETCH_INTERVAL_IN_SECONDS)
 			FirebaseRemoteConfig.getInstance().apply {
-				setConfigSettingsAsync(settings.build()).addOnCompleteListener { fetch() }}
+				setConfigSettingsAsync(settings.build()).addOnCompleteListener { fetchAndActivate() }}
 		}
 	}
 }
