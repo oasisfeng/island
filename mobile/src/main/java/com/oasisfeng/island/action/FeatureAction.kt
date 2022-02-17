@@ -7,10 +7,6 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.getSystemService
-import com.google.firebase.appindexing.Action
-import com.google.firebase.appindexing.Action.Builder.ACTIVATE_ACTION
-import com.google.firebase.appindexing.Action.Metadata
-import com.google.firebase.appindexing.FirebaseUserActions
 import com.oasisfeng.android.widget.Toasts
 import com.oasisfeng.island.engine.IslandManager
 import com.oasisfeng.island.mobile.BuildConfig
@@ -24,8 +20,6 @@ import com.oasisfeng.island.util.Users
  * Created by Oasis on 2019-7-1.
  */
 private const val URI_HOST = "feature"
-private const val PACKAGE_GOOGLE_SEARCH = "com.google.android.googlequicksearchbox"
-private const val PACKAGE_GOOGLE_ASSISTANT_GO = "com.google.android.apps.assistant"
 
 class FeatureActionActivity : CallerAwareActivity() {
 
@@ -47,9 +41,6 @@ class FeatureActionActivity : CallerAwareActivity() {
                 Shuttle(this, Users.profile ?: return@also).launch {
                     if (IslandManager.ensureAppFreeToLaunch(this, pkg).isEmpty())
                         IslandManager.launchApp(this, pkg, Users.current()) }
-                if (caller == PACKAGE_GOOGLE_SEARCH || caller == PACKAGE_GOOGLE_ASSISTANT_GO)    // Send action acknowledgement to Google Assistant
-                    FirebaseUserActions.getInstance().end(Action.Builder(ACTIVATE_ACTION).setMetadata(Metadata.Builder().setUpload(false))
-                            .setObject(activity.label.toString(), data.toString()).build())
             } ?: Toasts.showLong(this, "Not found: $query")
         }
     }
