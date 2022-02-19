@@ -119,7 +119,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 	private fun makeAppAvailableInProfile(profile: UserHandle, mode: Int) {
 		val target = IslandAppListProvider.getInstance(context)[pkg, profile]
 		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled) {    // Frozen system app shown as disabled, just unfreeze it.
-			if (unfreezeInitiallyFrozenSystemApp(target))
+			if (unfreezeInitiallyFrozenSystemApp(target) == true)
 				Toast.makeText(activity, context.getString(R.string.toast_successfully_cloned, app.label), Toast.LENGTH_SHORT).show()
 		} else if (target != null && target.isInstalled && ! target.enabled) {    // Disabled system app is shown as "removed" (not cloned)
 			launchSystemAppSettings(target)
