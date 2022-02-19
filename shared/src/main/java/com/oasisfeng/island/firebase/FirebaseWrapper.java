@@ -36,7 +36,7 @@ import androidx.annotation.NonNull;
 	@SuppressLint("StaticFieldLeak") private static final Context sFirebaseContext;
 
 	static {
-		Context context = IslandApplication.$();
+		Context context = IslandApplication.get();
 		if (! isGooglePlayServicesReady(context)) {
 			// Block Google Play services if not ready (either missing or version too low), to force Firebase Analytics to use local implementation
 			// and suppress the annoying notification of GMS missing or upgrade required.

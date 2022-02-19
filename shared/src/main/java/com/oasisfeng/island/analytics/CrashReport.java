@@ -28,7 +28,7 @@ public abstract class CrashReport {
 	static void setProperty(final String key, final boolean value) { sSingleton.get().setCustomKey(key, value); }
 
 	private static final Supplier<FirebaseCrashlytics> sSingleton = Suppliers.memoize(() -> {
-		FirebaseApp.initializeApp(IslandApplication.$());
+		FirebaseApp.initializeApp(IslandApplication.get());
 		final FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
 		crashlytics.setCrashlyticsCollectionEnabled(true/*BuildConfig.CRASHLYTICS_ENABLED*/);
 		crashlytics.setCustomKey("user", Process.myUserHandle().hashCode());			// Attach the current (Android) user ID to crash report.

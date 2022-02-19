@@ -109,7 +109,7 @@ public class Hacks {
 	public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
 			IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
 			.returning(String.class).throwing(RemoteException.class).withoutParams();
-	static final Hack.HackedMethod0<Void, Void, Unchecked, Unchecked, Unchecked>
+	static final Hack.HackedMethod0<?, Void, Unchecked, Unchecked, Unchecked>
 			ActivityManagerNative_getDefault = Hack.into("android.app.ActivityManagerNative")
 			.staticMethod("getDefault").fallbackReturning(null).withoutParams();
 	static final Hack.HackedMethod0<IBinder, Activity, Unchecked, Unchecked, Unchecked>

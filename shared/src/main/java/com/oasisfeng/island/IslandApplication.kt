@@ -11,7 +11,7 @@ import com.oasisfeng.island.analytics.CrashReport
 class IslandApplication : Application() {
 
 	companion object {
-		@Suppress("FunctionName") @JvmStatic fun `$`(): Application = sInstance
+		@JvmStatic fun get() = sInstance
 
 		lateinit var sInstance: IslandApplication
 	}

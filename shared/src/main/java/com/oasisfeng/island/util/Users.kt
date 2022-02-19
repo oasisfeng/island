@@ -23,7 +23,6 @@ import com.oasisfeng.island.home.HomeRole
 import com.oasisfeng.pattern.PseudoContentProvider
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.*
 import kotlin.coroutines.resume
 
 /**
@@ -78,19 +77,16 @@ class Users : PseudoContentProvider() {
 				val uiModule = Modules.getMainLaunchActivity(context).packageName
 				val la = context.getSystemService<LauncherApps>()!!
 				val activityInOwner = la.getActivityList(uiModule, CURRENT)[0].name
-				for (i in 1 /* skip parent */ until profiles.size) {
-					val profile = profiles[i]
+				for (profile in profiles.drop(1)/* skip parent */)
 					for (activity in la.getActivityList(uiModule, profile))
 						// Separate "Island Settings" launcher activity is enabled, only if profile is managed by Island.
 						if (activity.name == activityInOwner) Log.i(TAG, "Profile not managed by Island: ${profile.toId()}")
 						else profilesByIsland.add(profile).also { Log.i(TAG, "Profile managed by Island: ${profile.toId()}") }
-				}}
-			else for (i in 1 /* skip parent */ until profiles.size) {
-				val user = profiles[i]
+			} else for (user in profiles.drop(1)/* skip parent */)
 				if (user != CURRENT) Log.w(TAG, "Skip sibling profile (may not managed by Island): ${user.toId()}")
-				else profilesByIsland.add(user).also { Log.i(TAG, "Profile managed by Island: ${user.toId()}") }}
+				else profilesByIsland.add(user).also { Log.i(TAG, "Profile managed by Island: ${user.toId()}") }
 
-			profile = if (profilesByIsland.isEmpty()) null else profilesByIsland[profilesByIsland.size - 1]
+			profile = profilesByIsland.lastOrNull()
 
 			profilesByIsland.sortWith(Comparator.comparing { um.getSerialNumberForUser(it) })
 			sProfilesManagedByIsland = profilesByIsland

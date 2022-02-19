@@ -52,7 +52,7 @@ interface Analytics {
 		@JvmStatic fun log(tag: String, message: String) { Log.i(tag, message); CrashReport.log("[$tag] $message") }
 		@JvmStatic @Suppress("FunctionName") fun `$`() = impl
 		operator fun invoke() = impl
-		private val impl: Analytics = AnalyticsImpl(IslandApplication.`$`())
+		private val impl: Analytics = AnalyticsImpl(IslandApplication.get())
 	}
 }
 
