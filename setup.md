@@ -26,7 +26,7 @@ For Windows PC, [this official guide and driver list for common OEM](https://dev
 
 
 Activate Managed Mainland
---------------------------
+-------------------------------------
 
 IMPORTANT: Please read the [**LIMITATIONS OF MANAGED MAINLAND**](README.md/#managed-mainland) before proceeding to the following steps.
 
@@ -43,6 +43,24 @@ IMPORTANT: Please read the [**LIMITATIONS OF MANAGED MAINLAND**](README.md/#mana
    Some ROM variants (e.g. MIUI) enforce extra security policy which may block the above command, if you got permission-related error message, please check the development (or security) settings to enable USB-debugging related security options, then retry the "`dpm ...`" command again.
 
 4. Start Island app and your Mainland is now managed.
+
+
+Activate Managed Mainland (with Root, Experimental)
+----------------------------------------------------
+
+IMPORTANT: Use this way method only if you can't use the non-root method above. **This is currently experimental, and may face different experience than the non-root method.**
+
+1. Su to "system" user in root shell: `su system`
+2. Create a XML file `profile_owner.xml` in `/data/system/users/0` with the following content:
+```
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<root>
+<profile-owner package="com.oasisfeng.island" name="Mainland" component="com.oasisfeng.island/com.oasisfeng.island.IslandDeviceAdminReceiver" userRestrictionsMigrated="true" />
+</root>
+```
+3. Ensure the newly created `profile_owner.xml` has owner and group of system. (Should be fine if created as user "system")
+4. Go to system Settings - Device Admin, enable "Island" there.
+5. Reboot your device.
 
 
 Deactivate Managed Mainland
