@@ -63,8 +63,8 @@ object IslandNameManager {
 		syncNameToParentProfile(context, name)
 	}
 
-	@ProfileUser fun syncNameToParentProfile(context: Context, name: String)
-			= Shuttle(context, to = Users.parentProfile).launch(with = Users.current()) { saveProfileName(this, it, name) }
+	@ProfileUser fun syncNameToParentProfile(context: Context, name: String = getName(context))
+			= Shuttle(context, to = Users.parentProfile).launchNoThrows(with = Users.current()) { saveProfileName(this, it, name) }
 
 	class NameInitializer: BroadcastReceiver() {
 

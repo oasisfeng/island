@@ -207,6 +207,7 @@ class IslandSettingsActivity: CallerAwareActivity() {
         if (callingPackage != packageName) actionBar?.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME)
         else actionBar?.setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP, ActionBar.DISPLAY_HOME_AS_UP)
         fragmentManager.beginTransaction().replace(android.R.id.content, IslandSettingsFragment()).commit()
+        IslandNameManager.syncNameToParentProfile(this)     // In case previous name synchronization failed
     }
 
     class Enabler: BroadcastReceiver() {    // One-time enabler for
