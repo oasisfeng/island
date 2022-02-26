@@ -48,7 +48,7 @@ IMPORTANT: Please read the [**LIMITATIONS OF MANAGED MAINLAND**](README.md/#mana
 Activate Managed Mainland (with Root, Experimental)
 ----------------------------------------------------
 
-IMPORTANT: Use this way method only if you can't use the non-root method above. **This is currently experimental, and may face different experience than the non-root method.**
+IMPORTANT: Use this method only if you can't use the non-root method above. **This is currently experimental, and may face different experience than the non-root method.**
 
 1. Su to "system" user in root shell: `su system`
 2. Create a XML file `profile_owner.xml` in `/data/system/users/0` with the following content:
