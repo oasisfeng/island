@@ -10,6 +10,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.api.DelegatedAppOpsManager;
 import com.oasisfeng.island.api.DelegatedDevicePolicyManager;
 import com.oasisfeng.island.api.PermissionForwardingRestrictionsManager;
@@ -34,24 +35,24 @@ public class SystemServiceBridge extends Service {
 		case Context.RESTRICTIONS_SERVICE:
 			try {
 				return PermissionForwardingRestrictionsManager.buildBinderProxy(this, user);
-			} catch (final ReflectiveOperationException e) {
-				Log.e(TAG, "Error preparing delegated RestrictionsManager", e);
+			} catch (final ReflectiveOperationException | ExceptionInInitializerError e) {
+				Analytics.$().logAndReport(TAG, "Error preparing delegated RestrictionsManager", e);
 			} catch (final PermissionForwardingRestrictionsManager.IncompatibilityException e) {
-				Log.e(TAG, "Incompatible ROM");
+				Analytics.$().logAndReport(TAG, "Incompatible ROM", e);
 			}
 			break;
 		case Context.DEVICE_POLICY_SERVICE:
 			try {
 				return DelegatedDevicePolicyManager.buildBinderProxy(this);
-			} catch (final ReflectiveOperationException e) {
-				Log.e(TAG, "Error preparing delegated DevicePolicyManager", e);
+			} catch (final ReflectiveOperationException | ExceptionInInitializerError e) {
+				Analytics.$().logAndReport(TAG, "Error preparing delegated DevicePolicyManager", e);
 				break;
 			}
 		case Context.APP_OPS_SERVICE:
 			try {
 				return DelegatedAppOpsManager.buildBinderProxy(this);
-			} catch (final ReflectiveOperationException e) {
-				Log.e(TAG, "Error preparing delegated AppOpsManager", e);
+			} catch (final ReflectiveOperationException | ExceptionInInitializerError e) {
+				Analytics.$().logAndReport(TAG, "Error preparing delegated AppOpsManager", e);
 				break;
 			}
 

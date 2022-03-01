@@ -268,7 +268,7 @@ public class IslandProvisioning extends IntentService {
 	}
 
 	public static void startDeviceAndProfileOwnerSharedPostProvisioning(final Context context, final DevicePolicies policies) {
-		final boolean owner = Users.isParentProfile();
+		final boolean isParent = Users.isParentProfile();
 		if (SDK_INT >= O) {
 			final Set<String> ids = Collections.singleton(AFFILIATION_ID);
 			final Set<String> current_ids = policies.invoke(DevicePolicyManager::getAffiliationIds);
@@ -278,13 +278,13 @@ public class IslandProvisioning extends IntentService {
 
 			policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_BLUETOOTH_SHARING);    // Ref: UserRestrictionsUtils.DEFAULT_ENABLED_FOR_MANAGED_PROFILES
 		}
-		if (owner) policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
+		if (isParent) policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_SHARE_LOCATION);		// May be restricted on some devices (e.g. LG V20)
 
 		try {
 			if (SDK_INT >= N_MR1 && ! policies.isBackupServiceEnabled())
 				policies.setBackupServiceEnabled(true);     // Ref: DevicePolicyManagerService.toggleBackupServiceActive()
-		} catch (final SecurityException e) {
-			if (SDK_INT != N_MR1 || ! owner && ! "There should only be one user, managed by Device Owner".equals(e.getMessage()))
+		} catch (final SecurityException e) {   // isBackupServiceEnabled()/setBackupServiceEnabled() require device owner before Android Q.
+			if (SDK_INT >= Q || ! isParent && ! "There should only be one user, managed by Device Owner".equals(e.getMessage()))
 				Analytics.$().report(e);
 		} catch (final IllegalStateException e) {
 			Analytics.$().report(e);
