@@ -28,9 +28,11 @@ class AppOpsPermissionsUnlock: BroadcastReceiver() {
 
 		val async = goAsync()
 		thread(start = true) {
-			unlockAll(context.applicationContext)
+			try { unlockAll(context.applicationContext) } // SecurityException on BBK brands (OnePlus, Realme, OPPO and etc.), "getPackagesForUid: UID 1010256 requires android.permission.INTERACT_ACROSS_USERS_FULL or android.permission.INTERACT_ACROSS_USERS or android.permission.INTERACT_ACROSS_PROFILES to access user ."
+			catch (e: SecurityException) { Log.e(TAG, "Failed to unlock all permissions", e) }
 			disableSelf(context)
-			async.finish() }
+			async.finish()
+		}
 	}
 
 	companion object {
