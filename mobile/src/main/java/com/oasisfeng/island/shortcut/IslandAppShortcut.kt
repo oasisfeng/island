@@ -140,7 +140,6 @@ object IslandAppShortcut {
 			= if (app.hidden) context.getString(R.string.default_launch_shortcut_prefix) else null
 
 	private fun buildShortcutInfo(context: Context, app: ApplicationInfo, dynamic: Boolean): ShortcutInfoCompat {
-		val settings = IslandSettings(context)
 		val pkg = app.packageName; val userId = app.userId; val isCrossProfile = isCrossProfile(userId)
 		val shortcutId = getShortcutId(pkg, userId, isCrossProfile)
 		val label = buildLabel(context, app, dynamic)
