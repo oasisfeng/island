@@ -69,8 +69,9 @@ class Users : PseudoContentProvider() {
 		@JvmStatic fun refreshUsers(context: Context) {
 			mDebugBuild = context.applicationInfo.flags and FLAG_DEBUGGABLE != 0
 			val um = context.getSystemService<UserManager>()!!
-			val profiles = um.userProfiles
-			sProfiles = profiles
+			val profiles = um.userProfiles.filter { profile -> (profile.toId() < 900).also {
+				if (! it) Log.w(TAG, "Skip profile ${profile.toId()} (most probably not normal profile)") }}
+			sProfileCount = profiles.size
 			val profilesByIsland = ArrayList<UserHandle>(profiles.size - 1)
 			parentProfile = profiles[0]
 			if (parentProfile == CURRENT) {      // Running in parent profile
@@ -78,8 +79,7 @@ class Users : PseudoContentProvider() {
 				val la = context.getSystemService<LauncherApps>()!!
 				val activityInOwner = la.getActivityList(uiModule, CURRENT)[0].name
 				for (profile in profiles.drop(1)/* skip parent */)
-					if (profile.toId() >= 999) Log.w(TAG, "Skip profile ${profile.toId()} (most probably not normal profile)")
-					else for (activity in la.getActivityList(uiModule, profile))
+					for (activity in la.getActivityList(uiModule, profile))
 						// Separate "Island Settings" launcher activity is enabled, only if profile is managed by Island.
 						if (activity.name == activityInOwner) Log.i(TAG, "Profile not managed by Island: ${profile.toId()}")
 						else profilesByIsland.add(profile).also { Log.i(TAG, "Profile managed by Island: ${profile.toId()}") }
@@ -117,8 +117,8 @@ class Users : PseudoContentProvider() {
 
 		/** Excluding parent profile */
 		@OwnerUser @JvmStatic fun getProfilesManagedByIsland() = sProfilesManagedByIsland.also { ensureParentProfile() }
-		/** Including parent profile and profiles not managed by Island */
-		fun getProfileCount() = sProfiles.size
+		/** Including parent profile and profiles not managed by Island (probably created by other DPC in non-primary user. */
+		fun getProfileCount() = sProfileCount
 		@JvmStatic fun UserHandle.toId() = hashCode()
 		@JvmStatic fun isSameApp(uid1: Int, uid2: Int) = getAppId(uid1) == getAppId(uid2)
 		private fun getAppId(uid: Int) = uid % PER_USER_RANGE
@@ -148,7 +148,7 @@ class Users : PseudoContentProvider() {
 		private const val ACTIVATION_TIMEOUT: Long = 15_000		// May need to wait for user credential
 
 		private var mDebugBuild = false
-		private lateinit var sProfiles: List<UserHandle>                // Intentionally left null to fail early if this
+		private var sProfileCount: Int = 0
 		private lateinit var sProfilesManagedByIsland: List<UserHandle> //  class is accidentally used in other process.
 		private const val PER_USER_RANGE = 100000
 		private const val TAG = "Island.Users"
