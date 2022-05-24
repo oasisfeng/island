@@ -192,6 +192,9 @@
     <string name="pref_about_version_title">版本</string>
     <string name="pref_about_open_source_title">這是一個開源項目</string>
     <string name="pref_about_open_source_summary">歡迎來 GitHub 瀏覽我們</string>
+    <string name="pref_about_beta">取得 Beta 測試版本</string>
+    <string name="pref_about_beta_play_summary">加入 Play 商店的 Beta 版計畫以取得 Beta 測試版本。</string>
+    <string name="pref_about_beta_github_summary">在 GitHub Repo Page 上設定 Custom Watch - release 以接收 Pre-Release（Beta）版本的通知。</string>
     <string name="pref_about_licenses_title">授權</string>
 
     <!-- Security Confirmation -->
