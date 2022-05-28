@@ -67,10 +67,7 @@ object IslandAppShortcut {
 
 	@OwnerUser @JvmStatic fun requestPin(context: Context, app: ApplicationInfo) {
 		val dynamic = isDynamicLabelEnabled(context)
-		val profile = app.user
-		if (IslandManager.isReady(context, profile))
-			Shuttle(context, profile).launchNoThrows { requestPinAsUser(this, app, dynamic) }
-		else requestPinAsUser(context, app, dynamic)    // Create cross-profile shortcut in Mainland if Island is not ready (probably deactivated)
+		requestPinAsUser(context, app, dynamic)
 	}
 
 	/** @return true if launcher supports shortcut pinning, false for failure, or null if legacy shortcut installation broadcast is sent. */
