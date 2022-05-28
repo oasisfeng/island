@@ -75,6 +75,8 @@ object IslandAppShortcut {
 
 	/** @return true if launcher supports shortcut pinning, false for failure, or null if legacy shortcut installation broadcast is sent. */
 	@OwnerUser @ProfileUser @JvmStatic fun requestPinAsUser(context: Context, app: ApplicationInfo, dynamic: Boolean) {
+		if (SDK_INT < O) return requestLegacyPin(context, app)
+
 		val shortcut = buildShortcutInfo(context, app, dynamic)
 
 		try { ShortcutManagerCompat.pushDynamicShortcut(context, shortcut) }
@@ -121,7 +123,7 @@ object IslandAppShortcut {
 			update(context, app, dynamic) }
 	}
 
-	@OwnerUser private fun update(context: Context, app: ApplicationInfo, dynamic: Boolean) {
+	@OwnerUser @RequiresApi(O) private fun update(context: Context, app: ApplicationInfo, dynamic: Boolean) {
 		Log.i(TAG, "Updating shortcut for ${app.packageName} in profile ${app.userId}")
 		val shortcut = buildShortcutInfo(context, app, dynamic)
 		ShortcutManagerCompat.updateShortcuts(context, listOf(shortcut))
@@ -139,7 +141,7 @@ object IslandAppShortcut {
 	private fun getDynamicPrefix(context: Context, app: ApplicationInfo)
 			= if (app.hidden) context.getString(R.string.default_launch_shortcut_prefix) else null
 
-	private fun buildShortcutInfo(context: Context, app: ApplicationInfo, dynamic: Boolean): ShortcutInfoCompat {
+	@RequiresApi(O) private fun buildShortcutInfo(context: Context, app: ApplicationInfo, dynamic: Boolean): ShortcutInfoCompat {
 		val pkg = app.packageName; val userId = app.userId; val isCrossProfile = isCrossProfile(userId)
 		val shortcutId = getShortcutId(pkg, userId, isCrossProfile)
 		val label = buildLabel(context, app, dynamic)
