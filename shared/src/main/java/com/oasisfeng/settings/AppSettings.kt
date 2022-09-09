@@ -7,6 +7,8 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import androidx.annotation.StringRes
+import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.Users.Companion.toId
 
 /**
  * Utility class to access options stored in settings provider.
@@ -71,7 +73,7 @@ class AppSettings(context: Context) {
 
 	private fun getOptionUri(option: AppSetting<*>) = getOptionUri(getKey(option), option.isSingleUser)
 	private fun getOptionUri(pref_key: String, singleUser: Boolean) = Uri.parse("content://"
-			+ (if (singleUser) "0@" else "") + mAppContext.packageName + ".settings/" + pref_key)
+			+ (if (singleUser) "${Users.parentProfile.toId()}@" else "") + mAppContext.packageName + ".settings/" + pref_key)
 	private fun <T> getKey(option: AppSetting<T>) = mAppContext.getString(option.prefKeyResId)
 
 	private val mAppContext: Context = context.applicationContext
