@@ -8,7 +8,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.NameNotFoundException
-import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -17,7 +16,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Binder
 import android.os.Build.VERSION.SDK_INT
@@ -31,6 +29,7 @@ import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import androidx.annotation.RequiresApi
+import androidx.core.content.LocusIdCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -68,22 +67,19 @@ object IslandAppShortcut {
 
 	@OwnerUser @JvmStatic fun requestPin(context: Context, app: ApplicationInfo) {
 		val dynamic = isDynamicLabelEnabled(context)
-		val profile = app.user
-		if (IslandManager.isReady(context, profile))
-			Shuttle(context, profile).launchNoThrows { requestPinAsUser(this, app, dynamic) }
-		else requestPinAsUser(context, app, dynamic)    // Create cross-profile shortcut in Mainland if Island is not ready (probably deactivated)
+		requestPinAsUser(context, app, dynamic)
 	}
 
 	/** @return true if launcher supports shortcut pinning, false for failure, or null if legacy shortcut installation broadcast is sent. */
 	@OwnerUser @ProfileUser @JvmStatic fun requestPinAsUser(context: Context, app: ApplicationInfo, dynamic: Boolean) {
 		if (SDK_INT < O) return requestLegacyPin(context, app)
 
-		val sm: ShortcutManager = context.getSystemService() ?: return showToastForShortcutFailure(context)
-		val info = buildShortcutInfo(context, app, dynamic)
-		try { sm.addDynamicShortcuts(listOf(info)) }
+		val shortcut = buildShortcutInfo(context, app, dynamic)
+
+		try { ShortcutManagerCompat.pushDynamicShortcut(context, shortcut) }
 		catch (e: RuntimeException) { Log.e(TAG, "Error adding dynamic shortcut", e) }
 
-		try { sm.requestPinShortcut(info, null) }       // FIXME: Deal with rate limit
+		try { ShortcutManagerCompat.requestPinShortcut(context, shortcut, null) }       // FIXME: Deal with rate limit
 		catch (e: RuntimeException) { showToastForShortcutFailure(context); analytics().report(e) }
 	}
 
@@ -127,7 +123,7 @@ object IslandAppShortcut {
 	@OwnerUser @RequiresApi(O) private fun update(context: Context, app: ApplicationInfo, dynamic: Boolean) {
 		Log.i(TAG, "Updating shortcut for ${app.packageName} in profile ${app.userId}")
 		val shortcut = buildShortcutInfo(context, app, dynamic)
-		context.getSystemService<ShortcutManager>()?.updateShortcuts(listOf(shortcut))
+		ShortcutManagerCompat.updateShortcuts(context, listOf(shortcut))
 	}
 
 	private fun buildLabel(context: Context, app: ApplicationInfo, dynamic: Boolean)
@@ -142,16 +138,15 @@ object IslandAppShortcut {
 	private fun getDynamicPrefix(context: Context, app: ApplicationInfo)
 			= if (app.hidden) context.getString(R.string.default_launch_shortcut_prefix) else null
 
-	@RequiresApi(O) private fun buildShortcutInfo(context: Context, app: ApplicationInfo, dynamic: Boolean): ShortcutInfo {
+	@RequiresApi(O) private fun buildShortcutInfo(context: Context, app: ApplicationInfo, dynamic: Boolean): ShortcutInfoCompat {
 		val pkg = app.packageName; val userId = app.userId; val isCrossProfile = isCrossProfile(userId)
 		val shortcutId = getShortcutId(pkg, userId, isCrossProfile)
 		val label = buildLabel(context, app, dynamic)
 		val intent = buildShortcutIntent(context, pkg, userId)
 		val drawable = getAppIconDrawable(context, context.getSystemService()!!, app)
-		val sm = context.getSystemService<ShortcutManager>()!!
-		return ShortcutInfo.Builder(context, shortcutId).setIntent(intent).setShortLabel(label).apply {
-			setIcon(Icon.createWithAdaptiveBitmap(drawable.toBitmap(sm.iconMaxWidth, sm.iconMaxHeight)))
-			if (SDK_INT >= Q) setLocusId(LocusId(shortcutId))
+		return ShortcutInfoCompat.Builder(context, shortcutId).setIntent(intent).setShortLabel(label).apply {
+			setIcon(IconCompat.createWithAdaptiveBitmap(drawable.toBitmap(ShortcutManagerCompat.getIconMaxWidth(context), ShortcutManagerCompat.getIconMaxHeight(context))))
+			if (SDK_INT >= Q) setLocusId(LocusIdCompat(shortcutId))
 		}.build()
 	}
 
