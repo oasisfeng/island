@@ -69,7 +69,7 @@ class Users : PseudoContentProvider() {
 		@JvmStatic fun refreshUsers(context: Context) {
 			mDebugBuild = context.applicationInfo.flags and FLAG_DEBUGGABLE != 0
 			val um = context.getSystemService<UserManager>()!!
-			val profiles = um.userProfiles.filter { profile -> (profile.toId() < 900).also {
+			val profiles = um.userProfiles.filter { profile -> (profile.toId() < 100).also {	// "Secure Folder" on Samsung devices uses user ID 150.
 				if (! it) Log.w(TAG, "Skip profile ${profile.toId()} (most probably not normal profile)") }}
 			sProfileCount = profiles.size
 			val profilesByIsland = ArrayList<UserHandle>(profiles.size - 1)
