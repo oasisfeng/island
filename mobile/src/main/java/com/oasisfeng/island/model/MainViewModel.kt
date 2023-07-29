@@ -33,14 +33,15 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 			override fun onTabReselected(tab: TabLayout.Tab) {}})
 
 		// Tab "Discovery" and "Mainland" are always present
-		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery),/* selected = */false)
+		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery),/* setSelected = */false)
 		val currentProfile = currentProfile
-		tabs.addTab(tabs.newTab().setText(R.string.mainland_name),/* selected = */Users.isParentProfile(currentProfile))
+		tabs.addTab(tabs.newTab().setText(com.oasisfeng.island.shared.R.string.mainland_name),
+			/* setSelected = */Users.isParentProfile(currentProfile))
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)
-			mProfileStates.get(profile).observe(activity, { updateTabIconForProfileState(activity, tab, profile, it) })
-			tabs.addTab(tab,/* selected = */profile == currentProfile) }
+			mProfileStates.get(profile).observe(activity) { updateTabIconForProfileState(activity, tab, profile, it) }
+			tabs.addTab(tab,/* setSelected = */profile == currentProfile) }
 	}
 
 	private fun updateTabIconForProfileState(context: Context, tab: TabLayout.Tab, profile: UserHandle, state: ProfileState) {
@@ -55,7 +56,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 
 	override fun onCleared() {
 		super.onCleared()
-		getApplication<Application>().unregisterReceiver(mIslandNameChangeObserver)
+		application.unregisterReceiver(mIslandNameChangeObserver)
 	}
 
 	private val mIslandNameChangeObserver = receiver { intent ->
@@ -66,7 +67,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 	}
 
 	init {
-		getApplication<Application>().registerReceiver(mIslandNameChangeObserver, IntentFilter(ACTION_USER_INFO_CHANGED))
+		app.registerReceiver(mIslandNameChangeObserver, IntentFilter(ACTION_USER_INFO_CHANGED))
 	}
 
 	private var mTabs: TabLayout? = null

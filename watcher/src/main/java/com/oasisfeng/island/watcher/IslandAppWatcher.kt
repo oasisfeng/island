@@ -73,13 +73,14 @@ import java.util.*
 		for (granted_permission in grantedPermissions) try {
 			val permissionLabel = pm.getPermissionInfo(granted_permission, 0).loadLabel(pm)
 			val tag = Uri.fromParts(pkg, granted_permission, null).toString()
-			NotificationIds.IslandAppWatcher.post(context, tag) { buildShared(context, pkg, R.color.accent)
-					setSubText(appName).setContentTitle(context.getString(R.string.notification_permission_was_granted_title, permissionLabel))
-					setContentText(context.getText(R.string.notification_permission_was_granted_text))
-					addAction(Notification.Action.Builder(null, context.getText(R.string.action_keep_granted),
-							makePendingIntent(context, ACTION_DISMISS, pkg, granted_permission)).build())
-					addAction(Notification.Action.Builder(null, context.getText(R.string.action_revoke_granted),
-							makePendingIntent(context, ACTION_REVOKE_PERMISSION, pkg, granted_permission)).build()) }}
+			NotificationIds.IslandAppWatcher.post(context, tag) {
+				buildShared(context, pkg, com.oasisfeng.island.shared.R.color.accent)
+				setSubText(appName).setContentTitle(context.getString(R.string.notification_permission_was_granted_title, permissionLabel))
+				setContentText(context.getText(R.string.notification_permission_was_granted_text))
+				addAction(Notification.Action.Builder(null, context.getText(R.string.action_keep_granted),
+					makePendingIntent(context, ACTION_DISMISS, pkg, granted_permission)).build())
+				addAction(Notification.Action.Builder(null, context.getText(R.string.action_revoke_granted),
+					makePendingIntent(context, ACTION_REVOKE_PERMISSION, pkg, granted_permission)).build()) }}
 		catch (_: PackageManager.NameNotFoundException) {}  // Should never happen
 	}
 
@@ -113,14 +114,15 @@ import java.util.*
 				}
 			} else watchingPermissions = null
 			val pkg = info.packageName; val appLabel = info.applicationInfo.loadLabel(context.packageManager)
-			NotificationIds.IslandAppWatcher.post(context, pkg) { buildShared(context, pkg, R.color.primary)
-					setContentTitle(context.getString(R.string.notification_app_watcher_title, appLabel)).setContentText(context.getText(R.string.notification_app_watcher_text))
-					setContentIntent(makePendingIntent(context, ACTION_REFREEZE, "package", pkg) {
-						watchingPermissions?.also { putStringArrayListExtra(EXTRA_WATCHING_PERMISSIONS, it) }})
-					addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
-							NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build())
-					addAction(Notification.Action.Builder(null, context.getText(R.string.action_dismiss),
-							makePendingIntent(context, ACTION_DISMISS, "package", pkg)).build()) }
+			NotificationIds.IslandAppWatcher.post(context, pkg) {
+				buildShared(context, pkg, com.oasisfeng.island.shared.R.color.primary)
+				setContentTitle(context.getString(R.string.notification_app_watcher_title, appLabel)).setContentText(context.getText(R.string.notification_app_watcher_text))
+				setContentIntent(makePendingIntent(context, ACTION_REFREEZE, "package", pkg) {
+					watchingPermissions?.also { putStringArrayListExtra(EXTRA_WATCHING_PERMISSIONS, it) }})
+				addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
+					NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build())
+				addAction(Notification.Action.Builder(null, context.getText(R.string.action_dismiss),
+					makePendingIntent(context, ACTION_DISMISS, "package", pkg)).build()) }
 		}
 
 		private fun makePendingIntent(context: Context, action: String, scheme: String, ssp: String, extras: ((Intent).() -> Unit)? = null)
@@ -130,8 +132,8 @@ import java.util.*
 
 		private fun Notification.Builder.buildShared(context: Context, pkg: String, @ColorRes color: Int) {
 			val shortcutId = "launch:$pkg"
-			setOngoing(true).setColor(context.getColor(color))
-					.setSmallIcon(R.drawable.ic_landscape_black_24dp).setVisibility(Notification.VISIBILITY_PUBLIC)
+			setOngoing(true).setColor(context.getColor(color)).setVisibility(Notification.VISIBILITY_PUBLIC)
+					.setSmallIcon(com.oasisfeng.island.shared.R.drawable.ic_landscape_black_24dp)
 					.setGroup(GROUP).setCategory(Notification.CATEGORY_STATUS).setShortcutId(shortcutId)
 			if (SDK_INT >= Q) setLocusId(LocusId(shortcutId))
 		}

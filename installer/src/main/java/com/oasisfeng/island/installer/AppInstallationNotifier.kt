@@ -100,7 +100,8 @@ internal object AppInstallationNotifier {
 
 	@JvmStatic fun showNotification(context: Context, sessionId: Int, title: CharSequence?, decorate: Notification.Builder.() -> Unit = {}) {
 		val n = @Suppress("DEPRECATION") Notification.Builder(context).setContentTitle(title)
-				.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getColor(R.color.primary))
+				.setSmallIcon(com.oasisfeng.island.shared.R.drawable.ic_landscape_black_24dp)
+				.setColor(context.getColor(com.oasisfeng.island.shared.R.color.primary))
 		NotificationIds.AppInstallation.post(context, sessionId.toString(), n.apply(decorate))
 	}
 
@@ -123,7 +124,8 @@ internal object AppInstallationNotifier {
 				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, pkg).putExtra(Intent.EXTRA_USER, user)
 		AppInfoForwarderActivity.markAsLaunchedBySettings(forwarder)    // Otherwise app settings is launched instead.
 		val action = PendingIntent.getActivity(context, 0, forwarder, FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
-		@Suppress("DEPRECATION") n.setContentIntent(action).addAction(R.drawable.ic_settings_applications_white_24dp,
+		@Suppress("DEPRECATION") n.setContentIntent(action)
+			.addAction(com.oasisfeng.island.shared.R.drawable.ic_settings_applications_white_24dp,
 				context.getString(R.string.action_show_app_settings), action)
 	}
 

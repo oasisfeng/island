@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 android {
     namespace 'com.oasisfeng.island.shared'
 
-    compileSdkVersion this.compileSdkVersion
+    compileSdk this.compileSdkVersion
 
     defaultConfig {
         minSdkVersion this.minSdkVersion

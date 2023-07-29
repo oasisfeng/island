@@ -66,7 +66,9 @@ import com.oasisfeng.island.util.Users
 			return super.onHeaderClick(header, position)
 
 		val names = IslandNameManager.getAllNames(this)
-		val labels = users.map { user -> if (Users.isParentProfile(user)) getText(R.string.mainland_name) else names[user] }.toTypedArray()
+		val labels = users.map { user ->
+			if (Users.isParentProfile(user)) getText(com.oasisfeng.island.shared.R.string.mainland_name) else names[user]
+		}.toTypedArray()
 		Dialogs.buildList(this, null, labels) { _, which ->
 			if (which == 0) super.onHeaderClick(header, position)
 			else launchSettingsActivityAsUser(users[which])

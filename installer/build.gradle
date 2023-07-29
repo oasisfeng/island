@@ -5,7 +5,7 @@ apply plugin: 'kotlin-parcelize'
 android {
     namespace 'com.oasisfeng.island.installer'
 
-    compileSdkVersion this.compileSdkVersion
+    compileSdk this.compileSdkVersion
 
     defaultConfig {
         minSdkVersion this.minSdkVersion
@@ -26,6 +26,6 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlin_coroutine_version"
     implementation "com.jaredrummler:apk-parser:1.0.2"
 
-    testImplementation 'junit:junit:4.13.1'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
 }

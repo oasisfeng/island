@@ -83,7 +83,7 @@ object IslandAppShortcut {
 		try { sm.addDynamicShortcuts(listOf(info)) }
 		catch (e: RuntimeException) { Log.e(TAG, "Error adding dynamic shortcut", e) }
 
-		try { sm.requestPinShortcut(info, null) }       // FIXME: Deal with rate limit
+		try { sm.requestPinShortcut(info, null) }       // FIXME: Deal with rate limit and ROM restricted shortcut permission (no exception)
 		catch (e: RuntimeException) { showToastForShortcutFailure(context); analytics().report(e) }
 	}
 

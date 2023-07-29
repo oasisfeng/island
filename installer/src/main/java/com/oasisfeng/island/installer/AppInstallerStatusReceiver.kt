@@ -32,7 +32,7 @@ class AppInstallerStatusReceiver: BroadcastReceiver() {
 
 			PackageInstaller.STATUS_PENDING_USER_ACTION -> {
 				val action = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
-				if (action.component?.packageName ?: action.`package` == context.packageName) return    // Prevent targeting our private component
+				if ((action.component?.packageName ?: action.`package`) == context.packageName) return    // Prevent targeting our private component
 				action.flags = action.flags and FLAG_GRANT_READ_URI_PERMISSION.inv() and FLAG_GRANT_WRITE_URI_PERMISSION.inv()  // Prevent content leak
 				if (AppInstallerUtils.ensureSystemPackageEnabledAndUnfrozen(context, action))
 					context.startActivity(action.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_FORWARD_RESULT))

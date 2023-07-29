@@ -5,7 +5,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 android {
     namespace 'com.oasisfeng.island'
 
-    compileSdkVersion this.compileSdkVersion
+    compileSdk this.compileSdkVersion
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
@@ -30,18 +30,9 @@ android {
     flavorDimensions "packaging"
 
     productFlavors {
-        complete {
-            dimension "packaging"
-        }
-        engine {    // Use the same application ID to retain the profile / device ownership between "engine" and "full" build.
-            dimension "packaging"
-            matchingFallbacks = ['full']
-        }
-        mobile {
-            applicationIdSuffix ".mobile"
-            dimension "packaging"
-            matchingFallbacks = ['full']
-        }
+        complete { dimension "packaging" }
+        engine   { dimension "packaging" }  // Share application ID to retain the profile ownership when switching builds
+        mobile   { dimension "packaging"; applicationIdSuffix ".mobile" }
     }
 
     compileOptions {

@@ -4,6 +4,8 @@ import static android.Manifest.permission.MANAGE_DOCUMENTS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE;
+import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
+import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_INHERIT_EXISTING;
@@ -323,7 +325,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			final ActivityInfo activity = candidate.activityInfo;
 			if ((activity.applicationInfo.flags & FLAG_SYSTEM) == 0) continue;
 			final ComponentName component = new ComponentName(activity.packageName, activity.name);
-			intent.setComponent(component).setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+			intent.setComponent(component).setFlags(FLAG_ACTIVITY_FORWARD_RESULT | FLAG_GRANT_READ_URI_PERMISSION);
 			Log.i(TAG, "Redirect to system package installer: " + component.flattenToShortString());
 
 			final StrictMode.VmPolicy vm_policy = StrictMode.getVmPolicy();

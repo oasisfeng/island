@@ -51,8 +51,8 @@ class GeneralPreferenceFragment: SettingsActivity.SubPreferenceFragment(R.xml.pr
 
             isChecked = policies.invoke(DPM::getShortSupportMessage) != null
             onChange { enabled -> true.also {
-                policies.execute(DPM::setShortSupportMessage, if (enabled) getText(R.string.device_admin_support_message_short) else null)
-                policies.execute(DPM::setLongSupportMessage, if (enabled) getText(R.string.device_admin_support_message_long) else null) }}}
+                policies.execute(DPM::setShortSupportMessage, if (enabled) getText(com.oasisfeng.island.shared.R.string.device_admin_support_message_short) else null)
+                policies.execute(DPM::setLongSupportMessage, if (enabled) getText(com.oasisfeng.island.shared.R.string.device_admin_support_message_long) else null) }}}
 
         setup<TwoStatePreference>(R.string.key_preserve_app_ops) {
             if (SDK_INT < P) return@setup remove(this)

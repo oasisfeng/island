@@ -1,6 +1,7 @@
 package com.oasisfeng.island.watcher
 
 import android.app.*
+import android.app.Notification.CATEGORY_PROGRESS
 import android.app.Notification.CATEGORY_STATUS
 import android.app.Notification.VISIBILITY_PUBLIC
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
@@ -44,7 +45,7 @@ import kotlinx.coroutines.launch
 
 	override fun onReceive(context: Context, intent: Intent) {
 		Log.d(TAG, "onReceive: $intent")
-		if (SDK_INT < P || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_BOOT_COMPLETED,
+		if ((SDK_INT < P && ! BuildConfig.DEBUG) || intent.action !in listOf(Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_BOOT_COMPLETED,
 				Intent.ACTION_MY_PACKAGE_REPLACED, NotificationManager.ACTION_NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED,
 				NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED, ACTION_USER_INFO_CHANGED)) return
 		if (Users.isParentProfile()) return context.packageManager.setComponentEnabledSetting(ComponentName(context, javaClass),
@@ -65,12 +66,13 @@ import kotlinx.coroutines.launch
 		if (! canDeactivate && ! canRestart && ! needsManualDeactivate) return
 
 		NotificationIds.IslandWatcher.post(context) {
-			setOngoing(true).setGroup(GROUP).setGroupSummary(true)
-			setSmallIcon(R.drawable.ic_landscape_black_24dp).setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
-			setColor(context.getColor(R.color.primary)).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
+			setOngoing(true).setGroup(GROUP).setGroupSummary(true).setCategory(CATEGORY_STATUS).setVisibility(VISIBILITY_PUBLIC)
+			setSmallIcon(com.oasisfeng.island.shared.R.drawable.ic_landscape_black_24dp)
+			setLargeIcon(Icon.createWithBitmap(getAppIcon(context)))
+			setColor(context.getColor(com.oasisfeng.island.shared.R.color.primary))
 			setContentTitle(context.getString(R.string.notification_island_watcher_title, IslandNameManager.getName(context)))
 			setContentText(context.getText(if (canDeactivate || ! canRestart) R.string.notification_island_watcher_text_for_deactivate
-					else R.string.notification_island_watcher_text_for_restart))
+				else R.string.notification_island_watcher_text_for_restart))
 			if (canDeactivate) addServiceAction(context, R.string.action_deactivate_island)
 			if (canRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
 			if (needsManualDeactivate) addServiceAction(context, R.string.action_deactivate_island_manually, Settings.ACTION_SYNC_SETTINGS)
@@ -141,8 +143,9 @@ import kotlinx.coroutines.launch
 		private fun requestQuietMode(profile: UserHandle) {
 			// requestQuietModeEnabled() requires us running as foreground (service).
 			NotificationIds.IslandWatcher.startForeground(this, Notification.Builder(this, null)
-					.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(getColor(R.color.primary)).setCategory(Notification.CATEGORY_PROGRESS)
-					.setProgress(0, 0, true).setContentTitle("Deactivating Island space..."))
+				.setSmallIcon(com.oasisfeng.island.shared.R.drawable.ic_landscape_black_24dp)
+				.setCategory(CATEGORY_PROGRESS).setColor(getColor(com.oasisfeng.island.shared.R.color.primary))
+				.setProgress(0, 0, true).setContentTitle("Deactivating Island space..."))
 
 			try { getSystemService<UserManager>()!!.requestQuietModeEnabled(true, profile) }
 			catch (e: SecurityException) {   // Fall-back to manual control

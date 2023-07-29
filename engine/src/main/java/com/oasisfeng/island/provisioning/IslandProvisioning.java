@@ -290,8 +290,10 @@ public class IslandProvisioning extends IntentService {
 			Analytics.$().report(e);
 		}
 
-		policies.execute(DevicePolicyManager::setShortSupportMessage, context.getText(R.string.device_admin_support_message_short));
-		policies.execute(DevicePolicyManager::setLongSupportMessage, context.getText(R.string.device_admin_support_message_long));
+		policies.execute(DevicePolicyManager::setShortSupportMessage,
+				context.getText(com.oasisfeng.island.shared.R.string.device_admin_support_message_short));
+		policies.execute(DevicePolicyManager::setLongSupportMessage,
+				context.getText(com.oasisfeng.island.shared.R.string.device_admin_support_message_long));
 		// As reported by user, some account types are strangely unable to remove. Just make sure all account types are allowed.
 		final String[] restricted_account_types = policies.getManager().getAccountTypesWithManagementDisabled();
 		if (restricted_account_types != null && restricted_account_types.length > 0) for (final String account_type : restricted_account_types)
@@ -382,7 +384,8 @@ public class IslandProvisioning extends IntentService {
 	private final Supplier<Notification.Builder> mForegroundNotification = Suppliers.memoize(() -> {
 		final Notification.Builder builder = new Notification.Builder(this)
 				.setPriority(PRIORITY_HIGH).setCategory(CATEGORY_STATUS).setUsesChronometer(true)
-				.setSmallIcon(android.R.drawable.stat_notify_sync).setColor(getColor(R.color.accent))
+				.setSmallIcon(android.R.drawable.stat_notify_sync)
+				.setColor(getColor(com.oasisfeng.island.shared.R.color.accent))
 				.setContentTitle(getText(Users.isParentProfile() ? R.string.notification_provisioning_mainland_title : R.string.notification_provisioning_island_title))
 				.setContentText(getText(R.string.notification_provisioning_text));
 		return SDK_INT < O ? builder : builder.setBadgeIconType(BADGE_ICON_SMALL).setColorized(true);
