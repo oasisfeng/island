@@ -104,6 +104,7 @@ public class AppListFragment extends Fragment {
 		mBinding.setFeatured(mViewModel.mFeatured);
 		mBinding.setGuide(mUserGuide);
 		mBinding.setLifecycleOwner(this);
+//      AppExtraInfo.bind(mBinding.extras, mViewModel.mSelection);
 		activity.setActionBar(mBinding.actionbar);	// Must before attach
 		mViewModel.initializeTabs(activity, mBinding.tabs);
 

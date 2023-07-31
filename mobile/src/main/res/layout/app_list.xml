@@ -171,7 +171,12 @@
                 android:paddingEnd="@dimen/margin_medium"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="@{apps.mSelection.getStatusText(context)}" tools:text="Frozen"/>
-
+<!--
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/extras"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+-->
             <TextView
                 android:id="@+id/package_name"
                 android:layout_width="match_parent"
