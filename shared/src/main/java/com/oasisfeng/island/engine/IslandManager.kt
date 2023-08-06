@@ -22,14 +22,17 @@ import com.oasisfeng.island.util.Users.Companion.toId
 object IslandManager {
 
     @JvmStatic fun ensureLegacyInstallNonMarketAppAllowed(context: Context, policies: DevicePolicies): Boolean {
-        policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES)
-        if (SDK_INT >= O) return true // INSTALL_NON_MARKET_APPS is no longer supported since Android O.
-        val resolver = context.contentResolver
-        @Suppress("DEPRECATION", "LocalVariableName") val INSTALL_NON_MARKET_APPS = Settings.Secure.INSTALL_NON_MARKET_APPS
-        if (Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0) return true
-        policies.execute(DPM::setSecureSetting, INSTALL_NON_MARKET_APPS, "1")
-        return Settings.Secure.getInt(resolver, INSTALL_NON_MARKET_APPS, 0) > 0
+        if (isInstallFromUnknownSourcesAllowed(context)) return true
+        if (policies.isProfileOwner) {
+            policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES)
+            if (SDK_INT < O) @Suppress("DEPRECATION")
+                policies.execute(DPM::setSecureSetting, Settings.Secure.INSTALL_NON_MARKET_APPS, "1")
+        }
+        return isInstallFromUnknownSourcesAllowed(context)
     }
+
+    @Suppress("DEPRECATION") private fun isInstallFromUnknownSourcesAllowed(context: Context) =
+        Settings.Secure.getInt(context.contentResolver, Settings.Secure.INSTALL_NON_MARKET_APPS, 0) > 0
 
     @JvmStatic @OwnerUser @ProfileUser fun ensureAppHiddenState(context: Context, pkg: String, state: Boolean): Boolean {
         val policies = DevicePolicies(context)

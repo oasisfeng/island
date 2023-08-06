@@ -1,5 +1,6 @@
  package com.oasisfeng.island.controller
 
+import android.Manifest.permission.REQUEST_INSTALL_PACKAGES
 import android.app.admin.DevicePolicyManager
 import android.content.*
 import android.content.Intent.EXTRA_INSTALLER_PACKAGE_NAME
@@ -16,6 +17,8 @@ import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
+import android.os.Process.myPid
+import android.os.Process.myUid
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.IntDef
@@ -91,19 +94,25 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			drawable.setTint(context.getColor(if (dark) android.R.color.white else android.R.color.black))		// TODO: Decouple
 			if (shouldShowBadge) Users.getUserBadgedIcon(context, drawable, user) else drawable })
 
+		// REQUEST_INSTALL_PACKAGES is disallowed on Google Play Store, thus removed in the Google Play packaging.
 		val isShizukuAvailable = try { Shizuku.getVersion() >= 11 } catch (e: RuntimeException) { false }
 		val isShizukuReady = isShizukuAvailable && Shizuku.checkSelfPermission() == PERMISSION_GRANTED
-		val isPlayStoreAvailable = Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME) && isInstalledByPlayStore(context, pkg)
+		val isPlayStoreAvailable = Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME)
+		val isInstalledByPlayStore = isInstalledByPlayStore(context, pkg)
 		val isPlayStoreReady = targets.size <= 2 && isPlayStoreAvailableInProfiles(targets.keys)
 
 		val fragment = ModelBottomSheetFragment()
 		val alp = IslandAppListProvider.getInstance(context)
 		val dialog = AppClonesBottomSheet(targets, icons, { user -> alp.isInstalled(pkg, user) }) { target, mode ->
-			makeAppAvailableInProfile(target, mode)
+			makeAppAvailable(target, mode)
 			fragment.dismiss() }
 
 		fragment.show(activity) {
-			val mode = mutableStateOf(if (isShizukuReady) MODE_SHIZUKU else if (isPlayStoreReady) MODE_PLAY_STORE else null)
+			val defaultMode = when {
+				isShizukuReady -> MODE_SHIZUKU
+				isPlayStoreReady && (isInstalledByPlayStore || ! isInstallerReady()) -> MODE_PLAY_STORE
+				else -> null }
+			val mode = mutableStateOf(defaultMode)
 			dialog.compose(showShizuku = isShizukuAvailable, showPlayStore = isPlayStoreAvailable, mode)
 
 			snapshotFlow { mode.value }.onEach {
@@ -116,25 +125,21 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 	}
 
 	/** Either by unfreezing initially frozen (system) app, enabling disabled system app, or clone user app. */
-	private fun makeAppAvailableInProfile(profile: UserHandle, mode: Int) {
+	private fun makeAppAvailable(profile: UserHandle, mode: Int) {
 		val target = IslandAppListProvider.getInstance(context)[pkg, profile]
-		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled) {    // Frozen system app shown as disabled, just unfreeze it.
+		if (target != null && target.isHiddenSysIslandAppTreatedAsDisabled) {   // Frozen system app shown as disabled, just unfreeze it.
 			if (unfreezeInitiallyFrozenSystemApp(target) == true)
 				Toast.makeText(activity, context.getString(R.string.toast_successfully_cloned, app.label), Toast.LENGTH_SHORT).show()
-		} else if (target != null && target.isInstalled && ! target.enabled) {    // Disabled system app is shown as "removed" (not cloned)
+		} else if (target != null && target.isInstalled && !target.enabled) {  // Disabled app may be shown as "removed"
 			launchSystemAppSettings(target)
 			Toast.makeText(activity, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show()
-		} else cloneUserApp(profile, mode)
+		} else vm.interactive(context) { cloneApp(app, profile, mode) }
 	}
 
-	/** Clone user app to Mainland or Island */
-	private fun cloneUserApp(target: UserHandle, mode: @AppCloneMode Int = 0) {
-		if (Users.isParentProfile(target))
-			activity.startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)))
-		else vm.interactive(context) { cloneAppToIsland(app, target, mode) }
-	}
+	private suspend fun cloneApp(source: IslandAppInfo, target: UserHandle, mode: @AppCloneMode Int) {
+		if (Users.isParentProfile(target) && isInstallerReady())    // Only works in parent profile due to a bug in AOSP.
+			return activity.startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)))
 
-	private suspend fun cloneAppToIsland(source: IslandAppInfo, target: UserHandle, mode: @AppCloneMode Int) {
 		val context = source.context(); val pkg = source.packageName
 		if (source.isSystem) {
 			analytics().event("clone_sys").with(Analytics.Param.ITEM_ID, pkg).send()
@@ -145,8 +150,6 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			else Toast.makeText(context, context.getString(R.string.toast_cannot_clone, source.label), Toast.LENGTH_LONG).show()
 			return
 		}
-
-		if (SDK_INT >= O && cloneAppViaRoot(context, source, target)) return    // Prefer root routine to avoid overhead (it's instant)
 
 		if (mode == MODE_SHIZUKU && Shizuku.checkSelfPermission() == PERMISSION_GRANTED) {
 			val component = ComponentName(context, PrivilegedRemoteWorker::class.java)
@@ -171,10 +174,10 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			return
 		}
 
-		val viaPlayStore = mode == MODE_PLAY_STORE && isInstalledByPlayStore(context, pkg)
+		if (SDK_INT >= O && cloneAppViaRoot(context, source, target)) return    // Prefer root routine to avoid overhead (it's instant)
 
 		val result = Shuttle(context, to = target).invokeNoThrows(with = source as ApplicationInfo) {
-			performAppCloningInProfile(this, it, viaPlayStore) }     // Cast to reduce the overhead
+			performAppCloningInProfile(this, it, mode == MODE_PLAY_STORE) }
 		Log.i(TAG, "Result of cloning $pkg to $target: $result")
 
 		when (result) {
@@ -186,18 +189,24 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			CLONE_RESULT_OK_INSTALL_EXISTING -> analytics().event("clone_install_existing").with(Analytics.Param.ITEM_ID, pkg).send()
 			CLONE_RESULT_OK_GOOGLE_PLAY ->      analytics().event("clone_via_play").with(Analytics.Param.ITEM_ID, pkg).send()
 			CLONE_RESULT_ALREADY_CLONED ->      Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show()
-			CLONE_RESULT_NO_SYS_MARKET -> {
-				val activity = Activities.findActivityFrom(context)
-				if (activity != null) Dialogs.buildAlert(activity, 0, R.string.dialog_clone_incapable_explanation)
-						.setNeutralButton(R.string.action_learn_more) { _,_ -> WebContent.view(context, Config.URL_FAQ.get()) }
-						.setPositiveButton(android.R.string.cancel, null).show()
-				else Toast.makeText(context, R.string.dialog_clone_incapable_explanation, Toast.LENGTH_LONG).show() }
+			CLONE_RESULT_NO_SYS_MARKET ->       showExplanation(activity, R.string.dialog_clone_incapable_explanation)
+			CLONE_RESULT_NO_INSTALLER ->        showExplanation(activity, R.string.dialog_clone_no_installer_explanation)
 
 			CLONE_RESULT_UNKNOWN_SYS_MARKET -> {
 				val info = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).resolveActivityInfo(context.packageManager, 0)
 				if (info != null && info.applicationInfo.isSystem)
 					analytics().event("clone_via_market").with(Analytics.Param.ITEM_ID, pkg).with(Analytics.Param.ITEM_CATEGORY, info.packageName).send() }
 			null -> Toast.makeText(context, R.string.prompt_island_not_ready, Toast.LENGTH_LONG).show() }
+	}
+
+	private fun isInstallerReady() = context.checkPermission(REQUEST_INSTALL_PACKAGES, myPid(), myUid()) == PERMISSION_GRANTED
+
+	private fun showExplanation(context: Context, textResId: Int) {
+		val activity = Activities.findActivityFrom(context)
+		if (activity != null) Dialogs.buildAlert(activity, 0, textResId)
+			.setNeutralButton(R.string.action_learn_more) { _, _ -> WebContent.view(context, Config.URL_FAQ.get()) }
+			.setPositiveButton(android.R.string.cancel, null).show()
+		else Toast.makeText(context, textResId, Toast.LENGTH_LONG).show()
 	}
 
 	@OwnerUser @RequiresApi(O) private suspend fun cloneAppViaRoot(context: Context, source: IslandAppInfo, profile: UserHandle): Boolean {
@@ -232,6 +241,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 		private const val CLONE_RESULT_OK_GOOGLE_PLAY = 10
 		private const val CLONE_RESULT_UNKNOWN_SYS_MARKET = 11
 		private const val CLONE_RESULT_NO_SYS_MARKET = -1
+		private const val CLONE_RESULT_NO_INSTALLER = -2
 
 		@IntDef(MODE_INSTALLER, MODE_PLAY_STORE, MODE_SHIZUKU) @Target(TYPE) @Retention(SOURCE)
 		annotation class AppCloneMode
@@ -241,7 +251,8 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 
 		@ProfileUser private fun performAppCloningInProfile(context: Context, app: ApplicationInfo, viaPlayStore: Boolean): Int {
 			val policies = DevicePolicies(context)
-			policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_APPS)  // Blindly clear these restrictions
+			if (policies.isProfileOwner)
+				policies.clearUserRestrictionsIfNeeded(UserManager.DISALLOW_INSTALL_APPS)
 
 			val pkg = app.packageName
 			if (SDK_INT >= P && policies.manager.isAffiliatedUser) try {
@@ -271,8 +282,11 @@ class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewMod
 			@Suppress("DEPRECATION") val intent = Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null))
 					.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, context.packageName).addFlags(FLAG_ACTIVITY_NEW_TASK)
 					.putExtra(InstallerExtras.EXTRA_APP_INFO, app).addCategory(context.packageName) // Launch App Installer
-			policies.enableSystemAppByIntent(intent)
-			context.startActivity(intent)
+			if (policies.isProfileOwner) policies.enableSystemAppByIntent(intent)
+			try {
+				ModuleContext(context).forDeclaredPermission(REQUEST_INSTALL_PACKAGES)?.startActivity(intent)
+					?: return CLONE_RESULT_NO_INSTALLER
+			} catch (e: ActivityNotFoundException) { return CLONE_RESULT_NO_INSTALLER }
 			return CLONE_RESULT_OK_INSTALL
 		}
 

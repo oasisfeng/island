@@ -27,12 +27,16 @@ android {
         }
     }
 
-    flavorDimensions "packaging"
+    flavorDimensions += "packaging"
+    flavorDimensions += "distribution"
 
     productFlavors {
         complete { dimension "packaging" }
         engine   { dimension "packaging" }  // Share application ID to retain the profile ownership when switching builds
         mobile   { dimension "packaging"; applicationIdSuffix ".mobile" }
+
+        normal     { dimension "distribution" }
+        googleplay { dimension "distribution" }
     }
 
     compileOptions {
@@ -43,6 +47,7 @@ android {
     lint {
         checkOnly 'NewApi'
         abortOnError true
+        checkReleaseBuilds false
         htmlReport false
         xmlReport false
         textReport true
@@ -61,6 +66,10 @@ dependencies {
     completeImplementation project(':installer')
     completeImplementation project(':watcher')
     completeImplementation project(':open')
+    completeImplementation project(':ninja')
+
+    //debugImplementation project(':media')
+
     // Engine only
     engineImplementation project(':engine')
     // Mobile only

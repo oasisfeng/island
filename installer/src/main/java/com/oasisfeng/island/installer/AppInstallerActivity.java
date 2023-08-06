@@ -23,6 +23,7 @@ import static android.widget.Toast.LENGTH_LONG;
 import static com.oasisfeng.island.analytics.Analytics.Param.CONTENT;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY;
 import static com.oasisfeng.island.analytics.Analytics.Param.LOCATION;
+import static com.oasisfeng.island.appops.AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES;
 import static com.oasisfeng.island.installer.AppInstallInfo.Mode.CLONE;
 import static com.oasisfeng.island.installer.AppInstallInfo.Mode.INHERIT;
 import static com.oasisfeng.island.installer.AppInstallInfo.Mode.INSTALL;
@@ -34,6 +35,7 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -66,6 +68,7 @@ import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.installer.analyzer.ApkAnalyzer;
 import com.oasisfeng.island.util.CallerAwareActivity;
 import com.oasisfeng.island.util.DevicePolicies;
+import com.oasisfeng.island.util.ModuleContext;
 import com.oasisfeng.island.util.Users;
 import com.oasisfeng.java.utils.IoUtils;
 
@@ -124,9 +127,9 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		final DevicePolicies policies = new DevicePolicies(this);
 		final boolean silent_install = policies.isActiveDeviceOwner()
 				|| SDK_INT >= P && policies.isProfileOwner() && policies.getManager().isAffiliatedUser();
-		final PackageManager pm = getPackageManager();
-		if (SDK_INT >= P && ! pm.canRequestPackageInstalls() && silent_install) try {
-			new AppOpsCompat(this).setMode(AppOpsCompat.OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), getPackageName(), MODE_ALLOWED);
+		final Context context = new ModuleContext(this).forDeclaredPermission(REQUEST_INSTALL_PACKAGES);
+		if (SDK_INT >= P && ! context.getPackageManager().canRequestPackageInstalls() && silent_install) try {
+			new AppOpsCompat(this).setMode(OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
 		} catch (final RuntimeException e) {
 			Analytics.$().logAndReport(TAG, "Error granting permission REQUEST_INSTALL_PACKAGES", e);
 		}
@@ -356,16 +359,10 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		final int source_uid = getOriginatingUid(caller_app_info);
 		if (source_uid < 0) return true;		// From trusted caller (download provider, documents UI and etc.)
 		final PackageManager pm = getPackageManager();
-		final CharSequence source_label;
-		if (source_uid != caller_app_info.uid) {		// Originating source is not the caller
-			final String[] pkgs = pm.getPackagesForUid(source_uid);
-			if (pkgs != null) for (final String pkg : pkgs)
-				if (isSourceQualified(Apps.of(this).getAppInfo(pkg))) return true;
-			source_label = pm.getNameForUid(source_uid);
-		} else {
-			if (isSourceQualified(caller_app_info)) return true;
-			source_label = caller_app_info.loadLabel(pm);
-		}
+		final String[] pkgs = pm.getPackagesForUid(source_uid);
+		if (pkgs != null) for (final String pkg : pkgs)
+			if (isSourceQualified(Apps.of(this).getAppInfo(pkg))) return true;
+		final CharSequence source_label = pm.getNameForUid(source_uid);
 		Toasts.show(this, source_label + " does not declare " + REQUEST_INSTALL_PACKAGES, LENGTH_LONG);
 		return false;
 	}

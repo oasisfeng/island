@@ -3,6 +3,7 @@
 
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application android:label="Island [Extension Pack]" android:hasCode="false" android:allowBackup="false" tools:ignore="MissingApplicationIcon" />
 
