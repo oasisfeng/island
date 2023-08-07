@@ -3,6 +3,7 @@ package com.oasisfeng.island.model
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.analytics.Analytics
@@ -13,8 +14,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
-fun BaseAndroidViewModel.interactive(context: Context, block: suspend CoroutineScope.() -> Unit) {
-	viewModelScope.launch(CoroutineExceptionHandler { _, e -> handleException(context, tag, e) }, block = block)
+fun AndroidViewModel.interactive(context: Context, block: suspend CoroutineScope.() -> Unit) {
+	viewModelScope.launch(CoroutineExceptionHandler { _, e -> handleException(context, "Island.VM", e) }, block = block)
 }
 
 fun <R> BaseAndroidViewModel.interactiveFuture(context: Context, block: suspend CoroutineScope.() -> R): CompletableFuture<R?> {

@@ -147,7 +147,6 @@ public class Hacks {
 		@RequiresPermission(GET_APP_OPS_STATS) @Nullable List<PackageOps> getOpsForPackage(int uid, String pkg, @Nullable int[] ops);
 		@RequiresPermission(GET_APP_OPS_STATS) @Nullable List<PackageOps> getPackagesForOps(@Nullable int[] ops);
 		void setMode(int code, int uid, String packageName, @Mode int mode);
-		void setMode(String op, int uid, @Nullable String packageName, @Mode int mode);
 		void setUidMode(String appOp, int uid, @Mode int mode);
 		void setRestriction(int code,/* @AttributeUsage */int usage, @Mode int mode, @Nullable String[] exceptionPackages);
 		void resetAllModes();
@@ -176,4 +175,8 @@ public class Hacks {
 	}
 
 	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
+
+//	public static final @Nullable Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked>
+//			Environment_getDataSystemDirectory = Hack.into(Environment.class).staticMethod("getDataSystemDirectory")
+//			.returning(File.class).withoutParams();
 }

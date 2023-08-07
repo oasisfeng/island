@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.getSystemService
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.oasisfeng.android.app.Activities
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
@@ -34,7 +35,6 @@ import com.oasisfeng.android.google.GooglePlayStore
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
 import com.oasisfeng.android.util.Apps
-import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.Config
 import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.analytics.Analytics
@@ -76,13 +76,13 @@ import kotlin.annotation.AnnotationTarget.TYPE
  *
  * Refactored by Oasis on 2018-9-30.
  */
-class IslandAppClones(val activity: FragmentActivity, val vm: BaseAndroidViewModel, val app: IslandAppInfo) {
+class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, val app: IslandAppInfo) {
 
 	fun request() {
 		val names = IslandNameManager.getAllNames(context)
 		check(names.isNotEmpty()) { "No Island" }
 		val targets: MutableMap<UserHandle, String> = LinkedHashMap(names.size + 1)
-		targets[Users.parentProfile] = context.getString(R.string.mainland_name)
+		targets[Users.parentProfile] = context.getString(com.oasisfeng.island.shared.R.string.mainland_name)
 		targets.putAll(names)
 
 		val shouldShowBadge: Boolean = targets.size > 2

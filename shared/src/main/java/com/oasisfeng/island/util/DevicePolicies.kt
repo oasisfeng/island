@@ -140,6 +140,7 @@ class DevicePolicies {
     operator fun <A, T> invoke(callee: Function3<DPM, ComponentName, A, T>, a: A): T = callee.invoke(manager, sAdmin, a)
     operator fun <A, B, T> invoke(callee: Function4<DPM, ComponentName, A, B, T>, a: A, b: B): T = callee.invoke(manager, sAdmin, a, b)
     operator fun <A, B, C, T> invoke(callee: Function5<DPM, ComponentName, A, B, C, T>, a: A, b: B, c: C): T = callee.invoke(manager, sAdmin, a, b, c)
+    operator fun <A, B, C, D, T> invoke(callee: Function6<DPM, ComponentName, A, B, C, D, T>, a: A, b: B, c: C, d: D): T = callee.invoke(manager, sAdmin, a, b, c, d)
 
     val manager: DevicePolicyManager
     private val mAppContext: Context
@@ -210,7 +211,7 @@ class DevicePolicies {
             sAdmin = DeviceAdmins.getComponentName(context)
         }
 
-        private lateinit var sAdmin: ComponentName
+        lateinit var sAdmin: ComponentName
     }
 }
 

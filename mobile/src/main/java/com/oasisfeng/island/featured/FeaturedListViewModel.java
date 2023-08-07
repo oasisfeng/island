@@ -11,9 +11,9 @@ import android.os.Handler;
 import android.provider.Settings;
 
 import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -25,7 +25,6 @@ import com.oasisfeng.android.databinding.recyclerview.BindingRecyclerViewAdapter
 import com.oasisfeng.android.databinding.recyclerview.ItemBinder;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.androidx.lifecycle.NonNullMutableLiveData;
-import com.oasisfeng.common.app.BaseAndroidViewModel;
 import com.oasisfeng.island.adb.AdbSecure;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.controller.IslandAppClones;
@@ -40,7 +39,6 @@ import com.oasisfeng.island.settings.SettingsActivity;
 import com.oasisfeng.island.util.DevicePolicies;
 import com.oasisfeng.island.util.Users;
 
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -53,7 +51,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * Created by Oasis on 2018/5/18.
  */
 @ParametersAreNonnullByDefault
-public class FeaturedListViewModel extends BaseAndroidViewModel {
+public class FeaturedListViewModel extends AndroidViewModel {
 
 	private static final String SCOPE_TAG_PREFIX_FEATURED = "featured_";
 	private static final String PACKAGE_ICEBOX = "com.catchingnow.icebox";
@@ -152,11 +150,7 @@ public class FeaturedListViewModel extends BaseAndroidViewModel {
 
 	public FeaturedListViewModel(final Application app) { super(app); mApps = Apps.of(app); }
 
-	@Override public @NonNull String getTag() { return TAG; }
-
 	private final Apps mApps;
 
 	private static final AtomicInteger sOrderGenerator = new AtomicInteger();
-
-	@SuppressWarnings("SpellCheckingInspection") private static final String TAG = "Island.FLVM";
 }

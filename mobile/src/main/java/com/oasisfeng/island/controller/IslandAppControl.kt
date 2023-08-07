@@ -9,12 +9,12 @@ import android.content.pm.LauncherApps
 import android.net.Uri
 import android.os.UserHandle
 import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
 import com.oasisfeng.android.app.Activities
 import com.oasisfeng.android.content.IntentCompat
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.util.Apps
 import com.oasisfeng.android.widget.Toasts
-import com.oasisfeng.common.app.BaseAndroidViewModel
 import com.oasisfeng.island.analytics.Analytics.Param.ITEM_CATEGORY
 import com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID
 import com.oasisfeng.island.analytics.analytics
@@ -78,7 +78,7 @@ object IslandAppControl {
 			app.context().getSystemService(LauncherApps::class.java)!!.startAppDetailsActivity(ComponentName(app.packageName, ""), app.user, null, null)
 	}
 
-	@JvmStatic fun launchExternalAppSettings(vm: BaseAndroidViewModel, app: @NotNull IslandAppInfo) {
+	@JvmStatic fun launchExternalAppSettings(vm: AndroidViewModel, app: @NotNull IslandAppInfo) {
 		val context = app.context()
 		val intent = Intent(IntentCompat.ACTION_SHOW_APP_INFO).setPackage(context.packageName)
 				.putExtra(IntentCompat.EXTRA_PACKAGE_NAME, app.packageName).putExtra(Intent.EXTRA_USER, app.user)

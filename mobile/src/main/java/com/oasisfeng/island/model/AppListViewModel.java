@@ -397,8 +397,6 @@ public class AppListViewModel extends BaseAppListViewModel<AppViewModel> {
 		bottom_sheet.setState(BottomSheetBehavior.STATE_EXPANDED);
 	}
 
-	@Override public @NonNull String getTag() { return TAG; }
-
 	/* Parcelable */
 
 	public final BottomSheetBehavior.BottomSheetCallback bottom_sheet_callback = new BottomSheetBehavior.BottomSheetCallback() {

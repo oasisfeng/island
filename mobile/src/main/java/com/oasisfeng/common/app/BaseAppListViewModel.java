@@ -3,7 +3,9 @@ package com.oasisfeng.common.app;
 import android.app.Application;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.databinding.ObservableList;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.oasisfeng.android.databinding.ObservableSortedList;
@@ -18,7 +20,7 @@ import java.util.Map;
  *
  * Created by Oasis on 2016/6/24.
  */
-public abstract class BaseAppListViewModel<T extends AppViewModel> extends BaseAndroidViewModel {
+public abstract class BaseAppListViewModel<T extends AppViewModel> extends AndroidViewModel {
 
 	// TODO: Rebuild the whole AbstractAppListViewModel to keep immutability?
 	protected void replaceApps(final List<T> apps) {
@@ -85,7 +87,7 @@ public abstract class BaseAppListViewModel<T extends AppViewModel> extends BaseA
 		if (selection != null) selection.selected.setValue(true);
 	}
 
-	protected BaseAppListViewModel(final Application app, final Class<T> clazz) {
+	protected BaseAppListViewModel(final Application app, final @NonNull Class<T> clazz) {
 		super(app);
 		mApps = new ObservableSortedList<>(clazz);
 	}
