@@ -24,7 +24,8 @@
         <!-- <meta-data android:name="com.google.android.actions" android:resource="@xml/actions" /> -->
 
         <!-- windowSoftInputMode="adjustPan" to avoid bottom-sheet hanging in the center of screen when search is finished and IME panel is closed. -->
-        <activity android:name="com.oasisfeng.island.MainActivity" android:windowSoftInputMode="adjustPan" android:directBootAware="true">
+        <activity android:name="com.oasisfeng.island.MainActivity" android:windowSoftInputMode="adjustPan"
+            android:exported="true" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -49,6 +50,7 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:clearTaskOnLaunch="true"
             android:taskAffinity=":shortcut"
+            android:exported="true"
             android:launchMode="singleTask" > <!-- Most important attribute: launchMode="singleTask" -->
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.LAUNCH_APP" />
@@ -69,7 +71,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:name="com.oasisfeng.island.shortcut.ShortcutsUpdater">
+        <receiver android:name="com.oasisfeng.island.shortcut.ShortcutsUpdater" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
@@ -81,7 +83,7 @@
         <activity android:name="com.oasisfeng.island.setup.SetupActivity" android:theme="@style/SetupTheme" />
 
         <activity android:name="com.oasisfeng.island.action.FeatureActionActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                  android:excludeFromRecents="true">
+                  android:excludeFromRecents="true" android:exported="true">
             <intent-filter> <!-- Deep-link for App Actions -->
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -95,14 +97,14 @@
                   android:exported="false"
                   android:multiprocess="true" />
 
-        <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true">
+        <receiver android:name="com.oasisfeng.island.adb.ProfileRestrictionsSync" android:directBootAware="true" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.oasisfeng.island.settings.IslandSettingsActivity$Enabler"> <!-- Enable IslandSettingsActivity then disable self -->
+        <receiver android:name="com.oasisfeng.island.settings.IslandSettingsActivity$Enabler" android:exported="false"> <!-- Enable IslandSettingsActivity then disable self -->
             <intent-filter>
                 <action android:name="android.intent.action.USER_INITIALIZE" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
@@ -125,6 +127,7 @@
                   android:directBootAware="true"
                   android:label="@string/label_activity_island_settings"
                   android:theme="@style/AppTheme.Settings"
+                  android:exported="true"
                   android:enabled="false"> <!-- Enabled explicitly by IslandSettingsActivity$Enabler, "directBootAware" to receive PendingIntentShuttle in user-locked state -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -136,7 +139,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="com.oasisfeng.island.settings.AppOpsPermissionsUnlock" android:directBootAware="true">
+        <receiver android:name="com.oasisfeng.island.settings.AppOpsPermissionsUnlock" android:directBootAware="true" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />

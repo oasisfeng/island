@@ -46,7 +46,8 @@
                   android:excludeFromRecents="true"
                   android:alwaysRetainTaskState="true"
                   android:taskAffinity=":api"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
@@ -63,7 +64,8 @@
                   android:theme="@android:style/Theme.NoDisplay"
                   android:hardwareAccelerated="false"
                   android:enabled="false"
-                  android:directBootAware="true">
+                  android:directBootAware="true"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
@@ -71,7 +73,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="com.oasisfeng.island.api.ApiReceiver">
+        <receiver android:name="com.oasisfeng.island.api.ApiReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="com.oasisfeng.island.action.FREEZE" />
                 <action android:name="com.oasisfeng.island.action.UNFREEZE" />
@@ -85,7 +87,7 @@
         </receiver>
 
         <service android:name="com.oasisfeng.island.service.IslandPersistentService"
-                 android:permission="android.permission.BIND_DEVICE_ADMIN">
+                 android:permission="android.permission.BIND_DEVICE_ADMIN" android:exported="false">
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_SERVICE" />
             </intent-filter>
@@ -105,7 +107,8 @@
         <activity android:name="com.oasisfeng.island.provisioning.IslandProvisioning$CompletionActivity"
                   android:permission="android.permission.BIND_DEVICE_ADMIN"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                  android:excludeFromRecents="true" android:directBootAware="true">
+                  android:excludeFromRecents="true" android:directBootAware="true"
+                  android:exported="false">
             <intent-filter>
                 <action android:name="android.app.action.PROVISIONING_SUCCESSFUL" />
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -113,7 +116,7 @@
         </activity>
 
         <receiver android:name="com.oasisfeng.island.IslandDeviceAdminReceiver"
-                  android:permission="android.permission.BIND_DEVICE_ADMIN" >
+                  android:permission="android.permission.BIND_DEVICE_ADMIN" android:exported="false">
             <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />

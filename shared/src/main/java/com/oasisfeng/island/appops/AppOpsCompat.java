@@ -70,12 +70,6 @@ public class AppOpsCompat {
 		return op >= sOpDefaultMode.length ? AppOpsManager.MODE_ALLOWED : sOpDefaultMode[op];	// Fallback local map
 	}
 
-	public String opToPermission(final int op) {
-		final String permission = mAppOpsManager.opToPermission(op);
-		if (permission != null) return permission;
-		return op >= sOpPerms.length ? null : sOpPerms[op];	    // Fallback local map
-	}
-
 	public AppOpsCompat(final Context context) {
 		this((AppOpsManager) requireNonNull(context.getSystemService(Context.APP_OPS_SERVICE)));
 	}

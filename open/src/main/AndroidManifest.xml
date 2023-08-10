@@ -10,7 +10,7 @@
         </service>
 
         <provider android:name="com.oasisfeng.island.DelegatedScopeAuthorization$Initializer" android:authorities="com.oasisfeng.island.open.initializer" android:exported="false" />
-        <receiver android:name="com.oasisfeng.island.DelegatedScopeAuthorization" android:permission="android.permission.BIND_DEVICE_ADMIN">
+        <receiver android:name="com.oasisfeng.island.DelegatedScopeAuthorization" android:permission="android.permission.BIND_DEVICE_ADMIN" android:exported="false">
             <intent-filter>
                 <action android:name="android.content.action.REQUEST_PERMISSION" />
             </intent-filter>

@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId "com.oasisfeng.island"
         minSdkVersion this.minSdkVersion
-        targetSdkVersion 30
+        targetSdkVersion 31
         resConfigs 'en', 'zh', 'zh-rTW'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

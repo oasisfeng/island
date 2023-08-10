@@ -4,7 +4,7 @@
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <receiver android:name=".IslandWatcher" android:enabled="@bool/since_api_28" android:directBootAware="true">
+        <receiver android:name=".IslandWatcher" android:enabled="@bool/since_api_28" android:directBootAware="true" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -16,7 +16,7 @@
         </receiver>
         <service android:name=".IslandWatcher$IslandDeactivationService" android:directBootAware="true" />
 
-        <receiver android:name=".IslandAppWatcher" android:enabled="@bool/since_api_26" android:directBootAware="true">
+        <receiver android:name=".IslandAppWatcher" android:enabled="@bool/since_api_26" android:directBootAware="true" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
                 <data android:scheme="package" />

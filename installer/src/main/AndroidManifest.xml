@@ -11,7 +11,8 @@
                   android:label="@string/app_installer_label"
                   android:configChanges="uiMode|orientation|screenSize|keyboard|keyboardHidden"
                   android:excludeFromRecents="true"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:exported="true">
             <intent-filter> <!-- with MIME type -->
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.INSTALL_PACKAGE" />
@@ -30,13 +31,14 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".AppInstallerStatusReceiver" />
+        <receiver android:name=".AppInstallerStatusReceiver" android:exported="false" />
 
         <activity android:name=".AppInfoForwarderActivity"
                   android:taskAffinity=""
                   android:excludeFromRecents="true"
                   android:relinquishTaskIdentity="true"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SHOW_APP_INFO" />
                 <category android:name="android.intent.category.DEFAULT" />
