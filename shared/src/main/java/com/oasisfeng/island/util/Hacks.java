@@ -139,7 +139,8 @@ public class Hacks {
 		}
 
 		@Keep interface OpEntry extends Hack.Mirror<Object> {
-			int getOp();
+			int OP_FALL_BACK = -9;
+			@Hack.Fallback(OP_FALL_BACK) int getOp();
 			int getMode();
 		}
 

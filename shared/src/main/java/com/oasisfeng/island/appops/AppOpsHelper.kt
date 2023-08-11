@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.NameNotFoundException
+import android.os.Build.VERSION_CODES.P
 import android.util.ArrayMap
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -32,7 +33,7 @@ import com.oasisfeng.island.util.ProfileUser
  */
 private const val PREFS_NAME = "app_ops"
 
-@RequiresApi(28) class AppOpsHelper(private val context: Context) {
+@RequiresApi(P) class AppOpsHelper(private val context: Context) {
 
     fun setMode(pkg: String, op: Int, mode: Int, uid: Int): Boolean {
         if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg)) {

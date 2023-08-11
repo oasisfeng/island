@@ -1,7 +1,12 @@
 package com.oasisfeng.island.appops;
 
+import static android.os.Build.VERSION_CODES.P;
+import static java.util.Objects.requireNonNull;
+
 import android.app.AppOpsManager;
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -9,15 +14,14 @@ import androidx.annotation.RequiresPermission;
 
 import com.oasisfeng.hack.Hack;
 import com.oasisfeng.island.util.Hacks;
+import com.oasisfeng.island.util.Hacks.AppOpsManager.OpEntry;
 
 import java.util.List;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Created by Oasis on 2019-3-1.
  */
-public class AppOpsCompat {
+@RequiresApi(P) public class AppOpsCompat {
 
 	public static final int OP_COARSE_LOCATION = 0;
 	public static final int OP_POST_NOTIFICATION = 11;
@@ -43,7 +47,7 @@ public class AppOpsCompat {
 	 */
 	@RequiresPermission(GET_APP_OPS_STATS)
 	@Nullable List<Hacks.AppOpsManager.PackageOps> getOpsForPackage(final int uid, final String pkg, final @Nullable int[] ops) {
-		return mAppOpsManager.getOpsForPackage(uid, pkg, ops);
+		return fixOpEntriesIfNeeded(mAppOpsManager.getOpsForPackage(uid, pkg, ops));
 	}
 
 	/**
@@ -52,7 +56,28 @@ public class AppOpsCompat {
 	 * @param ops The set of operations you are interested in, or null if you want all of them.
 	 */
 	@Nullable List<Hacks.AppOpsManager.PackageOps> getPackagesForOps(final @Nullable int[] ops) {
-		return mAppOpsManager.getPackagesForOps(ops);
+		return fixOpEntriesIfNeeded(mAppOpsManager.getPackagesForOps(ops));
+	}
+
+	private List<Hacks.AppOpsManager.PackageOps> fixOpEntriesIfNeeded(final List<Hacks.AppOpsManager.PackageOps> pkgOpsList) {
+		if (pkgOpsList == null) return null;
+		for (Hacks.AppOpsManager.PackageOps pkgOps : pkgOpsList) {
+			final List<OpEntry> ops = pkgOps.getOps();
+			for (int i = 0; i < ops.size(); i ++) {
+				final OpEntry entry = ops.get(i);
+				if (entry instanceof AppOpsHelper.OpEntryData) continue;    // Already processed
+				if (entry.getOp() != OpEntry.OP_FALL_BACK) continue;
+				final Parcelable rawEntry = (Parcelable) entry.getRawObject();
+				final Parcel parcel = Parcel.obtain();
+				try {
+					rawEntry.writeToParcel(parcel, 0);
+					parcel.setDataPosition(0);
+					final int op = parcel.readInt(), mode = parcel.readInt();
+					ops.set(i, new AppOpsHelper.OpEntryData(op, mode));
+				} finally { parcel.recycle(); }
+			}
+		}
+		return pkgOpsList;
 	}
 
 	@RequiresApi(28) public void setMode(final int code, final int uid, final String pkg, final int mode) {
