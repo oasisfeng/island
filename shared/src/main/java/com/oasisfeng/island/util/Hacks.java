@@ -99,16 +99,6 @@ public class Hacks {
 	static final Hack.HackedMethod2<Context, Context, NameNotFoundException, Unchecked, Unchecked, ApplicationInfo, Integer>
 			Context_createApplicationContext = Hack.into(Context.class).method("createApplicationContext").returning(Context.class)
 			.fallbackReturning(null).throwing(NameNotFoundException.class).withParams(ApplicationInfo.class, int.class);
-	public static final @Nullable Hack.HackedMethod1<IBinder, Void, Unchecked, Unchecked, Unchecked, String>
-			ServiceManager_getService = Hack.into("android.os.ServiceManager").staticMethod("getService")
-			.returning(IBinder.class).withParam(String.class);
-	private static final String IWebViewUpdateService = "android.webkit.IWebViewUpdateService";
-	public static final @Nullable Hack.HackedMethod1<?, Void, Unchecked, Unchecked, Unchecked, IBinder>
-			IWebViewUpdateService$Stub_asInterface = Hack.into(IWebViewUpdateService + "$Stub").staticMethod("asInterface")
-			.returning(Hack.ANY_TYPE).withParam(IBinder.class);
-	public static final @Nullable Hack.HackedMethod0<String, Object, RemoteException, Unchecked, Unchecked>
-			IWebViewUpdateService_getCurrentWebViewPackageName = Hack.into(IWebViewUpdateService).method("getCurrentWebViewPackageName")
-			.returning(String.class).throwing(RemoteException.class).withoutParams();
 	static final Hack.HackedMethod0<?, Void, Unchecked, Unchecked, Unchecked>
 			ActivityManagerNative_getDefault = Hack.into("android.app.ActivityManagerNative")
 			.staticMethod("getDefault").fallbackReturning(null).withoutParams();
@@ -150,12 +140,9 @@ public class Hacks {
 		void setMode(int code, int uid, String packageName, @Mode int mode);
 		void setUidMode(String appOp, int uid, @Mode int mode);
 		void setRestriction(int code,/* @AttributeUsage */int usage, @Mode int mode, @Nullable String[] exceptionPackages);
-		void resetAllModes();
 
 		/** Retrieve the default mode for the operation. */
 		@Hack.Fallback(-1) @Mode int opToDefaultMode(final int op);
-		/** Retrieve the permission associated with an operation, or null if there is not one. */
-		@Nullable String opToPermission(int op);
 	}
 
 	@Keep public interface UserManagerHack extends Hack.Mirror<UserManager> {

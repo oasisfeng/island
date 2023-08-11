@@ -8,5 +8,4 @@ package com.oasisfeng.island.engine.common;
 public class WellKnownPackages {
 	public static final String PACKAGE_GOOGLE_PLAY_SERVICES = "com.google.android.gms";
 	public static final String PACKAGE_GOOGLE_PLAY_STORE = "com.android.vending";
-	public static final String PACKAGE_GOOGLE_CHROME = "com.android.chrome";
 }

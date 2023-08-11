@@ -19,7 +19,6 @@ import com.oasisfeng.island.data.helper.installed
 import com.oasisfeng.island.data.helper.isSystem
 import com.oasisfeng.island.data.helper.suspended
 import com.oasisfeng.island.engine.ClonedHiddenSystemApps
-import com.oasisfeng.island.provisioning.CriticalAppsManager
 import com.oasisfeng.island.provisioning.SystemAppsManager
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.DPM
@@ -148,7 +147,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 
 	/** Freezing or disabling a critical app may cause malfunction to other apps or the whole system.  */
 	fun isCritical(pkg: String): Boolean {
-		return pkg == CriticalAppsManager.getCurrentWebViewPackageName() || mCriticalSystemPackages.contains(pkg)
+		return mCriticalSystemPackages.contains(pkg)
 	}
 
 	private val mCallback: LauncherApps.Callback = object : LauncherApps.Callback() {
