@@ -52,7 +52,6 @@ public class DelegatedAppOpsManager extends DerivedAppOpsManager {
 		aom.getOpsForPackage(0, "a.b.c", new int[]{ 0 });
 		aom.getPackagesForOps(new int[]{ 0 });
 		aom.setRestriction(0, 0, 0, null);
-		aom.resetAllModes();
 
 		mBinderProxy.seal();
 	}
