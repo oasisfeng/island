@@ -78,7 +78,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_title_warning">WARNING</string>
     <string name="dialog_manual_setup"><b>For advanced user</b>:\nThis limitation could also be circumvented with one-time manual setup via USB-connected PC.</string>
     <string name="dialog_clone_incapable_explanation">Sorry, Island cannot clone apps without a proper built-in app market on your device (preferable Google Play Store) until Android 5.1. Please refer to the FAQ for solutions.</string>
-    <string name="dialog_clone_no_installer_explanation">Sorry, this version of Island can only clone apps via the system app store. Please refer to the FAQ for solutions.</string>
     <string name="dialog_greenify_title">Greenify integration</string>
     <string name="dialog_greenify_explanation">To save memory and avoid unnecessary battery consumption, Island has no background services in design. Instead it delegates the automatic freezing job to Greenify, taking advantage of its sophisticated automatic hibernation management.</string>
     <string name="dialog_greenify_version_too_low">Greenify needs to be upgraded to a newer version.</string>
@@ -93,7 +92,6 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="dialog_island_setup_failed">Sorry, something went wrong in Island setup. (stage %1$d)</string>
 
     <string name="action_continue">Continue</string>
-    <string name="action_learn_more">Learn more</string>
     <string name="action_install">Install</string>
     <string name="action_upgrade">Upgrade</string>
     <string name="action_destroy">Destroy</string>

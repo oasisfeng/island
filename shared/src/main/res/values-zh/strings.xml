@@ -11,6 +11,7 @@
     <string name="device_admin_support_message_long">您可能注意到系统界面中出现的“设备由您所在的单位负责管理”或类似信息，这是 Android 工作资料（壶中界的 Android 底层机制）激活后的透明性告知，无法隐去。\n\n我们不会以任何方式收集您的个人隐私信息，请参阅在 Google Play 市场中公示的隐私政策。\n\n如果遇到“XX 特性已被管理员禁用”，可能是由于您打开了某项限制功能，请至此应用中调整相应的设置。</string>
 
     <string name="prompt_failed_preserving_app_ops">App Ops 未能保留（内部异常）</string>
+    <string name="action_learn_more">详细了解</string>
 
     <string name="notification_profile_shuttle_pending_title">跨界功能受限</string>
     <string name="notification_profile_shuttle_pending_text">点此恢复</string>

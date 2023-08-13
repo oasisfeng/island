@@ -61,8 +61,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.oasisfeng.android.ui.Dialogs;
+import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
 import com.oasisfeng.android.widget.Toasts;
+import com.oasisfeng.island.Config;
 import com.oasisfeng.island.analytics.Analytics;
 import com.oasisfeng.island.appops.AppOpsCompat;
 import com.oasisfeng.island.installer.analyzer.ApkAnalyzer;
@@ -127,7 +129,14 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		final DevicePolicies policies = new DevicePolicies(this);
 		final boolean silent_install = policies.isActiveDeviceOwner()
 				|| SDK_INT >= P && policies.isProfileOwner() && policies.getManager().isAffiliatedUser();
-		final Context context = new ModuleContext(this).forDeclaredPermission(REQUEST_INSTALL_PACKAGES);
+		final @Nullable Context context = new ModuleContext(this).forDeclaredPermission(REQUEST_INSTALL_PACKAGES);
+		if (context == null) {
+			Dialogs.buildAlert(this, 0, R.string.dialog_clone_no_installer_explanation)
+					.setNeutralButton(com.oasisfeng.island.shared.R.string.action_learn_more, (dialog, which) -> {
+						WebContent.view(this, Config.URL_FAQ.get()); finish();
+					}).setPositiveButton(android.R.string.cancel, (dialog, which) -> finish()).show();
+			return true;
+		}
 		if (SDK_INT >= P && ! context.getPackageManager().canRequestPackageInstalls() && silent_install) try {
 			new AppOpsCompat(this).setMode(OP_REQUEST_INSTALL_PACKAGES, Process.myUid(), context.getPackageName(), MODE_ALLOWED);
 		} catch (final RuntimeException e) {

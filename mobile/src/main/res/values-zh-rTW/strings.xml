@@ -90,7 +90,6 @@
     <string name="dialog_island_setup_failed">抱歉，建立壺中界時出現了異常。（階段 %1$d）</string>
 
     <string name="action_continue">繼續</string>
-    <string name="action_learn_more">詳細了解</string>
     <string name="action_install">安裝</string>
     <string name="action_upgrade">升級</string>
     <string name="action_destroy">毀滅</string>

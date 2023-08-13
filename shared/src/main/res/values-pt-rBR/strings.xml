@@ -11,6 +11,7 @@
     <string name="device_admin_support_message_long">Quando o Island é ativado, você pode ver \"Dispositivo é gerenciado por uma organização\" ou informação similar no IU do sistema. É um aviso padrão de transparência do Perfil de Trabalho (o recurso subjacente de Android usado pelo Island), que não pode ser removido.\n\nO Island não coleta suas informações pessoais de forma nenhuma, consulte nossa política de privacidade na Loja do Google Play para obter mais detalhes.\n\nSe receber uma mensagem \"xxx recurso desativado por admin\", neste caso você podia ter ativado um dos recursos de restrição no Island, por favor, consulte a configuração relacionada no Island.\n\nPara desinstalar o Island, você deve desativá-lo primeiro, vá para Island - Configurações - Configurações Avançadas - Destruir / Desativar.</string>
 
     <string name="prompt_failed_preserving_app_ops">App Ops não foram preservados devido a um erro interno.</string>
+    <string name="action_learn_more">Saiba mais</string>
     <string name="notification_profile_shuttle_pending_title">A funcionalidade de configurações intercambiáveis é limitada</string>
     <string name="notification_profile_shuttle_pending_text">Toque para restaurar</string>
 

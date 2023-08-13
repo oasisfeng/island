@@ -110,7 +110,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		fragment.show(activity) {
 			val defaultMode = when {
 				isShizukuReady -> MODE_SHIZUKU
-				isPlayStoreReady && (isInstalledByPlayStore || ! isInstallerReady()) -> MODE_PLAY_STORE
+				isPlayStoreReady && (isInstalledByPlayStore || ! isInstallerUsable()) -> MODE_PLAY_STORE
 				else -> null }
 			val mode = mutableStateOf(defaultMode)
 			dialog.compose(showShizuku = isShizukuAvailable, showPlayStore = isPlayStoreAvailable, mode)
@@ -137,7 +137,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 	}
 
 	private suspend fun cloneApp(source: IslandAppInfo, target: UserHandle, mode: @AppCloneMode Int) {
-		if (Users.isParentProfile(target) && isInstallerReady())    // Only works in parent profile due to a bug in AOSP.
+		if (Users.isParentProfile(target) && isInstallerUsable())    // Only works in parent profile due to a bug in AOSP.
 			return activity.startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)))
 
 		val context = source.context(); val pkg = source.packageName
@@ -190,7 +190,6 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 			CLONE_RESULT_OK_GOOGLE_PLAY ->      analytics().event("clone_via_play").with(Analytics.Param.ITEM_ID, pkg).send()
 			CLONE_RESULT_ALREADY_CLONED ->      Toast.makeText(context, R.string.toast_already_cloned, Toast.LENGTH_SHORT).show()
 			CLONE_RESULT_NO_SYS_MARKET ->       showExplanation(activity, R.string.dialog_clone_incapable_explanation)
-			CLONE_RESULT_NO_INSTALLER ->        showExplanation(activity, R.string.dialog_clone_no_installer_explanation)
 
 			CLONE_RESULT_UNKNOWN_SYS_MARKET -> {
 				val info = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).resolveActivityInfo(context.packageManager, 0)
@@ -199,12 +198,13 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 			null -> Toast.makeText(context, R.string.prompt_island_not_ready, Toast.LENGTH_LONG).show() }
 	}
 
-	private fun isInstallerReady() = context.checkPermission(REQUEST_INSTALL_PACKAGES, myPid(), myUid()) == PERMISSION_GRANTED
+	private fun isInstallerUsable() = ModuleContext(context).forDeclaredPermission(REQUEST_INSTALL_PACKAGES) != null
 
 	private fun showExplanation(context: Context, textResId: Int) {
 		val activity = Activities.findActivityFrom(context)
 		if (activity != null) Dialogs.buildAlert(activity, 0, textResId)
-			.setNeutralButton(R.string.action_learn_more) { _, _ -> WebContent.view(context, Config.URL_FAQ.get()) }
+			.setNeutralButton(com.oasisfeng.island.shared.R.string.action_learn_more) { _, _ ->
+				WebContent.view(context, Config.URL_FAQ.get()) }
 			.setPositiveButton(android.R.string.cancel, null).show()
 		else Toast.makeText(context, textResId, Toast.LENGTH_LONG).show()
 	}
@@ -241,7 +241,6 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		private const val CLONE_RESULT_OK_GOOGLE_PLAY = 10
 		private const val CLONE_RESULT_UNKNOWN_SYS_MARKET = 11
 		private const val CLONE_RESULT_NO_SYS_MARKET = -1
-		private const val CLONE_RESULT_NO_INSTALLER = -2
 
 		@IntDef(MODE_INSTALLER, MODE_PLAY_STORE, MODE_SHIZUKU) @Target(TYPE) @Retention(SOURCE)
 		annotation class AppCloneMode
@@ -283,10 +282,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 					.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, context.packageName).addFlags(FLAG_ACTIVITY_NEW_TASK)
 					.putExtra(InstallerExtras.EXTRA_APP_INFO, app).addCategory(context.packageName) // Launch App Installer
 			if (policies.isProfileOwner) policies.enableSystemAppByIntent(intent)
-			try {
-				ModuleContext(context).forDeclaredPermission(REQUEST_INSTALL_PACKAGES)?.startActivity(intent)
-					?: return CLONE_RESULT_NO_INSTALLER
-			} catch (e: ActivityNotFoundException) { return CLONE_RESULT_NO_INSTALLER }
+			context.startActivity(intent)
 			return CLONE_RESULT_OK_INSTALL
 		}
 

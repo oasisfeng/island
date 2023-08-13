@@ -90,7 +90,6 @@
     <string name="dialog_island_setup_failed">抱歉，创建壶中界时出现了异常。（阶段 %1$d）</string>
 
     <string name="action_continue">继续</string>
-    <string name="action_learn_more">详细了解</string>
     <string name="action_install">安装</string>
     <string name="action_upgrade">升级</string>
     <string name="action_destroy">毁灭</string>

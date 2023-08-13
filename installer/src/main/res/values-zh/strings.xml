@@ -36,4 +36,5 @@
     <string name="toast_split_apk_clone_fallback_warning">此应用含有附加组件，可能无法以这种方式正常克隆。如果遇到故障，请尝试重新从应用市场安装。</string>
 
     <string name="prompt_miui_optimization">可能是“MIUI 优化”导致（可在“系统设置 - 开发者选项”中关闭）</string>
+    <string name="dialog_clone_no_installer_explanation">抱歉，当前渠道版本的炼妖壶不支持在系统应用商店之外安装（及克隆）应用。请参考常见问题解答中的解决方案。</string>
 </resources>

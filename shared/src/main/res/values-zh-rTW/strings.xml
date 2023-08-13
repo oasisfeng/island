@@ -11,6 +11,7 @@
     <string name="device_admin_support_message_long">您可能注意到系統介面中出現的「裝置由您所在的單位負責管理」或類似訊息，這是 Android 工作資料（壺中界的 Android 底層機制）啟用後的透明性告知，無法隱藏。\n\n我們不會以任何方式收集您的個人隱私訊息，請參考在 Google Play 商店中發布的隱私政策。\n\n如果遇到「XX 特性已被管理員停用」，可能是由於您打開了某項限制功能，請至此應用程式中調整對應的設定。</string>
 
     <string name="prompt_failed_preserving_app_ops">App Ops 未能保留（內部異常）</string>
+    <string name="action_learn_more">詳細了解</string>
 
     <string name="notification_profile_shuttle_pending_title">跨界功能受限</string>
     <string name="notification_profile_shuttle_pending_text">點此復原</string>

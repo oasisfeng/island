@@ -90,7 +90,6 @@ o ambiente de Sandbox. O Island nunca coleta dados relacionados à sua privacida
     <string name="dialog_island_setup_failed">Desculpe, algo deu errado na configuração do Island. (etapa %1$d)</string>
 
     <string name="action_continue">Continuar</string>
-    <string name="action_learn_more">Saiba mais</string>
     <string name="action_install">Instalar</string>
     <string name="action_upgrade">Atualizar</string>
     <string name="action_destroy">Destruir</string>
