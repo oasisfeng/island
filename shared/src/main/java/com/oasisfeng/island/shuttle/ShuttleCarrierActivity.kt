@@ -5,6 +5,7 @@ import android.app.KeyguardManager
 import android.app.Notification.GROUP_ALERT_SUMMARY
 import android.app.Notification.VISIBILITY_PUBLIC
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED
 import android.content.Context
@@ -39,7 +40,7 @@ class ShuttleCarrierActivity: Activity() {
 						.setSmallIcon(R.drawable.ic_landscape_black_24dp).setColor(context.getColor(R.color.accent))
 						.setContentTitle(context.getString(R.string.notification_profile_shuttle_pending_title))
 						.setContentText(context.getString(R.string.notification_profile_shuttle_pending_text))
-						.setContentIntent(PendingIntent.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT))
+						.setContentIntent(PendingIntent.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE))
 						.apply { if (SDK_INT >= O) setGroup("Shuttle").setGroupAlertBehavior(GROUP_ALERT_SUMMARY) }}}
 
 			Log.d(TAG, "Starting trampoline to Mainland...")

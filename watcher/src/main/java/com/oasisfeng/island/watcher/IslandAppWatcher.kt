@@ -3,6 +3,7 @@ package com.oasisfeng.island.watcher
 import android.Manifest.permission
 import android.app.Notification
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.*
 import android.content.Intent.ACTION_PACKAGE_REMOVED
@@ -61,7 +62,7 @@ import java.util.*
 	}
 
 	private fun refreeze(context: Context, pkg: String, watching_permissions: List<String>?) {
-		if (mCallerId == null) mCallerId = PendingIntent.getBroadcast(context, 0, Intent(), FLAG_UPDATE_CURRENT)
+		if (mCallerId == null) mCallerId = PendingIntent.getBroadcast(context, 0, Intent(), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
 		context.sendBroadcast(Intent(Api.latest.ACTION_FREEZE, Uri.fromParts("package", pkg, null))
 				.putExtra(Api.latest.EXTRA_CALLER_ID, mCallerId).setPackage(context.packageName))
 		if (watching_permissions == null) return
@@ -120,7 +121,7 @@ import java.util.*
 				setContentIntent(makePendingIntent(context, ACTION_REFREEZE, "package", pkg) {
 					watchingPermissions?.also { putStringArrayListExtra(EXTRA_WATCHING_PERMISSIONS, it) }})
 				addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
-					NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build())
+					NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)).build())
 				addAction(Notification.Action.Builder(null, context.getText(R.string.action_dismiss),
 					makePendingIntent(context, ACTION_DISMISS, "package", pkg)).build()) }
 		}
@@ -128,7 +129,7 @@ import java.util.*
 		private fun makePendingIntent(context: Context, action: String, scheme: String, ssp: String, extras: ((Intent).() -> Unit)? = null)
 				= PendingIntent.getBroadcast(context, 0, Intent(action).setClass(context, IslandAppWatcher::class.java).apply {
 					data = Uri.fromParts(scheme, ssp, null); extras?.invoke(this)
-				}, FLAG_UPDATE_CURRENT)
+				}, FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
 
 		private fun Notification.Builder.buildShared(context: Context, pkg: String, @ColorRes color: Int) {
 			val shortcutId = "launch:$pkg"

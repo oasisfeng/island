@@ -2,6 +2,7 @@ package com.oasisfeng.island
 
 import android.app.Notification
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.DELEGATION_PACKAGE_ACCESS
@@ -69,8 +70,8 @@ class DelegatedScopeAuthorization : RestrictionsReceiver() {
         }
         val intent = Intent(context, javaClass).setData(Uri.parse("request:$requestId"))
                 .putExtra(EXTRA_PACKAGE_NAME, pkg).putExtra(EXTRA_USER, user).putExtra(REQUEST_KEY_DATA, delegation)
-        val authorize = PendingIntent.getBroadcast(context, 0, intent.setAction(ACTION_AUTHORIZE), FLAG_UPDATE_CURRENT)
-        val refuse = PendingIntent.getBroadcast(context, 0, intent.setAction(ACTION_REFUSE), FLAG_UPDATE_CURRENT)
+        val authorize = PendingIntent.getBroadcast(context, 0, intent.setAction(ACTION_AUTHORIZE), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
+        val refuse = PendingIntent.getBroadcast(context, 0, intent.setAction(ACTION_REFUSE), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
         @Suppress("DEPRECATION")
         NotificationIds.Authorization.post(context, requestId, Notification.Builder(context)
             .setSmallIcon(android.R.drawable.ic_dialog_alert).setStyle(Notification.BigTextStyle())

@@ -1,6 +1,8 @@
 package com.oasisfeng.island.installer
 
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_MUTABLE
+import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -66,7 +68,7 @@ class AppInstallerStatusReceiver: BroadcastReceiver() {
 		@JvmStatic fun createCallback(context: Context, install: AppInstallInfo, sessionId: Int): PendingIntent =
 				Intent(context, AppInstallerStatusReceiver::class.java)     // Wrap in a bundle to avoid "ClassNotFoundException when unmarshalling" in system process
 						.putExtra(EXTRA_INSTALL_INFO, Bundle().apply { putParcelable(null, install) }).let {
-					PendingIntent.getBroadcast(context, sessionId, it, PendingIntent.FLAG_UPDATE_CURRENT) }
+					PendingIntent.getBroadcast(context, sessionId, it, FLAG_UPDATE_CURRENT or FLAG_MUTABLE) }
 
 
 		@Suppress("SpellCheckingInspection") private const val TAG = "Island.AISR"

@@ -4,6 +4,7 @@ import android.app.*
 import android.app.Notification.CATEGORY_PROGRESS
 import android.app.Notification.CATEGORY_STATUS
 import android.app.Notification.VISIBILITY_PUBLIC
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_PER_USER
@@ -77,12 +78,12 @@ import kotlinx.coroutines.launch
 			if (canRestart) addServiceAction(context, R.string.action_restart_island, Intent.ACTION_REBOOT)
 			if (needsManualDeactivate) addServiceAction(context, R.string.action_deactivate_island_manually, Settings.ACTION_SYNC_SETTINGS)
 			addAction(Notification.Action.Builder(null, context.getText(R.string.action_settings), PendingIntent.getActivity(context, 0,
-				NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT)).build()) }
+				NotificationIds.IslandWatcher.buildChannelSettingsIntent(context), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)).build()) }
 	}
 
 	private fun Notification.Builder.addServiceAction(context: Context, @StringRes label: Int, action: String? = null) {
 		addAction(Notification.Action.Builder(null, context.getText(label), PendingIntent.getService(context, 0,
-			Intent(context, IslandDeactivationService::class.java).setAction(action), FLAG_UPDATE_CURRENT)).build())
+			Intent(context, IslandDeactivationService::class.java).setAction(action), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)).build())
 	}
 
 	private fun isParentProfileOwner(context: Context) =

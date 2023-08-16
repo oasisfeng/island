@@ -17,8 +17,10 @@ import java.util.Objects;
 
 import androidx.annotation.Nullable;
 
+import static android.app.PendingIntent.FLAG_IMMUTABLE;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Context.USER_SERVICE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 /**
  * Client helper for Greenify APIs
@@ -36,12 +38,13 @@ public class GreenifyClient {
 		if (user_sn == - 1) return false;
 		final Intent intent = new Intent(ACTION_GREENIFY).setPackage(GREENIFY_PKG).setData(Uri.parse("package:" + pkg + "#usn=" + user_sn));
 		if (getGreenifyVersion(context) > 39500)        // EXTRA_CALLER_ID is supported in newer version of Greenify
-			intent.putExtra(EXTRA_CALLER_ID, PendingIntent.getBroadcast(context, 0, new Intent(), FLAG_UPDATE_CURRENT))
-					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.putExtra(EXTRA_CALLER_ID, PendingIntent.getBroadcast(context, 0, new Intent(),
+					FLAG_UPDATE_CURRENT | FLAG_IMMUTABLE)).addFlags(FLAG_ACTIVITY_NEW_TASK);
 		final Activity activity = Activities.findActivityFrom(context);
 		try {
 			if (activity != null) activity.startActivityForResult(intent, 0);
-			else context.startActivity(intent.putExtra("caller", PendingIntent.getBroadcast(context, 0, new Intent(), FLAG_UPDATE_CURRENT)));
+			else context.startActivity(intent.putExtra("caller",
+					PendingIntent.getBroadcast(context, 0, new Intent(), FLAG_UPDATE_CURRENT | FLAG_IMMUTABLE)));
 		} catch (final ActivityNotFoundException e) {
 			return false;
 		}
@@ -68,7 +71,7 @@ public class GreenifyClient {
 	public static void openInAppMarket(final Context context) {
 		final Activity activity = Activities.findActivityFrom(context);
 		final Context starter = activity != null ? activity : context;
-		final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GREENIFY_PKG)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GREENIFY_PKG)).addFlags(FLAG_ACTIVITY_NEW_TASK);
 		try {
 			starter.startActivity(intent);
 		} catch (final ActivityNotFoundException e) {
