@@ -370,8 +370,6 @@ public class IslandProvisioning extends IntentService {
 		try {	// For Package Installer
 			policies.addCrossProfileIntentFilter(IntentFilters.forActions(ACTION_INSTALL_PACKAGE)   // ACTION_VIEW is already covered above for */*.
 					.withDataScheme(ContentResolver.SCHEME_CONTENT).withDataType("application/vnd.android.package-archive"), FLAGS_BIDIRECTIONAL);
-			policies.addCrossProfileIntentFilter(IntentFilters.forAction(ACTION_INSTALL_PACKAGE).withCategory(context.getPackageName())	// Additional category to bypass system package installer
-					.withDataSchemes(ContentResolver.SCHEME_CONTENT, SCHEME_PACKAGE), FLAG_MANAGED_CAN_ACCESS_PARENT);	// One-way only
 		} catch (final IntentFilter.MalformedMimeTypeException ignored) {}
 		policies.addCrossProfileIntentFilter(IntentFilters.forActions(IntentCompat.ACTION_SHOW_APP_INFO), FLAG_PARENT_CAN_ACCESS_MANAGED);
 	}
