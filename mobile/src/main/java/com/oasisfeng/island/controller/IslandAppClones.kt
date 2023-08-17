@@ -115,7 +115,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 			val mode = mutableStateOf(defaultMode)
 			dialog.compose(showShizuku = isShizukuAvailable, showPlayStore = isPlayStoreAvailable, mode)
 
-			snapshotFlow { mode.value }.onEach {
+			snapshotFlow { mode.value }.onEach {    // When the choice of mode chip is changed
 				if (it != MODE_SHIZUKU || Shizuku.checkSelfPermission() == PERMISSION_GRANTED) return@onEach
 				Shizuku.addRequestPermissionResultListener(object: Shizuku.OnRequestPermissionResultListener { override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
 					removeRequestPermissionResultListener(this)

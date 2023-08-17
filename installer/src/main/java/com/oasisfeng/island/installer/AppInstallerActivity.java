@@ -60,6 +60,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.oasisfeng.android.os.UserHandles;
 import com.oasisfeng.android.ui.Dialogs;
 import com.oasisfeng.android.ui.WebContent;
 import com.oasisfeng.android.util.Apps;
@@ -363,6 +364,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	}
 
 	@RequiresApi(O) private boolean isCallerQualified(final ApplicationInfo caller_app_info) {
+		if (UserHandles.getAppId(caller_app_info.uid) == UserHandles.getAppId(Process.myUid())) return true;
 		if (Apps.isPrivileged(caller_app_info) && getIntent().getBooleanExtra(EXTRA_NOT_UNKNOWN_SOURCE, false))
 			return true;	// From trusted source declared by privileged caller, skip checking.
 		final int source_uid = getOriginatingUid(caller_app_info);
@@ -372,7 +374,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 		if (pkgs != null) for (final String pkg : pkgs)
 			if (isSourceQualified(Apps.of(this).getAppInfo(pkg))) return true;
 		final CharSequence source_label = pm.getNameForUid(source_uid);
-		Toasts.show(this, source_label + " does not declare " + REQUEST_INSTALL_PACKAGES, LENGTH_LONG);
+		Toasts.show(this, source_label + " has no permission REQUEST_INSTALL_PACKAGES", LENGTH_LONG);
 		return false;
 	}
 
