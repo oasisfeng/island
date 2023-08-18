@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" android:sharedUserId="com.oasisfeng.island"
-    android:versionCode="61000" android:versionName="6.1.0">
+    android:versionCode="61100" android:versionName="6.1.1">
+    android:versionCode="61100" android:versionName="6.1.1">
 
     <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
