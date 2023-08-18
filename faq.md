@@ -38,11 +38,9 @@ Failed to clone app with error message:
 
   Replace "10" above with the actual user id of Island space on your device. (use `adb -d shell pm list users` to query)
 
-Why is my (Google) cloud backup disabled in God mode?
+Why can't I clone apps not installed by Google Play Store?
 ---
 
-  Due to immature internal restrictions in Android system, backup service may be disabled on older version of Android in God mode. Unfortunately, this cannot be changed unless upgrading your system to Android 8+.
+  Due to distribution policy enforced by Google Play Store, the version of Island released on Google Play Store is not allowed to use an essential permission (REQUEST_INSTALL_PACKAGES), thus cannot clone apps by installing them into Island. For apps installed by Google Play Store, Island will launch Google Play Store inside Island to do the clone (it's almost instant).
 
-  - For Android 5-6, backup is always disabled when God mode is activated.
-  - For Android 7.x, backup is disabled if God mod is activated and secondary user (including Island space) is created.
-  - For Android 8.x, backup is always available.
+  If you need to clone apps not installed by Google Play Store, you can either grant Root / Shizuku permission to Island, or install the [Extension Pack](https://github.com/oasisfeng/island/releases/tag/sideplay.v1.0) additionally. (It must be installed in both Mainland and Island)
