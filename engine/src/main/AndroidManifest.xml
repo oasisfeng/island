@@ -108,7 +108,7 @@
                   android:permission="android.permission.BIND_DEVICE_ADMIN"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar"
                   android:excludeFromRecents="true" android:directBootAware="true"
-                  android:exported="false">
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.PROVISIONING_SUCCESSFUL" />
                 <category android:name="android.intent.category.DEFAULT"/>
