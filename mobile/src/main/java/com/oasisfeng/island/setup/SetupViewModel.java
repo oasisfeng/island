@@ -40,6 +40,7 @@ import java.util.Optional;
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.TIRAMISU;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_ID;
 import static com.oasisfeng.island.analytics.Analytics.Param.ITEM_NAME;
 
@@ -198,6 +199,7 @@ public class SetupViewModel implements Parcelable {
 		if (BuildConfig.DEBUG)			// TODO: Remove after testing
 			intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE, new Account("default_account", "miui_yellowpage"));
 		if (SDK_INT >= O) intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
+		if (SDK_INT >= TIRAMISU) intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_ALLOW_OFFLINE, true);
 		return intent;
 	}
 
