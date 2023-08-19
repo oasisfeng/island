@@ -27,7 +27,6 @@
     <string name="featured_greenify_description">Depois que a tela for desligada, suspender automaticamente os apps selecionados se não estiverem em uso ativo.</string>
     <string name="featured_appops_title">App Ops</string>
     <string name="featured_appops_description">App Ops é uma ferramenta poderosa para bloquear seletivamente algumas intenções de acesso aos dados de apps de forma inteligente, mesmo que a permissão relacionada seja concedida pelo usuário.</string>
-    <string name="featured_setup_island_title">Configurar um Island separado</string>
 
     <string name="setup_profile_welcome">Bem-vindo</string>
     <string name="setup_island_intro">\"Island\" é um ambiente de Sandbox para os apps selecionados e clonados que não permita o acesso a seus dados pessoais (incluindo registros de ligações, contatos, etc.) mesmo que as permissões sejam concedidas.
@@ -171,7 +170,6 @@ o ambiente de Sandbox. O Island nunca coleta dados relacionados à sua privacida
     <string name="pref_rescind_summary">Revogar a permissão no Mainland. Todos os seus apps e dados estarão intactos (ativos), mas você não poderá mais:\n\n</string>
     <string name="pref_device_owner_title">Estender o poder ao Mainland</string>
     <string name="pref_managed_mainland_summary">Se ativado, você pode:\n\n</string>
-    <string name="pref_device_owner_featurs">· Suspender os apps no Mainland\n· Usar alguns recursos globais do dispositivo (p.ex. ADB Seguro).</string>
 
     <string name="pref_setup_header">Configurar</string>
 
