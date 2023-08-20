@@ -22,7 +22,6 @@ import android.print.PrintManager;
 import android.util.Log;
 
 import androidx.annotation.IntDef;
-import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
@@ -112,7 +111,7 @@ public class Hacks {
 			IActivityManager_getLaunchedFromPackage = Hack.into("android.app.IActivityManager")
 			.method("getLaunchedFromPackage").returning(String.class).throwing(RemoteException.class).withParam(IBinder.class);
 
-	@Keep @ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
+	@ParametersAreNonnullByDefault public interface AppOpsManager extends Hack.Mirror<android.app.AppOpsManager> {
 
 		@Retention(RetentionPolicy.SOURCE) @IntDef(flag = true, value = {
 				android.app.AppOpsManager.MODE_ALLOWED,
@@ -122,13 +121,13 @@ public class Hacks {
 				android.app.AppOpsManager.MODE_FOREGROUND
 		}) @interface Mode {}
 
-		@Keep interface PackageOps extends Hack.Mirror<Object> {
+		interface PackageOps extends Hack.Mirror<Object> {
 			String getPackageName();
 			int getUid();
 			List<OpEntry> getOps();
 		}
 
-		@Keep interface OpEntry extends Hack.Mirror<Object> {
+		interface OpEntry extends Hack.Mirror<Object> {
 			int OP_FALL_BACK = -9;
 			@Hack.Fallback(OP_FALL_BACK) int getOp();
 			int getMode();
@@ -145,9 +144,9 @@ public class Hacks {
 		@Hack.Fallback(-1) @Mode int opToDefaultMode(final int op);
 	}
 
-	@Keep public interface UserManagerHack extends Hack.Mirror<UserManager> {
+	public interface UserManagerHack extends Hack.Mirror<UserManager> {
 
-		@Keep @Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror<Object> {
+		@Hack.SourceClass("android.content.pm.UserInfo") interface UserInfo extends Hack.Mirror<Object> {
 			int getId();
 			UserHandle getUserHandle();
 		}
@@ -158,11 +157,11 @@ public class Hacks {
 		boolean removeUser(@UserIdInt int userHandle);
 	}
 
-	@Keep public interface PackageManagerHack extends Hack.Mirror<PackageManager> {
+	public interface PackageManagerHack extends Hack.Mirror<PackageManager> {
 		ComponentName getHomeActivities(List<ResolveInfo> outActivities);
 	}
 
-	static { if (BuildConfig.DEBUG) Hack.verifyAllMirrorsIn(Hacks.class); }
+	static { if (BuildConfig.DEBUG || Log.isLoggable("Island", Log.DEBUG)) Hack.verifyAllMirrorsIn(Hacks.class); }
 
 //	public static final @Nullable Hack.HackedMethod0<File, Void, Unchecked, Unchecked, Unchecked>
 //			Environment_getDataSystemDirectory = Hack.into(Environment.class).staticMethod("getDataSystemDirectory")
