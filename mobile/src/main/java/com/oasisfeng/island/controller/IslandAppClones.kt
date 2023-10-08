@@ -17,8 +17,6 @@ import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
-import android.os.Process.myPid
-import android.os.Process.myUid
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.IntDef
@@ -98,7 +96,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		val isShizukuAvailable = try { Shizuku.getVersion() >= 11 } catch (e: RuntimeException) { false }
 		val isShizukuReady = isShizukuAvailable && Shizuku.checkSelfPermission() == PERMISSION_GRANTED
 		val isPlayStoreAvailable = Apps.of(context).isAvailable(GooglePlayStore.PACKAGE_NAME)
-		val isInstalledByPlayStore = isInstalledByPlayStore(context, pkg)
+		val isKnownInstalledByPlayStore = isKnownInstalledByPlayStore(context, pkg)
 		val isPlayStoreReady = targets.size <= 2 && isPlayStoreAvailableInProfiles(targets.keys)
 
 		val fragment = ModelBottomSheetFragment()
@@ -110,7 +108,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		fragment.show(activity) {
 			val defaultMode = when {
 				isShizukuReady -> MODE_SHIZUKU
-				isPlayStoreReady && (isInstalledByPlayStore || ! isInstallerUsable()) -> MODE_PLAY_STORE
+				isPlayStoreReady && (isKnownInstalledByPlayStore || ! isInstallerUsable()) -> MODE_PLAY_STORE
 				else -> null }
 			val mode = mutableStateOf(defaultMode)
 			dialog.compose(showShizuku = isShizukuAvailable, showPlayStore = isPlayStoreAvailable, mode)
@@ -137,8 +135,8 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 	}
 
 	private suspend fun cloneApp(source: IslandAppInfo, target: UserHandle, mode: @AppCloneMode Int) {
-		if (Users.isParentProfile(target) && isInstallerUsable())    // Only works in parent profile due to a bug in AOSP.
-			return activity.startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)))
+		if (Users.isParentProfile(target) && isInstallerUsable()) @Suppress("DEPRECATION") // Only works in parent profile due to a bug in AOSP.
+			return activity.startActivityForResult(Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)), 1)   // startActivityForResult() is required on Android U+ due to a bug in AOSP.
 
 		val context = source.context(); val pkg = source.packageName
 		if (source.isSystem) {
@@ -228,11 +226,13 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 	private fun isPlayStoreAvailableInProfiles(targets: Collection<UserHandle>) =
 		targets.all { LauncherAppsCompat(context).getApplicationInfoNoThrows(GooglePlayStore.PACKAGE_NAME, 0, it) != null }
 
-	private fun isInstalledByPlayStore(context: Context, pkg: String) =
-		if (SDK_INT >= VERSION_CODES.R) {
+	private fun isKnownInstalledByPlayStore(context: Context, pkg: String) =
+		if (SDK_INT >= VERSION_CODES.R) try {
 			context.packageManager.getInstallSourceInfo(pkg).run {
-				GooglePlayStore.PACKAGE_NAME.let { it == initiatingPackageName && it == installingPackageName }}
-		} else context.packageManager.getInstallerPackageName(pkg) == GooglePlayStore.PACKAGE_NAME
+				GooglePlayStore.PACKAGE_NAME.let { it == initiatingPackageName && it == installingPackageName }}}
+			catch (e: NameNotFoundException) { false }
+		else @Suppress("DEPRECATION") try { context.packageManager.getInstallerPackageName(pkg) == GooglePlayStore.PACKAGE_NAME }
+			catch (e: IllegalArgumentException) { false }
 
 	companion object {
 		private const val CLONE_RESULT_ALREADY_CLONED = 0
