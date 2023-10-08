@@ -26,6 +26,6 @@ allprojects {
         jcenter()
     }
 
-    ext.compileSdkVersion = 33
+    ext.compileSdkVersion = 34
     ext.minSdkVersion = 24
 }
