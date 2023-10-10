@@ -21,6 +21,7 @@ import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
 import android.os.Build.VERSION_CODES.Q
 import android.os.Bundle
+import android.os.Process
 import android.preference.EditTextPreference
 import android.preference.Preference
 import android.preference.TwoStatePreference
@@ -89,7 +90,8 @@ import com.oasisfeng.island.util.*
             if (SDK_INT <= Q || ! isProfileOrDeviceOwner) return@setup remove(this)
             onClick {
                 val pkgs = activity.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
-                        .filter { it.requestedPermissions?.contains(INTERACT_ACROSS_PROFILES) == true }
+                        .filter { it.requestedPermissions?.contains(INTERACT_ACROSS_PROFILES) == true
+                                && it.applicationInfo.uid != Process.myUid() }  // Exclude extension pack
                 val pm = activity.packageManager
                 val entries = pkgs.map { it.applicationInfo.loadLabel(pm) }.toTypedArray()
                 val allowedPackages: Set<String> = policies.invoke(DPM::getCrossProfilePackages)
