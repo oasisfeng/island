@@ -23,6 +23,7 @@ if (file('local.gradle').exists()) apply from: 'local.gradle'
 allprojects {
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 
