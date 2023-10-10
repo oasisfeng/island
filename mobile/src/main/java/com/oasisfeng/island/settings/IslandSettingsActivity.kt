@@ -8,6 +8,7 @@ import android.app.ActionBar
 import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE
 import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
+import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -20,6 +21,7 @@ import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
 import android.os.Build.VERSION_CODES.Q
+import android.os.Build.VERSION_CODES.S
 import android.os.Bundle
 import android.os.Process
 import android.preference.EditTextPreference
@@ -35,6 +37,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import com.oasisfeng.android.content.pm.enableComponent
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
@@ -67,6 +70,7 @@ import com.oasisfeng.island.util.*
 
         if (Users.isParentProfile() && ! isProfileOrDeviceOwner) {
             setup<Preference>(R.string.key_cross_profile) { remove(this) }
+            setup<Preference>(R.string.key_cross_profile_widgets) { remove(this) }
             setup<Preference>(R.string.key_managed_mainland_setup) {
                 summary = getString(R.string.pref_managed_mainland_summary) + getString(R.string.pref_managed_mainland_features)
                 setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_MANAGED_MAINLAND.get())) }}}
@@ -103,6 +107,23 @@ import com.oasisfeng.island.util.*
                                     .toSet().also { policies.invoke(DPM::setCrossProfilePackages, it) }}
                         .setPositiveButton(R.string.prompt_manage_cross_profile_apps_footer, null)
                         .show().apply { getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false } }}
+
+        setup<Preference>(R.string.key_cross_profile_widgets) {
+            val widgetManager = activity.getSystemService<AppWidgetManager>()
+            if (! isProfileOrDeviceOwner || widgetManager == null) return@setup remove(this)
+            onClick {
+                val pkgToAppInfo = widgetManager.installedProviders
+                    .map { if (SDK_INT >= S) it.activityInfo else Hacks.AppWidgetProviderInfo_providerInfo.get(it) }
+                    .associate { it.packageName to it.applicationInfo }
+                val pkgs = pkgToAppInfo.keys.toList()
+                val pm = activity.packageManager
+                val entries = pkgToAppInfo.values.map { it.loadLabel(pm) }.toTypedArray()
+                val allowedPackages: Set<String> = policies.invoke(DPM::getCrossProfileWidgetProviders).toSet()
+                val allowed = BooleanArray(entries.size) { index -> pkgs[index] in allowedPackages }
+                Dialogs.buildCheckList(activity, activity.getText(R.string.pref_manage_cross_profile_widgets_summary), entries, allowed) { _, which, checked ->
+                    if (checked) policies.invoke(DPM::addCrossProfileWidgetProvider, pkgs[which])
+                    else policies.invoke(DPM::removeCrossProfileWidgetProvider, pkgs[which])
+                }.setNeutralButton(R.string.action_close, null).show() }}
 
         setupNotificationChannelTwoStatePreference(R.string.key_island_watcher, SDK_INT >= P && ! Users.isParentProfile(), NotificationIds.IslandWatcher) {
             if (SDK_INT >= Q) summary = getString(R.string.pref_island_watcher_summary) +

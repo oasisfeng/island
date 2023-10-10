@@ -163,8 +163,11 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_privacy_location_summary">Also affect the ability to scan near-by devices</string>
     <string name="pref_privacy_storage_title">Access personal storage (experimental)</string>
     <string name="pref_privacy_storage_summary">CAUTION: Revoking may cause app to crash</string>
+    <string name="pref_crossland_header">Cross-land functionality</string>
     <string name="pref_manage_cross_profile_title">Manage cross-land privilege</string>
     <string name="pref_manage_cross_profile_summary">Manage the apps with cross-land privilege.</string>
+    <string name="pref_manage_cross_profile_widgets_title">Manage allowed widgets</string>
+    <string name="pref_manage_cross_profile_widgets_summary">Allow widgets to be used in Mainland.</string>
     <string name="label_prefix_for_system_app">[Builtin]</string>
     <string name="label_suffix_permission_granted">(user granted)</string>
     <string name="action_revoke_all">Batch revoke…</string>
