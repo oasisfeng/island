@@ -33,7 +33,7 @@ android {
     }
 
     // Enable lint checking in all build variants.
-    libraryVariants.all { variant ->
+    libraryVariants.configureEach { variant ->
         variant.outputs.each { output ->
             def lintTask = tasks["lint${variant.name.capitalize()}"]
             output.assemble.dependsOn lintTask

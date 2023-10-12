@@ -210,6 +210,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			}
 		}
 
+		//noinspection deprecation
 		if (caller.equals(getPackageName()) || requireNonNull(PreferenceManager.getDefaultSharedPreferences(this)
 				.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet())).contains(caller)) {
 			performInstall(data, null);	// Whitelisted caller to perform installation without confirmation
@@ -234,6 +235,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 	}
 
 	private void addAlwaysAllowedCallerPackage(final String pkg) {
+		//noinspection deprecation
 		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		final Set<String> pkgs = new HashSet<>(requireNonNull(preferences.getStringSet(PREF_KEY_DIRECT_INSTALL_ALLOWED_CALLERS, Collections.emptySet())));
 		pkgs.add(pkg);
@@ -260,7 +262,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 				if (info.splitPublicSourceDirs != null)
 					for (int i = 0, num_splits = info.splitPublicSourceDirs.length; i < num_splits; i ++) {
 						final String split = info.splitPublicSourceDirs[i];
-						input_streams.put(SDK_INT >= O ? info.splitNames[i] : "split" + i, new FileInputStream(split));
+						input_streams.put(SDK_INT >= O && info.splitNames != null ? info.splitNames[i] : "split" + i, new FileInputStream(split));
 					}
 			} else input_streams.put(stream_name, requireNonNull(getContentResolver().openInputStream(uri)));
 		} catch(final IOException | RuntimeException e) {		// SecurityException may be thrown by ContentResolver.openInputStream().
@@ -325,7 +327,7 @@ public class AppInstallerActivity extends CallerAwareActivity {
 			if (info == null) info = intent.getParcelableExtra(InstallerExtras.EXTRA_APP_INFO);
 			if (info != null) {
 				intent.setData(Uri.fromFile(new File(info.publicSourceDir)));
- 				if (info.splitPublicSourceDirs != null && info.splitPublicSourceDirs.length > 0)
+				if (info.splitPublicSourceDirs != null && info.splitPublicSourceDirs.length > 0)
 					Toast.makeText(getApplicationContext(), R.string.toast_split_apk_clone_fallback_warning, LENGTH_LONG).show();
 			}
 		}

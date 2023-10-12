@@ -102,6 +102,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		val fragment = ModelBottomSheetFragment()
 		val alp = IslandAppListProvider.getInstance(context)
 		val dialog = AppClonesBottomSheet(targets, icons, { user -> alp.isInstalled(pkg, user) }) { target, mode ->
+			// The normal follow-up procedure goes here
 			makeAppAvailable(target, mode)
 			fragment.dismiss() }
 
@@ -131,7 +132,9 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		} else if (target != null && target.isInstalled && !target.enabled) {  // Disabled app may be shown as "removed"
 			launchSystemAppSettings(target)
 			Toast.makeText(activity, R.string.toast_enable_disabled_system_app, Toast.LENGTH_SHORT).show()
-		} else vm.interactive(context) { cloneApp(app, profile, mode) }
+		} else vm.interactive(context) {
+			cloneApp(app, profile, mode)
+		}
 	}
 
 	private suspend fun cloneApp(source: IslandAppInfo, target: UserHandle, mode: @AppCloneMode Int) {
