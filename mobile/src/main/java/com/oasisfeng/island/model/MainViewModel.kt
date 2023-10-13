@@ -36,7 +36,7 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery),/* setSelected = */false)
 		val currentProfile = currentProfile
 		tabs.addTab(tabs.newTab().setText(com.oasisfeng.island.shared.R.string.mainland_name),
-			/* setSelected = */Users.isParentProfile(currentProfile))
+			/* setSelected */currentProfile?.let { Users.isParentProfile(it) } == true)
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)

@@ -92,7 +92,7 @@ object IslandAppShortcut {
 		ShortcutManagerCompat.removeLongLivedShortcuts(context, listOf(id))
 
 		if (! Users.isParentProfile()) Shuttle(context, to = Users.parentProfile).launchNoThrows(with = Users.currentId()) {
-			ShortcutManagerCompat.removeLongLivedShortcuts(context, listOf(getShortcutId(pkg, it, isCrossProfile = true))) }
+			ShortcutManagerCompat.removeLongLivedShortcuts(this, listOf(getShortcutId(pkg, it, isCrossProfile = true))) }
 	}
 
 	@OwnerUser @ProfileUser @RequiresApi(O) fun updateIfNeeded(context: Context, app: ApplicationInfo, isCrossProfile: Boolean) {
@@ -106,7 +106,7 @@ object IslandAppShortcut {
 		val dynamic = isDynamicLabelEnabled(context)
 		updateAll(context, dynamic)
 		Users.getProfilesManagedByIsland().forEach {
-			Shuttle(context, to = it).launchNoThrows { updateAll(context, dynamic) }}
+			Shuttle(context, to = it).launchNoThrows { updateAll(this, dynamic) }}
 	}
 
 	@RequiresApi(O) fun updateAll(context: Context, dynamic: Boolean) {
