@@ -14,6 +14,7 @@ import com.oasisfeng.island.util.ProfileUser
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.Users.Companion.ACTION_USER_INFO_CHANGED
 import com.oasisfeng.island.util.Users.Companion.EXTRA_USER_HANDLE
+import com.oasisfeng.island.util.Users.Companion.isParentProfile
 import com.oasisfeng.island.util.Users.Companion.toId
 
 object IslandNameManager {
@@ -31,7 +32,7 @@ object IslandNameManager {
 		getStore(context).getString(buildIslandNameKey(context), null) ?: getDefaultName(context)
 
 	private fun getDefaultName(context: Context, profile: UserHandle = Users.current()): String {
-		if (Users.isParentProfile(profile)) return context.getString(R.string.mainland_name)
+		if (profile.isParentProfile()) return context.getString(R.string.mainland_name)
 		val islandCount = Users.run { if (isParentProfile()) getProfilesManagedByIsland().size else getProfileCount() - 1 }
 		return if (islandCount > 1) getDefaultSpecificName(context, profile) else context.getString(R.string.default_island_name)
 	}

@@ -18,6 +18,7 @@ import com.oasisfeng.island.data.LiveProfileStates.ProfileState
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.util.Users
 import com.oasisfeng.island.util.Users.Companion.ACTION_USER_INFO_CHANGED
+import com.oasisfeng.island.util.Users.Companion.isParentProfile
 import com.oasisfeng.island.util.Users.Companion.toId
 
 class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel(app, state) {
@@ -33,10 +34,9 @@ class MainViewModel(app: Application, state: SavedStateHandle): AppListViewModel
 			override fun onTabReselected(tab: TabLayout.Tab) {}})
 
 		// Tab "Discovery" and "Mainland" are always present
-		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery),/* setSelected = */false)
+		tabs.addTab(tabs.newTab().setText(R.string.tab_discovery), /* setSelected */false)
 		val currentProfile = currentProfile
-		tabs.addTab(tabs.newTab().setText(com.oasisfeng.island.shared.R.string.mainland_name),
-			/* setSelected */currentProfile?.let { Users.isParentProfile(it) } == true)
+		tabs.addTab(tabs.newTab().setText(com.oasisfeng.island.shared.R.string.mainland_name), /* setSelected */currentProfile.isParentProfile())
 
 		for ((profile, name) in IslandNameManager.getAllNames(activity)) {
 			val tab = tabs.newTab().setTag(profile).setText(name)

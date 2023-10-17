@@ -54,6 +54,7 @@ import com.oasisfeng.island.model.interactive
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.ui.ModelBottomSheetFragment
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.Users.Companion.isParentProfile
 import com.oasisfeng.island.util.Users.Companion.toId
 import eu.chainfire.libsuperuser.Shell
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +87,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 		val shouldShowBadge: Boolean = targets.size > 2
 		val icons: Map<UserHandle, Drawable> = targets.entries.stream().collect(Collectors.toMap({ obj: Map.Entry<UserHandle, String> -> obj.key }) { e: Map.Entry<UserHandle, String> ->
 			val user = e.key
-			val res = if (Users.isParentProfile(user)) R.drawable.ic_portrait_24dp else R.drawable.ic_island_black_24dp
+			val res = if (user.isParentProfile()) R.drawable.ic_portrait_24dp else R.drawable.ic_island_black_24dp
 			val drawable: Drawable = context.getDrawable(res)!!
 			val dark = (context.resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
 			drawable.setTint(context.getColor(if (dark) android.R.color.white else android.R.color.black))		// TODO: Decouple
@@ -138,7 +139,7 @@ class IslandAppClones(val activity: FragmentActivity, val vm: AndroidViewModel, 
 	}
 
 	private suspend fun cloneApp(source: IslandAppInfo, target: UserHandle, mode: @AppCloneMode Int) {
-		if (Users.isParentProfile(target) && isInstallerUsable()) @Suppress("DEPRECATION") // Only works in parent profile due to a bug in AOSP.
+		if (target.isParentProfile() && isInstallerUsable()) @Suppress("DEPRECATION") // Only works in parent profile due to a bug in AOSP.
 			return activity.startActivityForResult(Intent(Intent.ACTION_INSTALL_PACKAGE, Uri.fromParts("package", pkg, null)), 1)   // startActivityForResult() is required on Android U+ due to a bug in AOSP.
 
 		val context = source.context(); val pkg = source.packageName

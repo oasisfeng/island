@@ -21,6 +21,7 @@ import com.oasisfeng.island.shuttle.ActivityShuttle
 import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.CallerAwareActivity
 import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.Users.Companion.isParentProfile
 
 /**
  * Created by Oasis on 2018-11-16.
@@ -70,7 +71,7 @@ class AppInfoForwarderActivity : CallerAwareActivity() {
 		if (SDK_INT >= O) chooser.putExtra(IntentCompat.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE, isCallerNotSettings)
 		val initialIntents: MutableList<Intent> = ArrayList()
 		if (isCallerNotSettings && detailsActivity != null) {
-			if (user != null && ! Users.isParentProfile(user) && Users.isProfileManagedByIsland(this, user)) {    // Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
+			if (user != null && ! user.isParentProfile() && Users.isProfileManagedByIsland(this, user)) {    // Use mainland resolve to replace the misleading forwarding-resolved "Switch to work profile".
 				val labelRes = detailsActivity.run { if (labelRes != 0) labelRes else applicationInfo.labelRes }
 				initialIntents.add(LabeledIntent(details, detailsActivity.packageName, labelRes, detailsActivity.iconResource))
 			} else initialIntents.add(details) }
