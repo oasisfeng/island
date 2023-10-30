@@ -27,6 +27,7 @@ import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Modules
 import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.Users.Companion.isParentProfile
 
 @Suppress("DEPRECATION") class SettingsActivity : android.preference.PreferenceActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +68,7 @@ import com.oasisfeng.island.util.Users
 
 		val names = IslandNameManager.getAllNames(this)
 		val labels = users.map { user ->
-			if (Users.isParentProfile(user)) getText(com.oasisfeng.island.shared.R.string.mainland_name) else names[user]
+			if (user.isParentProfile()) getText(com.oasisfeng.island.shared.R.string.mainland_name) else names[user]
 		}.toTypedArray()
 		Dialogs.buildList(this, null, labels) { _, which ->
 			if (which == 0) super.onHeaderClick(header, position)

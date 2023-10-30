@@ -3,7 +3,7 @@ plugins { id("com.android.application") }
 android {
     namespace = "com.oasisfeng.island.sideplay"
 
-    compileSdk = 31
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 31

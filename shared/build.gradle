@@ -33,7 +33,7 @@ android {
     }
 
     // Enable lint checking in all build variants.
-    libraryVariants.all { variant ->
+    libraryVariants.configureEach { variant ->
         variant.outputs.each { output ->
             def lintTask = tasks["lint${variant.name.capitalize()}"]
             output.assemble.dependsOn lintTask
@@ -53,7 +53,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'com.google.firebase:firebase-config-ktx'
     implementation 'com.google.firebase:firebase-crashlytics-ktx'
-    implementation 'com.oasisfeng.condom:library:2.5.0'
+    implementation 'com.oasisfeng.condom:library:3.0.0'
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.10.0'
 

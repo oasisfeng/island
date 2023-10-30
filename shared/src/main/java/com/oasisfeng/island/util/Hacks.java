@@ -3,12 +3,15 @@ package com.oasisfeng.island.util;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.O_MR1;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.S;
 import static com.oasisfeng.island.appops.AppOpsCompat.GET_APP_OPS_STATS;
 
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -73,6 +76,9 @@ public class Hacks {
 			.staticField("PRINT_SPOOLER_PACKAGE_NAME").fallbackTo("com.android.printspooler");
 	public static final Hack.HackedField<PowerManager, Object>
 			PowerManager_mService = Hack.into(PowerManager.class).field("mService").fallbackTo(null);
+	public static final Hack.HackedField<AppWidgetProviderInfo, ActivityInfo>
+			AppWidgetProviderInfo_providerInfo = Hack.onlyIf(SDK_INT < S).into(AppWidgetProviderInfo.class)
+			.field("providerInfo").fallbackTo(null);
 
 	public static final Hack.HackedMethod2<Integer, Void, Unchecked, Unchecked, Unchecked, String, Integer>
 			SystemProperties_getInt = Hack.into("android.os.SystemProperties").staticMethod("getInt")

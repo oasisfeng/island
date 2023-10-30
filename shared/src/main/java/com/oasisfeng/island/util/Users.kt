@@ -113,12 +113,12 @@ class Users : PseudoContentProvider() {
 
 		@JvmStatic fun isSystemUser() = CURRENT_ID == 0
 		@JvmStatic fun isParentProfile() = CURRENT_ID == parentProfile.toId()
-		@JvmStatic fun isParentProfile(user: UserHandle) = user == parentProfile
-		@JvmStatic fun isParentProfile(user_id: Int) = user_id == parentProfile.toId()
+		@JvmStatic fun UserHandle?.isParentProfile() = this == parentProfile
+		@JvmStatic fun isParentProfile(userId: Int) = userId == parentProfile.toId()
 
 		@OwnerUser @JvmStatic fun isProfileManagedByIsland(context: Context, user: UserHandle): Boolean {
 			ensureParentProfile()
-			if (isParentProfile(user)) {
+			if (user.isParentProfile()) {
 				if (isParentProfile()) return DevicePolicies(context).isProfileOwner
 				throw IllegalArgumentException("Not working for profile parent user") }
 			return sProfilesManagedByIsland.contains(user)

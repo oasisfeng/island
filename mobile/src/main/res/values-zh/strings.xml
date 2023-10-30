@@ -161,8 +161,11 @@
     <string name="pref_privacy_location_summary">将影响应用扫描附近设备的能力</string>
     <string name="pref_privacy_storage_title">访问个人存储 (试验性)</string>
     <string name="pref_privacy_storage_summary">注意：撤销此权限可能导致应用异常</string>
-    <string name="pref_manage_cross_profile_title">管理跨境权限</string>
-    <string name="pref_manage_cross_profile_summary">管理请求跨境数据互通权限的应用</string>
+    <string name="pref_crossland_header">跨界机制</string>
+    <string name="pref_manage_cross_profile_title">管理跨界权限</string>
+    <string name="pref_manage_cross_profile_summary">管理请求跨界数据互通权限的应用</string>
+    <string name="pref_manage_cross_profile_widgets_title">管理允许的小组件</string>
+    <string name="pref_manage_cross_profile_widgets_summary">允许小组件在界外使用</string>
     <string name="label_prefix_for_system_app">[内置]</string>
     <string name="label_suffix_permission_granted">(用户已授权)</string>
     <string name="action_revoke_all">批量撤销…</string>

@@ -24,6 +24,7 @@ import com.oasisfeng.island.shuttle.Shuttle
 import com.oasisfeng.island.util.DPM
 import com.oasisfeng.island.util.DevicePolicies
 import com.oasisfeng.island.util.Users
+import com.oasisfeng.island.util.Users.Companion.isParentProfile
 import com.oasisfeng.island.util.Users.Companion.toId
 import java.util.function.Predicate
 import java.util.stream.Stream
@@ -37,7 +38,7 @@ import kotlin.streams.asSequence
 class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 
 	operator fun get(pkg: String, profile: UserHandle): IslandAppInfo? {
-		return if (Users.isParentProfile(profile)) super.get(pkg) else loadAppsInProfileIfNotYet(profile)[pkg]
+		return if (profile.isParentProfile()) super.get(pkg) else loadAppsInProfileIfNotYet(profile)[pkg]
 	}
 
 	fun addPlaceholder(pkg: String, profile: UserHandle) {
@@ -62,7 +63,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	fun isInstalled(pkg: String, profile: UserHandle) = get(pkg, profile)?.run { installed && shouldShowAsEnabled() } == true
 
 	fun isExclusive(app: IslandAppInfo): Boolean {
-		if (Users.isParentProfile(app.user) && ! Users.hasProfile()) return true
+		if (app.user.isParentProfile() && ! Users.hasProfile()) return true
 		return Users.getProfilesManagedByIsland().asSequence().plus(Users.parentProfile).minus(app.user).all { profile ->
 			! isInstalled(app.packageName, profile) }
 	}
@@ -84,7 +85,7 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 	}
 
 	fun installedApps(profile: UserHandle): Stream<IslandAppInfo> {
-		return if (Users.isParentProfile(profile)) installedAppsInOwnerUser() else loadAppsInProfileIfNotYet(profile).values.stream()
+		return if (profile.isParentProfile()) installedAppsInOwnerUser() else loadAppsInProfileIfNotYet(profile).values.stream()
 	}
 
 	private fun loadAppsInProfileIfNotYet(profile: UserHandle): Map<String, IslandAppInfo>

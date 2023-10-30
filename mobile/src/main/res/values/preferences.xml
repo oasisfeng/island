@@ -13,6 +13,7 @@
     <string translatable="false" name="key_manage_location">manage_location</string>
     <string translatable="false" name="key_manage_storage">manage_storage</string>
     <string translatable="false" name="key_cross_profile">cross_profile</string>
+    <string translatable="false" name="key_cross_profile_widgets">cross_profile_widgets</string>
     <string translatable="false" name="key_watcher">watcher</string>
     <string translatable="false" name="key_island_watcher">island_watcher</string>
     <string translatable="false" name="key_app_watcher">app_watcher</string>

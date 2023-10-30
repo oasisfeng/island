@@ -17,6 +17,8 @@ import android.os.Build.VERSION_CODES.Q
 import android.util.Log
 import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
 import com.oasisfeng.android.util.Apps
 import com.oasisfeng.island.api.Api
 import com.oasisfeng.island.notification.NotificationIds
@@ -90,8 +92,9 @@ import java.util.*
 	/** This provider tracks all freezing and unfreezing events triggered by other modules within the default process of Island  */
 	class AppStateTracker : PseudoContentProvider() {
 
-		override fun onCreate() = false.also { context().registerReceiver(IslandAppWatcher(), IntentFilter().apply {
-			addAction(DevicePolicies.ACTION_PACKAGE_UNFROZEN); addAction(ACTION_PACKAGE_REMOVED); addDataScheme(("package")) }) }
+		override fun onCreate() = false.also { ContextCompat.registerReceiver(context(), IslandAppWatcher(),
+			IntentFilter(DevicePolicies.ACTION_PACKAGE_UNFROZEN).apply { addAction(ACTION_PACKAGE_REMOVED); addDataScheme(("package")) },
+			RECEIVER_NOT_EXPORTED) }
 	}
 
 	companion object {

@@ -160,8 +160,8 @@
     <string name="pref_privacy_location_summary">將影響應用程式掃描附近裝置的能力</string>
     <string name="pref_privacy_storage_title">瀏覽個人儲存空間 (實驗性)</string>
     <string name="pref_privacy_storage_summary">注意：撤銷此權限可能導致應用程式異常</string>
-    <string name="pref_manage_cross_profile_title">管理跨境權限</string>
-    <string name="pref_manage_cross_profile_summary">管理請求跨境資料互通權限的程式</string>
+    <string name="pref_manage_cross_profile_title">管理跨界權限</string>
+    <string name="pref_manage_cross_profile_summary">管理請求跨界資料互通權限的程式</string>
     <string name="label_prefix_for_system_app">[內建]</string>
     <string name="label_suffix_permission_granted">(用戶已授權)</string>
     <string name="action_revoke_all">批次撤銷…</string>
