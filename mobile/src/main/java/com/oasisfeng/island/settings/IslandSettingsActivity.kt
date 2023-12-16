@@ -76,6 +76,7 @@ import com.oasisfeng.island.util.*
                 setOnPreferenceClickListener { true.also { WebContent.view(activity, Uri.parse(Config.URL_SETUP_MANAGED_MAINLAND.get())) }}}
             setup<Preference>(R.string.key_watcher) { isEnabled = false }
             setup<Preference>(R.string.key_island_watcher) { remove(this) }
+            setup<Preference>(R.string.key_app_watcher) { remove(this) }
             setup<Preference>(R.string.key_setup) { remove(this) } }
         else setup<Preference>(R.string.key_managed_mainland_setup) { remove(this) }
 
