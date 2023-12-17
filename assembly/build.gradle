@@ -11,7 +11,7 @@ android {
         applicationId "com.oasisfeng.island"
         minSdkVersion this.minSdkVersion
         targetSdkVersion 31
-        resConfigs 'en', 'zh', 'zh-rTW', 'pt-rBR'
+        resourceConfigurations += ['en', 'zh', 'zh-rTW', 'pt-rBR']
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

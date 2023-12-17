@@ -62,7 +62,7 @@ import com.oasisfeng.island.util.DevicePolicies.PreferredActivity
  */
 @ProfileUser class IslandSettingsFragment: android.preference.PreferenceFragment() {
 
-    override fun onResume() {
+    @Deprecated("Deprecated in Java") override fun onResume() {
         super.onResume()
         val activity = activity; val pm = activity.packageManager
         activity.title = IslandNameManager.getName(activity)
@@ -219,20 +219,20 @@ import com.oasisfeng.island.util.DevicePolicies.PreferredActivity
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    @Deprecated("Deprecated in Java") override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         preferenceManager.setStorageDeviceProtected()
         addPreferencesFromResource(R.xml.pref_island)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    @Deprecated("Deprecated in Java") override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         if (! Users.isParentProfile()) {
             inflater.inflate(R.menu.pref_island_actions, menu)
             if (BuildConfig.DEBUG) menu.findItem(R.id.menu_test).isVisible = true }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    @Deprecated("Deprecated in Java") override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_rename -> true.also { requestRenaming() }
             R.id.menu_test -> true.also { TempDebug.run(activity) }
