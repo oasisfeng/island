@@ -6,6 +6,11 @@
         android:title="@string/pref_device_owner_title"
         android:summary="@string/pref_managed_mainland_summary" />
 
+    <Preference
+        android:key="@string/key_lock_capture_target"
+        android:title="@string/pref_lock_capture_target_title"
+        android:summary="@string/pref_lock_capture_target_summary" />
+
     <PreferenceCategory android:key="@string/key_privacy" android:title="@string/pref_privacy_header">
 
         <com.oasisfeng.android.preference.WallOfTextPreference

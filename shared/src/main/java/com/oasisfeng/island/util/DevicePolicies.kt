@@ -15,6 +15,7 @@ import android.os.Build.VERSION_CODES.P
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
+import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.oasisfeng.android.content.pm.LauncherAppsCompat
@@ -146,7 +147,8 @@ class DevicePolicies {
     private val mAppContext: Context
 
     enum class PreferredActivity(private val action: String, decorator: IntentFilter.() -> Unit) {
-        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME); addCategory(Intent.CATEGORY_DEFAULT) });
+        Home(Intent.ACTION_MAIN, { addCategory(Intent.CATEGORY_HOME); addCategory(Intent.CATEGORY_DEFAULT) }),
+        Camera(MediaStore.ACTION_IMAGE_CAPTURE, { addCategory(Intent.CATEGORY_DEFAULT) });
 
         fun getMatchingIntent() = Intent(action).apply {
             filter.categoriesIterator().forEach(this::addCategory)

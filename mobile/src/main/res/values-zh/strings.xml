@@ -65,6 +65,7 @@
     <string name="action_deactivate">解除</string>
     <string name="action_rescind">撤除</string>
     <string name="action_close">关闭</string>
+    <string name="button_reset_to_default">恢复默认</string>
 
     <string name="menu_tip">提示…</string>
     <string name="menu_search">搜索</string>
@@ -116,6 +117,7 @@
     <string name="prompt_activate_island_first">请先激活彼界…</string>
     <string name="prompt_invalid_shortcut">快捷方式已失效，请重新创建</string>
     <string name="prompt_operation_failure_due_to_incompatibility">操作失败\n(可能由于 ROM 兼容性)</string>
+    <string name="prompt_no_capture_app">尚未安装图像捕捉应用。\n\n可用的应用请参见“天书”。</string>
 
     <!-- General words -->
     <string name="open_settings">打开系统设置</string>
@@ -188,6 +190,8 @@
     <string name="pref_device_owner_title">让掌控力延伸至界外</string>
     <string name="pref_managed_mainland_summary">授予炼妖壶管理界外的权限，你将可以：\n\n</string>
     <string name="pref_managed_mainland_features">· 冻结界外的应用\n· 额外的特性（如全局 ADB 安全封印、一键封印壶中界）</string>
+    <string name="pref_lock_capture_target_title">响应图像捕捉的应用</string>
+    <string name="pref_lock_capture_target_summary">切换非系统应用响应图像捕捉</string>
 
     <string name="pref_setup_header">管理</string>
 

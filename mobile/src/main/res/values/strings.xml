@@ -67,6 +67,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="action_deactivate">Deactivate</string>
     <string name="action_rescind">Rescind</string>
     <string name="action_close">Close</string>
+    <string name="button_reset_to_default">Reset to default</string>
 
     <string name="menu_tip">Tip…</string>
     <string name="menu_search">Search</string>
@@ -118,6 +119,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="prompt_activate_island_first">Please activate Island first.</string>
     <string name="prompt_invalid_shortcut">Invalid shortcut, please recreate.</string>
     <string name="prompt_operation_failure_due_to_incompatibility">Operation failed.\n(probably due to ROM compatibility)</string>
+    <string name="prompt_no_capture_app">No image capture provider app installed yet.\n\nSee "Discovery" for available apps.</string>
 
     <!-- General words -->
     <string name="open_settings">Open Settings</string>
@@ -190,6 +192,8 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_device_owner_title">Extend the power to Mainland</string>
     <string name="pref_managed_mainland_summary">If activated, you can:\n\n</string>
     <string name="pref_managed_mainland_features">· Freeze apps in Mainland\n· Extra features. (e.g. full ADB Secure, one-click Island deactivation)</string>
+    <string name="pref_lock_capture_target_title">Image capture provider</string>
+    <string name="pref_lock_capture_target_summary">Switch the provider of image capture to non-system app.</string>
 
     <string name="pref_setup_header">Setup</string>
 

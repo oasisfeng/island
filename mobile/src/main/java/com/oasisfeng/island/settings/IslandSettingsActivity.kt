@@ -11,6 +11,7 @@ import android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
 import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.Intent.ACTION_BOOT_COMPLETED
 import android.content.Intent.ACTION_MY_PACKAGE_REPLACED
@@ -39,17 +40,20 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import com.oasisfeng.android.content.pm.enableComponent
+import com.oasisfeng.android.content.pm.getComponentName
 import com.oasisfeng.android.ui.Dialogs
 import com.oasisfeng.android.ui.WebContent
 import com.oasisfeng.island.Config
 import com.oasisfeng.island.IslandNameManager
 import com.oasisfeng.island.TempDebug
 import com.oasisfeng.island.appops.AppOpsCompat
+import com.oasisfeng.island.data.helper.isSystem
 import com.oasisfeng.island.mobile.BuildConfig
 import com.oasisfeng.island.mobile.R
 import com.oasisfeng.island.notification.NotificationIds
 import com.oasisfeng.island.setup.IslandSetup
 import com.oasisfeng.island.util.*
+import com.oasisfeng.island.util.DevicePolicies.PreferredActivity
 
 /**
  * Settings for each managed profile, also as launcher activity in managed profile.
@@ -60,7 +64,7 @@ import com.oasisfeng.island.util.*
 
     override fun onResume() {
         super.onResume()
-        val activity = activity
+        val activity = activity; val pm = activity.packageManager
         activity.title = IslandNameManager.getName(activity)
 
         val policies = DevicePolicies(activity.applicationContext)
@@ -80,6 +84,23 @@ import com.oasisfeng.island.util.*
             setup<Preference>(R.string.key_setup) { remove(this) } }
         else setup<Preference>(R.string.key_managed_mainland_setup) { remove(this) }
 
+        if (isProfileOrDeviceOwner) setup<Preference>(R.string.key_lock_capture_target) {
+            setOnPreferenceClickListener { true.also {
+                val captureIntent = PreferredActivity.Camera.getMatchingIntent()
+                val candidates = pm.getInstalledApplications(0).filter { ! it.isSystem }.flatMap {  // Skip system apps to avoid hanging due to massive queries.
+                    pm.queryIntentActivities(captureIntent.setPackage(it.packageName), 0) }
+                if (candidates.isEmpty())
+                    return@also Unit.also { Dialogs.buildAlert(activity, 0, R.string.prompt_no_capture_app).show() }
+
+                val reset = DialogInterface.OnClickListener { _, _ ->
+                    captureIntent.setPackage(null)/* changed above */.resolveActivity(pm)?.packageName?.also { pkg ->
+                        policies.clearPersistentPreferredActivity(pkg) }}
+                Dialogs.buildList(activity, null, candidates.map { it.activityInfo.loadLabel(pm) }.toTypedArray()) { _, which ->
+                    reset.onClick(null, 0)   // Reset first
+                    val target = candidates[which].activityInfo
+                    policies.setPersistentPreferredActivity(PreferredActivity.Camera, target.getComponentName())
+                }.setNeutralButton(R.string.button_reset_to_default, reset).show() }}}
+
         if (SDK_INT in P..Q && isProfileOrDeviceOwner) { // App Ops in Android R is a mess (being reset now and then), do not support it on Android R at present.
             setupPreferenceForManagingAppOps(R.string.key_manage_read_phone_state, READ_PHONE_STATE, AppOpsCompat.OP_READ_PHONE_STATE,
                     R.string.pref_privacy_read_phone_state_title, SDK_INT <= P)
@@ -94,10 +115,9 @@ import com.oasisfeng.island.util.*
         setup<Preference>(R.string.key_cross_profile) {
             if (SDK_INT <= Q || ! isProfileOrDeviceOwner) return@setup remove(this)
             onClick {
-                val pkgs = activity.packageManager.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
+                val pkgs = pm.getInstalledPackages(GET_PERMISSIONS or MATCH_UNINSTALLED_PACKAGES)
                         .filter { it.requestedPermissions?.contains(INTERACT_ACROSS_PROFILES) == true
                                 && it.applicationInfo.uid != Process.myUid() }  // Exclude extension pack
-                val pm = activity.packageManager
                 val entries = pkgs.map { it.applicationInfo.loadLabel(pm) }.toTypedArray()
                 val allowedPackages: Set<String> = policies.invoke(DPM::getCrossProfilePackages)
                 val allowed = BooleanArray(entries.size) { index -> pkgs[index].packageName in allowedPackages }
@@ -105,7 +125,7 @@ import com.oasisfeng.island.util.*
                         entries, allowed) { _, which, checked -> allowed[which] = checked }
                         .setNeutralButton(R.string.action_close) { _,_ ->
                             pkgs.mapIndexedNotNullTo(ArraySet()) { index, pkg -> if (allowed[index]) pkg.packageName else null }
-                                    .toSet().also { policies.invoke(DPM::setCrossProfilePackages, it) }}
+                                    .toSet().also { policies.setCrossProfilePackages(it) }}
                         .setPositiveButton(R.string.prompt_manage_cross_profile_apps_footer, null)
                         .show().apply { getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false } }}
 
@@ -117,7 +137,6 @@ import com.oasisfeng.island.util.*
                     .map { if (SDK_INT >= S) it.activityInfo else Hacks.AppWidgetProviderInfo_providerInfo.get(it) }
                     .associate { it.packageName to it.applicationInfo }
                 val pkgs = pkgToAppInfo.keys.toList()
-                val pm = activity.packageManager
                 val entries = pkgToAppInfo.values.map { it.loadLabel(pm) }.toTypedArray()
                 val allowedPackages: Set<String> = policies.invoke(DPM::getCrossProfileWidgetProviders).toSet()
                 val allowed = BooleanArray(entries.size) { index -> pkgs[index] in allowedPackages }
