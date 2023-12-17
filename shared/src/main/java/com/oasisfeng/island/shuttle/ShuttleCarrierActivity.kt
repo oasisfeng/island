@@ -12,7 +12,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
+import android.content.pm.CrossProfileApps
 import android.net.Uri
+import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.P
@@ -49,7 +51,7 @@ class ShuttleCarrierActivity: Activity() {
 		/** Credential confirmation is needed if separate challenge (P+) is used and is locked by keyguard,
 		 *  even if "user" (credential protected storage) is unlocked */
 		@ProfileUser private fun isCredentialNeeded(context: Context) =
-				if (SDK_INT < P || DevicePolicies(context).invoke(DPM::isUsingUnifiedPassword)) false
+				if (SDK_INT < P || DevicePolicies(context).run { ! isManagedProfile || invoke(DPM::isUsingUnifiedPassword) }) false
 				else (context.getSystemService<KeyguardManager>()?.run { isDeviceLocked && isDeviceSecure } ?: false)
 
 		private const val ACTION = "com.oasisfeng.island.action.SHUTTLE"
@@ -61,23 +63,36 @@ class ShuttleCarrierActivity: Activity() {
 		super.onCreate(savedInstanceState)
 		if (Users.isParentProfile()) {
 			Log.d(TAG, "Carrier is started in Mainland.")
-			ShuttleProvider.collect(this, intent)
-			setResult(RESULT_OK, Intent(null, Uri.parse(ShuttleProvider.CONTENT_URI))   // Send reverse shuttle back
+			try { ShuttleProvider.collectActivityResult(this, intent) }
+			catch (e: SecurityException) { Log.e(TAG, "Error collecting shuttle.") }
+			setResult(RESULT_OK, Intent(null, ShuttleProvider.buildCrossProfileUri()) // Send reverse shuttle back
 					.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION))
 			finish()
 		} else {
 			Log.d(TAG, "Starting carrier in Mainland...")
-			DevicePolicies(this).addCrossProfileIntentFilter(IntentFilter(ACTION), FLAG_PARENT_CAN_ACCESS_MANAGED)
-			val intent = intent.setAction(ACTION).setComponent(null).removeFlag(FLAG_ACTIVITY_NEW_TASK)
+			val intent = intent.setAction(ACTION).removeFlag(FLAG_ACTIVITY_NEW_TASK)
 			try {
-				CrossProfile.decorateIntentForActivityInParentProfile(this, intent)
-				startActivityForResult(intent, 1)
+				if (SDK_INT >= Build.VERSION_CODES.R) {
+					DevicePolicies(this).ensureCrossProfileReady()
+					getSystemService<CrossProfileApps>()!!.startActivity(intent, Users.parentProfile, this)
+				} else {
+					DevicePolicies(this).addCrossProfileIntentFilter(IntentFilter(ACTION), FLAG_PARENT_CAN_ACCESS_MANAGED)
+					CrossProfile.decorateIntentForActivityInParentProfile(this, intent.setComponent(null))
+					startActivityForResult(intent, 1)
+				}
 			} catch (e: RuntimeException) { finish(); Log.e(TAG, "Error establishing shuttle to parent profile.", e) }}
+	}
+
+	override fun onRestart() {
+		super.onRestart()
+		if (SDK_INT >= Build.VERSION_CODES.R) try {       // Cannot receive activity result on R+, see onCreate().
+			ShuttleProvider.takeUriGranted(this, Uri.parse(ShuttleProvider.CONTENT_URI))
+		} catch (e: RuntimeException) { Log.e(TAG, "Error taking shuttle from parent profile.", e) }
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		Log.v(TAG, "onActivityResult: $data")
-		ShuttleProvider.collect(this, data ?: return)       // Receive the reverse shuttle sent back as activity result
+		ShuttleProvider.collectActivityResult(this, data ?: return)       // Receive the reverse shuttle sent back as activity result
 		finish()
 	}
 

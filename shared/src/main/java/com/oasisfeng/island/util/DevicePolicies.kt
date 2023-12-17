@@ -1,6 +1,8 @@
 package com.oasisfeng.island.util
 
+import android.Manifest.permission.INTERACT_ACROSS_PROFILES
 import android.annotation.SuppressLint
+import android.app.AppOpsManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
@@ -9,6 +11,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS
 import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
+import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.N_MR1
 import android.os.Build.VERSION_CODES.P
@@ -37,6 +40,8 @@ typealias DPM = DevicePolicyManager
  * Created by Oasis on 2016/6/14.
  */
 class DevicePolicies {
+
+    val isManagedProfile: Boolean; get() = manager.isManagedProfile(sAdmin)
 
     val isProfileOwner: Boolean
         get() = manager.isProfileOwnerApp(Modules.MODULE_ENGINE)
@@ -112,6 +117,18 @@ class DevicePolicies {
     fun setUserRestriction(restriction: String, enabled: Boolean) =
         if (enabled) manager.addUserRestriction(sAdmin, restriction)
         else manager.clearUserRestriction(sAdmin, restriction)
+
+    @RequiresApi(Build.VERSION_CODES.R) fun setCrossProfilePackages(packages: Set<String>) {
+        manager.setCrossProfilePackages(sAdmin, packages.plus(Modules.MODULE_ENGINE))
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R) fun ensureCrossProfileReady() {
+        val packages = manager.getCrossProfilePackages(sAdmin)
+        if (Modules.MODULE_ENGINE in packages) return
+        setCrossProfilePackages(packages)   // MODULE_ENGINE will be added
+        val op = AppOpsManager.permissionToOp(INTERACT_ACROSS_PROFILES)!!
+        AppOpsHelper(mAppContext).setMode(Modules.MODULE_ENGINE, op, AppOpsManager.MODE_ALLOWED, Process.myUid())
+    }
 
     constructor(context: Context) {
         mAppContext = context.applicationContext

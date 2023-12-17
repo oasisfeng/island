@@ -148,6 +148,7 @@ public class Hacks {
 
 		/** Retrieve the default mode for the operation. */
 		@Hack.Fallback(-1) @Mode int opToDefaultMode(final int op);
+		int strOpToOp(String op);
 	}
 
 	public interface UserManagerHack extends Hack.Mirror<UserManager> {

@@ -63,24 +63,26 @@ class ShuttleProvider: ContentProvider() {
 		}
 
 		private fun initializeInIsland(context: Context) {
-			val uri = Uri.parse(CONTENT_URI)
-			if (context.isPermissionGranted(uri, uid = UserHandles.getAppId(Process.myUid())))
+			if (context.isPermissionGranted(Uri.parse(CONTENT_URI), uid = UserHandles.getAppId(Process.myUid())))
 				return Unit.also { Log.i(TAG, "Shuttle in ${Users.current().toId()}: ready") }
 
 			Log.i(TAG, "Shuttle in profile ${Users.current().toId()}: establishing...")
 			ShuttleCarrierActivity.sendToParentProfileQuietlyIfPossible(context) {
 				addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-				clipData = ClipData(TAG, emptyArray(), ClipData.Item(uri)) }
+				clipData = ClipData(TAG, emptyArray(), ClipData.Item(buildCrossProfileUri())) }
 		}
 
-		@OwnerUser @ProfileUser fun collect(context: Context, intent: Intent) {
-			(intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri)?.also {    // data or clipData
-				Log.d(TAG, "[${Users.currentId()}] Received: $it")
-				context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
+		@OwnerUser @ProfileUser fun collectActivityResult(context: Context, intent: Intent) {
+			val uri = intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri ?: return
+			Log.d(TAG, "[${Users.currentId()}] Received: $uri")
+			takeUriGranted(context, uri)
 		}
 
-		private fun buildCrossProfileUri(profileId: Int) =
-				Uri.Builder().scheme(SCHEME_CONTENT).encodedAuthority("$profileId@$AUTHORITY").build()
+		@OwnerUser @ProfileUser fun takeUriGranted(context: Context, uri: Uri) {
+			context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+		}
+
+		fun buildCrossProfileUri(profileId: Int = Users.currentId()): Uri = Uri.parse("$SCHEME_CONTENT://$profileId@$AUTHORITY")
 
 		private const val AUTHORITY = "com.oasisfeng.island.shuttle"
 		const val CONTENT_URI = "$SCHEME_CONTENT://$AUTHORITY"
@@ -135,6 +137,9 @@ private fun Bundle.put(key: String?, value: Any?) {
 		is Long -> putLong(key, value)
 		is String -> putString(key, value)
 		is CharSequence -> putCharSequence(key, value)
+		// These Parcelable types must be checked before "is Parcelable".
+		is Bundle -> putBundle(key, value)
+		is SizeF -> putSizeF(key, value)
 		is Parcelable -> putParcelable(key, value)
 
 		is Array<*> -> when {
@@ -145,8 +150,6 @@ private fun Bundle.put(key: String?, value: Any?) {
 		is List<*> -> @Suppress("UNCHECKED_CAST") putParcelableArrayList(key,
 				if (value is ArrayList<*>) (value as ArrayList<Parcelable>) else ArrayList(value as List<Parcelable>))
 		is SparseArray<*> -> @Suppress("UNCHECKED_CAST") putSparseParcelableArray(key, value as SparseArray<Parcelable>)
-		is Bundle -> putBundle(key, value)
-		is Serializable -> putSerializable(key, value)
 
 		is Byte -> putByte(key, value)
 		is Char -> putChar(key, value)
@@ -154,7 +157,6 @@ private fun Bundle.put(key: String?, value: Any?) {
 		is Float -> putFloat(key, value)
 		is Double -> putDouble(key, value)
 		is Size -> putSize(key, value)
-		is SizeF -> putSizeF(key, value)
 		is BooleanArray -> putBooleanArray(key, value)
 		is IntArray -> putIntArray(key, value)
 		is LongArray -> putLongArray(key, value)
@@ -165,6 +167,8 @@ private fun Bundle.put(key: String?, value: Any?) {
 		is DoubleArray -> putDoubleArray(key, value)
 
 		is IBinder -> putBinder(key, value)
+
+		is Serializable -> putSerializable(key, value)      // Must be the last one
 		else -> throw IllegalArgumentException("Unsupported type: " + value.javaClass)
 	}
 }

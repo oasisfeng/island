@@ -89,6 +89,10 @@ import java.util.List;
 		return mAppOpsManager.checkOpNoThrow(op, uid, pkg);
 	}
 
+	public int strOpToOp(final String op) {
+		return mAppOpsManager.strOpToOp(op);
+	}
+
 	public int opToDefaultMode(final int op) {
 		final int default_mode = mAppOpsManager.opToDefaultMode(op);
 		if (default_mode >= 0) return default_mode;

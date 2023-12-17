@@ -35,6 +35,8 @@ private const val PREFS_NAME = "app_ops"
 
 @RequiresApi(P) class AppOpsHelper(private val context: Context) {
 
+    fun setMode(pkg: String, op: String, mode: Int, uid: Int) = setMode(pkg, mAppOps.strOpToOp(op), mode, uid)
+
     fun setMode(pkg: String, op: Int, mode: Int, uid: Int): Boolean {
         if (! DevicePolicies(context).invoke(DevicePolicyManager::isApplicationHidden, pkg)) {
             mAppOps.setMode(op, uid, pkg, mode)     // If app is hidden, just save and postpone the change to the next unfreezing.
