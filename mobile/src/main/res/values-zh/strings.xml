@@ -192,6 +192,7 @@
     <string name="pref_managed_mainland_features">· 冻结界外的应用\n· 额外的特性（如全局 ADB 安全封印、一键封印壶中界）</string>
     <string name="pref_lock_capture_target_title">响应图像捕捉的应用</string>
     <string name="pref_lock_capture_target_summary">切换非系统应用响应图像捕捉</string>
+    <string name="pref_lock_capture_target_summary_mainland">切换非系统应用响应图像捕捉 (须界外受管理)</string>
 
     <string name="pref_setup_header">管理</string>
 

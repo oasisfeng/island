@@ -194,6 +194,7 @@ the sandbox environment. Island never collect data related to your privacy, plea
     <string name="pref_managed_mainland_features">· Freeze apps in Mainland\n· Extra features. (e.g. full ADB Secure, one-click Island deactivation)</string>
     <string name="pref_lock_capture_target_title">Image capture provider</string>
     <string name="pref_lock_capture_target_summary">Switch the provider of image capture to non-system app.</string>
+    <string name="pref_lock_capture_target_summary_mainland">Switch the provider of image capture to non-system app. (Requires Managed Mainland)</string>
 
     <string name="pref_setup_header">Setup</string>
 
