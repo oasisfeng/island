@@ -84,8 +84,9 @@ import com.oasisfeng.island.util.DevicePolicies.PreferredActivity
             setup<Preference>(R.string.key_setup) { remove(this) } }
         else setup<Preference>(R.string.key_managed_mainland_setup) { remove(this) }
 
-        if (isProfileOrDeviceOwner) setup<Preference>(R.string.key_lock_capture_target) {
-            setOnPreferenceClickListener { true.also {
+        setup<Preference>(R.string.key_lock_capture_target) {
+            if (! isProfileOrDeviceOwner) remove(this)
+            else setOnPreferenceClickListener { true.also {
                 val captureIntent = PreferredActivity.Camera.getMatchingIntent()
                 val candidates = pm.getInstalledApplications(0).filter { ! it.isSystem }.flatMap {  // Skip system apps to avoid hanging due to massive queries.
                     pm.queryIntentActivities(captureIntent.setPackage(it.packageName), 0) }
