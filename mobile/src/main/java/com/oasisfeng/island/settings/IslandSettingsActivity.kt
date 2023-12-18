@@ -17,6 +17,7 @@ import android.content.Intent.ACTION_BOOT_COMPLETED
 import android.content.Intent.ACTION_MY_PACKAGE_REPLACED
 import android.content.pm.PackageManager.GET_PERMISSIONS
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
+import android.graphics.Typeface.BOLD
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
@@ -30,12 +31,16 @@ import android.preference.Preference
 import android.preference.TwoStatePreference
 import android.provider.Settings
 import android.text.Editable
+import android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+import android.text.SpannableStringBuilder
 import android.text.TextWatcher
+import android.text.style.StyleSpan
 import android.util.ArraySet
 import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -89,16 +94,22 @@ import com.oasisfeng.island.util.DevicePolicies.PreferredActivity
             else setOnPreferenceClickListener { true.also {
                 val captureIntent = PreferredActivity.Camera.getMatchingIntent()
                 val candidates = pm.getInstalledApplications(0).filter { ! it.isSystem }.flatMap {  // Skip system apps to avoid hanging due to massive queries.
-                    pm.queryIntentActivities(captureIntent.setPackage(it.packageName), 0) }
+                    pm.queryIntentActivities(captureIntent.setPackage(it.packageName), 0)
+                }.map { it.activityInfo }
                 if (candidates.isEmpty())
                     return@also Unit.also { Dialogs.buildAlert(activity, 0, R.string.prompt_no_capture_app).show() }
+                val current = captureIntent.setPackage(null).resolveActivity(pm)
 
                 val reset = DialogInterface.OnClickListener { _, _ ->
-                    captureIntent.setPackage(null)/* changed above */.resolveActivity(pm)?.packageName?.also { pkg ->
-                        policies.clearPersistentPreferredActivity(pkg) }}
-                Dialogs.buildList(activity, null, candidates.map { it.activityInfo.loadLabel(pm) }.toTypedArray()) { _, which ->
+                    captureIntent.resolveActivity(pm)?.packageName?.also { pkg ->
+                        policies.clearPersistentPreferredActivity(pkg).also {
+                            if (BuildConfig.DEBUG) Toast.makeText(activity, "Cleared: $pkg", Toast.LENGTH_LONG).show() }}}
+                val list = candidates.map { it.loadLabel(pm).run {
+                    if (it.getComponentName() != current) this
+                    else SpannableStringBuilder(this).apply { setSpan(StyleSpan(BOLD), 0, length, SPAN_EXCLUSIVE_EXCLUSIVE) }}}
+                Dialogs.buildList(activity, null, list.toTypedArray()) { _, which ->
                     reset.onClick(null, 0)   // Reset first
-                    val target = candidates[which].activityInfo
+                    val target = candidates[which]
                     policies.setPersistentPreferredActivity(PreferredActivity.Camera, target.getComponentName())
                 }.setNeutralButton(R.string.button_reset_to_default, reset).show() }}}
 
