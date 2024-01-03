@@ -9,6 +9,7 @@
         <import type="com.oasisfeng.island.model.AppViewModel.State" />
         <import type="android.view.View" />
         <import type="com.google.android.material.bottomsheet.BottomSheetBehavior" />
+        <import type="com.oasisfeng.android.databinding.adapters.BottomSheetBindingAdapter" />
         <import type="com.oasisfeng.island.mobile.BuildConfig" />
         <variable name="apps" type="com.oasisfeng.island.model.AppListViewModel" />
         <variable name="featured" type="com.oasisfeng.island.featured.FeaturedListViewModel" />
@@ -45,6 +46,19 @@
                 app:chipSpacingHorizontal="@dimen/margin_medium"
                 app:chipSpacingVertical="0dp"
                 bind:shown="@{apps.mChipsVisible &amp;&amp; ! featured.visible}">
+
+                <com.google.android.material.chip.Chip
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipStrokeColor="@color/accent"
+                    app:chipIconTint="@color/accent"
+                    app:chipStrokeWidth="2dp"
+                    app:checkedIconVisible="false"
+                    app:chipBackgroundColor="@color/chip_background_color"
+                    app:rippleColor="@color/accent"
+                    android:checked="@={apps.getFilterIncludeHiddenSystemApps()}"
+                    android:text="@string/filter_include_hidden_system_components" />
 
                 <com.google.android.material.chip.Chip
                     style="@style/Widget.MaterialComponents.Chip.Filter"
@@ -147,7 +161,7 @@
             app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
             app:behavior_hideable="true"
             app:behavior_peekHeight="80dp"
-            bind:behavior_state="@{apps.mSelection != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
+            bind:behavior_state="@{apps.mSelection != null ? BottomSheetBindingAdapter.STATE_COLLAPSED_OR_EXPANDED : BottomSheetBehavior.STATE_HIDDEN}"
             bind:behavior_bottomSheetCallback="@{apps.bottom_sheet_callback}"
             android:onClick="@{apps::onBottomSheetClick}">
 
@@ -171,21 +185,11 @@
                 android:paddingEnd="@dimen/margin_medium"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="@{apps.mSelection.getStatusText(context)}" tools:text="Frozen"/>
-<!--
+
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/extras"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
--->
-            <TextView
-                android:id="@+id/package_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="@dimen/margin_medium"
-                android:paddingEnd="@dimen/margin_medium"
-                android:paddingTop="@dimen/margin_small"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="@{@string/field_app_id(apps.mSelection.info.packageName)}" tools:text="APP ID: com.oasisfeng.island"/>
 
         </LinearLayout>
 

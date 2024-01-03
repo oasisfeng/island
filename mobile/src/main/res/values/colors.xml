@@ -2,6 +2,7 @@
 <resources>
     <!-- Semantic colors -->
     <color name="textPrimary">@color/primary_dark</color>
+    <color name="textSecondary">@android:color/darker_gray</color>
     <color name="background">#F3F3F3</color>
     <color name="header_background">@android:color/white</color>
     <color name="background_highlight">@android:color/white</color>

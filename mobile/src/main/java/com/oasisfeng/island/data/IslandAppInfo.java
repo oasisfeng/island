@@ -109,7 +109,7 @@ public class IslandAppInfo extends AppInfo {
 		this(provider, user, base, last, null);
 	}
 
-	private IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base,
+	IslandAppInfo(final IslandAppListProvider provider, final UserHandle user, final ApplicationInfo base,
 	                      final @Nullable IslandAppInfo last, final @Nullable CharSequence label) {
 		super(provider, base, last, label);
 		this.user = user;

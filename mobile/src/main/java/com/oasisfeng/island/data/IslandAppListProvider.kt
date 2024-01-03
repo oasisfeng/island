@@ -66,6 +66,10 @@ class IslandAppListProvider : AppListProvider<IslandAppInfo>() {
 		return IslandAppInfo(this, UserHandles.getUserHandleForUid(current.uid), current, last)
 	}
 
+	fun createEntryWithLabel(current: ApplicationInfo, last: IslandAppInfo?, label: CharSequence): IslandAppInfo {
+		return IslandAppInfo(this, UserHandles.getUserHandleForUid(current.uid), current, last, label)
+	}
+
 	override fun onAppLabelUpdate(pkg: String, label: String) {
 		super.onAppLabelUpdate(pkg, label)
 		Users.getProfilesManagedByIsland().forEach { profile ->

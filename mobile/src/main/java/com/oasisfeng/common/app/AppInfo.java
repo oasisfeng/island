@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
@@ -87,11 +86,6 @@ public abstract class AppInfo extends ApplicationInfo {
 	}
 
 	public AppInfo getLastInfo() { return mLastInfo; }
-
-	public @Nullable PackageInfo getPackageInfo(int flags) {
-		try { return context().getPackageManager().getPackageInfo(packageName, flags); }
-		catch (PackageManager.NameNotFoundException e) { return null; }     // Should not happen
-	}
 
 	interface IconFilter { @UiThread Drawable process(Drawable raw_icon); }
 	interface IconConsumer { @UiThread void accept(Drawable icon); }

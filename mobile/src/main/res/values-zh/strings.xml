@@ -73,6 +73,10 @@
     <string name="menu_settings">设置</string>
 
     <string name="filter_include_hidden_system_components">+ 不可见的系统组件</string>
+    <string name="filter_can_query_all_apps">可探知所在空间内的其它应用</string>
+    <string name="filter_can_manage_external_storage">可访问所在空间内的共享存储（包括其中的私人媒体文件）</string>
+    <string name="filter_scoped_storage">支持分区存储（隐私友好）</string>
+    <string name="info_target_sdk">适配 Android %s</string>
 
     <string name="dialog_title_warning">注意</string>
     <string name="dialog_manual_setup"><b>致高级用户</b>：\n这一限制可以通过在 USB 连接的电脑上进行手动操作绕过。</string>
