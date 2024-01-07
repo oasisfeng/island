@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE
+import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
 import android.os.Build.VERSION.SDK_INT
@@ -78,11 +79,19 @@ class Users : PseudoContentProvider() {
 				val uiModule = Modules.getMainLaunchActivity(context).packageName
 				val la = context.getSystemService<LauncherApps>()!!
 				val activityInOwner = la.getActivityList(uiModule, CURRENT)[0].name
-				for (profile in profiles.drop(1)/* skip parent */)
-					for (activity in la.getActivityList(uiModule, profile))
+				for (profile in profiles.drop(1)/* skip parent */) {
+					val activityList: List<LauncherActivityInfo>
+					try {
+						activityList = la.getActivityList(uiModule, profile)
+					} catch (e: SecurityException) {
+						Log.w(TAG, "Skip profile ${profile.toId()} (most probably not normal profile)")
+						continue
+					}
+					for (activity in activityList)
 						// Separate "Island Settings" launcher activity is enabled, only if profile is managed by Island.
 						if (activity.name == activityInOwner) Log.i(TAG, "Profile not managed by Island: ${profile.toId()}")
 						else profilesByIsland.add(profile).also { Log.i(TAG, "Profile managed by Island: ${profile.toId()}") }
+				}
 			} else for (user in profiles.drop(1)/* skip parent */)
 				if (user != CURRENT) Log.w(TAG, "Skip sibling profile (may not managed by Island): ${user.toId()}")
 				else profilesByIsland.add(user).also { Log.i(TAG, "Profile managed by Island: ${user.toId()}") }
