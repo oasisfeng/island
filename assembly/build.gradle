@@ -13,6 +13,7 @@ android {
         targetSdkVersion 33
         resourceConfigurations += ['en', 'zh', 'zh-rTW', 'pt-rBR']
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        missingDimensionStrategy 'compat', 'gingerbreadCompat'  // setup-wizard has a "compat" dimension that Insular doesn't
     }
 
     buildFeatures.dataBinding true
