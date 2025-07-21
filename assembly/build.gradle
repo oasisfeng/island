@@ -4,8 +4,22 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     namespace 'com.oasisfeng.island'
-
     compileSdk this.compileSdkVersion
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+
+            // Enable only v1 and v3 signing
+            enableV1Signing true
+            enableV2Signing false
+            enableV3Signing true
+            enableV4Signing false
+        }
+    }
 
     defaultConfig {
         applicationId "com.oasisfeng.island"
@@ -15,28 +29,44 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
-    buildFeatures.dataBinding true
+    buildFeatures {
+        dataBinding true
+    }
 
     buildTypes {
         debug {
-            firebaseCrashlytics.mappingFileUploadEnabled false
+            signingConfig signingConfigs.release  // ✅ Sign debug with release key
+            firebaseCrashlytics {
+                mappingFileUploadEnabled false
+            }
         }
         release {
+            signingConfig signingConfigs.release
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
-    flavorDimensions += "packaging"
-    flavorDimensions += "distribution"
+    flavorDimensions "packaging", "distribution"
 
     productFlavors {
-        complete { dimension "packaging" }
-        engine   { dimension "packaging" }  // Share application ID to retain the profile ownership when switching builds
-        mobile   { dimension "packaging"; applicationIdSuffix ".mobile" }
+        complete {
+            dimension "packaging"
+        }
+        engine {
+            dimension "packaging"
+        }
+        mobile {
+            dimension "packaging"
+            applicationIdSuffix ".mobile"
+        }
 
-        normal     { dimension "distribution" }
-        googleplay { dimension "distribution" }
+        normal {
+            dimension "distribution"
+        }
+        googleplay {
+            dimension "distribution"
+        }
     }
 
     compileOptions {
@@ -44,7 +74,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lint {
+    lintOptions {
         checkOnly 'NewApi'
         abortOnError true
         checkReleaseBuilds false
@@ -54,8 +84,10 @@ android {
         textOutput file('stdout')
     }
 
-    repositories.flatDir {
-        dirs '../app/libs'
+    repositories {
+        flatDir {
+            dirs '../app/libs'
+        }
     }
 }
 
@@ -66,12 +98,11 @@ dependencies {
     completeImplementation project(':installer')
     completeImplementation project(':watcher')
     completeImplementation project(':open')
-    completeImplementation project(':ninja')
-
     //debugImplementation project(':media')
 
     // Engine only
     engineImplementation project(':engine')
+
     // Mobile only
     mobileImplementation project(':mobile')
 }

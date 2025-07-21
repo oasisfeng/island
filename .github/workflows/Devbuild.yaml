@@ -1,0 +1,96 @@
+name: Android CI
+
+env:
+  main_project_module: app
+  playstore_name: Island
+
+on:
+  push:
+    branches:
+      - 'dev'
+  pull_request:
+    branches:
+      - 'dev'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set environment variables for analytics
+        run: echo "DISABLE_ANALYTICS=true" >> $GITHUB_ENV
+
+      - name: Checkout deagle repository (dev branch)
+        uses: actions/checkout@v4
+        with:
+          repository: 'oasisfeng/deagle'
+          path: 'deagle'
+          ref: 'dev'
+
+      - name: Checkout main app code (dev branch)
+        uses: actions/checkout@v4
+        with:
+          path: 'island'
+          ref: 'dev'
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set current date as env variable
+        run: echo "date_today=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Set repository name as env variable
+        run: echo "repository_name=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x gradlew
+        working-directory: island
+
+      - name: Verify Gradle wrapper version
+        run: ./gradlew --version
+        working-directory: island
+
+      - name: Decode Keystore from secret
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+        working-directory: island
+
+      - name: Build APK Release - CompleteNormal
+        run: ./gradlew assembleCompleteNormalRelease -PdisableAnalytics=true
+        working-directory: island
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/island/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Build APK Debug - ${{ env.main_project_module }} (CompleteNormal Flavor)
+        run: ./gradlew assembleCompleteNormalDebug -PdisableAnalytics=true
+        working-directory: island
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/island/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Verify Artifacts Path
+        run: find island/ -type f -name "*.apk"
+
+      - name: Upload APK Debug Artifact (CompleteNormal Flavor)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk-${{ env.date_today }}
+          path: island/assembly/build/outputs/apk/completeNormal/debug/*.apk
+
+      - name: Upload APK Release Artifact (CompleteNormal Flavor)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ env.date_today }} - ${{ env.playstore_name }} - ${{ env.repository_name }} - APK(s) release generated (CompleteNormal)"
+          path: island/assembly/build/outputs/apk/completeNormal/release/*.apk
